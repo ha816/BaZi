@@ -1,20 +1,19 @@
-"""선천 분석 (태어난 순간 고정되는 팔자 기반 분석)"""
+"""사주 기본 모델 (팔자, 오행, 십신 등 사주 데이터 구조와 분석)"""
 
 from dataclasses import dataclass
 
 from sajupy import calculate_saju
 
-from common.ganji import ELEMENT_MAP, YINYANG_MAP
-from common.oheng import GENERATING_MAP, OVERCOMING_MAP
-from common.sipsin import SIPSIN_DOMAIN
+from bazi.domain.ganji import Oheng, lookup
+from bazi.domain.sipsin import Sipsin
 
 # 오행별 기본 성격 해석
 INTERPRETATIONS: dict[str, str] = {
-    "목": "성장과 추진력이 강하며 리더십이 있습니다.",
-    "화": "열정적이고 솔직하며 감정 표현이 확실합니다.",
-    "토": "신용을 중시하며 포용력이 있고 듬직합니다.",
-    "금": "결단력이 있고 냉철하며 원칙을 중요시합니다.",
-    "수": "지혜롭고 유연하며 적응력이 뛰어납니다.",
+    "木": "성장과 추진력이 강하며 리더십이 있습니다.",
+    "火": "열정적이고 솔직하며 감정 표현이 확실합니다.",
+    "土": "신용을 중시하며 포용력이 있고 듬직합니다.",
+    "金": "결단력이 있고 냉철하며 원칙을 중요시합니다.",
+    "水": "지혜롭고 유연하며 적응력이 뛰어납니다.",
 }
 
 
@@ -38,27 +37,27 @@ def get_sipsin(char: str, day_stem: str) -> str:
     일간 기준으로 한 글자의 십신을 판별한다.
     오행 관계(같음/생/극) + 음양 일치 여부로 10가지 십신 중 하나를 반환한다.
     """
-    me_element = ELEMENT_MAP[day_stem]
-    me_yinyang = YINYANG_MAP[day_stem]
-    target_element = ELEMENT_MAP[char]
-    target_yinyang = YINYANG_MAP[char]
+    me = lookup(day_stem)
+    target = lookup(char)
 
-    same_yinyang = me_yinyang == target_yinyang
+    same_yinyang = me.is_yang == target.is_yang
+    me_el = me.element
+    target_el = target.element
 
-    if me_element == target_element:
+    if me_el == target_el:
         return "비견" if same_yinyang else "겁재"
-    elif GENERATING_MAP[me_element] == target_element:
+    elif me_el.generates == target_el:
         return "식신" if same_yinyang else "상관"
-    elif OVERCOMING_MAP[me_element] == target_element:
+    elif me_el.overcomes == target_el:
         return "편재" if same_yinyang else "정재"
-    elif GENERATING_MAP[target_element] == me_element:
+    elif target_el.generates == me_el:
         return "편인" if same_yinyang else "정인"
     else:
         return "편관" if same_yinyang else "정관"
 
 
 class NatalChart:
-    """선천 사주 분석기"""
+    """사주 분석 기본 모델"""
 
     def __init__(self, saju_pillars: list[str]):
         self.saju = self._analyze(saju_pillars)
@@ -92,12 +91,12 @@ class NatalChart:
     @staticmethod
     def _analyze(saju_pillars: list[str]) -> SajuResult:
         """사주 네 기둥을 받아 기본 분석 결과를 반환한다."""
-        stats = {"목": 0, "화": 0, "토": 0, "금": 0, "수": 0}
+        stats = {o.name: 0 for o in Oheng}
         for char in "".join(saju_pillars):
-            stats[ELEMENT_MAP[char]] += 1
+            stats[lookup(char).element.name] += 1
 
         day_stem = saju_pillars[2][0]
-        my_element = ELEMENT_MAP[day_stem]
+        my_element = lookup(day_stem).element.name
 
         return SajuResult(
             year_pillar=saju_pillars[0],
@@ -114,11 +113,11 @@ class NatalChart:
         일간 강약을 판단한다.
         양수=신강, 0=중화, 음수=신약 (범위: -8 ~ +8)
         """
-        me = self.saju.my_main_element
-        generating_me = [k for k, v in GENERATING_MAP.items() if v == me][0]
+        me = Oheng[self.saju.my_main_element]
+        generating_me = me.generated_by
 
         stats = self.saju.element_stats
-        helping = stats[me] + stats[generating_me]
+        helping = stats[me.name] + stats[generating_me.name]
         draining = sum(stats.values()) - helping
 
         return helping - draining
@@ -128,12 +127,12 @@ class NatalChart:
         용신(用神)을 선정한다.
         strength > 0(신강)이면 기운을 빼줄 오행, <= 0(신약/중화)이면 도와줄 오행.
         """
-        me = self.saju.my_main_element
+        me = Oheng[self.saju.my_main_element]
 
         if self.strength > 0:
-            return GENERATING_MAP[me]
+            return me.generates.name
         else:
-            return [k for k, v in GENERATING_MAP.items() if v == me][0]
+            return me.generated_by.name
 
     def _analyze_sipsin(self) -> list[tuple[str, str]]:
         """팔자 8글자에서 일간을 제외한 7글자의 십신을 분석한다."""
@@ -153,6 +152,6 @@ class NatalChart:
     def get_sipsin_domains(self) -> list[dict]:
         """십신별 영역 해석을 포함한 결과를 반환한다."""
         return [
-            {"char": char, "sipsin": sipsin, "domain": SIPSIN_DOMAIN[sipsin]}
+            {"char": char, "sipsin": sipsin, "domain": Sipsin[sipsin].domain}
             for char, sipsin in self.sipsin
         ]

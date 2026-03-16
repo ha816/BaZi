@@ -1,14 +1,13 @@
-"""후천 분석 (대운, 세운 등 시간에 따라 변하는 운)"""
+"""운세 분석 (대운, 세운 등 시간에 따라 변하는 운)"""
 
 from dataclasses import dataclass
 from datetime import datetime
 
 from sajupy import SajuCalculator
 
-from common.ganji import BRANCHES, ELEMENT_MAP, STEMS, YINYANG_MAP
-from common.relations import BRANCH_CLASH, BRANCH_COMBINE, STEM_COMBINE
-from common.sipsin import SIPSIN_DOMAIN
-from saju.natal import NatalChart, get_sipsin
+from bazi.domain.ganji import Branch, Stem, lookup
+from bazi.domain.sipsin import Sipsin
+from bazi.model import NatalChart, get_sipsin
 
 # 절(節) 12개: 각 월의 시작을 알리는 절기 (대운 계산에 사용)
 JEOL_TERMS = frozenset([
@@ -21,9 +20,9 @@ PILLAR_NAMES = ["년주", "월주", "일주", "시주"]
 
 def year_to_ganji(year: int) -> str:
     """연도를 간지로 변환한다. (예: 2026 → '丙午')"""
-    stem = STEMS[(year - 4) % 10]
-    branch = BRANCHES[(year - 4) % 12]
-    return stem + branch
+    stem = Stem.by_order((year - 4) % 10)
+    branch = Branch.by_order((year - 4) % 12)
+    return stem.name + branch.name
 
 
 def _parse_term_time(term_time: float) -> datetime:
@@ -41,7 +40,7 @@ class DaeunPeriod:
 
 
 class FortuneChart:
-    """후천 운세 분석기"""
+    """운세 분석기 (대운·세운)"""
 
     def __init__(
         self,
@@ -101,16 +100,17 @@ class FortuneChart:
         대운 순서를 생성한다.
         양남/음녀 → 순행, 음남/양녀 → 역행.
         """
-        is_yang = YINYANG_MAP[year_stem]
+        is_yang = Stem[year_stem].is_yang
         forward = is_yang == self.is_male
 
         month_pillar = self.natal.saju.month_pillar
-        stem_idx = STEMS.index(month_pillar[0])
-        branch_idx = BRANCHES.index(month_pillar[1])
+        stem_idx = Stem[month_pillar[0]].order
+        branch_idx = Branch[month_pillar[1]].order
         step = 1 if forward else -1
 
         return [
-            STEMS[(stem_idx + step * i) % 10] + BRANCHES[(branch_idx + step * i) % 12]
+            Stem.by_order(stem_idx + step * i).name
+            + Branch.by_order(branch_idx + step * i).name
             for i in range(1, count + 1)
         ]
 
@@ -128,7 +128,7 @@ class FortuneChart:
         생일에서 가장 가까운 절(節)까지의 일수 ÷ 3.
         순행이면 다음 절, 역행이면 이전 절.
         """
-        is_yang = YINYANG_MAP[year_stem]
+        is_yang = Stem[year_stem].is_yang
         forward = is_yang == self.is_male
         birth_dt = datetime(birth_year, birth_month, birth_day, birth_hour, birth_minute)
 
@@ -164,17 +164,17 @@ class FortuneChart:
     def check_yongshin_in_seun(self) -> bool:
         """세운에 용신 오행이 포함되어 있는지 확인한다."""
         yongshin = self.natal.yongshin
-        return any(ELEMENT_MAP[ch] == yongshin for ch in self.seun_ganji)
+        return any(lookup(ch).element.name == yongshin for ch in self.seun_ganji)
 
     def check_yongshin_in_daeun(self, daeun: DaeunPeriod) -> bool:
         """대운에 용신 오행이 포함되어 있는지 확인한다."""
         yongshin = self.natal.yongshin
-        return any(ELEMENT_MAP[ch] == yongshin for ch in daeun.ganji)
+        return any(lookup(ch).element.name == yongshin for ch in daeun.ganji)
 
     def get_seun_sipsin_domains(self) -> list[dict]:
         """세운 십신의 영역 해석을 반환한다."""
         return [
-            {"char": char, "sipsin": sipsin, "domain": SIPSIN_DOMAIN[sipsin]}
+            {"char": char, "sipsin": sipsin, "domain": Sipsin[sipsin].domain}
             for char, sipsin in self.seun
         ]
 
@@ -185,20 +185,20 @@ class FortuneChart:
             {
                 "char": ch,
                 "sipsin": get_sipsin(ch, day_stem),
-                "domain": SIPSIN_DOMAIN[get_sipsin(ch, day_stem)],
+                "domain": Sipsin[get_sipsin(ch, day_stem)].domain,
             }
             for ch in daeun.ganji
         ]
 
     def find_clashes(self, ganji: str) -> list[dict]:
         """간지와 사주 네 기둥 사이의 지지충(衝)을 찾는다."""
-        incoming_branch = ganji[1]
+        incoming = Branch[ganji[1]]
         results = []
 
         for i, pillar in enumerate(self.natal.saju.pillars):
-            if BRANCH_CLASH.get(incoming_branch) == pillar[1]:
+            if incoming.clashes.name == pillar[1]:
                 results.append({
-                    "incoming": incoming_branch,
+                    "incoming": incoming.name,
                     "target": pillar[1],
                     "pillar": PILLAR_NAMES[i],
                 })
@@ -207,21 +207,21 @@ class FortuneChart:
 
     def find_combines(self, ganji: str) -> list[dict]:
         """간지와 사주 네 기둥 사이의 합(天干合·地支六合)을 찾는다."""
-        incoming_stem = ganji[0]
-        incoming_branch = ganji[1]
+        incoming_stem = Stem[ganji[0]]
+        incoming_branch = Branch[ganji[1]]
         results = []
 
         for i, pillar in enumerate(self.natal.saju.pillars):
-            if STEM_COMBINE.get(incoming_stem) == pillar[0]:
+            if incoming_stem.combines.name == pillar[0]:
                 results.append({
-                    "incoming": incoming_stem,
+                    "incoming": incoming_stem.name,
                     "target": pillar[0],
                     "pillar": PILLAR_NAMES[i],
                     "type": "천간합",
                 })
-            if BRANCH_COMBINE.get(incoming_branch) == pillar[1]:
+            if incoming_branch.combines.name == pillar[1]:
                 results.append({
-                    "incoming": incoming_branch,
+                    "incoming": incoming_branch.name,
                     "target": pillar[1],
                     "pillar": PILLAR_NAMES[i],
                     "type": "지지합",

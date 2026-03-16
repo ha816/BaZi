@@ -1,13 +1,13 @@
-from saju.natal import NatalChart, get_sipsin
+from bazi.model import NatalChart, get_sipsin
 
 
 def test_analyze_with_pillars():
     """간지를 직접 넣어서 오행 분석하는 기본 케이스"""
     chart = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
 
-    assert chart.saju.my_main_element == "토"
+    assert chart.saju.my_main_element == "土"
     assert chart.saju.day_stem == "己"
-    assert chart.saju.element_stats == {"목": 0, "화": 3, "토": 3, "금": 2, "수": 0}
+    assert chart.saju.element_stats == {"木": 0, "火": 3, "土": 3, "金": 2, "水": 0}
     assert chart.saju.year_pillar == "庚午"
     assert chart.saju.day_pillar == "己巳"
 
@@ -16,8 +16,8 @@ def test_analyze_water_dominant():
     """수(水) 기운이 강한 사주 예시"""
     chart = NatalChart(["壬子", "壬子", "壬子", "壬子"])
 
-    assert chart.saju.my_main_element == "수"
-    assert chart.saju.element_stats == {"목": 0, "화": 0, "토": 0, "금": 0, "수": 8}
+    assert chart.saju.my_main_element == "水"
+    assert chart.saju.element_stats == {"木": 0, "火": 0, "土": 0, "金": 0, "水": 8}
 
 
 def test_from_birthday():
@@ -46,13 +46,13 @@ def test_judge_strength_weak():
 def test_find_yongshin_for_strong():
     """신강일 때 용신"""
     chart = NatalChart(["己巳", "丙戌", "己巳", "己未"])
-    assert chart.yongshin == "금"
+    assert chart.yongshin == "金"
 
 
 def test_find_yongshin_for_weak():
     """신약일 때 용신"""
     chart = NatalChart(["庚申", "庚申", "甲戌", "庚申"])
-    assert chart.yongshin == "수"
+    assert chart.yongshin == "水"
 
 
 def test_get_personality():

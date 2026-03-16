@@ -1,6 +1,6 @@
-from saju.natal import NatalChart
-from saju.fortune import FortuneChart
-from saju.interpret import full_interpretation
+from bazi.model import NatalChart
+from bazi.fortune import FortuneChart
+from bazi.interpret import full_interpretation
 
 
 def test_full_interpretation():
@@ -13,7 +13,7 @@ def test_full_interpretation():
     interp = full_interpretation(natal, fortune, age=35)
 
     # 용신 확인
-    assert interp.yongshin == "금"
+    assert interp.yongshin == "金"
     assert isinstance(interp.yongshin_in_seun, bool)
     assert isinstance(interp.yongshin_in_daeun, bool)
 

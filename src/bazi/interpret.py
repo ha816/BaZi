@@ -1,9 +1,9 @@
-"""종합 해석: 선천(NatalChart) + 후천(FortuneChart)를 조합하여 규칙 기반 해석을 생성한다."""
+"""종합 해석: NatalChart + FortuneChart를 조합하여 규칙 기반 해석을 생성한다."""
 
 from dataclasses import dataclass, field
 
-from saju.fortune import DaeunPeriod, FortuneChart
-from saju.natal import NatalChart
+from bazi.model import NatalChart
+from bazi.fortune import DaeunPeriod, FortuneChart
 
 
 @dataclass

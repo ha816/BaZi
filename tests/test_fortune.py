@@ -1,5 +1,5 @@
-from saju.natal import NatalChart
-from saju.fortune import FortuneChart, year_to_ganji
+from bazi.model import NatalChart
+from bazi.fortune import FortuneChart, year_to_ganji
 
 
 def test_year_to_ganji():
