@@ -17,8 +17,50 @@ BRANCH_ELEMENT_MAP: dict[str, str] = {
     "丑": "토", "未": "토",
 }
 
-# 통합 매핑 (기존 코드 호환)
+# 천간 음양 매핑 (양=True, 음=False)
+STEM_YINYANG_MAP: dict[str, bool] = {
+    "甲": True, "乙": False,
+    "丙": True, "丁": False,
+    "戊": True, "己": False,
+    "庚": True, "辛": False,
+    "壬": True, "癸": False,
+}
+
+# 지지 음양 매핑 (양=True, 음=False)
+BRANCH_YINYANG_MAP: dict[str, bool] = {
+    "子": True, "丑": False,
+    "寅": True, "卯": False,
+    "辰": True, "巳": False,
+    "午": True, "未": False,
+    "申": True, "酉": False,
+    "戌": True, "亥": False,
+}
+
+# 순서가 있는 리스트 (인덱스 기반 순환 계산용)
+STEMS: list[str] = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"]
+BRANCHES: list[str] = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
+
+# 통합 매핑
 ELEMENT_MAP: dict[str, str] = {**STEM_ELEMENT_MAP, **BRANCH_ELEMENT_MAP}
+YINYANG_MAP: dict[str, bool] = {**STEM_YINYANG_MAP, **BRANCH_YINYANG_MAP}
+
+# 상생 관계: key가 value를 생한다 (목→화→토→금→수→목)
+GENERATING_MAP: dict[str, str] = {
+    "목": "화",
+    "화": "토",
+    "토": "금",
+    "금": "수",
+    "수": "목",
+}
+
+# 상극 관계: key가 value를 극한다 (목→토→수→화→금→목)
+OVERCOMING_MAP: dict[str, str] = {
+    "목": "토",
+    "토": "수",
+    "수": "화",
+    "화": "금",
+    "금": "목",
+}
 
 # 오행별 기본 성격 해석
 INTERPRETATIONS: dict[str, str] = {
