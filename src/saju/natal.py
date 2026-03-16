@@ -1,14 +1,21 @@
+"""선천 분석 (태어난 순간 고정되는 팔자 기반 분석)"""
+
 from dataclasses import dataclass
 
 from sajupy import calculate_saju
 
-from common.constants import (
-    ELEMENT_MAP,
-    GENERATING_MAP,
-    INTERPRETATIONS,
-    OVERCOMING_MAP,
-    YINYANG_MAP,
-)
+from common.ganji import ELEMENT_MAP, YINYANG_MAP
+from common.oheng import GENERATING_MAP, OVERCOMING_MAP
+from common.sipsin import SIPSIN_DOMAIN
+
+# 오행별 기본 성격 해석
+INTERPRETATIONS: dict[str, str] = {
+    "목": "성장과 추진력이 강하며 리더십이 있습니다.",
+    "화": "열정적이고 솔직하며 감정 표현이 확실합니다.",
+    "토": "신용을 중시하며 포용력이 있고 듬직합니다.",
+    "금": "결단력이 있고 냉철하며 원칙을 중요시합니다.",
+    "수": "지혜롭고 유연하며 적응력이 뛰어납니다.",
+}
 
 
 @dataclass
@@ -21,95 +28,9 @@ class SajuResult:
     my_main_element: str
     element_stats: dict[str, int]
 
-
-@dataclass
-class NatalAnalysis:
-    """선천 분석 결과 (태어난 순간 고정)"""
-    saju: SajuResult
-    strength: int  # 양수=신강, 0=중화, 음수=신약 (범위: -8 ~ +8)
-    yongshin: str
-    personality: str
-    sipsin: list[tuple[str, str]]  # [(글자, 십신), ...] 일간 제외 7글자
-
-
-def from_birthday(
-    year: int,
-    month: int,
-    day: int,
-    hour: int,
-    minute: int = 0,
-    city: str = "Seoul",
-) -> SajuResult:
-    """생년월일시로 사주를 계산한다."""
-    result = calculate_saju(
-        year=year,
-        month=month,
-        day=day,
-        hour=hour,
-        minute=minute,
-        city=city,
-        use_solar_time=True,
-    )
-    return analyze([
-        result["year_pillar"],
-        result["month_pillar"],
-        result["day_pillar"],
-        result["hour_pillar"],
-    ])
-
-
-def analyze(saju_pillars: list[str]) -> SajuResult:
-    """사주 네 기둥을 받아 기본 분석 결과를 반환한다."""
-    stats = {"목": 0, "화": 0, "토": 0, "금": 0, "수": 0}
-    for char in "".join(saju_pillars):
-        stats[ELEMENT_MAP[char]] += 1
-
-    day_stem = saju_pillars[2][0]
-    my_element = ELEMENT_MAP[day_stem]
-
-    return SajuResult(
-        year_pillar=saju_pillars[0],
-        month_pillar=saju_pillars[1],
-        day_pillar=saju_pillars[2],
-        hour_pillar=saju_pillars[3],
-        day_stem=day_stem,
-        my_main_element=my_element,
-        element_stats=stats,
-    )
-
-
-def judge_strength(result: SajuResult) -> int:
-    """
-    일간 강약을 판단한다.
-    나를 돕는 오행(비겁 + 인성) - 빼는 오행(식상 + 재성 + 관성)을 반환한다.
-    양수=신강, 0=중화, 음수=신약 (범위: -8 ~ +8)
-    """
-    me = result.my_main_element
-    generating_me = [k for k, v in GENERATING_MAP.items() if v == me][0]
-
-    stats = result.element_stats
-    helping = stats[me] + stats[generating_me]
-    draining = sum(stats.values()) - helping
-
-    return helping - draining
-
-
-def find_yongshin(result: SajuResult, strength: int) -> str:
-    """
-    용신(用神)을 선정한다.
-    strength > 0(신강)이면 기운을 빼줄 오행, <= 0(신약/중화)이면 도와줄 오행을 반환한다.
-    """
-    me = result.my_main_element
-
-    if strength > 0:
-        return GENERATING_MAP[me]
-    else:
-        return [k for k, v in GENERATING_MAP.items() if v == me][0]
-
-
-def get_personality(result: SajuResult) -> str:
-    """일간 오행 기반 기본 성격을 반환한다."""
-    return INTERPRETATIONS[result.my_main_element]
+    @property
+    def pillars(self) -> list[str]:
+        return [self.year_pillar, self.month_pillar, self.day_pillar, self.hour_pillar]
 
 
 def get_sipsin(char: str, day_stem: str) -> str:
@@ -136,38 +57,102 @@ def get_sipsin(char: str, day_stem: str) -> str:
         return "편관" if same_yinyang else "정관"
 
 
-def analyze_sipsin(result: SajuResult) -> list[tuple[str, str]]:
-    """
-    팔자 8글자에서 일간을 제외한 7글자의 십신을 분석한다.
-    반환: [(글자, 십신), ...] 년주천간부터 시주지지 순서 (일간 제외)
-    """
-    all_chars = list("".join([
-        result.year_pillar,
-        result.month_pillar,
-        result.day_pillar,
-        result.hour_pillar,
-    ]))
-    day_stem_index = 4
-    chars_without_day_stem = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
+class NatalChart:
+    """선천 사주 분석기"""
 
-    return [
-        (char, get_sipsin(char, result.day_stem))
-        for char in chars_without_day_stem
-    ]
+    def __init__(self, saju_pillars: list[str]):
+        self.saju = self._analyze(saju_pillars)
+        self.strength = self._judge_strength()
+        self.yongshin = self._find_yongshin()
+        self.sipsin = self._analyze_sipsin()
 
+    @classmethod
+    def from_birthday(
+        cls,
+        year: int,
+        month: int,
+        day: int,
+        hour: int,
+        minute: int = 0,
+        city: str = "Seoul",
+    ) -> "NatalChart":
+        """생년월일시로 사주를 계산하여 NatalChart를 생성한다."""
+        result = calculate_saju(
+            year=year, month=month, day=day,
+            hour=hour, minute=minute, city=city,
+            use_solar_time=True,
+        )
+        return cls([
+            result["year_pillar"],
+            result["month_pillar"],
+            result["day_pillar"],
+            result["hour_pillar"],
+        ])
 
-def full_analysis(saju_pillars: list[str]) -> NatalAnalysis:
-    """사주 네 기둥에 대해 선천 분석을 모두 수행한다."""
-    result = analyze(saju_pillars)
-    strength = judge_strength(result)
-    yongshin = find_yongshin(result, strength)
-    personality = get_personality(result)
-    sipsin = analyze_sipsin(result)
+    @staticmethod
+    def _analyze(saju_pillars: list[str]) -> SajuResult:
+        """사주 네 기둥을 받아 기본 분석 결과를 반환한다."""
+        stats = {"목": 0, "화": 0, "토": 0, "금": 0, "수": 0}
+        for char in "".join(saju_pillars):
+            stats[ELEMENT_MAP[char]] += 1
 
-    return NatalAnalysis(
-        saju=result,
-        strength=strength,
-        yongshin=yongshin,
-        personality=personality,
-        sipsin=sipsin,
-    )
+        day_stem = saju_pillars[2][0]
+        my_element = ELEMENT_MAP[day_stem]
+
+        return SajuResult(
+            year_pillar=saju_pillars[0],
+            month_pillar=saju_pillars[1],
+            day_pillar=saju_pillars[2],
+            hour_pillar=saju_pillars[3],
+            day_stem=day_stem,
+            my_main_element=my_element,
+            element_stats=stats,
+        )
+
+    def _judge_strength(self) -> int:
+        """
+        일간 강약을 판단한다.
+        양수=신강, 0=중화, 음수=신약 (범위: -8 ~ +8)
+        """
+        me = self.saju.my_main_element
+        generating_me = [k for k, v in GENERATING_MAP.items() if v == me][0]
+
+        stats = self.saju.element_stats
+        helping = stats[me] + stats[generating_me]
+        draining = sum(stats.values()) - helping
+
+        return helping - draining
+
+    def _find_yongshin(self) -> str:
+        """
+        용신(用神)을 선정한다.
+        strength > 0(신강)이면 기운을 빼줄 오행, <= 0(신약/중화)이면 도와줄 오행.
+        """
+        me = self.saju.my_main_element
+
+        if self.strength > 0:
+            return GENERATING_MAP[me]
+        else:
+            return [k for k, v in GENERATING_MAP.items() if v == me][0]
+
+    def _analyze_sipsin(self) -> list[tuple[str, str]]:
+        """팔자 8글자에서 일간을 제외한 7글자의 십신을 분석한다."""
+        all_chars = list("".join(self.saju.pillars))
+        day_stem_index = 4
+        chars_without_day_stem = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
+
+        return [
+            (char, get_sipsin(char, self.saju.day_stem))
+            for char in chars_without_day_stem
+        ]
+
+    def get_personality(self) -> str:
+        """일간 오행 기반 기본 성격을 반환한다."""
+        return INTERPRETATIONS[self.saju.my_main_element]
+
+    def get_sipsin_domains(self) -> list[dict]:
+        """십신별 영역 해석을 포함한 결과를 반환한다."""
+        return [
+            {"char": char, "sipsin": sipsin, "domain": SIPSIN_DOMAIN[sipsin]}
+            for char, sipsin in self.sipsin
+        ]

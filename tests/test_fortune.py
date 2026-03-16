@@ -1,80 +1,119 @@
-from saju import natal, fortune
+from saju.natal import NatalChart
+from saju.fortune import FortuneChart, year_to_ganji
 
 
 def test_year_to_ganji():
     """연도 → 간지 변환"""
-    assert fortune.year_to_ganji(1990) == "庚午"
-    assert fortune.year_to_ganji(2000) == "庚辰"
-    assert fortune.year_to_ganji(2024) == "甲辰"
-    assert fortune.year_to_ganji(2026) == "丙午"
+    assert year_to_ganji(1990) == "庚午"
+    assert year_to_ganji(2000) == "庚辰"
+    assert year_to_ganji(2024) == "甲辰"
+    assert year_to_ganji(2026) == "丙午"
 
 
-def test_get_seun():
+def test_seun():
     """세운 분석: 해당 연도 간지의 십신"""
-    # 일간: 己(토, 음), 2026년 = 丙午
-    # 丙(화, 양) → 정인, 午(화, 양) → 정인
-    seun = fortune.get_seun(2026, "己")
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
 
-    assert seun == [("丙", "정인"), ("午", "정인")]
-
-
-def test_get_daeun_sequence_forward():
-    """대운 순행: 양남 (년간 양 + 남자)"""
-    # 월주: 丙戌, 년간: 庚(양), 남자 → 순행
-    sequence = fortune.get_daeun_sequence("丙戌", "庚", is_male=True, count=4)
-
-    assert sequence == ["丁亥", "戊子", "己丑", "庚寅"]
+    assert fortune.seun_ganji == "丙午"
+    assert fortune.seun == [("丙", "정인"), ("午", "정인")]
 
 
-def test_get_daeun_sequence_backward():
-    """대운 역행: 양녀 (년간 양 + 여자)"""
-    # 월주: 丙戌, 년간: 庚(양), 여자 → 역행
-    sequence = fortune.get_daeun_sequence("丙戌", "庚", is_male=False, count=4)
+def test_daeun_forward():
+    """대운 순행: 양남"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
 
-    assert sequence == ["乙酉", "甲申", "癸未", "壬午"]
-
-
-def test_calc_daeun_start_age_forward():
-    """순행 대운 시작 나이: 생일→다음 절까지 일수 / 3"""
-    # 1990-10-10 14:30, 庚(양) + 남자 → 순행
-    # 다음 절: 입동 1990-11-08 → 약 28일 / 3 ≈ 9세
-    age = fortune.calc_daeun_start_age(1990, 10, 10, 14, 30, "庚", is_male=True)
-
-    assert age == 9
+    assert fortune.daeun[0].ganji == "丁亥"
+    assert fortune.daeun[0].start_age == 9
+    assert fortune.daeun[0].end_age == 18
 
 
-def test_calc_daeun_start_age_backward():
-    """역행 대운 시작 나이: 생일→이전 절까지 일수 / 3"""
-    # 1990-10-10 14:30, 庚(양) + 여자 → 역행
-    # 이전 절: 한로 1990-10-08 → 약 2일 / 3 ≈ 1세
-    age = fortune.calc_daeun_start_age(1990, 10, 10, 14, 30, "庚", is_male=False)
+def test_daeun_backward():
+    """대운 역행: 양녀"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=False,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
 
-    assert age == 1
+    assert fortune.daeun[0].ganji == "乙酉"
 
 
-def test_full_analysis():
-    """후천 분석 통합"""
-    result = natal.analyze(["庚午", "丙戌", "己巳", "辛未"])
-    analysis = fortune.full_analysis(
-        result,
-        year=2026,
-        is_male=True,
-        birth_year=1990,
-        birth_month=10,
-        birth_day=10,
-        birth_hour=14,
-        birth_minute=30,
-    )
+def test_daeun_start_age_forward():
+    """순행 대운 시작 나이"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
 
-    # 세운
-    assert analysis.seun_year == 2026
-    assert analysis.seun_ganji == "丙午"
-    assert len(analysis.seun) == 2
+    assert fortune.daeun[0].start_age == 9
 
-    # 대운
-    assert len(analysis.daeun) == 8
-    assert analysis.daeun[0].ganji == "丁亥"
-    assert analysis.daeun[0].start_age == 9
-    assert analysis.daeun[0].end_age == 18
-    assert analysis.daeun[1].start_age == 19
-    assert analysis.daeun[1].end_age == 28
+
+def test_daeun_start_age_backward():
+    """역행 대운 시작 나이"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=False,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
+
+    assert fortune.daeun[0].start_age == 1
+
+
+def test_get_current_daeun():
+    """현재 나이에 해당하는 대운 찾기"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
+
+    assert fortune.get_current_daeun(15).ganji == "丁亥"
+    assert fortune.get_current_daeun(25).ganji == "戊子"
+    assert fortune.get_current_daeun(35).ganji == "己丑"
+
+
+def test_check_yongshin_in_seun():
+    """세운에서 용신 확인"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    # 용신=금, 2026=丙午(화,화) → False
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
+
+    assert fortune.check_yongshin_in_seun() is False
+
+
+def test_find_clashes():
+    """지지충 찾기"""
+    natal = NatalChart(["甲子", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
+
+    # 세운 丙午의 午 vs 년주 子 → 충
+    clashes = fortune.find_clashes("丙午")
+    assert len(clashes) == 1
+    assert clashes[0]["incoming"] == "午"
+    assert clashes[0]["target"] == "子"
+    assert clashes[0]["pillar"] == "년주"
+
+
+def test_find_combines():
+    """천간합·지지합 찾기"""
+    natal = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    fortune = FortuneChart(natal, year=2026, is_male=True,
+                           birth_year=1990, birth_month=10, birth_day=10,
+                           birth_hour=14, birth_minute=30)
+
+    # 辛未: 辛-丙(천간합, 월주), 未-午(지지합, 년주)
+    combines = fortune.find_combines("辛未")
+    stem_combines = [c for c in combines if c["type"] == "천간합"]
+    branch_combines = [c for c in combines if c["type"] == "지지합"]
+
+    assert len(stem_combines) == 1
+    assert stem_combines[0]["target"] == "丙"
+    assert len(branch_combines) == 1
+    assert branch_combines[0]["target"] == "午"
