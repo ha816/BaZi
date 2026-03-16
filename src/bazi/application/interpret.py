@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass, field
 
-from bazi.chart import NatalChart
-from bazi.fortune import DaeunPeriod, FortuneChart
+from bazi.application.chart import NatalChart
+from bazi.application.fortune import DaeunPeriod, FortuneChart
 
 
 @dataclass

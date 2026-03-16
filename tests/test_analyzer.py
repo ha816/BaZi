@@ -1,5 +1,5 @@
 from bazi.domain.sipsin import Sipsin
-from bazi.chart import NatalChart
+from bazi.application.chart import NatalChart
 
 
 def test_analyze_with_pillars():

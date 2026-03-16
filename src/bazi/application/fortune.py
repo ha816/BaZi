@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sajupy import SajuCalculator
 
-from bazi.chart import NatalChart
+from bazi.application.chart import NatalChart
 from bazi.domain.fortune import Jeol, Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin

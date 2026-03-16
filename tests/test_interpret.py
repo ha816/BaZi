@@ -1,6 +1,6 @@
-from bazi.chart import NatalChart
-from bazi.fortune import FortuneChart
-from bazi.interpret import full_interpretation
+from bazi.application.chart import NatalChart
+from bazi.application.fortune import FortuneChart
+from bazi.application.interpret import full_interpretation
 
 
 def test_full_interpretation():

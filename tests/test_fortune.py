@@ -1,5 +1,5 @@
-from bazi.chart import NatalChart
-from bazi.fortune import FortuneChart, year_to_ganji
+from bazi.application.chart import NatalChart
+from bazi.application.fortune import FortuneChart, year_to_ganji
 
 
 def test_year_to_ganji():
