@@ -5,17 +5,10 @@ from datetime import datetime
 
 from sajupy import SajuCalculator
 
+from bazi.domain.fortune import Jeol, Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin
-from bazi.model import NatalChart, get_sipsin
-
-# 절(節) 12개: 각 월의 시작을 알리는 절기 (대운 계산에 사용)
-JEOL_TERMS = frozenset([
-    "소한", "입춘", "경칩", "청명", "입하", "망종",
-    "소서", "입추", "백로", "한로", "입동", "대설",
-])
-
-PILLAR_NAMES = ["년주", "월주", "일주", "시주"]
+from bazi.model import NatalChart
 
 
 def year_to_ganji(year: int) -> str:
@@ -65,10 +58,10 @@ class FortuneChart:
 
     def _calc_seun(self) -> list[tuple[str, str]]:
         """세운(歲運) 분석: 해당 연도의 간지가 일간에 미치는 영향."""
-        day_stem = self.natal.saju.day_stem
+        ds = self.natal.saju.day_stem
         return [
-            (self.seun_ganji[0], get_sipsin(self.seun_ganji[0], day_stem)),
-            (self.seun_ganji[1], get_sipsin(self.seun_ganji[1], day_stem)),
+            (self.seun_ganji[0], Sipsin.of(ds, self.seun_ganji[0]).name),
+            (self.seun_ganji[1], Sipsin.of(ds, self.seun_ganji[1]).name),
         ]
 
     def _calc_daeun(
@@ -134,7 +127,7 @@ class FortuneChart:
 
         calc = SajuCalculator()
         term_data = calc.data[
-            (calc.data["solar_term_korean"].isin(JEOL_TERMS))
+            (calc.data["solar_term_korean"].isin(Jeol.korean_names()))
             & (calc.data["year"].isin([birth_year - 1, birth_year, birth_year + 1]))
         ]
 
@@ -180,12 +173,12 @@ class FortuneChart:
 
     def get_daeun_sipsin_domains(self, daeun: DaeunPeriod) -> list[dict]:
         """대운 간지의 십신 영역 해석을 반환한다."""
-        day_stem = self.natal.saju.day_stem
+        ds = self.natal.saju.day_stem
         return [
             {
                 "char": ch,
-                "sipsin": get_sipsin(ch, day_stem),
-                "domain": Sipsin[get_sipsin(ch, day_stem)].domain,
+                "sipsin": (s := Sipsin.of(ds, ch)).name,
+                "domain": s.domain,
             }
             for ch in daeun.ganji
         ]
@@ -200,7 +193,7 @@ class FortuneChart:
                 results.append({
                     "incoming": incoming.name,
                     "target": pillar[1],
-                    "pillar": PILLAR_NAMES[i],
+                    "pillar": Pillar.by_order(i).korean,
                 })
 
         return results
@@ -216,14 +209,14 @@ class FortuneChart:
                 results.append({
                     "incoming": incoming_stem.name,
                     "target": pillar[0],
-                    "pillar": PILLAR_NAMES[i],
+                    "pillar": Pillar.by_order(i).korean,
                     "type": "천간합",
                 })
             if incoming_branch.combines.name == pillar[1]:
                 results.append({
                     "incoming": incoming_branch.name,
                     "target": pillar[1],
-                    "pillar": PILLAR_NAMES[i],
+                    "pillar": Pillar.by_order(i).korean,
                     "type": "지지합",
                 })
 

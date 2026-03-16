@@ -1,4 +1,5 @@
-from bazi.model import NatalChart, get_sipsin
+from bazi.domain.sipsin import Sipsin
+from bazi.model import NatalChart
 
 
 def test_analyze_with_pillars():
@@ -63,14 +64,14 @@ def test_get_personality():
 
 def test_get_sipsin():
     """일간 기준 십신 판별"""
-    assert get_sipsin("庚", "己") == "상관"
-    assert get_sipsin("丙", "己") == "정인"
-    assert get_sipsin("己", "己") == "비견"
-    assert get_sipsin("戊", "己") == "겁재"
-    assert get_sipsin("甲", "己") == "정관"
-    assert get_sipsin("乙", "己") == "편관"
-    assert get_sipsin("壬", "己") == "정재"
-    assert get_sipsin("癸", "己") == "편재"
+    assert Sipsin.of("己", "庚") == Sipsin.傷官
+    assert Sipsin.of("己", "丙") == Sipsin.正印
+    assert Sipsin.of("己", "己") == Sipsin.比肩
+    assert Sipsin.of("己", "戊") == Sipsin.劫財
+    assert Sipsin.of("己", "甲") == Sipsin.正官
+    assert Sipsin.of("己", "乙") == Sipsin.偏官
+    assert Sipsin.of("己", "壬") == Sipsin.正財
+    assert Sipsin.of("己", "癸") == Sipsin.偏財
 
 
 def test_analyze_sipsin():
@@ -79,8 +80,8 @@ def test_analyze_sipsin():
 
     assert len(chart.sipsin) == 7
     expected = [
-        ("庚", "상관"), ("午", "정인"), ("丙", "정인"), ("戌", "겁재"),
-        ("巳", "편인"), ("辛", "식신"), ("未", "비견"),
+        ("庚", "傷官"), ("午", "正印"), ("丙", "正印"), ("戌", "劫財"),
+        ("巳", "偏印"), ("辛", "食神"), ("未", "比肩"),
     ]
     assert chart.sipsin == expected
 
@@ -91,7 +92,7 @@ def test_get_sipsin_domains():
     domains = chart.get_sipsin_domains()
 
     assert len(domains) == 7
-    assert domains[0]["sipsin"] == "상관"
+    assert domains[0]["sipsin"] == "傷官"
     assert domains[0]["domain"] == "자유·반항·창의"
 
 

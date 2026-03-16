@@ -32,30 +32,6 @@ class SajuResult:
         return [self.year_pillar, self.month_pillar, self.day_pillar, self.hour_pillar]
 
 
-def get_sipsin(char: str, day_stem: str) -> str:
-    """
-    일간 기준으로 한 글자의 십신을 판별한다.
-    오행 관계(같음/생/극) + 음양 일치 여부로 10가지 십신 중 하나를 반환한다.
-    """
-    me = lookup(day_stem)
-    target = lookup(char)
-
-    same_yinyang = me.is_yang == target.is_yang
-    me_el = me.element
-    target_el = target.element
-
-    if me_el == target_el:
-        return "비견" if same_yinyang else "겁재"
-    elif me_el.generates == target_el:
-        return "식신" if same_yinyang else "상관"
-    elif me_el.overcomes == target_el:
-        return "편재" if same_yinyang else "정재"
-    elif target_el.generates == me_el:
-        return "편인" if same_yinyang else "정인"
-    else:
-        return "편관" if same_yinyang else "정관"
-
-
 class NatalChart:
     """사주 분석 기본 모델"""
 
@@ -141,7 +117,7 @@ class NatalChart:
         chars_without_day_stem = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
 
         return [
-            (char, get_sipsin(char, self.saju.day_stem))
+            (char, Sipsin.of(self.saju.day_stem, char).name)
             for char in chars_without_day_stem
         ]
 

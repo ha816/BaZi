@@ -18,7 +18,7 @@ def test_seun():
                            birth_hour=14, birth_minute=30)
 
     assert fortune.seun_ganji == "丙午"
-    assert fortune.seun == [("丙", "정인"), ("午", "정인")]
+    assert fortune.seun == [("丙", "正印"), ("午", "正印")]
 
 
 def test_daeun_forward():
