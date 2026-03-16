@@ -1,4 +1,4 @@
-"""사주 기본 모델 (팔자, 오행, 십신 등 사주 데이터 구조와 분석)"""
+"""사주 차트 (팔자 기반 분석 - 오행, 강약, 용신, 십신)"""
 
 from dataclasses import dataclass
 
@@ -6,15 +6,6 @@ from sajupy import calculate_saju
 
 from bazi.domain.ganji import Oheng, lookup
 from bazi.domain.sipsin import Sipsin
-
-# 오행별 기본 성격 해석
-INTERPRETATIONS: dict[str, str] = {
-    "木": "성장과 추진력이 강하며 리더십이 있습니다.",
-    "火": "열정적이고 솔직하며 감정 표현이 확실합니다.",
-    "土": "신용을 중시하며 포용력이 있고 듬직합니다.",
-    "金": "결단력이 있고 냉철하며 원칙을 중요시합니다.",
-    "水": "지혜롭고 유연하며 적응력이 뛰어납니다.",
-}
 
 
 @dataclass
@@ -33,7 +24,7 @@ class SajuResult:
 
 
 class NatalChart:
-    """사주 분석 기본 모델"""
+    """사주 분석 차트"""
 
     def __init__(self, saju_pillars: list[str]):
         self.saju = self._analyze(saju_pillars)
@@ -123,7 +114,7 @@ class NatalChart:
 
     def get_personality(self) -> str:
         """일간 오행 기반 기본 성격을 반환한다."""
-        return INTERPRETATIONS[self.saju.my_main_element]
+        return Oheng[self.saju.my_main_element].personality
 
     def get_sipsin_domains(self) -> list[dict]:
         """십신별 영역 해석을 포함한 결과를 반환한다."""

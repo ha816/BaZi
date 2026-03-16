@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from bazi.model import NatalChart
+from bazi.chart import NatalChart
 from bazi.fortune import DaeunPeriod, FortuneChart
 
 

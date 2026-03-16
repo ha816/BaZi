@@ -1,4 +1,4 @@
-from bazi.model import NatalChart
+from bazi.chart import NatalChart
 from bazi.fortune import FortuneChart, year_to_ganji
 
 

@@ -1,4 +1,4 @@
-from bazi.model import NatalChart
+from bazi.chart import NatalChart
 from bazi.fortune import FortuneChart
 from bazi.interpret import full_interpretation
 

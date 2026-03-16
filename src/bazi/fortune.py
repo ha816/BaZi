@@ -5,23 +5,11 @@ from datetime import datetime
 
 from sajupy import SajuCalculator
 
+from bazi.chart import NatalChart
 from bazi.domain.fortune import Jeol, Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin
-from bazi.model import NatalChart
-
-
-def year_to_ganji(year: int) -> str:
-    """연도를 간지로 변환한다. (예: 2026 → '丙午')"""
-    stem = Stem.by_order((year - 4) % 10)
-    branch = Branch.by_order((year - 4) % 12)
-    return stem.name + branch.name
-
-
-def _parse_term_time(term_time: float) -> datetime:
-    """sajupy의 term_time(YYYYMMDDHHMM float)을 datetime으로 변환한다."""
-    s = str(int(float(str(term_time))))
-    return datetime(int(s[0:4]), int(s[4:6]), int(s[6:8]), int(s[8:10]), int(s[10:12]))
+from bazi.domain.util import parse_term_time, year_to_ganji
 
 
 @dataclass
@@ -134,7 +122,7 @@ class FortuneChart:
         term_dates = []
         for _, row in term_data.iterrows():
             try:
-                term_dates.append(_parse_term_time(row["term_time"]))
+                term_dates.append(parse_term_time(row["term_time"]))
             except (ValueError, KeyError):
                 continue
 

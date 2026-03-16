@@ -23,11 +23,15 @@ class Oheng(Enum):
       상극: 순환에서 두 칸 뒤 (+2)  木→土→水→火→金→木
     """
 
-    木 = "나무"
-    火 = "불"
-    土 = "흙"
-    金 = "쇠"
-    水 = "물"
+    木 = ("나무", "성장과 추진력이 강하며 리더십이 있습니다.")
+    火 = ("불", "열정적이고 솔직하며 감정 표현이 확실합니다.")
+    土 = ("흙", "신용을 중시하며 포용력이 있고 듬직합니다.")
+    金 = ("쇠", "결단력이 있고 냉철하며 원칙을 중요시합니다.")
+    水 = ("물", "지혜롭고 유연하며 적응력이 뛰어납니다.")
+
+    def __init__(self, meaning: str, personality: str):
+        self.meaning = meaning
+        self.personality = personality
 
     @property
     def generates(self) -> "Oheng":
