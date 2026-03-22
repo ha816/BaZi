@@ -1,8 +1,6 @@
-"""사주 차트 (팔자 기반 분석 - 오행, 강약, 용신, 십신)"""
+"""선천 분석 (팔자 기반 분석 - 오행, 강약, 용신, 십신)"""
 
 from dataclasses import dataclass
-
-from sajupy import calculate_saju
 
 from bazi.domain.ganji import Oheng, lookup
 from bazi.domain.sipsin import Sipsin
@@ -23,7 +21,7 @@ class SajuResult:
         return [self.year_pillar, self.month_pillar, self.day_pillar, self.hour_pillar]
 
 
-class NatalChart:
+class NatalAnalyzer:
     """사주 분석 차트"""
 
     def __init__(self, saju_pillars: list[str]):
@@ -31,29 +29,6 @@ class NatalChart:
         self.strength = self._judge_strength()
         self.yongshin = self._find_yongshin()
         self.sipsin = self._analyze_sipsin()
-
-    @classmethod
-    def from_birthday(
-        cls,
-        year: int,
-        month: int,
-        day: int,
-        hour: int,
-        minute: int = 0,
-        city: str = "Seoul",
-    ) -> "NatalChart":
-        """생년월일시로 사주를 계산하여 NatalChart를 생성한다."""
-        result = calculate_saju(
-            year=year, month=month, day=day,
-            hour=hour, minute=minute, city=city,
-            use_solar_time=True,
-        )
-        return cls([
-            result["year_pillar"],
-            result["month_pillar"],
-            result["day_pillar"],
-            result["hour_pillar"],
-        ])
 
     @staticmethod
     def _analyze(saju_pillars: list[str]) -> SajuResult:

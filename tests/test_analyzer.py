@@ -1,10 +1,10 @@
 from bazi.domain.sipsin import Sipsin
-from bazi.application.chart import NatalChart
+from bazi.application.natal import NatalAnalyzer
 
 
 def test_analyze_with_pillars():
     """간지를 직접 넣어서 오행 분석하는 기본 케이스"""
-    chart = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    chart = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
 
     assert chart.saju.my_main_element == "土"
     assert chart.saju.day_stem == "己"
@@ -15,7 +15,7 @@ def test_analyze_with_pillars():
 
 def test_analyze_water_dominant():
     """수(水) 기운이 강한 사주 예시"""
-    chart = NatalChart(["壬子", "壬子", "壬子", "壬子"])
+    chart = NatalAnalyzer(["壬子", "壬子", "壬子", "壬子"])
 
     assert chart.saju.my_main_element == "水"
     assert chart.saju.element_stats == {"木": 0, "火": 0, "土": 0, "金": 0, "水": 8}
@@ -23,7 +23,9 @@ def test_analyze_water_dominant():
 
 def test_from_birthday():
     """생년월일시로 사주를 자동 계산하는 케이스"""
-    chart = NatalChart.from_birthday(1990, 10, 10, 14, 30, city="Seoul")
+    from bazi.domain.util import calculate_pillars
+    pillars = calculate_pillars(1990, 10, 10, 14, 30, city="Seoul")
+    chart = NatalAnalyzer(pillars)
 
     assert len(chart.saju.year_pillar) == 2
     assert len(chart.saju.month_pillar) == 2
@@ -34,31 +36,31 @@ def test_from_birthday():
 
 def test_judge_strength_strong():
     """신강 판단"""
-    chart = NatalChart(["己巳", "丙戌", "己巳", "己未"])
+    chart = NatalAnalyzer(["己巳", "丙戌", "己巳", "己未"])
     assert chart.strength == 8
 
 
 def test_judge_strength_weak():
     """신약 판단"""
-    chart = NatalChart(["庚申", "庚申", "甲戌", "庚申"])
+    chart = NatalAnalyzer(["庚申", "庚申", "甲戌", "庚申"])
     assert chart.strength == -6
 
 
 def test_find_yongshin_for_strong():
     """신강일 때 용신"""
-    chart = NatalChart(["己巳", "丙戌", "己巳", "己未"])
+    chart = NatalAnalyzer(["己巳", "丙戌", "己巳", "己未"])
     assert chart.yongshin == "金"
 
 
 def test_find_yongshin_for_weak():
     """신약일 때 용신"""
-    chart = NatalChart(["庚申", "庚申", "甲戌", "庚申"])
+    chart = NatalAnalyzer(["庚申", "庚申", "甲戌", "庚申"])
     assert chart.yongshin == "水"
 
 
 def test_get_personality():
     """일간 오행 기반 성격 조회"""
-    chart = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    chart = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
     assert chart.get_personality() == "신용을 중시하며 포용력이 있고 듬직합니다."
 
 
@@ -76,7 +78,7 @@ def test_get_sipsin():
 
 def test_analyze_sipsin():
     """팔자 전체 십신 분석 (일간 제외 7글자)"""
-    chart = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    chart = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
 
     assert len(chart.sipsin) == 7
     expected = [
@@ -88,7 +90,7 @@ def test_analyze_sipsin():
 
 def test_get_sipsin_domains():
     """십신 영역 해석"""
-    chart = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    chart = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
     domains = chart.get_sipsin_domains()
 
     assert len(domains) == 7
@@ -98,5 +100,5 @@ def test_get_sipsin_domains():
 
 def test_pillars_property():
     """saju.pillars 프로퍼티"""
-    chart = NatalChart(["庚午", "丙戌", "己巳", "辛未"])
+    chart = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
     assert chart.saju.pillars == ["庚午", "丙戌", "己巳", "辛未"]
