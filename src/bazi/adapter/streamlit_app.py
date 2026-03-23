@@ -5,13 +5,14 @@ import datetime
 import streamlit as st
 
 from bazi.application.natal import NatalAnalyzer
-from bazi.application.fortune import FortuneChart
+from bazi.application.fortune import FortuneAnalyzer
 from bazi.application.interpret import full_interpretation
-from bazi.domain.util import calculate_pillars
+from bazi.domain.fortune import Saju
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
 analyze_natal = NatalAnalyzer()
+analyze_fortune = FortuneAnalyzer()
 
 
 def main():
@@ -52,13 +53,9 @@ def main():
     age = analysis_year - year + 1  # 한국 나이
 
     try:
-        saju = calculate_pillars(year, month, day, hour, minute)
+        saju = Saju(datetime.datetime(year, month, day, hour, minute))
         natal = analyze_natal(saju)
-        fortune = FortuneChart(
-            natal=natal, year=analysis_year, is_male=is_male,
-            birth_year=year, birth_month=month, birth_day=day,
-            birth_hour=hour, birth_minute=minute,
-        )
+        fortune = analyze_fortune(saju, year=analysis_year, is_male=is_male)
         result = full_interpretation(natal, fortune, age)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")

@@ -1,21 +1,21 @@
+from datetime import datetime
+
 from bazi.domain.fortune import Saju
 from bazi.application.natal import NatalAnalyzer
-from bazi.application.fortune import FortuneChart
+from bazi.application.fortune import FortuneAnalyzer
 from bazi.application.interpret import full_interpretation
 
-analyze = NatalAnalyzer()
+analyze_natal = NatalAnalyzer()
+analyze_fortune = FortuneAnalyzer()
 
 
 def test_full_interpretation():
     """종합 해석 통합 테스트"""
-    saju = Saju(year_pillar="庚午", month_pillar="丙戌",
-                day_pillar="己巳", hour_pillar="辛未")
-    natal = analyze(saju)
-    fortune = FortuneChart(natal, year=2026, is_male=True,
-                           birth_year=1990, birth_month=10, birth_day=10,
-                           birth_hour=14, birth_minute=30)
+    saju = Saju(datetime(1990, 10, 10, 14, 30))
+    natal = analyze_natal(saju)
+    fortune = analyze_fortune(saju, year=2026, is_male=True)
 
-    interp = full_interpretation(natal, fortune, age=35)
+    interp = full_interpretation(natal, fortune, age=37)
 
     # 용신 확인
     assert interp.yongshin == "金"

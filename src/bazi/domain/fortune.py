@@ -6,21 +6,35 @@
   - 기(氣) 12개: 각 월의 중간점. (현재 미사용)
 """
 
-from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
+from sajupy import calculate_saju as _sajupy_calculate
 
-@dataclass(frozen=True)
+
 class Saju:
-    """사주(四柱) - 네 기둥으로 구성된 사람의 명식.
+    """사주(四柱) - 생년월일시로부터 계산된 네 기둥.
 
     각 기둥은 천간(天干)+지지(地支) 두 글자로 이루어진 간지(干支) 문자열이다.
     """
 
-    year_pillar: str   # 년주(年柱) - 태어난 해
-    month_pillar: str  # 월주(月柱) - 태어난 달
-    day_pillar: str    # 일주(日柱) - 태어난 날
-    hour_pillar: str   # 시주(時柱) - 태어난 시
+    def __init__(
+        self,
+        birth_dt: datetime,
+        city: str = "Seoul",
+        use_solar_time: bool = True,
+    ):
+        self.birth_dt = birth_dt
+
+        result = _sajupy_calculate(
+            year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
+            hour=birth_dt.hour, minute=birth_dt.minute, city=city,
+            use_solar_time=use_solar_time,
+        )
+        self.year_pillar: str = result["year_pillar"]
+        self.month_pillar: str = result["month_pillar"]
+        self.day_pillar: str = result["day_pillar"]
+        self.hour_pillar: str = result["hour_pillar"]
 
     @property
     def pillars(self) -> list[str]:

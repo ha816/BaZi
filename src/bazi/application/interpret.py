@@ -1,9 +1,12 @@
-"""종합 해석: NatalInfo + FortuneChart를 조합하여 규칙 기반 해석을 생성한다."""
+"""종합 해석: NatalInfo + FortuneInfo를 조합하여 규칙 기반 해석을 생성한다."""
 
 from dataclasses import dataclass, field
 
 from bazi.application.natal import NatalInfo
-from bazi.application.fortune import DaeunPeriod, FortuneChart
+from bazi.application.fortune import DaeunPeriod, FortuneInfo
+from bazi.domain.fortune import Pillar
+from bazi.domain.ganji import Branch, Stem, lookup
+from bazi.domain.sipsin import Sipsin
 
 
 @dataclass
@@ -33,28 +36,26 @@ class Interpretation:
 
 def full_interpretation(
     natal: NatalInfo,
-    fortune: FortuneChart,
+    fortune: FortuneInfo,
     age: int,
 ) -> Interpretation:
-    """
-    선천 + 후천 데이터를 종합하여 규칙 기반 해석을 생성한다.
-    """
+    """선천 + 후천 데이터를 종합하여 규칙 기반 해석을 생성한다."""
     yongshin = natal.yongshin
 
     # 1. 용신 충족
-    yongshin_in_seun = fortune.check_yongshin_in_seun()
-    current_daeun = fortune.get_current_daeun(age)
-    yongshin_in_daeun = fortune.check_yongshin_in_daeun(current_daeun) if current_daeun else False
+    yongshin_in_seun = _check_yongshin(yongshin, fortune.seun_ganji)
+    current_daeun = _get_current_daeun(fortune.daeun, age)
+    yongshin_in_daeun = _check_yongshin(yongshin, current_daeun.ganji) if current_daeun else False
 
     # 2. 십신 해석
-    seun_sipsin = fortune.get_seun_sipsin_domains()
-    daeun_sipsin = fortune.get_daeun_sipsin_domains(current_daeun) if current_daeun else []
+    seun_sipsin = _build_sipsin_domains(fortune.seun)
+    daeun_sipsin = _calc_sipsin_domains(natal.saju.day_stem, current_daeun.ganji) if current_daeun else []
 
     # 3. 충·합
-    seun_clashes = fortune.find_clashes(fortune.seun_ganji)
-    seun_combines = fortune.find_combines(fortune.seun_ganji)
-    daeun_clashes = fortune.find_clashes(current_daeun.ganji) if current_daeun else []
-    daeun_combines = fortune.find_combines(current_daeun.ganji) if current_daeun else []
+    seun_clashes = _find_clashes(natal, fortune.seun_ganji)
+    seun_combines = _find_combines(natal, fortune.seun_ganji)
+    daeun_clashes = _find_clashes(natal, current_daeun.ganji) if current_daeun else []
+    daeun_combines = _find_combines(natal, current_daeun.ganji) if current_daeun else []
 
     # 종합 문장 생성
     summary = _build_summary(
@@ -79,6 +80,83 @@ def full_interpretation(
         daeun_combines=daeun_combines,
         summary=summary,
     )
+
+
+# ── 해석 유틸 ──
+
+
+def _get_current_daeun(daeun: list[DaeunPeriod], age: int) -> DaeunPeriod | None:
+    """현재 나이에 해당하는 대운을 찾는다."""
+    for d in daeun:
+        if d.start_age <= age <= d.end_age:
+            return d
+    return None
+
+
+def _check_yongshin(yongshin: str, ganji: str) -> bool:
+    """간지에 용신 오행이 포함되어 있는지 확인한다."""
+    return any(lookup(ch).element.name == yongshin for ch in ganji)
+
+
+def _build_sipsin_domains(seun: list[tuple[str, str]]) -> list[dict]:
+    """십신 튜플 리스트를 영역 해석 dict로 변환한다."""
+    return [
+        {"char": char, "sipsin": sipsin, "domain": Sipsin[sipsin].domain}
+        for char, sipsin in seun
+    ]
+
+
+def _calc_sipsin_domains(day_stem: str, ganji: str) -> list[dict]:
+    """간지의 십신 영역 해석을 계산한다."""
+    return [
+        {
+            "char": ch,
+            "sipsin": (s := Sipsin.of(day_stem, ch)).name,
+            "domain": s.domain,
+        }
+        for ch in ganji
+    ]
+
+
+def _find_clashes(natal: NatalInfo, ganji: str) -> list[dict]:
+    """간지와 사주 네 기둥 사이의 지지충(衝)을 찾는다."""
+    incoming = Branch[ganji[1]]
+    results = []
+
+    for i, pillar in enumerate(natal.saju.pillars):
+        if incoming.clashes.name == pillar[1]:
+            results.append({
+                "incoming": incoming.name,
+                "target": pillar[1],
+                "pillar": Pillar.by_order(i).korean,
+            })
+
+    return results
+
+
+def _find_combines(natal: NatalInfo, ganji: str) -> list[dict]:
+    """간지와 사주 네 기둥 사이의 합(天干合·地支六合)을 찾는다."""
+    incoming_stem = Stem[ganji[0]]
+    incoming_branch = Branch[ganji[1]]
+    results = []
+
+    for i, pillar in enumerate(natal.saju.pillars):
+        if incoming_stem.combines.name == pillar[0]:
+            results.append({
+                "incoming": incoming_stem.name,
+                "target": pillar[0],
+                "pillar": Pillar.by_order(i).korean,
+                "type": "천간합",
+            })
+        if incoming_branch.combines.name == pillar[1]:
+            results.append({
+                "incoming": incoming_branch.name,
+                "target": pillar[1],
+                "pillar": Pillar.by_order(i).korean,
+                "type": "지지합",
+            })
+
+    return results
 
 
 def _build_summary(
