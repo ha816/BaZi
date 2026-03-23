@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sajupy import calculate_saju
 
+from bazi.domain.fortune import Saju
 from bazi.domain.ganji import Branch, Stem
 
 
@@ -21,19 +22,19 @@ def calculate_pillars(
     hour: int,
     minute: int = 0,
     city: str = "Seoul",
-) -> list[str]:
-    """생년월일시로 사주 네 기둥을 계산하여 반환한다."""
+) -> Saju:
+    """생년월일시로 사주(四柱)를 계산하여 반환한다."""
     result = calculate_saju(
         year=year, month=month, day=day,
         hour=hour, minute=minute, city=city,
         use_solar_time=True,
     )
-    return [
-        result["year_pillar"],
-        result["month_pillar"],
-        result["day_pillar"],
-        result["hour_pillar"],
-    ]
+    return Saju(
+        year_pillar=result["year_pillar"],
+        month_pillar=result["month_pillar"],
+        day_pillar=result["day_pillar"],
+        hour_pillar=result["hour_pillar"],
+    )
 
 
 def parse_term_time(term_time: float) -> datetime:

@@ -1,99 +1,78 @@
 """선천 분석 (팔자 기반 분석 - 오행, 강약, 용신, 십신)"""
 
+from collections import Counter
 from dataclasses import dataclass
 
+from bazi.domain.fortune import Saju
 from bazi.domain.ganji import Oheng, lookup
 from bazi.domain.sipsin import Sipsin
 
 
 @dataclass
-class SajuResult:
-    year_pillar: str
-    month_pillar: str
-    day_pillar: str
-    hour_pillar: str
-    day_stem: str
+class NatalInfo:
+    saju: Saju
     my_main_element: str
     element_stats: dict[str, int]
-
-    @property
-    def pillars(self) -> list[str]:
-        return [self.year_pillar, self.month_pillar, self.day_pillar, self.hour_pillar]
+    strength: int
+    yongshin: str
+    sipsin: list[tuple[str, str]]
+    personality: str
+    sipsin_domains: list[dict]
 
 
 class NatalAnalyzer:
-    """사주 분석 차트"""
+    """선천 분석기 — 사주(四柱)를 받아 분석 결과(NatalInfo)를 반환한다."""
 
-    def __init__(self, saju_pillars: list[str]):
-        self.saju = self._analyze(saju_pillars)
-        self.strength = self._judge_strength()
-        self.yongshin = self._find_yongshin()
-        self.sipsin = self._analyze_sipsin()
+    def __call__(self, saju: Saju) -> NatalInfo:
+        stats = self._count_oheng(saju)
+        my_element = lookup(saju.day_stem).element.name
+        me = Oheng[my_element]
+        strength = self._judge_strength(stats, me)
+        yongshin = self._find_yongshin(me, strength)
+        sipsin = self._analyze_sipsin(saju)
+        sipsin_domains = self._build_sipsin_domains(sipsin)
 
-    @staticmethod
-    def _analyze(saju_pillars: list[str]) -> SajuResult:
-        """사주 네 기둥을 받아 기본 분석 결과를 반환한다."""
-        stats = {o.name: 0 for o in Oheng}
-        for char in "".join(saju_pillars):
-            stats[lookup(char).element.name] += 1
-
-        day_stem = saju_pillars[2][0]
-        my_element = lookup(day_stem).element.name
-
-        return SajuResult(
-            year_pillar=saju_pillars[0],
-            month_pillar=saju_pillars[1],
-            day_pillar=saju_pillars[2],
-            hour_pillar=saju_pillars[3],
-            day_stem=day_stem,
+        return NatalInfo(
+            saju=saju,
             my_main_element=my_element,
             element_stats=stats,
+            strength=strength,
+            yongshin=yongshin,
+            sipsin=sipsin,
+            personality=me.personality,
+            sipsin_domains=sipsin_domains,
         )
 
-    def _judge_strength(self) -> int:
-        """
-        일간 강약을 판단한다.
-        양수=신강, 0=중화, 음수=신약 (범위: -8 ~ +8)
-        """
-        me = Oheng[self.saju.my_main_element]
-        generating_me = me.generated_by
+    @staticmethod
+    def _count_oheng(saju: Saju) -> dict[str, int]:
+        """팔자 8글자의 오행 분포를 집계한다."""
+        counts = Counter(lookup(char).element.name for char in saju.palja)
+        return {o.name: counts.get(o.name, 0) for o in Oheng}
 
-        stats = self.saju.element_stats
-        helping = stats[me.name] + stats[generating_me.name]
+    @staticmethod
+    def _judge_strength(stats: dict[str, int], me: Oheng) -> int:
+        """일간 강약을 판단한다. 양수=신강, 0=중화, 음수=신약."""
+        helping = stats[me.name] + stats[me.generated_by.name]
         draining = sum(stats.values()) - helping
-
         return helping - draining
 
-    def _find_yongshin(self) -> str:
-        """
-        용신(用神)을 선정한다.
-        strength > 0(신강)이면 기운을 빼줄 오행, <= 0(신약/중화)이면 도와줄 오행.
-        """
-        me = Oheng[self.saju.my_main_element]
+    @staticmethod
+    def _find_yongshin(me: Oheng, strength: int) -> str:
+        """용신(用神)을 선정한다."""
+        return me.generates.name if strength > 0 else me.generated_by.name
 
-        if self.strength > 0:
-            return me.generates.name
-        else:
-            return me.generated_by.name
-
-    def _analyze_sipsin(self) -> list[tuple[str, str]]:
-        """팔자 8글자에서 일간을 제외한 7글자의 십신을 분석한다."""
-        all_chars = list("".join(self.saju.pillars))
+    @staticmethod
+    def _analyze_sipsin(saju: Saju) -> list[tuple[str, str]]:
+        """팔자에서 일간을 제외한 7글자의 십신을 분석한다."""
+        all_chars = list(saju.palja)
         day_stem_index = 4
-        chars_without_day_stem = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
+        chars = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
+        return [(char, Sipsin.of(saju.day_stem, char).name) for char in chars]
 
+    @staticmethod
+    def _build_sipsin_domains(sipsin: list[tuple[str, str]]) -> list[dict]:
+        """십신별 영역 해석을 생성한다."""
         return [
-            (char, Sipsin.of(self.saju.day_stem, char).name)
-            for char in chars_without_day_stem
-        ]
-
-    def get_personality(self) -> str:
-        """일간 오행 기반 기본 성격을 반환한다."""
-        return Oheng[self.saju.my_main_element].personality
-
-    def get_sipsin_domains(self) -> list[dict]:
-        """십신별 영역 해석을 포함한 결과를 반환한다."""
-        return [
-            {"char": char, "sipsin": sipsin, "domain": Sipsin[sipsin].domain}
-            for char, sipsin in self.sipsin
+            {"char": char, "sipsin": s, "domain": Sipsin[s].domain}
+            for char, s in sipsin
         ]

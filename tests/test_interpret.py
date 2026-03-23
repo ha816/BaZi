@@ -1,11 +1,16 @@
+from bazi.domain.fortune import Saju
 from bazi.application.natal import NatalAnalyzer
 from bazi.application.fortune import FortuneChart
 from bazi.application.interpret import full_interpretation
 
+analyze = NatalAnalyzer()
+
 
 def test_full_interpretation():
     """종합 해석 통합 테스트"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    saju = Saju(year_pillar="庚午", month_pillar="丙戌",
+                day_pillar="己巳", hour_pillar="辛未")
+    natal = analyze(saju)
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)

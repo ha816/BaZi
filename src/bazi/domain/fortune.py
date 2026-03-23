@@ -1,4 +1,4 @@
-"""운세 도메인 상수 - 사주 기둥(四柱), 절기(節氣).
+"""운세 도메인 상수 - 사주(四柱), 기둥(柱), 절기(節氣).
 
 사주(四柱): 년주·월주·일주·시주, 사람의 생년월일시를 간지로 나타낸 4개의 기둥.
 절기(節氣): 태양의 위치에 따라 1년을 24등분한 것.
@@ -6,7 +6,35 @@
   - 기(氣) 12개: 각 월의 중간점. (현재 미사용)
 """
 
+from dataclasses import dataclass
 from enum import Enum
+
+
+@dataclass(frozen=True)
+class Saju:
+    """사주(四柱) - 네 기둥으로 구성된 사람의 명식.
+
+    각 기둥은 천간(天干)+지지(地支) 두 글자로 이루어진 간지(干支) 문자열이다.
+    """
+
+    year_pillar: str   # 년주(年柱) - 태어난 해
+    month_pillar: str  # 월주(月柱) - 태어난 달
+    day_pillar: str    # 일주(日柱) - 태어난 날
+    hour_pillar: str   # 시주(時柱) - 태어난 시
+
+    @property
+    def pillars(self) -> list[str]:
+        return [self.year_pillar, self.month_pillar, self.day_pillar, self.hour_pillar]
+
+    @property
+    def day_stem(self) -> str:
+        """일간(日干) - 일주의 천간."""
+        return self.day_pillar[0]
+
+    @property
+    def palja(self) -> str:
+        """팔자(八字) - 8글자 전체."""
+        return "".join(self.pillars)
 
 
 class Pillar(Enum):

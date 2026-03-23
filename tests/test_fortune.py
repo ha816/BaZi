@@ -1,5 +1,13 @@
+from bazi.domain.fortune import Saju
 from bazi.application.natal import NatalAnalyzer
 from bazi.application.fortune import FortuneChart, year_to_ganji
+
+analyze = NatalAnalyzer()
+
+
+def _saju(*pillars):
+    return Saju(year_pillar=pillars[0], month_pillar=pillars[1],
+                day_pillar=pillars[2], hour_pillar=pillars[3])
 
 
 def test_year_to_ganji():
@@ -12,7 +20,7 @@ def test_year_to_ganji():
 
 def test_seun():
     """세운 분석: 해당 연도 간지의 십신"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -23,7 +31,7 @@ def test_seun():
 
 def test_daeun_forward():
     """대운 순행: 양남"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -35,7 +43,7 @@ def test_daeun_forward():
 
 def test_daeun_backward():
     """대운 역행: 양녀"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=False,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -45,7 +53,7 @@ def test_daeun_backward():
 
 def test_daeun_start_age_forward():
     """순행 대운 시작 나이"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -55,7 +63,7 @@ def test_daeun_start_age_forward():
 
 def test_daeun_start_age_backward():
     """역행 대운 시작 나이"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=False,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -65,7 +73,7 @@ def test_daeun_start_age_backward():
 
 def test_get_current_daeun():
     """현재 나이에 해당하는 대운 찾기"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -77,7 +85,7 @@ def test_get_current_daeun():
 
 def test_check_yongshin_in_seun():
     """세운에서 용신 확인"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     # 용신=금, 2026=丙午(화,화) → False
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
@@ -88,7 +96,7 @@ def test_check_yongshin_in_seun():
 
 def test_find_clashes():
     """지지충 찾기"""
-    natal = NatalAnalyzer(["甲子", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("甲子", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)
@@ -103,7 +111,7 @@ def test_find_clashes():
 
 def test_find_combines():
     """천간합·지지합 찾기"""
-    natal = NatalAnalyzer(["庚午", "丙戌", "己巳", "辛未"])
+    natal = analyze(_saju("庚午", "丙戌", "己巳", "辛未"))
     fortune = FortuneChart(natal, year=2026, is_male=True,
                            birth_year=1990, birth_month=10, birth_day=10,
                            birth_hour=14, birth_minute=30)

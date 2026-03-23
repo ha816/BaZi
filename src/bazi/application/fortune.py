@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sajupy import SajuCalculator
 
-from bazi.application.natal import NatalAnalyzer
+from bazi.application.natal import NatalInfo
 from bazi.domain.fortune import Jeol, Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin
@@ -25,7 +25,7 @@ class FortuneChart:
 
     def __init__(
         self,
-        natal: NatalAnalyzer,
+        natal: NatalInfo,
         year: int,
         is_male: bool,
         birth_year: int,

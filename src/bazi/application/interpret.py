@@ -1,8 +1,8 @@
-"""종합 해석: NatalAnalyzer + FortuneChart를 조합하여 규칙 기반 해석을 생성한다."""
+"""종합 해석: NatalInfo + FortuneChart를 조합하여 규칙 기반 해석을 생성한다."""
 
 from dataclasses import dataclass, field
 
-from bazi.application.natal import NatalAnalyzer
+from bazi.application.natal import NatalInfo
 from bazi.application.fortune import DaeunPeriod, FortuneChart
 
 
@@ -32,7 +32,7 @@ class Interpretation:
 
 
 def full_interpretation(
-    natal: NatalAnalyzer,
+    natal: NatalInfo,
     fortune: FortuneChart,
     age: int,
 ) -> Interpretation:

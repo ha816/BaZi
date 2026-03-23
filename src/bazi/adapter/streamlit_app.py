@@ -11,6 +11,8 @@ from bazi.domain.util import calculate_pillars
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
+analyze_natal = NatalAnalyzer()
+
 
 def main():
     st.set_page_config(page_title="사주팔자 분석", page_icon="🔮", layout="centered")
@@ -50,8 +52,8 @@ def main():
     age = analysis_year - year + 1  # 한국 나이
 
     try:
-        pillars = calculate_pillars(year, month, day, hour, minute)
-        natal = NatalAnalyzer(pillars)
+        saju = calculate_pillars(year, month, day, hour, minute)
+        natal = analyze_natal(saju)
         fortune = FortuneChart(
             natal=natal, year=analysis_year, is_male=is_male,
             birth_year=year, birth_month=month, birth_day=day,
@@ -74,7 +76,7 @@ def main():
     # ── 오행 분포 ──
     st.subheader("오행 분포")
     oheng_cols = st.columns(5)
-    for col, (element, count) in zip(oheng_cols, natal.saju.element_stats.items()):
+    for col, (element, count) in zip(oheng_cols, natal.element_stats.items()):
         with col:
             emoji = OHENG_EMOJI.get(element, "")
             st.metric(label=f"{emoji} {element}", value=f"{count}개")
@@ -82,7 +84,7 @@ def main():
     # ── 강약·용신 ──
     col_a, col_b, col_c = st.columns(3)
     with col_a:
-        me = natal.saju.my_main_element
+        me = natal.my_main_element
         st.metric("일간 오행", f"{OHENG_EMOJI.get(me, '')} {me}")
     with col_b:
         if natal.strength > 0:
@@ -98,12 +100,11 @@ def main():
 
     # ── 성격 ──
     st.subheader("기본 성격")
-    st.info(natal.get_personality())
+    st.info(natal.personality)
 
     # ── 십신 분석 ──
     st.subheader("십신 분석")
-    sipsin_data = natal.get_sipsin_domains()
-    for item in sipsin_data:
+    for item in natal.sipsin_domains:
         st.write(f"**{item['char']}** → {item['sipsin']} : {item['domain']}")
 
     # ── 세운 ──
