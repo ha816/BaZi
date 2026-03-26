@@ -4,8 +4,7 @@ import datetime
 
 import streamlit as st
 
-from bazi.application.natal import NatalAnalyzer
-from bazi.application.postnatal import PostnatalAnalyzer
+from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import full_interpretation
 from bazi.domain.fortune import Saju
 

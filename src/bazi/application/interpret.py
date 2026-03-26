@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass, field
 
-from bazi.application.natal import NatalInfo
-from bazi.application.postnatal import DaeunPeriod, PostnatalInfo
+from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.fortune import Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin

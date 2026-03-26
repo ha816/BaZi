@@ -1,8 +1,8 @@
 from datetime import datetime
 
 from bazi.domain.fortune import Saju
-from bazi.application.natal import NatalAnalyzer
-from bazi.application.postnatal import PostnatalAnalyzer, year_to_ganji
+from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
+from bazi.domain.util import year_to_ganji
 
 analyze_natal = NatalAnalyzer()
 analyze_fortune = PostnatalAnalyzer()
