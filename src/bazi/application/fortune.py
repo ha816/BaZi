@@ -39,7 +39,7 @@ class FortuneAnalyzer:
     ) -> FortuneInfo:
         seun_ganji = year_to_ganji(year)
         seun = self._calc_seun(saju, seun_ganji)
-        daeun = self._calc_daeun(saju, is_male, saju.birth_dt)
+        daeun = self._calc_daeun(saju, is_male)
 
         return FortuneInfo(
             year=year,
@@ -58,15 +58,11 @@ class FortuneAnalyzer:
         ]
 
     @staticmethod
-    def _calc_daeun(
-        saju: Saju,
-        is_male: bool,
-        birth_dt: datetime,
-    ) -> list[DaeunPeriod]:
+    def _calc_daeun(saju: Saju, is_male: bool) -> list[DaeunPeriod]:
         """대운 목록을 생성한다."""
-        year_stem = saju.year_pillar[0]
-        sequence = FortuneAnalyzer._get_daeun_sequence(saju, year_stem, is_male)
-        start_age = FortuneAnalyzer._calc_start_age(birth_dt, year_stem, is_male)
+        forward = Stem[saju.year_pillar[0]].is_yang == is_male
+        sequence = FortuneAnalyzer._get_daeun_sequence(saju, forward)
+        start_age = FortuneAnalyzer._calc_start_age(saju.birth_dt, forward)
 
         return [
             DaeunPeriod(
@@ -78,10 +74,8 @@ class FortuneAnalyzer:
         ]
 
     @staticmethod
-    def _get_daeun_sequence(saju: Saju, year_stem: str, is_male: bool, count: int = 8) -> list[str]:
+    def _get_daeun_sequence(saju: Saju, forward: bool, count: int = 8) -> list[str]:
         """대운 순서를 생성한다. 양남/음녀 → 순행, 음남/양녀 → 역행."""
-        forward = Stem[year_stem].is_yang == is_male
-
         month_pillar = saju.month_pillar
         stem_idx = Stem[month_pillar[0]].order
         branch_idx = Branch[month_pillar[1]].order
@@ -94,14 +88,8 @@ class FortuneAnalyzer:
         ]
 
     @staticmethod
-    def _calc_start_age(
-        birth_dt: datetime,
-        year_stem: str,
-        is_male: bool,
-    ) -> int:
+    def _calc_start_age(birth_dt: datetime, forward: bool) -> int:
         """대운 시작 나이를 계산한다. 생일에서 가장 가까운 절(節)까지의 일수 ÷ 3."""
-        forward = Stem[year_stem].is_yang == is_male
-
         calc = SajuCalculator()
         birth_year = birth_dt.year
         term_data = calc.data[
