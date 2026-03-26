@@ -5,16 +5,16 @@ from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import full_interpretation
 
 analyze_natal = NatalAnalyzer()
-analyze_fortune = PostnatalAnalyzer()
+analyze_postnatal = PostnatalAnalyzer()
 
 
 def test_full_interpretation():
     """종합 해석 통합 테스트"""
     saju = Saju(datetime(1990, 10, 10, 14, 30))
     natal = analyze_natal(saju)
-    fortune = analyze_fortune(saju, year=2026, is_male=True)
+    postnatal = analyze_postnatal(saju, year=2026, is_male=True)
 
-    interp = full_interpretation(natal, fortune, age=37)
+    interp = full_interpretation(natal, postnatal, age=37)
 
     # 용신 확인
     assert interp.yongshin == "金"

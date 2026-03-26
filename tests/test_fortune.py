@@ -5,7 +5,7 @@ from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.domain.util import year_to_ganji
 
 analyze_natal = NatalAnalyzer()
-analyze_fortune = PostnatalAnalyzer()
+analyze_postnatal = PostnatalAnalyzer()
 
 SAJU = Saju(datetime(1990, 10, 10, 14, 30))
 NATAL = analyze_natal(SAJU)
@@ -21,58 +21,58 @@ def test_year_to_ganji():
 
 def test_seun():
     """세운 분석: 해당 연도 간지의 십신"""
-    fortune = analyze_fortune(SAJU, year=2026, is_male=True)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=True)
 
-    assert fortune.seun_ganji == "丙午"
-    assert fortune.seun == [("丙", "偏印"), ("午", "偏印")]
+    assert postnatal.seun_ganji == "丙午"
+    assert postnatal.seun == [("丙", "偏印"), ("午", "偏印")]
 
 
 def test_daeun_forward():
     """대운 순행: 양남"""
-    fortune = analyze_fortune(SAJU, year=2026, is_male=True)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=True)
 
-    assert fortune.daeun[0].ganji == "丁亥"
-    assert fortune.daeun[0].start_age == 9
-    assert fortune.daeun[0].end_age == 18
+    assert postnatal.daeun[0].ganji == "丁亥"
+    assert postnatal.daeun[0].start_age == 9
+    assert postnatal.daeun[0].end_age == 18
 
 
 def test_daeun_backward():
     """대운 역행: 양녀"""
-    fortune = analyze_fortune(SAJU, year=2026, is_male=False)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=False)
 
-    assert fortune.daeun[0].ganji == "乙酉"
+    assert postnatal.daeun[0].ganji == "乙酉"
 
 
 def test_daeun_start_age_forward():
     """순행 대운 시작 나이"""
-    fortune = analyze_fortune(SAJU, year=2026, is_male=True)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=True)
 
-    assert fortune.daeun[0].start_age == 9
+    assert postnatal.daeun[0].start_age == 9
 
 
 def test_daeun_start_age_backward():
     """역행 대운 시작 나이"""
-    fortune = analyze_fortune(SAJU, year=2026, is_male=False)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=False)
 
-    assert fortune.daeun[0].start_age == 1
+    assert postnatal.daeun[0].start_age == 1
 
 
 def test_get_current_daeun():
     """현재 나이에 해당하는 대운 찾기"""
     from bazi.application.interpret import _get_current_daeun
-    fortune = analyze_fortune(SAJU, year=2026, is_male=True)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=True)
 
-    assert _get_current_daeun(fortune.daeun, 15).ganji == "丁亥"
-    assert _get_current_daeun(fortune.daeun, 25).ganji == "戊子"
-    assert _get_current_daeun(fortune.daeun, 37).ganji == "己丑"
+    assert _get_current_daeun(postnatal.daeun, 15).ganji == "丁亥"
+    assert _get_current_daeun(postnatal.daeun, 25).ganji == "戊子"
+    assert _get_current_daeun(postnatal.daeun, 37).ganji == "己丑"
 
 
 def test_check_yongshin_in_seun():
     """세운에서 용신 확인"""
     from bazi.application.interpret import _check_yongshin
-    fortune = analyze_fortune(SAJU, year=2026, is_male=True)
+    postnatal = analyze_postnatal(SAJU, year=2026, is_male=True)
     # 용신=金, 2026=丙午(화,화) → False
-    assert _check_yongshin(NATAL.yongshin, fortune.seun_ganji) is False
+    assert _check_yongshin(NATAL.yongshin, postnatal.seun_ganji) is False
 
 
 def test_find_clashes():

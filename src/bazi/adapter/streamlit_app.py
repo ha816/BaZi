@@ -11,7 +11,7 @@ from bazi.domain.fortune import Saju
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
 analyze_natal = NatalAnalyzer()
-analyze_fortune = PostnatalAnalyzer()
+analyze_postnatal = PostnatalAnalyzer()
 
 
 def main():
@@ -54,8 +54,8 @@ def main():
     try:
         saju = Saju(datetime.datetime(year, month, day, hour, minute))
         natal = analyze_natal(saju)
-        fortune = analyze_fortune(saju, year=analysis_year, is_male=is_male)
-        result = full_interpretation(natal, fortune, age)
+        postnatal = analyze_postnatal(saju, year=analysis_year, is_male=is_male)
+        result = full_interpretation(natal, postnatal, age)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return
@@ -105,7 +105,7 @@ def main():
 
     # ── 세운 ──
     st.header(f"{analysis_year}년 세운")
-    st.write(f"세운 간지: **{fortune.seun_ganji}**")
+    st.write(f"세운 간지: **{postnatal.seun_ganji}**")
 
     if result.yongshin_in_seun:
         st.success(f"세운에 용신({yong})이 포함되어 있습니다.")
@@ -132,7 +132,7 @@ def main():
 
     # 대운 전체 타임라인
     st.subheader("대운 타임라인")
-    for d in fortune.daeun:
+    for d in postnatal.daeun:
         marker = " ← 현재" if result.current_daeun and d.ganji == result.current_daeun.ganji else ""
         st.write(f"**{d.ganji}** ({d.start_age}~{d.end_age}세){marker}")
 

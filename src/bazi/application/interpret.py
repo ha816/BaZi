@@ -35,24 +35,24 @@ class Interpretation:
 
 def full_interpretation(
     natal: NatalInfo,
-    fortune: PostnatalInfo,
+    postnatal: PostnatalInfo,
     age: int,
 ) -> Interpretation:
     """선천 + 후천 데이터를 종합하여 규칙 기반 해석을 생성한다."""
     yongshin = natal.yongshin
 
     # 1. 용신 충족
-    yongshin_in_seun = _check_yongshin(yongshin, fortune.seun_ganji)
-    current_daeun = _get_current_daeun(fortune.daeun, age)
+    yongshin_in_seun = _check_yongshin(yongshin, postnatal.seun_ganji)
+    current_daeun = _get_current_daeun(postnatal.daeun, age)
     yongshin_in_daeun = _check_yongshin(yongshin, current_daeun.ganji) if current_daeun else False
 
     # 2. 십신 해석
-    seun_sipsin = _build_sipsin_domains(fortune.seun)
+    seun_sipsin = _build_sipsin_domains(postnatal.seun)
     daeun_sipsin = _calc_sipsin_domains(natal.saju.day_stem, current_daeun.ganji) if current_daeun else []
 
     # 3. 충·합
-    seun_clashes = _find_clashes(natal, fortune.seun_ganji)
-    seun_combines = _find_combines(natal, fortune.seun_ganji)
+    seun_clashes = _find_clashes(natal, postnatal.seun_ganji)
+    seun_combines = _find_combines(natal, postnatal.seun_ganji)
     daeun_clashes = _find_clashes(natal, current_daeun.ganji) if current_daeun else []
     daeun_combines = _find_combines(natal, current_daeun.ganji) if current_daeun else []
 
@@ -62,7 +62,7 @@ def full_interpretation(
         seun_sipsin, daeun_sipsin,
         seun_clashes, seun_combines,
         daeun_clashes, daeun_combines,
-        fortune.year,
+        postnatal.year,
         current_daeun,
     )
 
