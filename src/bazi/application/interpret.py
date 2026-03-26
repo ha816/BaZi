@@ -1,9 +1,9 @@
-"""종합 해석: NatalInfo + FortuneInfo를 조합하여 규칙 기반 해석을 생성한다."""
+"""종합 해석: NatalInfo + PostnatalInfo를 조합하여 규칙 기반 해석을 생성한다."""
 
 from dataclasses import dataclass, field
 
 from bazi.application.natal import NatalInfo
-from bazi.application.fortune import DaeunPeriod, FortuneInfo
+from bazi.application.postnatal import DaeunPeriod, PostnatalInfo
 from bazi.domain.fortune import Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin
@@ -36,7 +36,7 @@ class Interpretation:
 
 def full_interpretation(
     natal: NatalInfo,
-    fortune: FortuneInfo,
+    fortune: PostnatalInfo,
     age: int,
 ) -> Interpretation:
     """선천 + 후천 데이터를 종합하여 규칙 기반 해석을 생성한다."""

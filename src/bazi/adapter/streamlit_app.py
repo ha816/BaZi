@@ -5,14 +5,14 @@ import datetime
 import streamlit as st
 
 from bazi.application.natal import NatalAnalyzer
-from bazi.application.fortune import FortuneAnalyzer
+from bazi.application.postnatal import PostnatalAnalyzer
 from bazi.application.interpret import full_interpretation
 from bazi.domain.fortune import Saju
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
 analyze_natal = NatalAnalyzer()
-analyze_fortune = FortuneAnalyzer()
+analyze_fortune = PostnatalAnalyzer()
 
 
 def main():

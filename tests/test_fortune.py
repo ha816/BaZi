@@ -2,10 +2,10 @@ from datetime import datetime
 
 from bazi.domain.fortune import Saju
 from bazi.application.natal import NatalAnalyzer
-from bazi.application.fortune import FortuneAnalyzer, year_to_ganji
+from bazi.application.postnatal import PostnatalAnalyzer, year_to_ganji
 
 analyze_natal = NatalAnalyzer()
-analyze_fortune = FortuneAnalyzer()
+analyze_fortune = PostnatalAnalyzer()
 
 SAJU = Saju(datetime(1990, 10, 10, 14, 30))
 NATAL = analyze_natal(SAJU)

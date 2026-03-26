@@ -20,7 +20,7 @@ class DaeunPeriod:
 
 
 @dataclass
-class FortuneInfo:
+class PostnatalInfo:
     """후천 분석 결과"""
     year: int
     seun_ganji: str
@@ -28,20 +28,20 @@ class FortuneInfo:
     daeun: list[DaeunPeriod]
 
 
-class FortuneAnalyzer:
-    """후천 분석기 — 사주(四柱)와 시간 정보를 받아 FortuneInfo를 반환한다."""
+class PostnatalAnalyzer:
+    """후천 분석기 — 사주(四柱)와 시간 정보를 받아 PostnatalInfo를 반환한다."""
 
     def __call__(
         self,
         saju: Saju,
         year: int,
         is_male: bool,
-    ) -> FortuneInfo:
+    ) -> PostnatalInfo:
         seun_ganji = year_to_ganji(year)
         seun = self._calc_seun(saju, seun_ganji)
         daeun = self._calc_daeun(saju, is_male)
 
-        return FortuneInfo(
+        return PostnatalInfo(
             year=year,
             seun_ganji=seun_ganji,
             seun=seun,
@@ -61,8 +61,8 @@ class FortuneAnalyzer:
     def _calc_daeun(saju: Saju, is_male: bool) -> list[DaeunPeriod]:
         """대운 목록을 생성한다."""
         forward = Stem[saju.year_pillar[0]].is_yang == is_male
-        sequence = FortuneAnalyzer._get_daeun_sequence(saju, forward)
-        start_age = FortuneAnalyzer._calc_start_age(saju.birth_dt, forward)
+        sequence = PostnatalAnalyzer._get_daeun_sequence(saju, forward)
+        start_age = PostnatalAnalyzer._calc_start_age(saju.birth_dt, forward)
 
         return [
             DaeunPeriod(

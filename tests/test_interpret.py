@@ -2,11 +2,11 @@ from datetime import datetime
 
 from bazi.domain.fortune import Saju
 from bazi.application.natal import NatalAnalyzer
-from bazi.application.fortune import FortuneAnalyzer
+from bazi.application.postnatal import PostnatalAnalyzer
 from bazi.application.interpret import full_interpretation
 
 analyze_natal = NatalAnalyzer()
-analyze_fortune = FortuneAnalyzer()
+analyze_fortune = PostnatalAnalyzer()
 
 
 def test_full_interpretation():
