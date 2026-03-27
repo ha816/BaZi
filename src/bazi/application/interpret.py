@@ -6,6 +6,9 @@ from bazi.domain.natal import NatalInfo, PostnatalInfo
 class Interpreter:
     """종합 해석기 — 선천 + 후천 데이터를 받아 해석 문장을 반환한다."""
 
+    natal: NatalInfo
+    postnatal: PostnatalInfo
+
     def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
         self.natal = natal
         self.postnatal = postnatal

@@ -13,6 +13,9 @@ from bazi.domain.util import parse_term_time, year_to_ganji
 class NatalAnalyzer:
     """선천 분석기 — 사주(四柱)를 받아 분석 결과(NatalInfo)를 반환한다."""
 
+    saju: Saju
+    day_stem: Stem | Branch  # 실제로는 항상 Stem
+
     def __call__(self, saju: Saju) -> NatalInfo:
         self.saju = saju
         self.day_stem = lookup(saju.day_stem)
@@ -73,6 +76,13 @@ class NatalAnalyzer:
 
 class PostnatalAnalyzer:
     """후천 분석기 — 사주(四柱)와 시간 정보를 받아 PostnatalInfo를 반환한다."""
+
+    user: User
+    natal: NatalInfo
+    saju: Saju
+    year: int
+    seun_ganji: str
+    day_stem: Stem | Branch  # 실제로는 항상 Stem
 
     def __call__(
         self,
