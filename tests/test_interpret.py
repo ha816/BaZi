@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from bazi.domain.fortune import Saju
+from bazi.domain.user import Gender, User
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import Interpreter
 
@@ -11,11 +12,12 @@ interpret = Interpreter()
 
 def test_full_interpretation():
     """종합 해석 통합 테스트"""
-    saju = Saju(datetime(1990, 10, 10, 14, 30))
+    user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
+    saju = Saju(user.birth_dt)
     natal = analyze_natal(saju)
-    postnatal = analyze_postnatal(saju, year=2026, is_male=True)
+    postnatal = analyze_postnatal(user, saju, year=2026)
 
-    interp = interpret(natal, postnatal, age=37)
+    interp = interpret(user, natal, postnatal)
 
     # 용신 확인
     assert interp.yongshin == "金"

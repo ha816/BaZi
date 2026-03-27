@@ -7,6 +7,7 @@ import streamlit as st
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import Interpreter
 from bazi.domain.fortune import Saju
+from bazi.domain.user import Gender, User
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
@@ -47,16 +48,21 @@ def main():
         return
 
     # ── 분석 실행 ──
-    year, month, day = birth_date.year, birth_date.month, birth_date.day
-    hour, minute = birth_time.hour, birth_time.minute
-    is_male = gender == "남성"
-    age = analysis_year - year + 1  # 한국 나이
+    birth_dt = datetime.datetime(
+        birth_date.year, birth_date.month, birth_date.day,
+        birth_time.hour, birth_time.minute,
+    )
+    user = User(
+        name="",
+        gender=Gender.MALE if gender == "남성" else Gender.FEMALE,
+        birth_dt=birth_dt,
+    )
 
     try:
-        saju = Saju(datetime.datetime(year, month, day, hour, minute))
+        saju = Saju(user.birth_dt, city=user.city)
         natal = analyze_natal(saju)
-        postnatal = analyze_postnatal(saju, year=analysis_year, is_male=is_male)
-        result = interpret(natal, postnatal, age)
+        postnatal = analyze_postnatal(user, saju, year=analysis_year)
+        result = interpret(user, natal, postnatal)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return

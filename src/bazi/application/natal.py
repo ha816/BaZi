@@ -9,6 +9,7 @@ from bazi.domain.fortune import Jeol, Saju
 from bazi.domain.ganji import Branch, Oheng, Stem, lookup
 from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.sipsin import Sipsin
+from bazi.domain.user import User
 from bazi.domain.util import parse_term_time, year_to_ganji
 
 
@@ -75,13 +76,13 @@ class PostnatalAnalyzer:
 
     def __call__(
         self,
+        user: User,
         saju: Saju,
         year: int,
-        is_male: bool,
     ) -> PostnatalInfo:
         seun_ganji = year_to_ganji(year)
         seun = self._calc_seun(saju, seun_ganji)
-        daeun = self._calc_daeun(saju, is_male)
+        daeun = self._calc_daeun(saju, user.gender.is_male)
 
         return PostnatalInfo(
             year=year,

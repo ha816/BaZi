@@ -6,6 +6,7 @@ from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.fortune import Pillar
 from bazi.domain.ganji import Branch, Stem, lookup
 from bazi.domain.sipsin import Sipsin
+from bazi.domain.user import User
 
 
 @dataclass
@@ -38,11 +39,12 @@ class Interpreter:
 
     def __call__(
         self,
+        user: User,
         natal: NatalInfo,
         postnatal: PostnatalInfo,
-        age: int,
     ) -> Interpretation:
         yongshin = natal.yongshin
+        age = user.age(postnatal.year)
 
         # 1. 용신 충족
         yongshin_in_seun = self._check_yongshin(yongshin, postnatal.seun_ganji)
