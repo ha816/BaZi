@@ -54,41 +54,33 @@ class Interpreter:
 
         # 1. 용신 충족
         self.current_daeun = self._get_current_daeun()
-        yongshin_in_seun = self._check_yongshin(self.seun_ganji)
-        yongshin_in_daeun = self._check_yongshin(self.current_daeun.ganji) if self.current_daeun else False
+        self.yongshin_in_seun = self._check_yongshin(self.seun_ganji)
+        self.yongshin_in_daeun = self._check_yongshin(self.current_daeun.ganji) if self.current_daeun else False
 
         # 2. 십신 해석
-        seun_sipsin = [postnatal.seun_stem, postnatal.seun_branch]
-        daeun_sipsin = self._calc_sipsin(self.current_daeun.ganji) if self.current_daeun else []
+        self.seun_sipsin = [postnatal.seun_stem, postnatal.seun_branch]
+        self.daeun_sipsin = self._calc_sipsin(self.current_daeun.ganji) if self.current_daeun else []
 
         # 3. 충·합
-        seun_clashes = self._find_clashes(self.seun_ganji)
-        seun_combines = self._find_combines(self.seun_ganji)
-        daeun_clashes = self._find_clashes(self.current_daeun.ganji) if self.current_daeun else []
-        daeun_combines = self._find_combines(self.current_daeun.ganji) if self.current_daeun else []
-
-        # 종합 문장 생성
-        summary = self._build_summary(
-            yongshin_in_seun, yongshin_in_daeun,
-            seun_sipsin, daeun_sipsin,
-            seun_clashes, seun_combines,
-            daeun_clashes, daeun_combines,
-        )
+        self.seun_clashes = self._find_clashes(self.seun_ganji)
+        self.seun_combines = self._find_combines(self.seun_ganji)
+        self.daeun_clashes = self._find_clashes(self.current_daeun.ganji) if self.current_daeun else []
+        self.daeun_combines = self._find_combines(self.current_daeun.ganji) if self.current_daeun else []
 
         return Interpretation(
             yongshin=natal.yongshin,
-            yongshin_in_seun=yongshin_in_seun,
-            yongshin_in_daeun=yongshin_in_daeun,
-            seun_sipsin=seun_sipsin,
+            yongshin_in_seun=self.yongshin_in_seun,
+            yongshin_in_daeun=self.yongshin_in_daeun,
+            seun_sipsin=self.seun_sipsin,
             current_daeun=self.current_daeun,
-            daeun_sipsin=daeun_sipsin,
+            daeun_sipsin=self.daeun_sipsin,
             sibi_unseong=natal.sibi_unseong,
             sinsal=natal.sinsal,
-            seun_clashes=seun_clashes,
-            seun_combines=seun_combines,
-            daeun_clashes=daeun_clashes,
-            daeun_combines=daeun_combines,
-            summary=summary,
+            seun_clashes=self.seun_clashes,
+            seun_combines=self.seun_combines,
+            daeun_clashes=self.daeun_clashes,
+            daeun_combines=self.daeun_combines,
+            summary=self._build_summary(),
         )
 
     def _get_current_daeun(self) -> DaeunPeriod | None:
@@ -146,46 +138,36 @@ class Interpreter:
 
         return results
 
-    def _build_summary(
-        self,
-        yongshin_in_seun: bool,
-        yongshin_in_daeun: bool,
-        seun_sipsin: list[tuple[str, Sipsin]],
-        daeun_sipsin: list[tuple[str, Sipsin]],
-        seun_clashes: list[dict],
-        seun_combines: list[dict],
-        daeun_clashes: list[dict],
-        daeun_combines: list[dict],
-    ) -> list[str]:
+    def _build_summary(self) -> list[str]:
         """규칙 기반으로 종합 해석 문장을 생성한다."""
         lines = []
         yongshin = self.natal.yongshin
         year = self.postnatal.year
-        current_daeun = self.current_daeun
 
         # 용신 충족
-        if yongshin_in_seun and yongshin_in_daeun:
+        if self.yongshin_in_seun and self.yongshin_in_daeun:
             lines.append(f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 작용하여 매우 유리한 해입니다.")
-        elif yongshin_in_seun:
+        elif self.yongshin_in_seun:
             lines.append(f"{year}년 세운에 용신({yongshin.name})이 있어 올해의 기회를 잘 살릴 수 있습니다.")
-        elif yongshin_in_daeun:
+        elif self.yongshin_in_daeun:
             lines.append(f"대운에 용신({yongshin.name})이 있어 큰 흐름은 좋으나, {year}년 세운에는 용신이 부재합니다.")
         else:
             lines.append(f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 없어 신중한 판단이 필요합니다.")
 
         # 세운 십신 해석
-        for char, s in seun_sipsin:
+        for char, s in self.seun_sipsin:
             lines.append(f"세운 {char}({s.name}): {s.domain} 방면에 변화가 예상됩니다.")
 
         # 대운 십신 해석
-        if current_daeun and daeun_sipsin:
-            lines.append(f"현재 대운 {current_daeun.ganji}({current_daeun.start_age}~{current_daeun.end_age}세):")
-            for char, s in daeun_sipsin:
+        if self.current_daeun and self.daeun_sipsin:
+            d = self.current_daeun
+            lines.append(f"현재 대운 {d.ganji}({d.start_age}~{d.end_age}세):")
+            for char, s in self.daeun_sipsin:
                 lines.append(f"  대운 {char}({s.name}): {s.domain} 방면의 큰 흐름이 작용합니다.")
 
         # 십이운성 (일주 기준)
         if self.natal.sibi_unseong:
-            day_pillar, day_unseong = self.natal.sibi_unseong[2]  # 일주
+            _, day_unseong = self.natal.sibi_unseong[2]
             lines.append(f"일주 십이운성은 {day_unseong.name}({day_unseong.meaning})입니다.")
 
         # 신살
@@ -193,15 +175,15 @@ class Interpreter:
             lines.append(f"사주에 {s.korean}({branch.name})이(가) 있습니다: {s.meaning}.")
 
         # 충
-        for clash in seun_clashes:
+        for clash in self.seun_clashes:
             lines.append(f"주의: 세운 {clash['incoming']}이(가) {clash['pillar']} {clash['target']}과(와) 충(衝)합니다. 변동·갈등에 유의하세요.")
-        for clash in daeun_clashes:
+        for clash in self.daeun_clashes:
             lines.append(f"주의: 대운 {clash['incoming']}이(가) {clash['pillar']} {clash['target']}과(와) 충(衝)합니다. 이 시기 큰 변화가 있을 수 있습니다.")
 
         # 합
-        for combine in seun_combines:
+        for combine in self.seun_combines:
             lines.append(f"세운 {combine['incoming']}이(가) {combine['pillar']} {combine['target']}과(와) {combine['type']}합니다. 새로운 인연·협력이 기대됩니다.")
-        for combine in daeun_combines:
+        for combine in self.daeun_combines:
             lines.append(f"대운 {combine['incoming']}이(가) {combine['pillar']} {combine['target']}과(와) {combine['type']}합니다. 장기적 관계·변화가 예상됩니다.")
 
         return lines
