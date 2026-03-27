@@ -5,13 +5,14 @@ import datetime
 import streamlit as st
 
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
-from bazi.application.interpret import full_interpretation
+from bazi.application.interpret import Interpreter
 from bazi.domain.fortune import Saju
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
 analyze_natal = NatalAnalyzer()
 analyze_postnatal = PostnatalAnalyzer()
+interpret = Interpreter()
 
 
 def main():
@@ -55,7 +56,7 @@ def main():
         saju = Saju(datetime.datetime(year, month, day, hour, minute))
         natal = analyze_natal(saju)
         postnatal = analyze_postnatal(saju, year=analysis_year, is_male=is_male)
-        result = full_interpretation(natal, postnatal, age)
+        result = interpret(natal, postnatal, age)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return
