@@ -1,4 +1,4 @@
-from bazi.domain.ganji import SibiUnseong
+from bazi.domain.ganji import Branch, SibiUnseong, Stem
 from bazi.domain.natal import Sinsal
 from bazi.domain.natal import Saju
 from bazi.application.natal import NatalAnalyzer
@@ -11,23 +11,23 @@ analyze = NatalAnalyzer()
 
 def test_yang_stem_forward():
     """양간(甲)은 순행: 甲의 長生=亥, 沐浴=子"""
-    assert SibiUnseong.of("甲", "亥") == SibiUnseong.長生
-    assert SibiUnseong.of("甲", "子") == SibiUnseong.沐浴
-    assert SibiUnseong.of("甲", "寅") == SibiUnseong.建祿
-    assert SibiUnseong.of("甲", "卯") == SibiUnseong.帝旺
+    assert SibiUnseong.of(Stem.甲, Branch.亥) == SibiUnseong.長生
+    assert SibiUnseong.of(Stem.甲, Branch.子) == SibiUnseong.沐浴
+    assert SibiUnseong.of(Stem.甲, Branch.寅) == SibiUnseong.建祿
+    assert SibiUnseong.of(Stem.甲, Branch.卯) == SibiUnseong.帝旺
 
 
 def test_yin_stem_backward():
     """음간(乙)은 역행: 乙의 長生=午, 沐浴=巳"""
-    assert SibiUnseong.of("乙", "午") == SibiUnseong.長生
-    assert SibiUnseong.of("乙", "巳") == SibiUnseong.沐浴
+    assert SibiUnseong.of(Stem.乙, Branch.午) == SibiUnseong.長生
+    assert SibiUnseong.of(Stem.乙, Branch.巳) == SibiUnseong.沐浴
 
 
 def test_various_stems():
     """다양한 천간 테스트"""
-    assert SibiUnseong.of("丙", "寅") == SibiUnseong.長生
-    assert SibiUnseong.of("庚", "巳") == SibiUnseong.長生
-    assert SibiUnseong.of("壬", "申") == SibiUnseong.長生
+    assert SibiUnseong.of(Stem.丙, Branch.寅) == SibiUnseong.長生
+    assert SibiUnseong.of(Stem.庚, Branch.巳) == SibiUnseong.長生
+    assert SibiUnseong.of(Stem.壬, Branch.申) == SibiUnseong.長生
 
 
 def test_sibi_unseong_in_natal():

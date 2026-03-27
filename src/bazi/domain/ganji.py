@@ -309,15 +309,13 @@ class SibiUnseong(Enum):
         return self.value
 
     @classmethod
-    def of(cls, stem: str, branch: str) -> "SibiUnseong":
+    def of(cls, stem: Stem, branch: Branch) -> "SibiUnseong":
         """천간이 지지를 만났을 때의 십이운성을 반환한다."""
-        s = Stem[stem]
-        b = Branch[branch]
-        start = _JANGSEONG_START[s]
-        if s.is_yang:
-            offset = (b.order - start.order) % 12
+        start = _JANGSEONG_START[stem]
+        if stem.is_yang:
+            offset = (branch.order - start.order) % 12
         else:
-            offset = (start.order - b.order) % 12
+            offset = (start.order - branch.order) % 12
         return list(cls)[offset]
 
 

@@ -67,7 +67,7 @@ class NatalAnalyzer:
     def _analyze_sibi_unseong(saju: Saju) -> list[tuple[str, SibiUnseong]]:
         """각 기둥 지지의 십이운성을 분석한다."""
         return [
-            (pillar, SibiUnseong.of(saju.day_stem, pillar[1]))
+            (pillar, SibiUnseong.of(Stem[saju.day_stem], Branch[pillar[1]]))
             for pillar in saju.pillars
         ]
 
