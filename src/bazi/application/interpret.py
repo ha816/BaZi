@@ -4,7 +4,8 @@ from dataclasses import dataclass, field
 
 from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.natal import Pillar
-from bazi.domain.ganji import Branch, Sipsin, Stem, lookup
+from bazi.domain.ganji import Branch, SibiUnseong, Sipsin, Stem, lookup
+from bazi.domain.natal import Sinsal
 from bazi.domain.user import User
 
 
@@ -22,6 +23,10 @@ class Interpretation:
     # 현재 대운 해석
     current_daeun: DaeunPeriod | None
     daeun_sipsin: list[tuple[str, Sipsin]]
+
+    # 십이운성·신살
+    sibi_unseong: list[tuple[str, SibiUnseong]]
+    sinsal: list[tuple[str, Sinsal]]
 
     # 충·합
     seun_clashes: list[dict]
@@ -64,6 +69,7 @@ class Interpreter:
         summary = self._build_summary(
             yongshin, yongshin_in_seun, yongshin_in_daeun,
             seun_sipsin, daeun_sipsin,
+            natal.sibi_unseong, natal.sinsal,
             seun_clashes, seun_combines,
             daeun_clashes, daeun_combines,
             postnatal.year,
@@ -77,6 +83,8 @@ class Interpreter:
             seun_sipsin=seun_sipsin,
             current_daeun=current_daeun,
             daeun_sipsin=daeun_sipsin,
+            sibi_unseong=natal.sibi_unseong,
+            sinsal=natal.sinsal,
             seun_clashes=seun_clashes,
             seun_combines=seun_combines,
             daeun_clashes=daeun_clashes,
@@ -150,6 +158,8 @@ class Interpreter:
         yongshin_in_daeun: bool,
         seun_sipsin: list[tuple[str, Sipsin]],
         daeun_sipsin: list[tuple[str, Sipsin]],
+        sibi_unseong: list[tuple[str, SibiUnseong]],
+        sinsal: list[tuple[str, Sinsal]],
         seun_clashes: list[dict],
         seun_combines: list[dict],
         daeun_clashes: list[dict],
@@ -179,6 +189,15 @@ class Interpreter:
             lines.append(f"현재 대운 {current_daeun.ganji}({current_daeun.start_age}~{current_daeun.end_age}세):")
             for char, s in daeun_sipsin:
                 lines.append(f"  대운 {char}({s.name}): {s.domain} 방면의 큰 흐름이 작용합니다.")
+
+        # 십이운성 (일주 기준)
+        if sibi_unseong:
+            day_pillar, day_unseong = sibi_unseong[2]  # 일주
+            lines.append(f"일주 십이운성은 {day_unseong.name}({day_unseong.meaning})입니다.")
+
+        # 신살
+        for branch_char, s in sinsal:
+            lines.append(f"사주에 {s.korean}({branch_char})이(가) 있습니다: {s.meaning}.")
 
         # 충
         for clash in seun_clashes:

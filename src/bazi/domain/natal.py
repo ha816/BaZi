@@ -14,8 +14,10 @@ from typing import TYPE_CHECKING
 
 from sajupy import calculate_saju as _sajupy_calculate
 
+from bazi.domain.ganji import Branch
+
 if TYPE_CHECKING:
-    from bazi.domain.ganji import Sipsin
+    from bazi.domain.ganji import SibiUnseong, Sipsin
 
 
 class Saju:
@@ -103,6 +105,55 @@ class Jeol(Enum):
         return frozenset(j.value for j in cls)
 
 
+# ── 신살(神殺) ──
+
+
+class Sinsal(Enum):
+    """신살(神殺) - 사주에 나타나는 특수한 작용.
+
+    일지(日支)의 삼합(三合) 그룹을 기준으로 판단한다.
+    """
+
+    驛馬 = ("역마살", "이동·변동·해외·활동적")
+    桃花 = ("도화살", "매력·이성·예술·인기")
+    華蓋 = ("화개살", "학문·종교·예술·고독")
+
+    def __init__(self, korean: str, meaning: str):
+        self.korean = korean
+        self.meaning = meaning
+
+    @classmethod
+    def find_all(cls, day_branch: str, all_branches: list[str]) -> list[tuple[str, "Sinsal"]]:
+        """일지 기준으로 사주 전체 지지에서 신살을 찾는다."""
+        db = Branch[day_branch]
+        group = None
+        for branches, mapping in _SAMHAP_SINSAL:
+            if db in branches:
+                group = mapping
+                break
+        if group is None:
+            return []
+
+        results = []
+        for sinsal, trigger in group.items():
+            for b_char in all_branches:
+                if Branch[b_char] == trigger:
+                    results.append((b_char, sinsal))
+        return results
+
+
+_SAMHAP_SINSAL: list[tuple[frozenset[Branch], dict[Sinsal, Branch]]] = [
+    (frozenset({Branch.寅, Branch.午, Branch.戌}),
+     {Sinsal.驛馬: Branch.申, Sinsal.桃花: Branch.卯, Sinsal.華蓋: Branch.戌}),
+    (frozenset({Branch.申, Branch.子, Branch.辰}),
+     {Sinsal.驛馬: Branch.寅, Sinsal.桃花: Branch.酉, Sinsal.華蓋: Branch.辰}),
+    (frozenset({Branch.巳, Branch.酉, Branch.丑}),
+     {Sinsal.驛馬: Branch.亥, Sinsal.桃花: Branch.午, Sinsal.華蓋: Branch.丑}),
+    (frozenset({Branch.亥, Branch.卯, Branch.未}),
+     {Sinsal.驛馬: Branch.巳, Sinsal.桃花: Branch.子, Sinsal.華蓋: Branch.未}),
+]
+
+
 # ── 분석 결과 데이터 ──
 
 
@@ -114,6 +165,8 @@ class NatalInfo:
     strength: int
     yongshin: str
     sipsin: list[tuple[str, Sipsin]]
+    sibi_unseong: list[tuple[str, SibiUnseong]]
+    sinsal: list[tuple[str, Sinsal]]
     personality: str
 
 

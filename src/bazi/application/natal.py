@@ -6,8 +6,8 @@ from datetime import datetime
 from sajupy import SajuCalculator
 
 from bazi.domain.natal import Jeol, Saju
-from bazi.domain.ganji import Branch, Oheng, Sipsin, Stem, lookup
-from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
+from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem, lookup
+from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo, Sinsal
 from bazi.domain.user import User
 from bazi.domain.util import parse_term_time, year_to_ganji
 
@@ -22,6 +22,8 @@ class NatalAnalyzer:
         strength = self._judge_strength(stats, me)
         yongshin = self._find_yongshin(me, strength)
         sipsin = self._analyze_sipsin(saju)
+        sibi_unseong = self._analyze_sibi_unseong(saju)
+        sinsal = self._analyze_sinsal(saju)
 
         return NatalInfo(
             saju=saju,
@@ -30,6 +32,8 @@ class NatalAnalyzer:
             strength=strength,
             yongshin=yongshin,
             sipsin=sipsin,
+            sibi_unseong=sibi_unseong,
+            sinsal=sinsal,
             personality=me.personality,
         )
 
@@ -58,6 +62,21 @@ class NatalAnalyzer:
         day_stem_index = 4
         chars = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
         return [(char, Sipsin.of(saju.day_stem, char)) for char in chars]
+
+    @staticmethod
+    def _analyze_sibi_unseong(saju: Saju) -> list[tuple[str, SibiUnseong]]:
+        """각 기둥 지지의 십이운성을 분석한다."""
+        return [
+            (pillar, SibiUnseong.of(saju.day_stem, pillar[1]))
+            for pillar in saju.pillars
+        ]
+
+    @staticmethod
+    def _analyze_sinsal(saju: Saju) -> list[tuple[str, Sinsal]]:
+        """사주에서 신살을 찾는다."""
+        day_branch = saju.day_pillar[1]
+        all_branches = [p[1] for p in saju.pillars]
+        return Sinsal.find_all(day_branch, all_branches)
 
 
 class PostnatalAnalyzer:

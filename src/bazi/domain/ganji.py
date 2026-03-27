@@ -269,3 +269,56 @@ class Sipsin(Enum):
             return cls.偏印 if same_yinyang else cls.正印
         else:
             return cls.偏官 if same_yinyang else cls.正官
+
+
+# ── 십이운성(十二運星) ──
+
+
+# 각 천간의 長生이 시작되는 지지
+_JANGSEONG_START: dict[Stem, Branch] = {
+    Stem.甲: Branch.亥, Stem.乙: Branch.午,
+    Stem.丙: Branch.寅, Stem.丁: Branch.酉,
+    Stem.戊: Branch.寅, Stem.己: Branch.酉,
+    Stem.庚: Branch.巳, Stem.辛: Branch.子,
+    Stem.壬: Branch.申, Stem.癸: Branch.卯,
+}
+
+
+class SibiUnseong(Enum):
+    """십이운성(十二運星) - 천간이 지지를 만났을 때의 에너지 상태 12단계.
+
+    생왕사절(生旺死絶)이라고도 하며, 천간의 기운이 지지에서
+    어떤 상태에 있는지를 나타낸다.
+    """
+
+    長生 = "태어남, 새로운 시작"
+    沐浴 = "불안정, 변화, 감정 기복"
+    冠帶 = "성장, 준비, 자립"
+    建祿 = "안정, 실력 발휘"
+    帝旺 = "최절정, 왕성한 활동"
+    衰 = "쇠퇴, 내려가는 기운"
+    病 = "약화, 조심 필요"
+    死 = "정지, 전환점"
+    墓 = "저장, 내면 집중"
+    絕 = "단절, 새로운 씨앗"
+    胎 = "잉태, 가능성"
+    養 = "양육, 준비 단계"
+
+    @property
+    def meaning(self) -> str:
+        return self.value
+
+    @classmethod
+    def of(cls, stem: str, branch: str) -> "SibiUnseong":
+        """천간이 지지를 만났을 때의 십이운성을 반환한다."""
+        s = Stem[stem]
+        b = Branch[branch]
+        start = _JANGSEONG_START[s]
+        if s.is_yang:
+            offset = (b.order - start.order) % 12
+        else:
+            offset = (start.order - b.order) % 12
+        return list(cls)[offset]
+
+
+# ── 신살(神殺) ──
