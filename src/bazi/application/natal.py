@@ -5,7 +5,7 @@ from datetime import datetime
 
 from sajupy import SajuCalculator
 
-from bazi.domain.fortune import Jeol, Saju
+from bazi.domain.natal import Jeol, Saju
 from bazi.domain.ganji import Branch, Oheng, Sipsin, Stem, lookup
 from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.user import User

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from bazi.domain.fortune import Saju
+from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import Interpreter

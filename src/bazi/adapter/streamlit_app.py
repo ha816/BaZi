@@ -6,7 +6,7 @@ import streamlit as st
 
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import Interpreter
-from bazi.domain.fortune import Saju
+from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}

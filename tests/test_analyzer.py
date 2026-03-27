@@ -1,4 +1,4 @@
-from bazi.domain.fortune import Saju
+from bazi.domain.natal import Saju
 from bazi.domain.ganji import Sipsin
 from bazi.application.natal import NatalAnalyzer
 
