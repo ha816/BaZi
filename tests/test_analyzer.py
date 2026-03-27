@@ -1,5 +1,5 @@
 from bazi.domain.natal import Saju
-from bazi.domain.ganji import Sipsin
+from bazi.domain.ganji import Oheng, Sipsin, Stem
 from bazi.application.natal import NatalAnalyzer
 
 analyze = NatalAnalyzer()
@@ -11,9 +11,9 @@ def test_analyze_basic():
     info = analyze(saju)
 
     assert saju.pillars == ["庚午", "丙戌", "戊申", "己未"]
-    assert info.my_main_element == "土"
+    assert info.my_main_element == Oheng.土
     assert info.saju.day_stem == "戊"
-    assert info.element_stats == {"木": 0, "火": 2, "土": 4, "金": 2, "水": 0}
+    assert info.element_stats == {Oheng.木: 0, Oheng.火: 2, Oheng.土: 4, Oheng.金: 2, Oheng.水: 0}
 
 
 def test_judge_strength_strong():
@@ -31,13 +31,13 @@ def test_judge_strength_weak():
 def test_find_yongshin_for_strong():
     """신강일 때 용신"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
-    assert info.yongshin == "金"
+    assert info.yongshin == Oheng.金
 
 
 def test_find_yongshin_for_weak():
     """신약일 때 용신"""
     info = analyze(Saju(1983, 3, 3, 15, 0))
-    assert info.yongshin == "土"
+    assert info.yongshin == Oheng.土
 
 
 def test_personality():
@@ -48,9 +48,9 @@ def test_personality():
 
 def test_sipsin():
     """일간 기준 십신 판별"""
-    assert Sipsin.of("戊", "庚") == Sipsin.食神
-    assert Sipsin.of("戊", "丙") == Sipsin.偏印
-    assert Sipsin.of("戊", "己") == Sipsin.劫財
+    assert Sipsin.of(Stem.戊, Stem.庚) == Sipsin.食神
+    assert Sipsin.of(Stem.戊, Stem.丙) == Sipsin.偏印
+    assert Sipsin.of(Stem.戊, Stem.己) == Sipsin.劫財
 
 
 def test_analyze_sipsin():

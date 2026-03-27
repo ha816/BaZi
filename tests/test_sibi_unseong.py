@@ -46,13 +46,12 @@ def test_sibi_unseong_in_natal():
 def test_sinsal_find_all():
     """일지 기준 신살 찾기"""
     # 申은 申子辰 그룹: 역마=寅, 도화=酉, 화개=辰
-    results = Sinsal.find_all("申", ["午", "戌", "申", "未"])
-    sinsal_types = {s for _, s in results}
+    results = Sinsal.find_all(Branch.申, [Branch.午, Branch.戌, Branch.申, Branch.未])
     # 위 지지에 寅, 酉, 辰 없으므로 빈 결과
     assert len(results) == 0
 
     # 寅이 포함되면 역마살 감지
-    results = Sinsal.find_all("申", ["寅", "戌", "申", "未"])
+    results = Sinsal.find_all(Branch.申, [Branch.寅, Branch.戌, Branch.申, Branch.未])
     assert any(s == Sinsal.驛馬 for _, s in results)
 
 

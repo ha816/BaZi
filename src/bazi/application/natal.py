@@ -17,8 +17,7 @@ class NatalAnalyzer:
 
     def __call__(self, saju: Saju) -> NatalInfo:
         stats = self._count_oheng(saju)
-        my_element = lookup(saju.day_stem).element.name
-        me = Oheng[my_element]
+        me = lookup(saju.day_stem).element
         strength = self._judge_strength(stats, me)
         yongshin = self._find_yongshin(me, strength)
         sipsin = self._analyze_sipsin(saju)
@@ -27,7 +26,7 @@ class NatalAnalyzer:
 
         return NatalInfo(
             saju=saju,
-            my_main_element=my_element,
+            my_main_element=me,
             element_stats=stats,
             strength=strength,
             yongshin=yongshin,
@@ -38,22 +37,22 @@ class NatalAnalyzer:
         )
 
     @staticmethod
-    def _count_oheng(saju: Saju) -> dict[str, int]:
+    def _count_oheng(saju: Saju) -> dict[Oheng, int]:
         """팔자 8글자의 오행 분포를 집계한다."""
-        counts = Counter(lookup(char).element.name for char in saju.palja)
-        return {o.name: counts.get(o.name, 0) for o in Oheng}
+        counts = Counter(lookup(char).element for char in saju.palja)
+        return {o: counts.get(o, 0) for o in Oheng}
 
     @staticmethod
-    def _judge_strength(stats: dict[str, int], me: Oheng) -> int:
+    def _judge_strength(stats: dict[Oheng, int], me: Oheng) -> int:
         """일간 강약을 판단한다. 양수=신강, 0=중화, 음수=신약."""
-        helping = stats[me.name] + stats[me.generated_by.name]
+        helping = stats[me] + stats[me.generated_by]
         draining = sum(stats.values()) - helping
         return helping - draining
 
     @staticmethod
-    def _find_yongshin(me: Oheng, strength: int) -> str:
+    def _find_yongshin(me: Oheng, strength: int) -> Oheng:
         """용신(用神)을 선정한다."""
-        return me.generates.name if strength > 0 else me.generated_by.name
+        return me.generates if strength > 0 else me.generated_by
 
     @staticmethod
     def _analyze_sipsin(saju: Saju) -> list[tuple[str, Sipsin]]:
@@ -61,7 +60,8 @@ class NatalAnalyzer:
         all_chars = list(saju.palja)
         day_stem_index = 4
         chars = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
-        return [(char, Sipsin.of(saju.day_stem, char)) for char in chars]
+        ds = lookup(saju.day_stem)
+        return [(char, Sipsin.of(ds, lookup(char))) for char in chars]
 
     @staticmethod
     def _analyze_sibi_unseong(saju: Saju) -> list[tuple[str, SibiUnseong]]:
@@ -72,10 +72,10 @@ class NatalAnalyzer:
         ]
 
     @staticmethod
-    def _analyze_sinsal(saju: Saju) -> list[tuple[str, Sinsal]]:
+    def _analyze_sinsal(saju: Saju) -> list[tuple[Branch, Sinsal]]:
         """사주에서 신살을 찾는다."""
-        day_branch = saju.day_pillar[1]
-        all_branches = [p[1] for p in saju.pillars]
+        day_branch = Branch[saju.day_pillar[1]]
+        all_branches = [Branch[p[1]] for p in saju.pillars]
         return Sinsal.find_all(day_branch, all_branches)
 
 
@@ -102,10 +102,10 @@ class PostnatalAnalyzer:
     @staticmethod
     def _calc_seun(saju: Saju, seun_ganji: str) -> list[tuple[str, Sipsin]]:
         """세운(歲運) 분석: 해당 연도의 간지가 일간에 미치는 영향."""
-        ds = saju.day_stem
+        ds = lookup(saju.day_stem)
         return [
-            (seun_ganji[0], Sipsin.of(ds, seun_ganji[0])),
-            (seun_ganji[1], Sipsin.of(ds, seun_ganji[1])),
+            (seun_ganji[0], Sipsin.of(ds, lookup(seun_ganji[0]))),
+            (seun_ganji[1], Sipsin.of(ds, lookup(seun_ganji[1]))),
         ]
 
     @staticmethod

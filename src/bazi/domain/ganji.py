@@ -251,10 +251,8 @@ class Sipsin(Enum):
         return self.value
 
     @classmethod
-    def of(cls, day_stem: str, char: str) -> "Sipsin":
-        """일간 기준으로 한 글자의 십신을 판별한다."""
-        me = lookup(day_stem)
-        target = lookup(char)
+    def of(cls, me: "Stem | Branch", target: "Stem | Branch") -> "Sipsin":
+        """일간 기준으로 대상 글자의 십신을 판별한다."""
         same_yinyang = me.is_yang == target.is_yang
         me_el = me.element
         target_el = target.element

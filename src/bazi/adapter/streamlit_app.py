@@ -82,14 +82,14 @@ def main():
     oheng_cols = st.columns(5)
     for col, (element, count) in zip(oheng_cols, natal.element_stats.items()):
         with col:
-            emoji = OHENG_EMOJI.get(element, "")
-            st.metric(label=f"{emoji} {element}", value=f"{count}개")
+            emoji = OHENG_EMOJI.get(element.name, "")
+            st.metric(label=f"{emoji} {element.name}", value=f"{count}개")
 
     # ── 강약·용신 ──
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         me = natal.my_main_element
-        st.metric("일간 오행", f"{OHENG_EMOJI.get(me, '')} {me}")
+        st.metric("일간 오행", f"{OHENG_EMOJI.get(me.name, '')} {me.name}")
     with col_b:
         if natal.strength > 0:
             strength_label = "신강(身強)"
@@ -100,7 +100,7 @@ def main():
         st.metric("강약", f"{strength_label} ({natal.strength:+d})")
     with col_c:
         yong = natal.yongshin
-        st.metric("용신(用神)", f"{OHENG_EMOJI.get(yong, '')} {yong}")
+        st.metric("용신(用神)", f"{OHENG_EMOJI.get(yong.name, '')} {yong.name}")
 
     # ── 성격 ──
     st.subheader("기본 성격")
@@ -116,9 +116,9 @@ def main():
     st.write(f"세운 간지: **{postnatal.seun_ganji}**")
 
     if result.yongshin_in_seun:
-        st.success(f"세운에 용신({yong})이 포함되어 있습니다.")
+        st.success(f"세운에 용신({yong.name})이 포함되어 있습니다.")
     else:
-        st.warning(f"세운에 용신({yong})이 없습니다.")
+        st.warning(f"세운에 용신({yong.name})이 없습니다.")
 
     for char, s in result.seun_sipsin:
         st.write(f"**{char}**({s.name}): {s.domain}")
@@ -131,9 +131,9 @@ def main():
         st.write(f"현재 대운: **{daeun.ganji}** ({daeun.start_age}~{daeun.end_age}세)")
 
         if result.yongshin_in_daeun:
-            st.success(f"대운에 용신({yong})이 포함되어 있습니다.")
+            st.success(f"대운에 용신({yong.name})이 포함되어 있습니다.")
         else:
-            st.warning(f"대운에 용신({yong})이 없습니다.")
+            st.warning(f"대운에 용신({yong.name})이 없습니다.")
 
         for char, s in result.daeun_sipsin:
             st.write(f"**{char}**({s.name}): {s.domain}")

@@ -17,7 +17,7 @@ from sajupy import calculate_saju as _sajupy_calculate
 from bazi.domain.ganji import Branch
 
 if TYPE_CHECKING:
-    from bazi.domain.ganji import SibiUnseong, Sipsin
+    from bazi.domain.ganji import Oheng, SibiUnseong, Sipsin
 
 
 class Saju:
@@ -123,12 +123,11 @@ class Sinsal(Enum):
         self.meaning = meaning
 
     @classmethod
-    def find_all(cls, day_branch: str, all_branches: list[str]) -> list[tuple[str, "Sinsal"]]:
+    def find_all(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
         """일지 기준으로 사주 전체 지지에서 신살을 찾는다."""
-        db = Branch[day_branch]
         group = None
         for branches, mapping in _SAMHAP_SINSAL:
-            if db in branches:
+            if day_branch in branches:
                 group = mapping
                 break
         if group is None:
@@ -136,9 +135,9 @@ class Sinsal(Enum):
 
         results = []
         for sinsal, trigger in group.items():
-            for b_char in all_branches:
-                if Branch[b_char] == trigger:
-                    results.append((b_char, sinsal))
+            for b in all_branches:
+                if b == trigger:
+                    results.append((b, sinsal))
         return results
 
 
@@ -160,13 +159,13 @@ _SAMHAP_SINSAL: list[tuple[frozenset[Branch], dict[Sinsal, Branch]]] = [
 @dataclass
 class NatalInfo:
     saju: Saju
-    my_main_element: str
-    element_stats: dict[str, int]
+    my_main_element: Oheng
+    element_stats: dict[Oheng, int]
     strength: int
-    yongshin: str
+    yongshin: Oheng
     sipsin: list[tuple[str, Sipsin]]
     sibi_unseong: list[tuple[str, SibiUnseong]]
-    sinsal: list[tuple[str, Sinsal]]
+    sinsal: list[tuple[Branch, Sinsal]]
     personality: str
 
 

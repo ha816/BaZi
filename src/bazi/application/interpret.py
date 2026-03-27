@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.natal import Pillar
-from bazi.domain.ganji import Branch, SibiUnseong, Sipsin, Stem, lookup
+from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem, lookup
 from bazi.domain.natal import Sinsal
 from bazi.domain.user import User
 
@@ -13,7 +13,7 @@ from bazi.domain.user import User
 class Interpretation:
     """종합 해석 결과"""
     # 용신 충족
-    yongshin: str
+    yongshin: Oheng
     yongshin_in_seun: bool
     yongshin_in_daeun: bool
 
@@ -26,7 +26,7 @@ class Interpretation:
 
     # 십이운성·신살
     sibi_unseong: list[tuple[str, SibiUnseong]]
-    sinsal: list[tuple[str, Sinsal]]
+    sinsal: list[tuple[Branch, Sinsal]]
 
     # 충·합
     seun_clashes: list[dict]
@@ -101,14 +101,15 @@ class Interpreter:
         return None
 
     @staticmethod
-    def _check_yongshin(yongshin: str, ganji: str) -> bool:
+    def _check_yongshin(yongshin: Oheng, ganji: str) -> bool:
         """간지에 용신 오행이 포함되어 있는지 확인한다."""
-        return any(lookup(ch).element.name == yongshin for ch in ganji)
+        return any(lookup(ch).element == yongshin for ch in ganji)
 
     @staticmethod
     def _calc_sipsin(day_stem: str, ganji: str) -> list[tuple[str, Sipsin]]:
         """간지의 십신을 계산한다."""
-        return [(ch, Sipsin.of(day_stem, ch)) for ch in ganji]
+        ds = lookup(day_stem)
+        return [(ch, Sipsin.of(ds, lookup(ch))) for ch in ganji]
 
     @staticmethod
     def _find_clashes(natal: NatalInfo, ganji: str) -> list[dict]:
@@ -153,13 +154,13 @@ class Interpreter:
 
     @staticmethod
     def _build_summary(
-        yongshin: str,
+        yongshin: Oheng,
         yongshin_in_seun: bool,
         yongshin_in_daeun: bool,
         seun_sipsin: list[tuple[str, Sipsin]],
         daeun_sipsin: list[tuple[str, Sipsin]],
         sibi_unseong: list[tuple[str, SibiUnseong]],
-        sinsal: list[tuple[str, Sinsal]],
+        sinsal: list[tuple[Branch, Sinsal]],
         seun_clashes: list[dict],
         seun_combines: list[dict],
         daeun_clashes: list[dict],
@@ -172,13 +173,13 @@ class Interpreter:
 
         # 용신 충족
         if yongshin_in_seun and yongshin_in_daeun:
-            lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin})이 작용하여 매우 유리한 해입니다.")
+            lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin.name})이 작용하여 매우 유리한 해입니다.")
         elif yongshin_in_seun:
-            lines.append(f"{seun_year}년 세운에 용신({yongshin})이 있어 올해의 기회를 잘 살릴 수 있습니다.")
+            lines.append(f"{seun_year}년 세운에 용신({yongshin.name})이 있어 올해의 기회를 잘 살릴 수 있습니다.")
         elif yongshin_in_daeun:
-            lines.append(f"대운에 용신({yongshin})이 있어 큰 흐름은 좋으나, {seun_year}년 세운에는 용신이 부재합니다.")
+            lines.append(f"대운에 용신({yongshin.name})이 있어 큰 흐름은 좋으나, {seun_year}년 세운에는 용신이 부재합니다.")
         else:
-            lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin})이 없어 신중한 판단이 필요합니다.")
+            lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin.name})이 없어 신중한 판단이 필요합니다.")
 
         # 세운 십신 해석
         for char, s in seun_sipsin:
@@ -196,8 +197,8 @@ class Interpreter:
             lines.append(f"일주 십이운성은 {day_unseong.name}({day_unseong.meaning})입니다.")
 
         # 신살
-        for branch_char, s in sinsal:
-            lines.append(f"사주에 {s.korean}({branch_char})이(가) 있습니다: {s.meaning}.")
+        for branch, s in sinsal:
+            lines.append(f"사주에 {s.korean}({branch.name})이(가) 있습니다: {s.meaning}.")
 
         # 충
         for clash in seun_clashes:

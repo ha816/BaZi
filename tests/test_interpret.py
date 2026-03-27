@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from bazi.domain.ganji import Oheng
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
@@ -20,7 +21,7 @@ def test_full_interpretation():
     interp = interpret(user, natal, postnatal)
 
     # 용신 확인
-    assert interp.yongshin == "金"
+    assert interp.yongshin == Oheng.金
     assert isinstance(interp.yongshin_in_seun, bool)
     assert isinstance(interp.yongshin_in_daeun, bool)
 
