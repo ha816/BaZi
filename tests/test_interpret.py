@@ -27,7 +27,7 @@ def test_returns_interpretation_dataclass():
 def test_personality_section():
     result = _make_result()
     assert len(result.personality) > 0
-    assert any("일간" in line for line in result.personality)
+    assert any("당신" in line or "에너지" in line for line in result.personality)
 
 
 def test_element_balance_section():
@@ -73,3 +73,28 @@ def test_relationships_present_when_clashes_exist():
     result = _make_result()
     # 충·합 유무는 데이터에 따라 다르지만, 리스트 타입이어야 한다
     assert isinstance(result.relationships, list)
+
+
+def test_modern_mapping_in_fortune_domain():
+    """영역별 운세에 현대적 매핑(투자/커리어/라이프)이 포함된다."""
+    result = _make_result()
+    all_text = " ".join(result.fortune_by_domain)
+    assert any(kw in all_text for kw in ["투자", "커리어", "라이프"])
+
+
+def test_advice_has_fortune_boosting():
+    """종합 조언에 개운법(색상/방향/음식)이 포함된다."""
+    result = _make_result()
+    all_text = " ".join(result.advice)
+    assert "색상" in all_text
+    assert "방향" in all_text
+    assert "음식" in all_text
+
+
+def test_narrative_style_personality():
+    """성격 해석이 서사적(비유 포함) 스타일인지 확인."""
+    result = _make_result()
+    all_text = " ".join(result.personality)
+    # 오행 비유 키워드 중 하나라도 포함
+    metaphors = ["나무", "태양", "대지", "서리", "바다"]
+    assert any(m in all_text for m in metaphors)
