@@ -2,10 +2,8 @@
 
 from dataclasses import dataclass, field
 
-from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
-from bazi.domain.natal import Pillar
+from bazi.domain.natal import DaeunPeriod, NatalInfo, Pillar, PostnatalInfo, Sinsal
 from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem, lookup
-from bazi.domain.natal import Sinsal
 from bazi.domain.user import User
 from bazi.domain.util import year_to_ganji
 
@@ -48,43 +46,41 @@ class Interpreter:
         natal: NatalInfo,
         postnatal: PostnatalInfo,
     ) -> Interpretation:
-        yongshin = natal.yongshin
-        age = user.age(postnatal.year)
-
-        seun_ganji = year_to_ganji(postnatal.year)
+        self.user = user
+        self.natal = natal
+        self.postnatal = postnatal
+        self.seun_ganji = year_to_ganji(postnatal.year)
+        self.age = user.age(postnatal.year)
 
         # 1. 용신 충족
-        yongshin_in_seun = self._check_yongshin(yongshin, seun_ganji)
-        current_daeun = self._get_current_daeun(postnatal.daeun, age)
-        yongshin_in_daeun = self._check_yongshin(yongshin, current_daeun.ganji) if current_daeun else False
+        self.current_daeun = self._get_current_daeun()
+        yongshin_in_seun = self._check_yongshin(self.seun_ganji)
+        yongshin_in_daeun = self._check_yongshin(self.current_daeun.ganji) if self.current_daeun else False
 
         # 2. 십신 해석
         seun_sipsin = [postnatal.seun_stem, postnatal.seun_branch]
-        daeun_sipsin = self._calc_sipsin(natal.saju.day_stem, current_daeun.ganji) if current_daeun else []
+        daeun_sipsin = self._calc_sipsin(self.current_daeun.ganji) if self.current_daeun else []
 
         # 3. 충·합
-        seun_clashes = self._find_clashes(natal, seun_ganji)
-        seun_combines = self._find_combines(natal, seun_ganji)
-        daeun_clashes = self._find_clashes(natal, current_daeun.ganji) if current_daeun else []
-        daeun_combines = self._find_combines(natal, current_daeun.ganji) if current_daeun else []
+        seun_clashes = self._find_clashes(self.seun_ganji)
+        seun_combines = self._find_combines(self.seun_ganji)
+        daeun_clashes = self._find_clashes(self.current_daeun.ganji) if self.current_daeun else []
+        daeun_combines = self._find_combines(self.current_daeun.ganji) if self.current_daeun else []
 
         # 종합 문장 생성
         summary = self._build_summary(
-            yongshin, yongshin_in_seun, yongshin_in_daeun,
+            yongshin_in_seun, yongshin_in_daeun,
             seun_sipsin, daeun_sipsin,
-            natal.sibi_unseong, natal.sinsal,
             seun_clashes, seun_combines,
             daeun_clashes, daeun_combines,
-            postnatal.year,
-            current_daeun,
         )
 
         return Interpretation(
-            yongshin=yongshin,
+            yongshin=natal.yongshin,
             yongshin_in_seun=yongshin_in_seun,
             yongshin_in_daeun=yongshin_in_daeun,
             seun_sipsin=seun_sipsin,
-            current_daeun=current_daeun,
+            current_daeun=self.current_daeun,
             daeun_sipsin=daeun_sipsin,
             sibi_unseong=natal.sibi_unseong,
             sinsal=natal.sinsal,
@@ -95,32 +91,28 @@ class Interpreter:
             summary=summary,
         )
 
-    @staticmethod
-    def _get_current_daeun(daeun: list[DaeunPeriod], age: int) -> DaeunPeriod | None:
+    def _get_current_daeun(self) -> DaeunPeriod | None:
         """현재 나이에 해당하는 대운을 찾는다."""
-        for d in daeun:
-            if d.start_age <= age <= d.end_age:
+        for d in self.postnatal.daeun:
+            if d.start_age <= self.age <= d.end_age:
                 return d
         return None
 
-    @staticmethod
-    def _check_yongshin(yongshin: Oheng, ganji: str) -> bool:
+    def _check_yongshin(self, ganji: str) -> bool:
         """간지에 용신 오행이 포함되어 있는지 확인한다."""
-        return any(lookup(ch).element == yongshin for ch in ganji)
+        return any(lookup(ch).element == self.natal.yongshin for ch in ganji)
 
-    @staticmethod
-    def _calc_sipsin(day_stem: str, ganji: str) -> list[tuple[str, Sipsin]]:
+    def _calc_sipsin(self, ganji: str) -> list[tuple[str, Sipsin]]:
         """간지의 십신을 계산한다."""
-        ds = lookup(day_stem)
+        ds = lookup(self.natal.saju.day_stem)
         return [(ch, Sipsin.of(ds, lookup(ch))) for ch in ganji]
 
-    @staticmethod
-    def _find_clashes(natal: NatalInfo, ganji: str) -> list[dict]:
+    def _find_clashes(self, ganji: str) -> list[dict]:
         """간지와 사주 네 기둥 사이의 지지충(衝)을 찾는다."""
         incoming = Branch[ganji[1]]
         results = []
 
-        for i, pillar in enumerate(natal.saju.pillars):
+        for i, pillar in enumerate(self.natal.saju.pillars):
             if incoming.clashes.name == pillar[1]:
                 results.append({
                     "incoming": incoming.name,
@@ -130,14 +122,13 @@ class Interpreter:
 
         return results
 
-    @staticmethod
-    def _find_combines(natal: NatalInfo, ganji: str) -> list[dict]:
+    def _find_combines(self, ganji: str) -> list[dict]:
         """간지와 사주 네 기둥 사이의 합(天干合·地支六合)을 찾는다."""
         incoming_stem = Stem[ganji[0]]
         incoming_branch = Branch[ganji[1]]
         results = []
 
-        for i, pillar in enumerate(natal.saju.pillars):
+        for i, pillar in enumerate(self.natal.saju.pillars):
             if incoming_stem.combines.name == pillar[0]:
                 results.append({
                     "incoming": incoming_stem.name,
@@ -155,34 +146,32 @@ class Interpreter:
 
         return results
 
-    @staticmethod
     def _build_summary(
-        yongshin: Oheng,
+        self,
         yongshin_in_seun: bool,
         yongshin_in_daeun: bool,
         seun_sipsin: list[tuple[str, Sipsin]],
         daeun_sipsin: list[tuple[str, Sipsin]],
-        sibi_unseong: list[tuple[str, SibiUnseong]],
-        sinsal: list[tuple[Branch, Sinsal]],
         seun_clashes: list[dict],
         seun_combines: list[dict],
         daeun_clashes: list[dict],
         daeun_combines: list[dict],
-        seun_year: int,
-        current_daeun: DaeunPeriod | None,
     ) -> list[str]:
         """규칙 기반으로 종합 해석 문장을 생성한다."""
         lines = []
+        yongshin = self.natal.yongshin
+        year = self.postnatal.year
+        current_daeun = self.current_daeun
 
         # 용신 충족
         if yongshin_in_seun and yongshin_in_daeun:
-            lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin.name})이 작용하여 매우 유리한 해입니다.")
+            lines.append(f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 작용하여 매우 유리한 해입니다.")
         elif yongshin_in_seun:
-            lines.append(f"{seun_year}년 세운에 용신({yongshin.name})이 있어 올해의 기회를 잘 살릴 수 있습니다.")
+            lines.append(f"{year}년 세운에 용신({yongshin.name})이 있어 올해의 기회를 잘 살릴 수 있습니다.")
         elif yongshin_in_daeun:
-            lines.append(f"대운에 용신({yongshin.name})이 있어 큰 흐름은 좋으나, {seun_year}년 세운에는 용신이 부재합니다.")
+            lines.append(f"대운에 용신({yongshin.name})이 있어 큰 흐름은 좋으나, {year}년 세운에는 용신이 부재합니다.")
         else:
-            lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin.name})이 없어 신중한 판단이 필요합니다.")
+            lines.append(f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 없어 신중한 판단이 필요합니다.")
 
         # 세운 십신 해석
         for char, s in seun_sipsin:
@@ -195,12 +184,12 @@ class Interpreter:
                 lines.append(f"  대운 {char}({s.name}): {s.domain} 방면의 큰 흐름이 작용합니다.")
 
         # 십이운성 (일주 기준)
-        if sibi_unseong:
-            day_pillar, day_unseong = sibi_unseong[2]  # 일주
+        if self.natal.sibi_unseong:
+            day_pillar, day_unseong = self.natal.sibi_unseong[2]  # 일주
             lines.append(f"일주 십이운성은 {day_unseong.name}({day_unseong.meaning})입니다.")
 
         # 신살
-        for branch, s in sinsal:
+        for branch, s in self.natal.sinsal:
             lines.append(f"사주에 {s.korean}({branch.name})이(가) 있습니다: {s.meaning}.")
 
         # 충

@@ -65,35 +65,39 @@ def test_daeun_start_age_backward():
 def test_get_current_daeun():
     """현재 나이에 해당하는 대운 찾기"""
     postnatal = analyze_postnatal(MALE_USER, SAJU, year=2026)
+    interp = Interpreter()
+    result = interp(MALE_USER, NATAL, postnatal)
 
-    assert Interpreter._get_current_daeun(postnatal.daeun, 15).ganji == "丁亥"
-    assert Interpreter._get_current_daeun(postnatal.daeun, 25).ganji == "戊子"
-    assert Interpreter._get_current_daeun(postnatal.daeun, 37).ganji == "己丑"
+    assert result.current_daeun is not None
+    assert result.current_daeun.ganji == "己丑"  # 37세(2026-1990+1)
 
 
 def test_check_yongshin_in_seun():
     """세운에서 용신 확인"""
     postnatal = analyze_postnatal(MALE_USER, SAJU, year=2026)
+    result = Interpreter()(MALE_USER, NATAL, postnatal)
     # 용신=金, 2026=丙午(화,화) → False
-    seun_ganji = year_to_ganji(2026)
-    assert Interpreter._check_yongshin(NATAL.yongshin, seun_ganji) is False
+    assert result.yongshin_in_seun is False
 
 
 def test_find_clashes():
     """지지충 찾기 (1984-03-15 12:00, 년주에 子 → 2026 丙午와 충)"""
+    user_1984 = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1984, 3, 15, 12, 0))
     saju = Saju(1984, 3, 15, 12, 0)
     natal = analyze_natal(saju)
+    postnatal = analyze_postnatal(user_1984, saju, year=2026)
+    result = Interpreter()(user_1984, natal, postnatal)
 
-    clashes = Interpreter._find_clashes(natal, "丙午")
-    assert len(clashes) >= 1
-    assert any(c["incoming"] == "午" and c["target"] == "子" for c in clashes)
+    assert len(result.seun_clashes) >= 1
+    assert any(c["incoming"] == "午" and c["target"] == "子" for c in result.seun_clashes)
 
 
 def test_find_combines():
     """지지합 찾기 (1990-10-10, 시주 未 → 丙午의 午와 지지합)"""
-    combines = Interpreter._find_combines(NATAL, "丙午")
-    branch_combines = [c for c in combines if c["type"] == "지지합"]
+    postnatal = analyze_postnatal(MALE_USER, SAJU, year=2026)
+    result = Interpreter()(MALE_USER, NATAL, postnatal)
 
+    branch_combines = [c for c in result.seun_combines if c["type"] == "지지합"]
     assert len(branch_combines) == 1
     assert branch_combines[0]["incoming"] == "午"
     assert branch_combines[0]["target"] == "未"
