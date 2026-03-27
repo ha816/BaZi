@@ -63,8 +63,8 @@ def main():
         dt = user.birth_dt
         saju = Saju(dt.year, dt.month, dt.day, dt.hour, dt.minute, city=user.city)
         natal = analyze_natal(saju)
-        postnatal = analyze_postnatal(user, saju, year=analysis_year)
-        result = interpret(user, natal, postnatal)
+        postnatal = analyze_postnatal(user, natal, year=analysis_year)
+        summary = interpret(natal, postnatal)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return
@@ -116,49 +116,49 @@ def main():
     st.header(f"{analysis_year}년 세운")
     st.write(f"세운 간지: **{year_to_ganji(analysis_year)}**")
 
-    if result.yongshin_in_seun:
+    if postnatal.yongshin_in_seun:
         st.success(f"세운에 용신({yong.name})이 포함되어 있습니다.")
     else:
         st.warning(f"세운에 용신({yong.name})이 없습니다.")
 
-    for char, s in result.seun_sipsin:
+    for char, s in [postnatal.seun_stem, postnatal.seun_branch]:
         st.write(f"**{char}**({s.name}): {s.domain}")
 
     # ── 대운 ──
     st.header("대운 흐름")
 
-    if result.current_daeun:
-        daeun = result.current_daeun
+    if postnatal.current_daeun:
+        daeun = postnatal.current_daeun
         st.write(f"현재 대운: **{daeun.ganji}** ({daeun.start_age}~{daeun.end_age}세)")
 
-        if result.yongshin_in_daeun:
+        if postnatal.yongshin_in_daeun:
             st.success(f"대운에 용신({yong.name})이 포함되어 있습니다.")
         else:
             st.warning(f"대운에 용신({yong.name})이 없습니다.")
 
-        for char, s in result.daeun_sipsin:
+        for char, s in postnatal.daeun_sipsin:
             st.write(f"**{char}**({s.name}): {s.domain}")
 
     # 대운 전체 타임라인
     st.subheader("대운 타임라인")
     for d in postnatal.daeun:
-        marker = " ← 현재" if result.current_daeun and d.ganji == result.current_daeun.ganji else ""
+        marker = " ← 현재" if postnatal.current_daeun and d.ganji == postnatal.current_daeun.ganji else ""
         st.write(f"**{d.ganji}** ({d.start_age}~{d.end_age}세){marker}")
 
     # ── 충·합 ──
-    if result.seun_clashes or result.daeun_clashes:
+    if postnatal.seun_clashes or postnatal.daeun_clashes:
         st.subheader("충(衝) 감지")
-        for clash in result.seun_clashes + result.daeun_clashes:
+        for clash in postnatal.seun_clashes + postnatal.daeun_clashes:
             st.error(f"{clash['incoming']} ↔ {clash['target']} ({clash['pillar']})")
 
-    if result.seun_combines or result.daeun_combines:
+    if postnatal.seun_combines or postnatal.daeun_combines:
         st.subheader("합(合) 감지")
-        for combine in result.seun_combines + result.daeun_combines:
+        for combine in postnatal.seun_combines + postnatal.daeun_combines:
             st.success(f"{combine['incoming']} ↔ {combine['target']} ({combine['pillar']}, {combine['type']})")
 
     # ── 종합 해석 ──
     st.header("종합 해석")
-    for line in result.summary:
+    for line in summary:
         st.write(line)
 
 

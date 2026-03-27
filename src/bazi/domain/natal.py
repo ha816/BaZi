@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -184,3 +184,17 @@ class PostnatalInfo:
     seun_stem: tuple[str, Sipsin]
     seun_branch: tuple[str, Sipsin]
     daeun: list[DaeunPeriod]
+
+    # 용신 충족
+    yongshin_in_seun: bool = False
+    yongshin_in_daeun: bool = False
+
+    # 현재 대운
+    current_daeun: DaeunPeriod | None = None
+    daeun_sipsin: list[tuple[str, Sipsin]] = field(default_factory=list)
+
+    # 충·합
+    seun_clashes: list[dict] = field(default_factory=list)
+    seun_combines: list[dict] = field(default_factory=list)
+    daeun_clashes: list[dict] = field(default_factory=list)
+    daeun_combines: list[dict] = field(default_factory=list)

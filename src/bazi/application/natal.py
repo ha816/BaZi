@@ -5,7 +5,7 @@ from collections import Counter
 from sajupy import SajuCalculator
 
 from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem, lookup
-from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Saju, Sinsal
+from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, Pillar, PostnatalInfo, Saju, Sinsal
 from bazi.domain.user import User
 from bazi.domain.util import parse_term_time, year_to_ganji
 
@@ -77,31 +77,93 @@ class PostnatalAnalyzer:
     def __call__(
         self,
         user: User,
-        saju: Saju,
+        natal: NatalInfo,
         year: int,
     ) -> PostnatalInfo:
         self.user = user
-        self.saju = saju
+        self.natal = natal
+        self.saju = natal.saju
         self.year = year
+        self.seun_ganji = year_to_ganji(year)
+        self.day_stem = lookup(self.saju.day_stem)
 
         seun_stem, seun_branch = self._calc_seun()
         daeun = self._calc_daeun()
+        age = user.age(year)
+        current_daeun = self._get_current_daeun(daeun, age)
 
         return PostnatalInfo(
             year=year,
             seun_stem=seun_stem,
             seun_branch=seun_branch,
             daeun=daeun,
+            yongshin_in_seun=self._check_yongshin(self.seun_ganji),
+            yongshin_in_daeun=self._check_yongshin(current_daeun.ganji) if current_daeun else False,
+            current_daeun=current_daeun,
+            daeun_sipsin=self._calc_sipsin(current_daeun.ganji) if current_daeun else [],
+            seun_clashes=self._find_clashes(self.seun_ganji),
+            seun_combines=self._find_combines(self.seun_ganji),
+            daeun_clashes=self._find_clashes(current_daeun.ganji) if current_daeun else [],
+            daeun_combines=self._find_combines(current_daeun.ganji) if current_daeun else [],
         )
 
     def _calc_seun(self) -> tuple[tuple[str, Sipsin], tuple[str, Sipsin]]:
         """세운(歲運) 분석: 해당 연도의 간지가 일간에 미치는 영향."""
-        ganji = year_to_ganji(self.year)
-        ds = lookup(self.saju.day_stem)
+        g = self.seun_ganji
         return (
-            (ganji[0], Sipsin.of(ds, lookup(ganji[0]))),
-            (ganji[1], Sipsin.of(ds, lookup(ganji[1]))),
+            (g[0], Sipsin.of(self.day_stem, lookup(g[0]))),
+            (g[1], Sipsin.of(self.day_stem, lookup(g[1]))),
         )
+
+    def _get_current_daeun(self, daeun: list[DaeunPeriod], age: int) -> DaeunPeriod | None:
+        """현재 나이에 해당하는 대운을 찾는다."""
+        for d in daeun:
+            if d.start_age <= age <= d.end_age:
+                return d
+        return None
+
+    def _check_yongshin(self, ganji: str) -> bool:
+        """간지에 용신 오행이 포함되어 있는지 확인한다."""
+        return any(lookup(ch).element == self.natal.yongshin for ch in ganji)
+
+    def _calc_sipsin(self, ganji: str) -> list[tuple[str, Sipsin]]:
+        """간지의 십신을 계산한다."""
+        return [(ch, Sipsin.of(self.day_stem, lookup(ch))) for ch in ganji]
+
+    def _find_clashes(self, ganji: str) -> list[dict]:
+        """간지와 사주 네 기둥 사이의 지지충(衝)을 찾는다."""
+        incoming = Branch[ganji[1]]
+        results = []
+        for i, pillar in enumerate(self.saju.pillars):
+            if incoming.clashes.name == pillar[1]:
+                results.append({
+                    "incoming": incoming.name,
+                    "target": pillar[1],
+                    "pillar": Pillar.by_order(i).korean,
+                })
+        return results
+
+    def _find_combines(self, ganji: str) -> list[dict]:
+        """간지와 사주 네 기둥 사이의 합(天干合·地支六合)을 찾는다."""
+        incoming_stem = Stem[ganji[0]]
+        incoming_branch = Branch[ganji[1]]
+        results = []
+        for i, pillar in enumerate(self.saju.pillars):
+            if incoming_stem.combines.name == pillar[0]:
+                results.append({
+                    "incoming": incoming_stem.name,
+                    "target": pillar[0],
+                    "pillar": Pillar.by_order(i).korean,
+                    "type": "천간합",
+                })
+            if incoming_branch.combines.name == pillar[1]:
+                results.append({
+                    "incoming": incoming_branch.name,
+                    "target": pillar[1],
+                    "pillar": Pillar.by_order(i).korean,
+                    "type": "지지합",
+                })
+        return results
 
     def _calc_daeun(self) -> list[DaeunPeriod]:
         """대운 목록을 생성한다."""
