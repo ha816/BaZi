@@ -22,7 +22,6 @@ class NatalAnalyzer:
         strength = self._judge_strength(stats, me)
         yongshin = self._find_yongshin(me, strength)
         sipsin = self._analyze_sipsin(saju)
-        sipsin_domains = self._build_sipsin_domains(sipsin)
 
         return NatalInfo(
             saju=saju,
@@ -32,7 +31,6 @@ class NatalAnalyzer:
             yongshin=yongshin,
             sipsin=sipsin,
             personality=me.personality,
-            sipsin_domains=sipsin_domains,
         )
 
     @staticmethod
@@ -54,20 +52,12 @@ class NatalAnalyzer:
         return me.generates.name if strength > 0 else me.generated_by.name
 
     @staticmethod
-    def _analyze_sipsin(saju: Saju) -> list[tuple[str, str]]:
+    def _analyze_sipsin(saju: Saju) -> list[tuple[str, Sipsin]]:
         """팔자에서 일간을 제외한 7글자의 십신을 분석한다."""
         all_chars = list(saju.palja)
         day_stem_index = 4
         chars = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
-        return [(char, Sipsin.of(saju.day_stem, char).name) for char in chars]
-
-    @staticmethod
-    def _build_sipsin_domains(sipsin: list[tuple[str, str]]) -> list[dict]:
-        """십신별 영역 해석을 생성한다."""
-        return [
-            {"char": char, "sipsin": s, "domain": Sipsin[s].domain}
-            for char, s in sipsin
-        ]
+        return [(char, Sipsin.of(saju.day_stem, char)) for char in chars]
 
 
 class PostnatalAnalyzer:
@@ -91,12 +81,12 @@ class PostnatalAnalyzer:
         )
 
     @staticmethod
-    def _calc_seun(saju: Saju, seun_ganji: str) -> list[tuple[str, str]]:
+    def _calc_seun(saju: Saju, seun_ganji: str) -> list[tuple[str, Sipsin]]:
         """세운(歲運) 분석: 해당 연도의 간지가 일간에 미치는 영향."""
         ds = saju.day_stem
         return [
-            (seun_ganji[0], Sipsin.of(ds, seun_ganji[0]).name),
-            (seun_ganji[1], Sipsin.of(ds, seun_ganji[1]).name),
+            (seun_ganji[0], Sipsin.of(ds, seun_ganji[0])),
+            (seun_ganji[1], Sipsin.of(ds, seun_ganji[1])),
         ]
 
     @staticmethod

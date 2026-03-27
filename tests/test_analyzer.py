@@ -59,8 +59,8 @@ def test_analyze_sipsin():
 
     assert len(info.sipsin) == 7
     expected = [
-        ("庚", "食神"), ("午", "偏印"), ("丙", "偏印"), ("戌", "比肩"),
-        ("申", "食神"), ("己", "劫財"), ("未", "劫財"),
+        ("庚", Sipsin.食神), ("午", Sipsin.偏印), ("丙", Sipsin.偏印), ("戌", Sipsin.比肩),
+        ("申", Sipsin.食神), ("己", Sipsin.劫財), ("未", Sipsin.劫財),
     ]
     assert info.sipsin == expected
 
@@ -69,9 +69,8 @@ def test_sipsin_domains():
     """십신 영역 해석"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
 
-    assert len(info.sipsin_domains) == 7
-    assert info.sipsin_domains[0]["sipsin"] == "食神"
-    assert info.sipsin_domains[0]["domain"] == "재능·표현·식복"
+    assert info.sipsin[0][1] == Sipsin.食神
+    assert info.sipsin[0][1].domain == "재능·표현·식복"
 
 
 def test_pillars_property():

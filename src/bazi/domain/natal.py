@@ -6,10 +6,16 @@
   - 기(氣) 12개: 각 월의 중간점. (현재 미사용)
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sajupy import calculate_saju as _sajupy_calculate
+
+if TYPE_CHECKING:
+    from bazi.domain.ganji import Sipsin
 
 
 class Saju:
@@ -107,9 +113,8 @@ class NatalInfo:
     element_stats: dict[str, int]
     strength: int
     yongshin: str
-    sipsin: list[tuple[str, str]]
+    sipsin: list[tuple[str, Sipsin]]
     personality: str
-    sipsin_domains: list[dict]
 
 
 @dataclass
@@ -125,5 +130,5 @@ class PostnatalInfo:
     """후천 분석 결과"""
     year: int
     seun_ganji: str
-    seun: list[tuple[str, str]]
+    seun: list[tuple[str, Sipsin]]
     daeun: list[DaeunPeriod]

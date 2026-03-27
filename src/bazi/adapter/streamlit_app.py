@@ -108,8 +108,8 @@ def main():
 
     # ── 십신 분석 ──
     st.subheader("십신 분석")
-    for item in natal.sipsin_domains:
-        st.write(f"**{item['char']}** → {item['sipsin']} : {item['domain']}")
+    for char, s in natal.sipsin:
+        st.write(f"**{char}** → {s.name} : {s.domain}")
 
     # ── 세운 ──
     st.header(f"{analysis_year}년 세운")
@@ -120,8 +120,8 @@ def main():
     else:
         st.warning(f"세운에 용신({yong})이 없습니다.")
 
-    for item in result.seun_sipsin:
-        st.write(f"**{item['char']}**({item['sipsin']}): {item['domain']}")
+    for char, s in result.seun_sipsin:
+        st.write(f"**{char}**({s.name}): {s.domain}")
 
     # ── 대운 ──
     st.header("대운 흐름")
@@ -135,8 +135,8 @@ def main():
         else:
             st.warning(f"대운에 용신({yong})이 없습니다.")
 
-        for item in result.daeun_sipsin:
-            st.write(f"**{item['char']}**({item['sipsin']}): {item['domain']}")
+        for char, s in result.daeun_sipsin:
+            st.write(f"**{char}**({s.name}): {s.domain}")
 
     # 대운 전체 타임라인
     st.subheader("대운 타임라인")

@@ -17,11 +17,11 @@ class Interpretation:
     yongshin_in_daeun: bool
 
     # 세운 해석
-    seun_sipsin: list[dict]
+    seun_sipsin: list[tuple[str, Sipsin]]
 
     # 현재 대운 해석
     current_daeun: DaeunPeriod | None
-    daeun_sipsin: list[dict]
+    daeun_sipsin: list[tuple[str, Sipsin]]
 
     # 충·합
     seun_clashes: list[dict]
@@ -51,8 +51,8 @@ class Interpreter:
         yongshin_in_daeun = self._check_yongshin(yongshin, current_daeun.ganji) if current_daeun else False
 
         # 2. 십신 해석
-        seun_sipsin = self._build_sipsin_domains(postnatal.seun)
-        daeun_sipsin = self._calc_sipsin_domains(natal.saju.day_stem, current_daeun.ganji) if current_daeun else []
+        seun_sipsin = postnatal.seun
+        daeun_sipsin = self._calc_sipsin(natal.saju.day_stem, current_daeun.ganji) if current_daeun else []
 
         # 3. 충·합
         seun_clashes = self._find_clashes(natal, postnatal.seun_ganji)
@@ -98,24 +98,9 @@ class Interpreter:
         return any(lookup(ch).element.name == yongshin for ch in ganji)
 
     @staticmethod
-    def _build_sipsin_domains(seun: list[tuple[str, str]]) -> list[dict]:
-        """십신 튜플 리스트를 영역 해석 dict로 변환한다."""
-        return [
-            {"char": char, "sipsin": sipsin, "domain": Sipsin[sipsin].domain}
-            for char, sipsin in seun
-        ]
-
-    @staticmethod
-    def _calc_sipsin_domains(day_stem: str, ganji: str) -> list[dict]:
-        """간지의 십신 영역 해석을 계산한다."""
-        return [
-            {
-                "char": ch,
-                "sipsin": (s := Sipsin.of(day_stem, ch)).name,
-                "domain": s.domain,
-            }
-            for ch in ganji
-        ]
+    def _calc_sipsin(day_stem: str, ganji: str) -> list[tuple[str, Sipsin]]:
+        """간지의 십신을 계산한다."""
+        return [(ch, Sipsin.of(day_stem, ch)) for ch in ganji]
 
     @staticmethod
     def _find_clashes(natal: NatalInfo, ganji: str) -> list[dict]:
@@ -163,8 +148,8 @@ class Interpreter:
         yongshin: str,
         yongshin_in_seun: bool,
         yongshin_in_daeun: bool,
-        seun_sipsin: list[dict],
-        daeun_sipsin: list[dict],
+        seun_sipsin: list[tuple[str, Sipsin]],
+        daeun_sipsin: list[tuple[str, Sipsin]],
         seun_clashes: list[dict],
         seun_combines: list[dict],
         daeun_clashes: list[dict],
@@ -186,14 +171,14 @@ class Interpreter:
             lines.append(f"{seun_year}년은 세운과 대운 모두 용신({yongshin})이 없어 신중한 판단이 필요합니다.")
 
         # 세운 십신 해석
-        for item in seun_sipsin:
-            lines.append(f"세운 {item['char']}({item['sipsin']}): {item['domain']} 방면에 변화가 예상됩니다.")
+        for char, s in seun_sipsin:
+            lines.append(f"세운 {char}({s.name}): {s.domain} 방면에 변화가 예상됩니다.")
 
         # 대운 십신 해석
         if current_daeun and daeun_sipsin:
             lines.append(f"현재 대운 {current_daeun.ganji}({current_daeun.start_age}~{current_daeun.end_age}세):")
-            for item in daeun_sipsin:
-                lines.append(f"  대운 {item['char']}({item['sipsin']}): {item['domain']} 방면의 큰 흐름이 작용합니다.")
+            for char, s in daeun_sipsin:
+                lines.append(f"  대운 {char}({s.name}): {s.domain} 방면의 큰 흐름이 작용합니다.")
 
         # 충
         for clash in seun_clashes:

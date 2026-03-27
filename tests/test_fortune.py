@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from bazi.domain.natal import Saju
+from bazi.domain.ganji import Sipsin
 from bazi.domain.user import Gender, User
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import Interpreter
@@ -28,7 +29,7 @@ def test_seun():
     postnatal = analyze_postnatal(MALE_USER, SAJU, year=2026)
 
     assert postnatal.seun_ganji == "丙午"
-    assert postnatal.seun == [("丙", "偏印"), ("午", "偏印")]
+    assert postnatal.seun == [("丙", Sipsin.偏印), ("午", Sipsin.偏印)]
 
 
 def test_daeun_forward():
