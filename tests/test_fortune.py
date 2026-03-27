@@ -11,7 +11,7 @@ analyze_postnatal = PostnatalAnalyzer()
 
 MALE_USER = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
 FEMALE_USER = User(name="테스트", gender=Gender.FEMALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-SAJU = Saju(MALE_USER.birth_dt)
+SAJU = Saju(1990, 10, 10, 14, 30)
 NATAL = analyze_natal(SAJU)
 
 
@@ -79,7 +79,7 @@ def test_check_yongshin_in_seun():
 
 def test_find_clashes():
     """지지충 찾기 (1984-03-15 12:00, 년주에 子 → 2026 丙午와 충)"""
-    saju = Saju(datetime(1984, 3, 15, 12, 0))
+    saju = Saju(1984, 3, 15, 12, 0)
     natal = analyze_natal(saju)
 
     clashes = Interpreter._find_clashes(natal, "丙午")

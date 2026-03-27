@@ -6,9 +6,8 @@ from datetime import datetime
 from sajupy import SajuCalculator
 
 from bazi.domain.fortune import Jeol, Saju
-from bazi.domain.ganji import Branch, Oheng, Stem, lookup
+from bazi.domain.ganji import Branch, Oheng, Sipsin, Stem, lookup
 from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
-from bazi.domain.sipsin import Sipsin
 from bazi.domain.user import User
 from bazi.domain.util import parse_term_time, year_to_ganji
 
@@ -82,7 +81,7 @@ class PostnatalAnalyzer:
     ) -> PostnatalInfo:
         seun_ganji = year_to_ganji(year)
         seun = self._calc_seun(saju, seun_ganji)
-        daeun = self._calc_daeun(saju, user.gender.is_male)
+        daeun = self._calc_daeun(saju, user)
 
         return PostnatalInfo(
             year=year,
@@ -101,11 +100,11 @@ class PostnatalAnalyzer:
         ]
 
     @staticmethod
-    def _calc_daeun(saju: Saju, is_male: bool) -> list[DaeunPeriod]:
+    def _calc_daeun(saju: Saju, user: User) -> list[DaeunPeriod]:
         """대운 목록을 생성한다."""
-        forward = Stem[saju.year_pillar[0]].is_yang == is_male
+        forward = Stem[saju.year_pillar[0]].is_yang == user.gender.is_male
         sequence = PostnatalAnalyzer._get_daeun_sequence(saju, forward)
-        start_age = PostnatalAnalyzer._calc_start_age(saju.birth_dt, forward)
+        start_age = PostnatalAnalyzer._calc_start_age(user.birth_dt, forward)
 
         return [
             DaeunPeriod(

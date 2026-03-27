@@ -13,7 +13,7 @@ interpret = Interpreter()
 def test_full_interpretation():
     """종합 해석 통합 테스트"""
     user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-    saju = Saju(user.birth_dt)
+    saju = Saju(1990, 10, 10, 14, 30)
     natal = analyze_natal(saju)
     postnatal = analyze_postnatal(user, saju, year=2026)
 

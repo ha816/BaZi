@@ -59,7 +59,8 @@ def main():
     )
 
     try:
-        saju = Saju(user.birth_dt, city=user.city)
+        dt = user.birth_dt
+        saju = Saju(dt.year, dt.month, dt.day, dt.hour, dt.minute, city=user.city)
         natal = analyze_natal(saju)
         postnatal = analyze_postnatal(user, saju, year=analysis_year)
         result = interpret(user, natal, postnatal)

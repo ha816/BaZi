@@ -6,7 +6,6 @@
   - 기(氣) 12개: 각 월의 중간점. (현재 미사용)
 """
 
-from datetime import datetime
 from enum import Enum
 
 from sajupy import calculate_saju as _sajupy_calculate
@@ -20,15 +19,14 @@ class Saju:
 
     def __init__(
         self,
-        birth_dt: datetime,
+        year: int, month: int, day: int,
+        hour: int, minute: int = 0,
         city: str = "Seoul",
         use_solar_time: bool = True,
     ):
-        self.birth_dt = birth_dt
-
         result = _sajupy_calculate(
-            year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
-            hour=birth_dt.hour, minute=birth_dt.minute, city=city,
+            year=year, month=month, day=day,
+            hour=hour, minute=minute, city=city,
             use_solar_time=use_solar_time,
         )
         self.year_pillar: str = result["year_pillar"]

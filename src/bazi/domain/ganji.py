@@ -1,4 +1,4 @@
-"""간지(干支) - 천간(天干), 지지(地支), 오행(五行), 충·합의 기본 데이터.
+"""간지(干支) - 천간(天干), 지지(地支), 오행(五行), 충·합, 십신(十神).
 
 간지는 사주의 최소 구성 단위이다.
   - 천간(干) 10개: 甲 乙 丙 丁 戊 己 庚 辛 壬 癸
@@ -9,6 +9,9 @@
 오행(五行): 木(나무), 火(불), 土(흙), 金(쇠), 水(물)
   - 상생(相生): 서로 돕는 관계. 木→火→土→金→水→木 순환.
   - 상극(相剋): 서로 억제하는 관계. 木→土→水→火→金→木 순환.
+
+십신(十神): 일간(나)을 기준으로 다른 글자와의 10가지 관계.
+  오행 관계 5가지 × 음양 일치 여부 2가지 = 10가지.
 """
 
 from enum import Enum
@@ -220,3 +223,49 @@ def lookup(char: str) -> Stem | Branch:
         return Stem[char]
     except KeyError:
         return Branch[char]
+
+
+# ── 십신(十神) ──
+
+
+class Sipsin(Enum):
+    """십신(十神) - 일간 기준 10가지 관계.
+
+    value는 해당 십신의 영역(domain) 해석이다.
+    """
+
+    比肩 = "동료·경쟁·독립"      # 비견 - 같은 오행, 같은 음양
+    劫財 = "경쟁·손재·형제"      # 겁재 - 같은 오행, 다른 음양
+    食神 = "재능·표현·식복"      # 식신 - 내가 생함, 같은 음양
+    傷官 = "자유·반항·창의"      # 상관 - 내가 생함, 다른 음양
+    偏財 = "투자·유동재산·아버지"  # 편재 - 내가 극함, 같은 음양
+    正財 = "안정적수입·저축·근면"  # 정재 - 내가 극함, 다른 음양
+    偏官 = "권력·압박·변동"      # 편관 - 나를 극함, 같은 음양
+    正官 = "직장·명예·규율"      # 정관 - 나를 극함, 다른 음양
+    偏印 = "영감·편학·고독"      # 편인 - 나를 생함, 같은 음양
+    正印 = "학문·자격·어머니"     # 정인 - 나를 생함, 다른 음양
+
+    @property
+    def domain(self) -> str:
+        """영역 해석을 반환한다."""
+        return self.value
+
+    @classmethod
+    def of(cls, day_stem: str, char: str) -> "Sipsin":
+        """일간 기준으로 한 글자의 십신을 판별한다."""
+        me = lookup(day_stem)
+        target = lookup(char)
+        same_yinyang = me.is_yang == target.is_yang
+        me_el = me.element
+        target_el = target.element
+
+        if me_el == target_el:
+            return cls.比肩 if same_yinyang else cls.劫財
+        elif me_el.generates == target_el:
+            return cls.食神 if same_yinyang else cls.傷官
+        elif me_el.overcomes == target_el:
+            return cls.偏財 if same_yinyang else cls.正財
+        elif target_el.generates == me_el:
+            return cls.偏印 if same_yinyang else cls.正印
+        else:
+            return cls.偏官 if same_yinyang else cls.正官

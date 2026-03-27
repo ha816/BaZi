@@ -4,8 +4,7 @@ from dataclasses import dataclass, field
 
 from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo
 from bazi.domain.fortune import Pillar
-from bazi.domain.ganji import Branch, Stem, lookup
-from bazi.domain.sipsin import Sipsin
+from bazi.domain.ganji import Branch, Sipsin, Stem, lookup
 from bazi.domain.user import User
 
 
