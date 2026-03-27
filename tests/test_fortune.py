@@ -28,8 +28,8 @@ def test_seun():
     """세운 분석: 해당 연도 간지의 십신"""
     postnatal = analyze_postnatal(MALE_USER, SAJU, year=2026)
 
-    assert postnatal.seun_ganji == "丙午"
-    assert postnatal.seun == [("丙", Sipsin.偏印), ("午", Sipsin.偏印)]
+    assert postnatal.seun_stem == ("丙", Sipsin.偏印)
+    assert postnatal.seun_branch == ("午", Sipsin.偏印)
 
 
 def test_daeun_forward():
@@ -75,7 +75,8 @@ def test_check_yongshin_in_seun():
     """세운에서 용신 확인"""
     postnatal = analyze_postnatal(MALE_USER, SAJU, year=2026)
     # 용신=金, 2026=丙午(화,화) → False
-    assert Interpreter._check_yongshin(NATAL.yongshin, postnatal.seun_ganji) is False
+    seun_ganji = year_to_ganji(2026)
+    assert Interpreter._check_yongshin(NATAL.yongshin, seun_ganji) is False
 
 
 def test_find_clashes():

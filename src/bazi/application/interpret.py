@@ -7,6 +7,7 @@ from bazi.domain.natal import Pillar
 from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem, lookup
 from bazi.domain.natal import Sinsal
 from bazi.domain.user import User
+from bazi.domain.util import year_to_ganji
 
 
 @dataclass
@@ -50,18 +51,20 @@ class Interpreter:
         yongshin = natal.yongshin
         age = user.age(postnatal.year)
 
+        seun_ganji = year_to_ganji(postnatal.year)
+
         # 1. 용신 충족
-        yongshin_in_seun = self._check_yongshin(yongshin, postnatal.seun_ganji)
+        yongshin_in_seun = self._check_yongshin(yongshin, seun_ganji)
         current_daeun = self._get_current_daeun(postnatal.daeun, age)
         yongshin_in_daeun = self._check_yongshin(yongshin, current_daeun.ganji) if current_daeun else False
 
         # 2. 십신 해석
-        seun_sipsin = postnatal.seun
+        seun_sipsin = [postnatal.seun_stem, postnatal.seun_branch]
         daeun_sipsin = self._calc_sipsin(natal.saju.day_stem, current_daeun.ganji) if current_daeun else []
 
         # 3. 충·합
-        seun_clashes = self._find_clashes(natal, postnatal.seun_ganji)
-        seun_combines = self._find_combines(natal, postnatal.seun_ganji)
+        seun_clashes = self._find_clashes(natal, seun_ganji)
+        seun_combines = self._find_combines(natal, seun_ganji)
         daeun_clashes = self._find_clashes(natal, current_daeun.ganji) if current_daeun else []
         daeun_combines = self._find_combines(natal, current_daeun.ganji) if current_daeun else []
 

@@ -1,13 +1,11 @@
 """선천·후천 분석 (팔자 기반 분석 + 대운/세운)"""
 
 from collections import Counter
-from datetime import datetime
 
 from sajupy import SajuCalculator
 
-from bazi.domain.natal import Jeol, Saju
 from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem, lookup
-from bazi.domain.natal import DaeunPeriod, NatalInfo, PostnatalInfo, Sinsal
+from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Saju, Sinsal
 from bazi.domain.user import User
 from bazi.domain.util import parse_term_time, year_to_ganji
 
@@ -16,13 +14,13 @@ class NatalAnalyzer:
     """선천 분석기 — 사주(四柱)를 받아 분석 결과(NatalInfo)를 반환한다."""
 
     def __call__(self, saju: Saju) -> NatalInfo:
-        stats = self._count_oheng(saju)
-        me = lookup(saju.day_stem).element
+        self.saju = saju
+        self.day_stem = lookup(saju.day_stem)
+
+        stats = self._count_oheng()
+        me = self.day_stem.element
         strength = self._judge_strength(stats, me)
         yongshin = self._find_yongshin(me, strength)
-        sipsin = self._analyze_sipsin(saju)
-        sibi_unseong = self._analyze_sibi_unseong(saju)
-        sinsal = self._analyze_sinsal(saju)
 
         return NatalInfo(
             saju=saju,
@@ -30,52 +28,46 @@ class NatalAnalyzer:
             element_stats=stats,
             strength=strength,
             yongshin=yongshin,
-            sipsin=sipsin,
-            sibi_unseong=sibi_unseong,
-            sinsal=sinsal,
+            sipsin=self._analyze_sipsin(),
+            sibi_unseong=self._analyze_sibi_unseong(),
+            sinsal=self._analyze_sinsal(),
             personality=me.personality,
         )
 
-    @staticmethod
-    def _count_oheng(saju: Saju) -> dict[Oheng, int]:
+    def _count_oheng(self) -> dict[Oheng, int]:
         """팔자 8글자의 오행 분포를 집계한다."""
-        counts = Counter(lookup(char).element for char in saju.palja)
+        counts = Counter(lookup(char).element for char in self.saju.palja)
         return {o: counts.get(o, 0) for o in Oheng}
 
-    @staticmethod
-    def _judge_strength(stats: dict[Oheng, int], me: Oheng) -> int:
+    def _judge_strength(self, stats: dict[Oheng, int], me: Oheng) -> int:
         """일간 강약을 판단한다. 양수=신강, 0=중화, 음수=신약."""
         helping = stats[me] + stats[me.generated_by]
         draining = sum(stats.values()) - helping
         return helping - draining
 
-    @staticmethod
-    def _find_yongshin(me: Oheng, strength: int) -> Oheng:
+    def _find_yongshin(self, me: Oheng, strength: int) -> Oheng:
         """용신(用神)을 선정한다."""
         return me.generates if strength > 0 else me.generated_by
 
-    @staticmethod
-    def _analyze_sipsin(saju: Saju) -> list[tuple[str, Sipsin]]:
+    def _analyze_sipsin(self) -> list[tuple[str, Sipsin]]:
         """팔자에서 일간을 제외한 7글자의 십신을 분석한다."""
-        all_chars = list(saju.palja)
+        all_chars = list(self.saju.palja)
         day_stem_index = 4
         chars = all_chars[:day_stem_index] + all_chars[day_stem_index + 1:]
-        ds = lookup(saju.day_stem)
-        return [(char, Sipsin.of(ds, lookup(char))) for char in chars]
+        return [(char, Sipsin.of(self.day_stem, lookup(char))) for char in chars]
 
-    @staticmethod
-    def _analyze_sibi_unseong(saju: Saju) -> list[tuple[str, SibiUnseong]]:
+    def _analyze_sibi_unseong(self) -> list[tuple[str, SibiUnseong]]:
         """각 기둥 지지의 십이운성을 분석한다."""
+        stem = Stem[self.saju.day_stem]
         return [
-            (pillar, SibiUnseong.of(Stem[saju.day_stem], Branch[pillar[1]]))
-            for pillar in saju.pillars
+            (pillar, SibiUnseong.of(stem, Branch[pillar[1]]))
+            for pillar in self.saju.pillars
         ]
 
-    @staticmethod
-    def _analyze_sinsal(saju: Saju) -> list[tuple[Branch, Sinsal]]:
+    def _analyze_sinsal(self) -> list[tuple[Branch, Sinsal]]:
         """사주에서 신살을 찾는다."""
-        day_branch = Branch[saju.day_pillar[1]]
-        all_branches = [Branch[p[1]] for p in saju.pillars]
+        day_branch = Branch[self.saju.day_pillar[1]]
+        all_branches = [Branch[p[1]] for p in self.saju.pillars]
         return Sinsal.find_all(day_branch, all_branches)
 
 
@@ -88,32 +80,34 @@ class PostnatalAnalyzer:
         saju: Saju,
         year: int,
     ) -> PostnatalInfo:
-        seun_ganji = year_to_ganji(year)
-        seun = self._calc_seun(saju, seun_ganji)
-        daeun = self._calc_daeun(saju, user)
+        self.user = user
+        self.saju = saju
+        self.year = year
+
+        seun_stem, seun_branch = self._calc_seun()
+        daeun = self._calc_daeun()
 
         return PostnatalInfo(
             year=year,
-            seun_ganji=seun_ganji,
-            seun=seun,
+            seun_stem=seun_stem,
+            seun_branch=seun_branch,
             daeun=daeun,
         )
 
-    @staticmethod
-    def _calc_seun(saju: Saju, seun_ganji: str) -> list[tuple[str, Sipsin]]:
+    def _calc_seun(self) -> tuple[tuple[str, Sipsin], tuple[str, Sipsin]]:
         """세운(歲運) 분석: 해당 연도의 간지가 일간에 미치는 영향."""
-        ds = lookup(saju.day_stem)
-        return [
-            (seun_ganji[0], Sipsin.of(ds, lookup(seun_ganji[0]))),
-            (seun_ganji[1], Sipsin.of(ds, lookup(seun_ganji[1]))),
-        ]
+        ganji = year_to_ganji(self.year)
+        ds = lookup(self.saju.day_stem)
+        return (
+            (ganji[0], Sipsin.of(ds, lookup(ganji[0]))),
+            (ganji[1], Sipsin.of(ds, lookup(ganji[1]))),
+        )
 
-    @staticmethod
-    def _calc_daeun(saju: Saju, user: User) -> list[DaeunPeriod]:
+    def _calc_daeun(self) -> list[DaeunPeriod]:
         """대운 목록을 생성한다."""
-        forward = Stem[saju.year_pillar[0]].is_yang == user.gender.is_male
-        sequence = PostnatalAnalyzer._get_daeun_sequence(saju, forward)
-        start_age = PostnatalAnalyzer._calc_start_age(user.birth_dt, forward)
+        forward = Stem[self.saju.year_pillar[0]].is_yang == self.user.gender.is_male
+        sequence = self._get_daeun_sequence(forward)
+        start_age = self._calc_start_age(forward)
 
         return [
             DaeunPeriod(
@@ -124,10 +118,9 @@ class PostnatalAnalyzer:
             for i, ganji in enumerate(sequence)
         ]
 
-    @staticmethod
-    def _get_daeun_sequence(saju: Saju, forward: bool, count: int = 8) -> list[str]:
+    def _get_daeun_sequence(self, forward: bool, count: int = 8) -> list[str]:
         """대운 순서를 생성한다. 양남/음녀 → 순행, 음남/양녀 → 역행."""
-        month_pillar = saju.month_pillar
+        month_pillar = self.saju.month_pillar
         stem_idx = Stem[month_pillar[0]].order
         branch_idx = Branch[month_pillar[1]].order
         step = 1 if forward else -1
@@ -138,10 +131,10 @@ class PostnatalAnalyzer:
             for i in range(1, count + 1)
         ]
 
-    @staticmethod
-    def _calc_start_age(birth_dt: datetime, forward: bool) -> int:
+    def _calc_start_age(self, forward: bool) -> int:
         """대운 시작 나이를 계산한다. 생일에서 가장 가까운 절(節)까지의 일수 ÷ 3."""
         calc = SajuCalculator()
+        birth_dt = self.user.birth_dt
         birth_year = birth_dt.year
         term_data = calc.data[
             (calc.data["solar_term_korean"].isin(Jeol.korean_names()))

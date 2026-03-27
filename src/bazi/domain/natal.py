@@ -181,6 +181,6 @@ class DaeunPeriod:
 class PostnatalInfo:
     """후천 분석 결과"""
     year: int
-    seun_ganji: str
-    seun: list[tuple[str, Sipsin]]
+    seun_stem: tuple[str, Sipsin]
+    seun_branch: tuple[str, Sipsin]
     daeun: list[DaeunPeriod]

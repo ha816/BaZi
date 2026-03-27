@@ -8,6 +8,7 @@ from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.interpret import Interpreter
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
+from bazi.domain.util import year_to_ganji
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
@@ -113,7 +114,7 @@ def main():
 
     # ── 세운 ──
     st.header(f"{analysis_year}년 세운")
-    st.write(f"세운 간지: **{postnatal.seun_ganji}**")
+    st.write(f"세운 간지: **{year_to_ganji(analysis_year)}**")
 
     if result.yongshin_in_seun:
         st.success(f"세운에 용신({yong.name})이 포함되어 있습니다.")
