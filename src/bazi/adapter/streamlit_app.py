@@ -158,8 +158,31 @@ def main():
 
     # ── 종합 해석 ──
     st.header("종합 해석")
-    for line in summary:
-        st.write(line)
+
+    section_config = [
+        ("성격·기질", summary.personality, "info"),
+        ("오행 밸런스", summary.element_balance, None),
+        ("용신 분석", summary.yongshin, None),
+        ("영역별 운세", summary.fortune_by_domain, None),
+        ("올해 운세", summary.annual_fortune, None),
+        ("대운 흐름", summary.major_fortune, None),
+        ("충·합 관계", summary.relationships, "warning"),
+        ("종합 조언", summary.advice, "success"),
+    ]
+
+    for title, lines, style in section_config:
+        if not lines:
+            continue
+        st.subheader(title)
+        for line in lines:
+            if style == "info":
+                st.info(line)
+            elif style == "warning":
+                st.warning(line)
+            elif style == "success":
+                st.success(line)
+            else:
+                st.write(line)
 
 
 if __name__ == "__main__":
