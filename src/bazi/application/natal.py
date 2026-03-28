@@ -79,10 +79,10 @@ class NatalAnalyzer:
         ]
 
     def _analyze_sinsal(self) -> list[tuple[Branch, Sinsal]]:
-        """사주에서 신살을 찾는다."""
+        """사주에서 신살·귀인을 찾는다."""
         day_branch = Branch.from_char(self.saju.day_pillar[1])
         all_branches = [Branch.from_char(p[1]) for p in self.saju.pillars]
-        return Sinsal.find_all(day_branch, all_branches)
+        return Sinsal.find_all(self.day_stem, day_branch, all_branches)
 
 
 class PostnatalAnalyzer:

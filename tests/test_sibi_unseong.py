@@ -45,14 +45,21 @@ def test_sibi_unseong_in_natal():
 
 def test_sinsal_find_all():
     """일지 기준 신살 찾기"""
+    from bazi.domain.ganji import Stem
+
     # 申은 申子辰 그룹: 역마=寅, 도화=酉, 화개=辰
-    results = Sinsal.find_all(Branch.申, [Branch.午, Branch.戌, Branch.申, Branch.未])
-    # 위 지지에 寅, 酉, 辰 없으므로 빈 결과
-    assert len(results) == 0
+    results = Sinsal.find_all(Stem.戊, Branch.申, [Branch.午, Branch.戌, Branch.申, Branch.未])
+    # 삼합 기반 신살은 없지만, 천을귀인/문창귀인/백호살이 있을 수 있음
+    samhap_results = [s for _, s in results if s in (Sinsal.驛馬, Sinsal.桃花, Sinsal.華蓋)]
+    assert len(samhap_results) == 0
 
     # 寅이 포함되면 역마살 감지
-    results = Sinsal.find_all(Branch.申, [Branch.寅, Branch.戌, Branch.申, Branch.未])
+    results = Sinsal.find_all(Stem.戊, Branch.申, [Branch.寅, Branch.戌, Branch.申, Branch.未])
     assert any(s == Sinsal.驛馬 for _, s in results)
+
+    # 천을귀인 테스트: 甲일간은 丑, 未에서 천을귀인
+    results = Sinsal.find_all(Stem.甲, Branch.子, [Branch.丑, Branch.未, Branch.寅, Branch.卯])
+    assert any(s == Sinsal.天乙貴人 for _, s in results)
 
 
 def test_sinsal_in_natal():
