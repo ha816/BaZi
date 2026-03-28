@@ -10,7 +10,7 @@ from bazi.domain.natal import NatalInfo, PostnatalInfo
 
 # ── 영역별 십신 매핑 ──
 
-_DOMAIN_MAP: dict[str, list[Sipsin]] = {
+DOMAIN_MAP: dict[str, list[Sipsin]] = {
     "재물운": [Sipsin.偏財, Sipsin.正財],
     "직장·사회운": [Sipsin.偏官, Sipsin.正官],
     "학업·자격운": [Sipsin.偏印, Sipsin.正印],
@@ -98,6 +98,55 @@ _OHENG_LACK: dict[Oheng, str] = {
     Oheng.水: "샘이 마른 우물처럼, 지혜와 유연성이 부족하여 융통성이 필요합니다.",
 }
 
+# ── 기둥(柱)별 의미 ──
+
+_PILLAR_MEANING: dict[str, str] = {
+    "년주": "조상·사회적 환경",
+    "월주": "부모·직장·사회활동",
+    "일주": "본인·배우자",
+    "시주": "자녀·말년·미래",
+}
+
+# ── 용신 오행별 개운법 ──
+
+_YONGSHIN_FORTUNE: dict[Oheng, dict[str, str]] = {
+    Oheng.木: {
+        "활동": "등산·산책·원예 등 자연과 가까운 활동",
+        "색상": "초록색·연두색 계열의 옷이나 소품",
+        "방향": "동쪽 방향으로의 이동이나 동향 배치",
+        "음식": "신맛 나는 음식(레몬·식초·매실)",
+        "투자": "성장주·신사업·교육 관련 투자",
+    },
+    Oheng.火: {
+        "활동": "운동·발표·네트워킹 등 열정적인 활동",
+        "색상": "붉은색·주황색 계열의 포인트 아이템",
+        "방향": "남쪽 방향이 길하며, 밝은 조명의 공간",
+        "음식": "쓴맛 나는 음식(커피·다크초콜릿·녹차)",
+        "투자": "IT·미디어·에너지 관련 분야",
+    },
+    Oheng.土: {
+        "활동": "명상·요가·부동산 탐방 등 안정감을 주는 활동",
+        "색상": "노란색·베이지·브라운 계열의 따뜻한 톤",
+        "방향": "중앙이 좋으며, 안정된 공간에 머무르기",
+        "음식": "단맛 나는 음식(고구마·단호박·꿀)",
+        "투자": "부동산·리츠·인프라 등 실물 자산",
+    },
+    Oheng.金: {
+        "활동": "재정 정리·미니멀 라이프·정리 정돈",
+        "색상": "흰색·은색·골드 계열의 깔끔한 톤",
+        "방향": "서쪽 방향이 길하며, 정돈된 환경",
+        "음식": "매운맛 나는 음식(고추·생강·마늘)",
+        "투자": "배당주·금·안정적 채권",
+    },
+    Oheng.水: {
+        "활동": "여행·수영·독서 등 유연하고 흐르는 활동",
+        "색상": "검은색·남색·파란색 계열",
+        "방향": "북쪽 방향이 길하며, 물 가까운 환경",
+        "음식": "짠맛 나는 음식(해산물·미역·김)",
+        "투자": "유동성 높은 자산, 해외 투자, 물류·유통",
+    },
+}
+
 
 @dataclass
 class Interpretation:
@@ -136,10 +185,10 @@ class Interpreter:
     # ── 1. 성격·기질 ──
 
     def _interpret_personality(self) -> list[str]:
-        me = self.natal.my_main_element
-        metaphor = _OHENG_METAPHOR[me]
+        my_element = self.natal.my_main_element
+        metaphor = _OHENG_METAPHOR[my_element]
         lines = [
-            f"당신은 {metaphor}를 가진 사람입니다. {me.personality}"
+            f"당신은 {metaphor}를 가진 사람입니다. {my_element.personality}"
         ]
 
         if self.natal.sibi_unseong:
@@ -149,8 +198,8 @@ class Interpreter:
                 f"기운이 더해져, 삶의 기본 리듬을 형성합니다."
             )
 
-        for branch, s in self.natal.sinsal:
-            lines.append(f"특히 {s.korean}이 있어 {s.meaning} 성향이 두드러집니다.")
+        for branch, sinsal in self.natal.sinsal:
+            lines.append(f"특히 {sinsal.korean}이 있어 {sinsal.meaning} 성향이 두드러집니다.")
 
         return lines
 
@@ -158,36 +207,36 @@ class Interpreter:
 
     def _interpret_element_balance(self) -> list[str]:
         stats = self.natal.element_stats
-        me = self.natal.my_main_element
+        my_element = self.natal.my_main_element
         lines = []
 
         # 분포 요약
-        dist = ", ".join(f"{o.name} {c}개" for o, c in stats.items())
+        dist = ", ".join(f"{oheng.name} {count}개" for oheng, count in stats.items())
         lines.append(f"팔자 속 오행 분포는 [{dist}]입니다.")
 
-        excess = [o for o, c in stats.items() if c >= 3]
-        lacking = [o for o, c in stats.items() if c == 0]
+        excess = [oheng for oheng, count in stats.items() if count >= 3]
+        lacking = [oheng for oheng, count in stats.items() if count == 0]
 
         if excess:
-            for o in excess:
-                lines.append(f"{o.name}({o.meaning})이 {stats[o]}개로 과다합니다. {_OHENG_EXCESS[o]}")
+            for oheng in excess:
+                lines.append(f"{oheng.name}({oheng.meaning})이 {stats[oheng]}개로 과다합니다. {_OHENG_EXCESS[oheng]}")
         if lacking:
-            for o in lacking:
-                lines.append(f"{o.name}({o.meaning})이 없습니다. {_OHENG_LACK[o]}")
+            for oheng in lacking:
+                lines.append(f"{oheng.name}({oheng.meaning})이 없습니다. {_OHENG_LACK[oheng]}")
 
         if not excess and not lacking:
             lines.append("다섯 가지 기운이 비교적 고르게 분포되어 있어 안정적인 구성입니다.")
 
         # 신강/신약을 서사로
-        s = self.natal.strength
-        if s > 0:
+        strength = self.natal.strength
+        if strength > 0:
             lines.append(
-                f"신강(+{s}) — {_OHENG_METAPHOR[me]}가 넘치는 상태입니다. "
+                f"신강(+{strength}) — {_OHENG_METAPHOR[my_element]}가 넘치는 상태입니다. "
                 f"이 에너지를 바깥으로 발산하는 활동(운동·사업 확장·봉사)이 균형을 맞춰줍니다."
             )
-        elif s < 0:
+        elif strength < 0:
             lines.append(
-                f"신약({s}) — {me.name}의 기운이 주변에 눌려 있는 상태입니다. "
+                f"신약({strength}) — {my_element.name}의 기운이 주변에 눌려 있는 상태입니다. "
                 f"든든한 지원군(멘토·팀·가족)과 함께할 때 본래의 역량이 발휘됩니다."
             )
         else:
@@ -200,21 +249,21 @@ class Interpreter:
     # ── 3. 용신 분석 ──
 
     def _interpret_yongshin(self) -> list[str]:
-        y = self.natal.yongshin
-        me = self.natal.my_main_element
-        s = self.natal.strength
+        yongshin = self.natal.yongshin
+        my_element = self.natal.my_main_element
+        strength = self.natal.strength
         lines = []
 
-        if s > 0:
+        if strength > 0:
             lines.append(
-                f"넘치는 {me.name}의 기운을 적절히 빼주는 {y.name}({y.meaning})이 "
-                f"당신의 용신입니다. 마치 뜨거운 여름에 시원한 {y.meaning}을 만난 것과 같아, "
-                f"{y.name}의 기운이 올 때 삶의 균형이 맞춰집니다."
+                f"넘치는 {my_element.name}의 기운을 적절히 빼주는 {yongshin.name}({yongshin.meaning})이 "
+                f"당신의 용신입니다. 마치 뜨거운 여름에 시원한 {yongshin.meaning}을 만난 것과 같아, "
+                f"{yongshin.name}의 기운이 올 때 삶의 균형이 맞춰집니다."
             )
         else:
             lines.append(
-                f"부족한 {me.name}의 기운을 채워주는 {y.name}({y.meaning})이 "
-                f"당신의 용신입니다. {y.name}의 기운이 들어오는 해에는 "
+                f"부족한 {my_element.name}의 기운을 채워주는 {yongshin.name}({yongshin.meaning})이 "
+                f"당신의 용신입니다. {yongshin.name}의 기운이 들어오는 해에는 "
                 f"마치 가뭄 끝에 단비가 내리듯, 일이 풀리기 시작합니다."
             )
 
@@ -225,24 +274,24 @@ class Interpreter:
 
         if in_seun and in_daeun:
             lines.append(
-                f"반가운 소식입니다! {year}년은 세운과 대운 모두에서 용신({y.name})이 "
+                f"반가운 소식입니다! {year}년은 세운과 대운 모두에서 용신({yongshin.name})이 "
                 f"작용하여 매우 유리한 해입니다. 새로운 도전에 적극적으로 나설 때입니다."
             )
         elif in_seun:
             lines.append(
-                f"{year}년 세운에 용신({y.name})이 있습니다. "
+                f"{year}년 세운에 용신({yongshin.name})이 있습니다. "
                 f"올해 찾아오는 기회를 놓치지 마세요 — 단, 장기적 큰 흐름(대운)에는 "
                 f"용신이 없으니 단기 승부에 집중하는 것이 현명합니다."
             )
         elif in_daeun:
             lines.append(
-                f"대운이라는 큰 강줄기에 용신({y.name})이 흐르고 있어 "
+                f"대운이라는 큰 강줄기에 용신({yongshin.name})이 흐르고 있어 "
                 f"10년 단위의 큰 흐름은 좋습니다. 다만 {year}년 세운에는 부재하니, "
                 f"올해는 씨앗을 뿌리되 수확은 조급해하지 마세요."
             )
         else:
             lines.append(
-                f"{year}년은 세운과 대운 모두 용신({y.name})이 부재합니다. "
+                f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 부재합니다. "
                 f"새 사업·큰 투자·이직 같은 중대한 결정은 한 박자 늦추고, "
                 f"내실을 다지는 데 집중하는 것이 지혜로운 선택입니다."
             )
@@ -257,21 +306,21 @@ class Interpreter:
         # 세운 십신으로 올해 영역 판단
         seun_sipsins = [self.postnatal.seun_stem[1], self.postnatal.seun_branch[1]]
         # 대운 십신도 반영
-        daeun_sipsins = [s for _, s in self.postnatal.daeun_sipsin]
+        daeun_sipsins = [sipsin for _, sipsin in self.postnatal.daeun_sipsin]
 
-        for domain_name, domain_sipsins in _DOMAIN_MAP.items():
-            seun_match = [s for s in seun_sipsins if s in domain_sipsins]
-            daeun_match = [s for s in daeun_sipsins if s in domain_sipsins]
+        for domain_name, domain_sipsins in DOMAIN_MAP.items():
+            seun_match = [sipsin for sipsin in seun_sipsins if sipsin in domain_sipsins]
+            daeun_match = [sipsin for sipsin in daeun_sipsins if sipsin in domain_sipsins]
 
             key_sipsin = (seun_match or daeun_match or [None])[0]
             if key_sipsin is None:
                 continue
 
-            strength = "세운과 대운 모두 영향" if seun_match and daeun_match \
+            influence = "세운과 대운 모두 영향" if seun_match and daeun_match \
                 else "올해의 키워드" if seun_match \
                 else "대운의 흐름"
 
-            lines.append(f"[{domain_name}] {strength} — {key_sipsin.name}: {_SIPSIN_DETAIL[key_sipsin]}")
+            lines.append(f"[{domain_name}] {influence} — {key_sipsin.name}: {_SIPSIN_DETAIL[key_sipsin]}")
 
             # 현대적 매핑 추가
             if domain_name == "재물운":
@@ -309,19 +358,19 @@ class Interpreter:
 
     def _interpret_major_fortune(self) -> list[str]:
         lines = []
-        d = self.postnatal.current_daeun
-        if not d:
+        current_daeun = self.postnatal.current_daeun
+        if not current_daeun:
             return lines
 
-        lines.append(f"현재 대운 {d.ganji}({d.start_age}~{d.end_age}세):")
+        lines.append(f"현재 대운 {current_daeun.ganji}({current_daeun.start_age}~{current_daeun.end_age}세):")
 
-        for char, s in self.postnatal.daeun_sipsin:
-            lines.append(f"  {char}({s.name}): {_SIPSIN_DETAIL[s]}")
+        for char, sipsin in self.postnatal.daeun_sipsin:
+            lines.append(f"  {char}({sipsin.name}): {_SIPSIN_DETAIL[sipsin]}")
 
         # 대운 흐름 시계열
         daeun_list = self.postnatal.daeun
         current_idx = next(
-            (i for i, dp in enumerate(daeun_list) if dp.ganji == d.ganji), None
+            (i for i, dp in enumerate(daeun_list) if dp.ganji == current_daeun.ganji), None
         )
         if current_idx is not None:
             if current_idx > 0:
@@ -337,13 +386,6 @@ class Interpreter:
 
     def _interpret_relationships(self) -> list[str]:
         lines = []
-
-        _PILLAR_MEANING = {
-            "년주": "조상·사회적 환경",
-            "월주": "부모·직장·사회활동",
-            "일주": "본인·배우자",
-            "시주": "자녀·말년·미래",
-        }
 
         for clash in self.postnatal.seun_clashes:
             pillar = clash['pillar']
@@ -384,7 +426,7 @@ class Interpreter:
 
     def _interpret_advice(self) -> list[str]:
         lines = []
-        y = self.natal.yongshin
+        yongshin = self.natal.yongshin
         year = self.postnatal.year
         in_seun = self.postnatal.yongshin_in_seun
         in_daeun = self.postnatal.yongshin_in_daeun
@@ -424,47 +466,9 @@ class Interpreter:
             )
 
         # 용신 오행별 구체적 개운법
-        _YONGSHIN_FORTUNE: dict[Oheng, dict[str, str]] = {
-            Oheng.木: {
-                "활동": "등산·산책·원예 등 자연과 가까운 활동",
-                "색상": "초록색·연두색 계열의 옷이나 소품",
-                "방향": "동쪽 방향으로의 이동이나 동향 배치",
-                "음식": "신맛 나는 음식(레몬·식초·매실)",
-                "투자": "성장주·신사업·교육 관련 투자",
-            },
-            Oheng.火: {
-                "활동": "운동·발표·네트워킹 등 열정적인 활동",
-                "색상": "붉은색·주황색 계열의 포인트 아이템",
-                "방향": "남쪽 방향이 길하며, 밝은 조명의 공간",
-                "음식": "쓴맛 나는 음식(커피·다크초콜릿·녹차)",
-                "투자": "IT·미디어·에너지 관련 분야",
-            },
-            Oheng.土: {
-                "활동": "명상·요가·부동산 탐방 등 안정감을 주는 활동",
-                "색상": "노란색·베이지·브라운 계열의 따뜻한 톤",
-                "방향": "중앙이 좋으며, 안정된 공간에 머무르기",
-                "음식": "단맛 나는 음식(고구마·단호박·꿀)",
-                "투자": "부동산·리츠·인프라 등 실물 자산",
-            },
-            Oheng.金: {
-                "활동": "재정 정리·미니멀 라이프·정리 정돈",
-                "색상": "흰색·은색·골드 계열의 깔끔한 톤",
-                "방향": "서쪽 방향이 길하며, 정돈된 환경",
-                "음식": "매운맛 나는 음식(고추·생강·마늘)",
-                "투자": "배당주·금·안정적 채권",
-            },
-            Oheng.水: {
-                "활동": "여행·수영·독서 등 유연하고 흐르는 활동",
-                "색상": "검은색·남색·파란색 계열",
-                "방향": "북쪽 방향이 길하며, 물 가까운 환경",
-                "음식": "짠맛 나는 음식(해산물·미역·김)",
-                "투자": "유동성 높은 자산, 해외 투자, 물류·유통",
-            },
-        }
-
-        fortune = _YONGSHIN_FORTUNE[y]
+        fortune = _YONGSHIN_FORTUNE[yongshin]
         lines.append(
-            f"용신 {y.name}({y.meaning})을 보강하는 개운법:"
+            f"용신 {yongshin.name}({yongshin.meaning})을 보강하는 개운법:"
         )
         lines.append(f"  🎯 추천 활동: {fortune['활동']}")
         lines.append(f"  🎨 행운의 색상: {fortune['색상']}")

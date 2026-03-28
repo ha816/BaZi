@@ -5,15 +5,14 @@ import datetime
 import plotly.graph_objects as go
 import streamlit as st
 
+from bazi.application.interpret import DOMAIN_MAP, Interpreter
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
-from bazi.application.interpret import Interpreter, _DOMAIN_MAP
 from bazi.domain.ganji import lookup
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 from bazi.domain.util import year_to_ganji
 
-OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
-OHENG_COLORS = {"木": "#4CAF50", "火": "#F44336", "土": "#FF9800", "金": "#FFD700", "水": "#2196F3"}
+_OHENG_EMOJI: dict[str, str] = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
 analyze_natal = NatalAnalyzer()
 analyze_postnatal = PostnatalAnalyzer()
@@ -86,11 +85,11 @@ def main():
     oheng_cols = st.columns(5)
     for col, (element, count) in zip(oheng_cols, natal.element_stats.items()):
         with col:
-            emoji = OHENG_EMOJI.get(element.name, "")
+            emoji = _OHENG_EMOJI.get(element.name, "")
             st.metric(label=f"{emoji} {element.name}", value=f"{count}개")
 
     # 오행 레이더 차트
-    oheng_names = [f"{OHENG_EMOJI.get(o.name, '')} {o.name}" for o in natal.element_stats]
+    oheng_names = [f"{_OHENG_EMOJI.get(o.name, '')} {o.name}" for o in natal.element_stats]
     oheng_values = list(natal.element_stats.values())
 
     fig_radar = go.Figure()
@@ -116,7 +115,7 @@ def main():
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         me = natal.my_main_element
-        st.metric("일간 오행", f"{OHENG_EMOJI.get(me.name, '')} {me.name}")
+        st.metric("일간 오행", f"{_OHENG_EMOJI.get(me.name, '')} {me.name}")
     with col_b:
         if natal.strength > 0:
             strength_label = "신강(身強)"
@@ -127,7 +126,7 @@ def main():
         st.metric("강약", f"{strength_label} ({natal.strength:+d})")
     with col_c:
         yong = natal.yongshin
-        st.metric("용신(用神)", f"{OHENG_EMOJI.get(yong.name, '')} {yong.name}")
+        st.metric("용신(用神)", f"{_OHENG_EMOJI.get(yong.name, '')} {yong.name}")
 
     # ── 성격 ──
     st.subheader("기본 성격")
@@ -246,7 +245,7 @@ def main():
     domain_names = []
     domain_scores = []
     domain_bar_colors = []
-    for domain_name, domain_sipsins in _DOMAIN_MAP.items():
+    for domain_name, domain_sipsins in DOMAIN_MAP.items():
         seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
         daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
         score = seun_hit * 2 + daeun_hit  # 세운이 가중치 높음
