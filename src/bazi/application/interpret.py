@@ -11,6 +11,8 @@ from bazi.application.constant import (
     OHENG_LACK,
     OHENG_METAPHOR,
     PILLAR_MEANING,
+    SAMJAE_LABELS,
+    SAMJAE_MAP,
     SIPSIN_DETAIL,
     YONGSHIN_FORTUNE,
 )
@@ -60,6 +62,9 @@ class Interpretation:
     sipsin: list[dict[str, str]] = field(default_factory=list)
     sibi_unseong: list[dict[str, str]] = field(default_factory=list)
     sinsal: list[dict[str, str]] = field(default_factory=list)
+
+    # 삼재
+    samjae: dict | None = None  # {"type": "들삼재", "year_branch": "午"} or None
 
     # 텍스트 해석
     personality: list[str] = field(default_factory=list)
@@ -146,6 +151,22 @@ class Interpreter:
             level = "high" if score >= 3 else "medium" if score >= 1 else "low"
             domain_scores[domain_name] = {"score": score, "level": level}
 
+        # 삼재 판별
+        year_branch = Branch.from_char(natal.saju.year_pillar[1])
+        seun_branch = Branch.from_char(year_to_ganji(postnatal.year)[1])
+        samjae = None
+        for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
+            if year_branch in group:
+                samjae_branches = (entering, sitting, leaving)
+                if seun_branch in samjae_branches:
+                    idx = samjae_branches.index(seun_branch)
+                    samjae = {
+                        "type": SAMJAE_LABELS[idx],
+                        "year_branch": seun_branch.name,
+                        "birth_branch": year_branch.name,
+                    }
+                break
+
         return {
             "pillars": natal.saju.pillars,
             "day_stem": natal.saju.day_stem,
@@ -171,6 +192,7 @@ class Interpreter:
             "sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
             "sibi_unseong": [{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
             "sinsal": [{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
+            "samjae": samjae,
         }
 
     def _get_personality(self) -> list[str]:
@@ -332,6 +354,32 @@ class Interpreter:
             f"{year}년 지지 {branch_char}({branch_sipsin.name})은 "
             f"{branch_sipsin.domain} 방면의 환경을 만듭니다."
         )
+
+        # 삼재 해석
+        year_branch = Branch.from_char(self.natal.saju.year_pillar[1])
+        seun_branch = Branch.from_char(year_to_ganji(year)[1])
+        for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
+            if year_branch in group:
+                samjae_branches = (entering, sitting, leaving)
+                if seun_branch in samjae_branches:
+                    idx = samjae_branches.index(seun_branch)
+                    label = SAMJAE_LABELS[idx]
+                    if idx == 0:
+                        lines.append(
+                            f"{year}년은 삼재(三災)에 진입하는 '{label}'입니다. "
+                            f"새로운 일을 시작하기보다 기존 일을 정리하고 조심하는 자세가 필요합니다."
+                        )
+                    elif idx == 1:
+                        lines.append(
+                            f"{year}년은 삼재 중 가장 강한 '{label}'입니다. "
+                            f"건강·사고·재물 손실에 특히 유의하고, 큰 변화를 삼가세요."
+                        )
+                    else:
+                        lines.append(
+                            f"{year}년은 삼재가 물러가는 '{label}'입니다. "
+                            f"어려운 시기가 마무리되고 있으니 조금만 더 신중하면 좋은 흐름이 시작됩니다."
+                        )
+                break
 
         return lines
 
