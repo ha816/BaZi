@@ -114,9 +114,6 @@ class Branch(Enum):
         return BranchCombine.partner_of(self)
 
 
-# ── 충(衝)·합(合) 관계 enum ──
-
-
 class StemCombine(Enum):
     """천간합(天干合) - 두 천간이 만나 합이 되는 5쌍.
 
@@ -210,9 +207,6 @@ def lookup(char: str) -> Stem | Branch:
         return Branch[char]
 
 
-# ── 십신(十神) ──
-
-
 class Sipsin(Enum):
     """십신(十神) - 일간(나)을 기준으로 다른 글자와의 10가지 관계.
 
@@ -253,9 +247,6 @@ class Sipsin(Enum):
             return cls.偏印 if same_yinyang else cls.正印
         else:
             return cls.偏官 if same_yinyang else cls.正官
-
-
-# ── 십이운성(十二運星) ──
 
 
 # 각 천간의 長生이 시작되는 지지
@@ -301,6 +292,3 @@ class SibiUnseong(Enum):
         else:
             offset = (start.order - branch.order) % 12
         return list(cls)[offset]
-
-
-# ── 신살(神殺) ──

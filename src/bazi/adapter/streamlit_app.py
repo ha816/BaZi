@@ -21,7 +21,6 @@ def main():
     st.set_page_config(page_title="사주팔자 분석", page_icon="🔮", layout="centered")
     st.title("사주팔자 분석기")
 
-    # ── 입력 폼 ──
     with st.form("saju_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -48,7 +47,6 @@ def main():
     if not submitted:
         return
 
-    # ── 분석 실행 ──
     birth_dt = datetime.datetime(
         birth_date.year, birth_date.month, birth_date.day,
         birth_time.hour, birth_time.minute,
@@ -69,7 +67,6 @@ def main():
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return
 
-    # ── 사주 원국 ──
     st.header("사주 원국")
 
     pillar_labels = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"]
@@ -78,7 +75,6 @@ def main():
         with col:
             st.metric(label=label, value=pillar)
 
-    # ── 오행 분포 ──
     st.subheader("오행 분포")
     oheng_cols = st.columns(5)
     for col, (element, count) in zip(oheng_cols, natal.element_stats.items()):
@@ -86,7 +82,6 @@ def main():
             emoji = _OHENG_EMOJI.get(element.name, "")
             st.metric(label=f"{emoji} {element.name}", value=f"{count}개")
 
-    # 오행 레이더 차트
     oheng_names = [f"{_OHENG_EMOJI.get(o.name, '')} {o.name}" for o in natal.element_stats]
     oheng_values = list(natal.element_stats.values())
 
@@ -109,7 +104,6 @@ def main():
     )
     st.plotly_chart(fig_radar, width="stretch")
 
-    # ── 강약·용신 ──
     col_a, col_b, col_c = st.columns(3)
     with col_a:
         me = natal.my_main_element
@@ -126,16 +120,13 @@ def main():
         yong = natal.yongshin
         st.metric("용신(用神)", f"{_OHENG_EMOJI.get(yong.name, '')} {yong.name}")
 
-    # ── 성격 ──
     st.subheader("기본 성격")
     st.info(natal.personality)
 
-    # ── 십신 분석 ──
     st.subheader("십신 분석")
     for char, s in natal.sipsin:
         st.write(f"**{char}** → {s.name} : {s.domain}")
 
-    # ── 세운 ──
     st.header(f"{analysis_year}년 세운")
     st.write(f"세운 간지: **{year_to_ganji(analysis_year)}**")
 
@@ -147,7 +138,6 @@ def main():
     for char, s in [postnatal.seun_stem, postnatal.seun_branch]:
         st.write(f"**{char}**({s.name}): {s.domain}")
 
-    # ── 대운 ──
     st.header("대운 흐름")
 
     if postnatal.current_daeun:
@@ -162,7 +152,6 @@ def main():
         for char, s in postnatal.daeun_sipsin:
             st.write(f"**{char}**({s.name}): {s.domain}")
 
-    # 대운 타임라인 그래프
     st.subheader("대운 타임라인")
 
     daeun_labels = []
@@ -170,7 +159,6 @@ def main():
     daeun_colors = []
     for d in postnatal.daeun:
         daeun_labels.append(f"{d.ganji}\n({d.start_age}~{d.end_age}세)")
-        # 용신 포함 여부로 점수 계산
         has_yongshin = any(
             lookup(ch).element == natal.yongshin for ch in d.ganji
         )
@@ -185,14 +173,12 @@ def main():
             daeun_colors.append("#B0BEC5")
 
     fig_timeline = go.Figure()
-    # 배경 영역선
     fig_timeline.add_trace(go.Scatter(
         x=daeun_labels, y=daeun_scores,
         mode="lines",
         line=dict(color="rgba(99, 110, 250, 0.3)", width=2, dash="dot"),
         showlegend=False,
     ))
-    # 포인트
     fig_timeline.add_trace(go.Scatter(
         x=daeun_labels, y=daeun_scores,
         mode="markers+text",
@@ -201,7 +187,6 @@ def main():
         textposition="top center",
         showlegend=False,
     ))
-    # 현재 대운 강조
     if postnatal.current_daeun:
         current_label = next(
             (l for l, d in zip(daeun_labels, postnatal.daeun)
@@ -223,7 +208,6 @@ def main():
     )
     st.plotly_chart(fig_timeline, width="stretch")
 
-    # ── 충·합 ──
     if postnatal.seun_clashes or postnatal.daeun_clashes:
         st.subheader("충(衝) 감지")
         for clash in postnatal.seun_clashes + postnatal.daeun_clashes:
@@ -234,7 +218,6 @@ def main():
         for combine in postnatal.seun_combines + postnatal.daeun_combines:
             st.success(f"{combine['incoming']} ↔ {combine['target']} ({combine['pillar']}, {combine['type']})")
 
-    # ── 영역별 운세 차트 ──
     st.header("영역별 운세")
 
     seun_sipsins = [postnatal.seun_stem[1], postnatal.seun_branch[1]]
@@ -246,7 +229,7 @@ def main():
     for domain_name, domain_sipsins in DOMAIN_MAP.items():
         seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
         daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
-        score = seun_hit * 2 + daeun_hit  # 세운이 가중치 높음
+        score = seun_hit * 2 + daeun_hit
         domain_names.append(domain_name)
         domain_scores.append(score)
         if score >= 3:
@@ -273,7 +256,6 @@ def main():
     )
     st.plotly_chart(fig_domain, width="stretch")
 
-    # ── 종합 해석 ──
     st.header("종합 해석")
 
     section_config = [

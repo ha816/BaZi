@@ -98,9 +98,6 @@ class Jeol(Enum):
         return frozenset(j.value for j in cls)
 
 
-# ── 신살(神殺) ──
-
-
 class Sinsal(Enum):
     """신살(神殺) - 사주에 나타나는 특수한 작용.
 
@@ -144,9 +141,6 @@ _SAMHAP_SINSAL: list[tuple[frozenset[Branch], dict[Sinsal, Branch]]] = [
     (frozenset({Branch.亥, Branch.卯, Branch.未}),
      {Sinsal.驛馬: Branch.巳, Sinsal.桃花: Branch.子, Sinsal.華蓋: Branch.未}),
 ]
-
-
-# ── 분석 결과 데이터 ──
 
 
 @dataclass

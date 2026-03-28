@@ -5,9 +5,6 @@ from dataclasses import dataclass, field
 from bazi.domain.ganji import Oheng, Sipsin
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 
-
-# ── 영역별 십신 매핑 ──
-
 DOMAIN_MAP: dict[str, list[Sipsin]] = {
     "재물운": [Sipsin.偏財, Sipsin.正財],
     "직장·사회운": [Sipsin.偏官, Sipsin.正官],
@@ -28,8 +25,6 @@ _SIPSIN_DETAIL: dict[Sipsin, str] = {
     Sipsin.偏印: "영감과 아이디어가 풍부하나 안정감은 떨어질 수 있습니다.",
     Sipsin.正印: "학업·자격 취득에 유리하고 윗사람의 도움이 있습니다.",
 }
-
-# ── 현대적 직업·투자·라이프스타일 매핑 ──
 
 _MODERN_CAREER: dict[Sipsin, str] = {
     Sipsin.比肩: "1인 기업, 프리랜서, 독립 컨설턴트 등 자율성이 높은 일이 잘 맞습니다.",
@@ -70,8 +65,6 @@ _MODERN_LIFESTYLE: dict[Sipsin, str] = {
     Sipsin.正印: "독서 챌린지, 온라인 강의 수강 등 배움의 즐거움을 만끽하세요.",
 }
 
-# ── 오행 서사·비유 ──
-
 _OHENG_METAPHOR: dict[Oheng, str] = {
     Oheng.木: "봄날의 큰 나무처럼 위로 뻗어가는 에너지",
     Oheng.火: "한여름의 태양처럼 강렬하게 타오르는 에너지",
@@ -96,16 +89,12 @@ _OHENG_LACK: dict[Oheng, str] = {
     Oheng.水: "샘이 마른 우물처럼, 지혜와 유연성이 부족하여 융통성이 필요합니다.",
 }
 
-# ── 기둥(柱)별 의미 ──
-
 _PILLAR_MEANING: dict[str, str] = {
     "년주": "조상·사회적 환경",
     "월주": "부모·직장·사회활동",
     "일주": "본인·배우자",
     "시주": "자녀·말년·미래",
 }
-
-# ── 용신 오행별 개운법 ──
 
 _YONGSHIN_FORTUNE: dict[Oheng, dict[str, str]] = {
     Oheng.木: {
@@ -180,8 +169,6 @@ class Interpreter:
             advice=self._interpret_advice(),
         )
 
-    # ── 1. 성격·기질 ──
-
     def _interpret_personality(self) -> list[str]:
         my_element = self.natal.my_main_element
         metaphor = _OHENG_METAPHOR[my_element]
@@ -200,8 +187,6 @@ class Interpreter:
             lines.append(f"특히 {sinsal.korean}이 있어 {sinsal.meaning} 성향이 두드러집니다.")
 
         return lines
-
-    # ── 2. 오행 밸런스 ──
 
     def _interpret_element_balance(self) -> list[str]:
         stats = self.natal.element_stats
@@ -243,8 +228,6 @@ class Interpreter:
             )
 
         return lines
-
-    # ── 3. 용신 분석 ──
 
     def _interpret_yongshin(self) -> list[str]:
         yongshin = self.natal.yongshin
@@ -296,8 +279,6 @@ class Interpreter:
 
         return lines
 
-    # ── 4. 영역별 운세 ──
-
     def _interpret_fortune_by_domain(self) -> list[str]:
         lines = []
 
@@ -332,8 +313,6 @@ class Interpreter:
 
         return lines
 
-    # ── 5. 세운 (올해 운세) ──
-
     def _interpret_annual_fortune(self) -> list[str]:
         lines = []
         year = self.postnatal.year
@@ -351,8 +330,6 @@ class Interpreter:
         )
 
         return lines
-
-    # ── 6. 대운 흐름 ──
 
     def _interpret_major_fortune(self) -> list[str]:
         lines = []
@@ -379,8 +356,6 @@ class Interpreter:
                 lines.append(f"  다음 대운 {nxt.ganji}({nxt.start_age}~{nxt.end_age}세)로의 전환을 준비하세요.")
 
         return lines
-
-    # ── 7. 충·합 관계 ──
 
     def _interpret_relationships(self) -> list[str]:
         lines = []
@@ -419,8 +394,6 @@ class Interpreter:
             )
 
         return lines
-
-    # ── 8. 종합 조언 ──
 
     def _interpret_advice(self) -> list[str]:
         lines = []
