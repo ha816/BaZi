@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from bazi.application.interpret import DOMAIN_MAP, Interpretation
 from bazi.domain.ganji import Stem, Branch
 from bazi.domain.natal import NatalInfo, PostnatalInfo
+from bazi.domain.util import year_to_ganji
 
 
 class AnalysisRequest(BaseModel):
@@ -171,8 +172,6 @@ def build_response(
         level = "high" if score >= 3 else "medium" if score >= 1 else "low"
         domain_scores[domain_name] = DomainScoreInfo(score=score, level=level)
 
-    # 세운 간지
-    from bazi.domain.util import year_to_ganji
     seun_ganji = year_to_ganji(postnatal.year)
 
     return AnalysisResponse(
