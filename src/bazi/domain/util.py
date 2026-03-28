@@ -1,5 +1,3 @@
-"""도메인 유틸리티 - 간지 변환, 날짜 파싱 등."""
-
 from datetime import datetime
 
 from bazi.domain.ganji import Branch, Stem

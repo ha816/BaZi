@@ -1,5 +1,3 @@
-"""선천·후천 분석 (팔자 기반 분석 + 대운/세운)"""
-
 from collections import Counter
 
 from sajupy import SajuCalculator

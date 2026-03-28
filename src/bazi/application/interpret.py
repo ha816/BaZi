@@ -1,5 +1,3 @@
-"""종합 해석: NatalInfo + PostnatalInfo를 받아 구조화된 해석을 생성한다."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -1,5 +1,3 @@
-"""사주팔자 분석 Streamlit UI"""
-
 import datetime
 
 import plotly.graph_objects as go

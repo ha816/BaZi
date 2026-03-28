@@ -1,5 +1,3 @@
-"""사용자 도메인 모델."""
-
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -17,7 +15,7 @@ class Gender(Enum):
 
 @dataclass
 class User:
-    """사주 분석 대상자."""
+    """사주 분석 대상자. 이름·성별·생년월일시·도시 정보를 담는다."""
     name: str
     gender: Gender
     birth_dt: datetime
