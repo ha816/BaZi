@@ -202,14 +202,14 @@ class Interpreter:
             # 차트/UI 데이터
             **self._build_chart_data(),
             # 텍스트 해석
-            personality=self._interpret_personality(),
-            element_balance=self._interpret_element_balance(),
-            yongshin=self._interpret_yongshin(),
-            fortune_by_domain=self._interpret_fortune_by_domain(),
-            annual_fortune=self._interpret_annual_fortune(),
-            major_fortune=self._interpret_major_fortune(),
-            relationships=self._interpret_relationships(),
-            advice=self._interpret_advice(),
+            personality=self._get_personality(),
+            element_balance=self._get_element_balance(),
+            yongshin=self._get_yongshin(),
+            fortune_by_domain=self._get_fortune_by_domain(),
+            annual_fortune=self._get_annual_fortune(),
+            major_fortune=self._get_major_fortune(),
+            relationships=self._get_relationships(),
+            advice=self._get_advice(),
         )
 
     def _build_chart_data(self) -> dict:
@@ -290,7 +290,7 @@ class Interpreter:
             "sinsal": [{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
         }
 
-    def _interpret_personality(self) -> list[str]:
+    def _get_personality(self) -> list[str]:
         my_element = self.natal.my_main_element
         metaphor = _OHENG_METAPHOR[my_element]
         lines = [
@@ -309,7 +309,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_element_balance(self) -> list[str]:
+    def _get_element_balance(self) -> list[str]:
         stats = self.natal.element_stats
         my_element = self.natal.my_main_element
         lines = []
@@ -350,7 +350,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_yongshin(self) -> list[str]:
+    def _get_yongshin(self) -> list[str]:
         yongshin = self.natal.yongshin
         my_element = self.natal.my_main_element
         strength = self.natal.strength
@@ -400,7 +400,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_fortune_by_domain(self) -> list[str]:
+    def _get_fortune_by_domain(self) -> list[str]:
         lines = []
 
         # 세운 십신으로 올해 영역 판단
@@ -434,7 +434,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_annual_fortune(self) -> list[str]:
+    def _get_annual_fortune(self) -> list[str]:
         lines = []
         year = self.postnatal.year
 
@@ -452,7 +452,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_major_fortune(self) -> list[str]:
+    def _get_major_fortune(self) -> list[str]:
         lines = []
         current_daeun = self.postnatal.current_daeun
         if not current_daeun:
@@ -478,7 +478,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_relationships(self) -> list[str]:
+    def _get_relationships(self) -> list[str]:
         lines = []
 
         for clash in self.postnatal.seun_clashes:
@@ -516,7 +516,7 @@ class Interpreter:
 
         return lines
 
-    def _interpret_advice(self) -> list[str]:
+    def _get_advice(self) -> list[str]:
         lines = []
         yongshin = self.natal.yongshin
         year = self.postnatal.year
