@@ -2,15 +2,18 @@
 
 import datetime
 
+import plotly.graph_objects as go
 import streamlit as st
 
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
-from bazi.application.interpret import Interpreter
+from bazi.application.interpret import Interpreter, _DOMAIN_MAP
+from bazi.domain.ganji import lookup
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 from bazi.domain.util import year_to_ganji
 
 OHENG_EMOJI = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
+OHENG_COLORS = {"木": "#4CAF50", "火": "#F44336", "土": "#FF9800", "金": "#FFD700", "水": "#2196F3"}
 
 analyze_natal = NatalAnalyzer()
 analyze_postnatal = PostnatalAnalyzer()
@@ -43,7 +46,7 @@ def main():
                 value=datetime.date.today().year,
             )
 
-        submitted = st.form_submit_button("분석하기", use_container_width=True)
+        submitted = st.form_submit_button("분석하기", width="stretch")
 
     if not submitted:
         return
@@ -85,6 +88,29 @@ def main():
         with col:
             emoji = OHENG_EMOJI.get(element.name, "")
             st.metric(label=f"{emoji} {element.name}", value=f"{count}개")
+
+    # 오행 레이더 차트
+    oheng_names = [f"{OHENG_EMOJI.get(o.name, '')} {o.name}" for o in natal.element_stats]
+    oheng_values = list(natal.element_stats.values())
+
+    fig_radar = go.Figure()
+    fig_radar.add_trace(go.Scatterpolar(
+        r=oheng_values + [oheng_values[0]],
+        theta=oheng_names + [oheng_names[0]],
+        fill="toself",
+        fillcolor="rgba(99, 110, 250, 0.2)",
+        line=dict(color="#636EFA", width=2),
+        name="오행 분포",
+    ))
+    fig_radar.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, max(oheng_values) + 1], tickmode="linear", dtick=1),
+        ),
+        showlegend=False,
+        height=350,
+        margin=dict(l=60, r=60, t=30, b=30),
+    )
+    st.plotly_chart(fig_radar, width="stretch")
 
     # ── 강약·용신 ──
     col_a, col_b, col_c = st.columns(3)
@@ -139,11 +165,66 @@ def main():
         for char, s in postnatal.daeun_sipsin:
             st.write(f"**{char}**({s.name}): {s.domain}")
 
-    # 대운 전체 타임라인
+    # 대운 타임라인 그래프
     st.subheader("대운 타임라인")
+
+    daeun_labels = []
+    daeun_scores = []
+    daeun_colors = []
     for d in postnatal.daeun:
-        marker = " ← 현재" if postnatal.current_daeun and d.ganji == postnatal.current_daeun.ganji else ""
-        st.write(f"**{d.ganji}** ({d.start_age}~{d.end_age}세){marker}")
+        daeun_labels.append(f"{d.ganji}\n({d.start_age}~{d.end_age}세)")
+        # 용신 포함 여부로 점수 계산
+        has_yongshin = any(
+            lookup(ch).element == natal.yongshin for ch in d.ganji
+        )
+        is_current = postnatal.current_daeun and d.ganji == postnatal.current_daeun.ganji
+        score = 2 if has_yongshin else 0
+        daeun_scores.append(score)
+        if is_current:
+            daeun_colors.append("#FF6B6B")
+        elif has_yongshin:
+            daeun_colors.append("#4CAF50")
+        else:
+            daeun_colors.append("#B0BEC5")
+
+    fig_timeline = go.Figure()
+    # 배경 영역선
+    fig_timeline.add_trace(go.Scatter(
+        x=daeun_labels, y=daeun_scores,
+        mode="lines",
+        line=dict(color="rgba(99, 110, 250, 0.3)", width=2, dash="dot"),
+        showlegend=False,
+    ))
+    # 포인트
+    fig_timeline.add_trace(go.Scatter(
+        x=daeun_labels, y=daeun_scores,
+        mode="markers+text",
+        marker=dict(size=16, color=daeun_colors, line=dict(width=2, color="white")),
+        text=["용신 ✓" if s > 0 else "·" for s in daeun_scores],
+        textposition="top center",
+        showlegend=False,
+    ))
+    # 현재 대운 강조
+    if postnatal.current_daeun:
+        current_label = next(
+            (l for l, d in zip(daeun_labels, postnatal.daeun)
+             if d.ganji == postnatal.current_daeun.ganji), None
+        )
+        if current_label:
+            fig_timeline.add_annotation(
+                x=current_label, y=daeun_scores[daeun_labels.index(current_label)],
+                text="← 현재 대운",
+                showarrow=True, arrowhead=2, arrowcolor="#FF6B6B",
+                font=dict(color="#FF6B6B", size=13),
+                ax=50, ay=-30,
+            )
+    fig_timeline.update_layout(
+        yaxis=dict(visible=False),
+        xaxis=dict(tickangle=-45),
+        height=300,
+        margin=dict(l=20, r=20, t=30, b=80),
+    )
+    st.plotly_chart(fig_timeline, width="stretch")
 
     # ── 충·합 ──
     if postnatal.seun_clashes or postnatal.daeun_clashes:
@@ -155,6 +236,45 @@ def main():
         st.subheader("합(合) 감지")
         for combine in postnatal.seun_combines + postnatal.daeun_combines:
             st.success(f"{combine['incoming']} ↔ {combine['target']} ({combine['pillar']}, {combine['type']})")
+
+    # ── 영역별 운세 차트 ──
+    st.header("영역별 운세")
+
+    seun_sipsins = [postnatal.seun_stem[1], postnatal.seun_branch[1]]
+    daeun_sipsins = [s for _, s in postnatal.daeun_sipsin]
+
+    domain_names = []
+    domain_scores = []
+    domain_bar_colors = []
+    for domain_name, domain_sipsins in _DOMAIN_MAP.items():
+        seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
+        daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
+        score = seun_hit * 2 + daeun_hit  # 세운이 가중치 높음
+        domain_names.append(domain_name)
+        domain_scores.append(score)
+        if score >= 3:
+            domain_bar_colors.append("#4CAF50")
+        elif score >= 1:
+            domain_bar_colors.append("#FF9800")
+        else:
+            domain_bar_colors.append("#B0BEC5")
+
+    fig_domain = go.Figure()
+    fig_domain.add_trace(go.Bar(
+        x=domain_names,
+        y=domain_scores,
+        marker_color=domain_bar_colors,
+        text=[f"{s}점" for s in domain_scores],
+        textposition="outside",
+    ))
+    fig_domain.update_layout(
+        yaxis=dict(title="영향도", range=[0, max(domain_scores, default=1) + 1], dtick=1),
+        xaxis=dict(title=""),
+        height=300,
+        margin=dict(l=40, r=20, t=30, b=30),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_domain, width="stretch")
 
     # ── 종합 해석 ──
     st.header("종합 해석")

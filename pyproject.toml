@@ -8,6 +8,7 @@ dependencies = [
     "httpx>=0.28.1",
     "sajupy>=0.2.0",
     "streamlit>=1.45.0",
+    "plotly>=6.6.0",
 ]
 
 [build-system]
