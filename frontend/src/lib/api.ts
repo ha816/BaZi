@@ -1,14 +1,16 @@
-import type { AnalysisInput, AnalysisResponse } from "@/types/analysis";
+import type { AnalysisInput, AnalysisResult } from "@/types/analysis";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export async function analyzeChart(
   input: AnalysisInput
-): Promise<AnalysisResponse> {
-  const res = await fetch(`${API_URL}/api/analyze`, {
+): Promise<AnalysisResult> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) params.set(key, String(value));
+  }
+  const res = await fetch(`${API_URL}/api/analyze?${params}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
   });
   if (!res.ok) {
     const text = await res.text();

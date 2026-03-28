@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from bazi.domain.ganji import Oheng, Sipsin
+from bazi.domain.ganji import Oheng, Sipsin, Stem, Branch
 from bazi.domain.natal import NatalInfo, PostnatalInfo
+from bazi.domain.util import year_to_ganji
 
 DOMAIN_MAP: dict[str, list[Sipsin]] = {
     "재물운": [Sipsin.偏財, Sipsin.正財],
@@ -137,8 +138,47 @@ _YONGSHIN_FORTUNE: dict[Oheng, dict[str, str]] = {
 
 @dataclass
 class Interpretation:
-    """구조화된 종합 해석 결과."""
+    """구조화된 종합 해석 결과. 텍스트 해석 + 차트/UI용 데이터를 모두 포함한다."""
 
+    # 사주 원국
+    pillars: list[str] = field(default_factory=list)
+    day_stem: str = ""
+
+    # 오행·강약·용신 (차트용)
+    element_stats: dict[str, int] = field(default_factory=dict)
+    strength_value: int = 0
+    strength_label: str = ""
+    my_element: dict[str, str] = field(default_factory=dict)
+    yongshin_info: dict[str, str] = field(default_factory=dict)
+
+    # 세운
+    year: int = 0
+    seun_ganji: str = ""
+    seun_stem: dict[str, str] = field(default_factory=dict)
+    seun_branch: dict[str, str] = field(default_factory=dict)
+    yongshin_in_seun: bool = False
+    yongshin_in_daeun: bool = False
+
+    # 대운 (차트용)
+    daeun: list[dict] = field(default_factory=list)
+    current_daeun: dict | None = None
+    daeun_sipsin: list[dict[str, str]] = field(default_factory=list)
+
+    # 충·합
+    seun_clashes: list[dict] = field(default_factory=list)
+    seun_combines: list[dict] = field(default_factory=list)
+    daeun_clashes: list[dict] = field(default_factory=list)
+    daeun_combines: list[dict] = field(default_factory=list)
+
+    # 영역별 점수 (차트용)
+    domain_scores: dict[str, dict] = field(default_factory=dict)
+
+    # 십신·십이운성·신살
+    sipsin: list[dict[str, str]] = field(default_factory=list)
+    sibi_unseong: list[dict[str, str]] = field(default_factory=list)
+    sinsal: list[dict[str, str]] = field(default_factory=list)
+
+    # 텍스트 해석
     personality: list[str] = field(default_factory=list)
     element_balance: list[str] = field(default_factory=list)
     yongshin: list[str] = field(default_factory=list)
@@ -159,6 +199,9 @@ class Interpreter:
         self.natal = natal
         self.postnatal = postnatal
         return Interpretation(
+            # 차트/UI 데이터
+            **self._build_chart_data(),
+            # 텍스트 해석
             personality=self._interpret_personality(),
             element_balance=self._interpret_element_balance(),
             yongshin=self._interpret_yongshin(),
@@ -168,6 +211,84 @@ class Interpreter:
             relationships=self._interpret_relationships(),
             advice=self._interpret_advice(),
         )
+
+    def _build_chart_data(self) -> dict:
+        """프론트엔드 차트/UI에 필요한 데이터를 구성한다."""
+        natal = self.natal
+        postnatal = self.postnatal
+        yongshin_el = natal.yongshin
+        current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
+
+        # 강약 레이블
+        if natal.strength > 0:
+            strength_label = "신강(身強)"
+        elif natal.strength < 0:
+            strength_label = "신약(身弱)"
+        else:
+            strength_label = "중화(中和)"
+
+        # 대운 리스트
+        daeun_list = []
+        for d in postnatal.daeun:
+            has_yongshin = yongshin_el in (
+                Stem.from_char(d.ganji[0]).element,
+                Branch.from_char(d.ganji[1]).element,
+            )
+            daeun_list.append({
+                "ganji": d.ganji,
+                "start_age": d.start_age,
+                "end_age": d.end_age,
+                "has_yongshin": has_yongshin,
+                "is_current": d.ganji == current_ganji,
+            })
+
+        # 현재 대운
+        current_daeun = None
+        if postnatal.current_daeun:
+            cd = postnatal.current_daeun
+            current_daeun = {
+                "ganji": cd.ganji,
+                "start_age": cd.start_age,
+                "end_age": cd.end_age,
+            }
+
+        # 영역별 점수
+        seun_sipsins = [postnatal.seun_stem[1], postnatal.seun_branch[1]]
+        daeun_sipsins = [s for _, s in postnatal.daeun_sipsin]
+        domain_scores = {}
+        for domain_name, domain_sipsins in DOMAIN_MAP.items():
+            seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
+            daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
+            score = seun_hit * 2 + daeun_hit
+            level = "high" if score >= 3 else "medium" if score >= 1 else "low"
+            domain_scores[domain_name] = {"score": score, "level": level}
+
+        return {
+            "pillars": natal.saju.pillars,
+            "day_stem": natal.saju.day_stem,
+            "element_stats": {o.name: c for o, c in natal.element_stats.items()},
+            "strength_value": natal.strength,
+            "strength_label": strength_label,
+            "my_element": {"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
+            "yongshin_info": {"name": yongshin_el.name, "meaning": yongshin_el.meaning},
+            "year": postnatal.year,
+            "seun_ganji": year_to_ganji(postnatal.year),
+            "seun_stem": {"char": postnatal.seun_stem[0], "sipsin_name": postnatal.seun_stem[1].name, "domain": postnatal.seun_stem[1].domain},
+            "seun_branch": {"char": postnatal.seun_branch[0], "sipsin_name": postnatal.seun_branch[1].name, "domain": postnatal.seun_branch[1].domain},
+            "yongshin_in_seun": postnatal.yongshin_in_seun,
+            "yongshin_in_daeun": postnatal.yongshin_in_daeun,
+            "daeun": daeun_list,
+            "current_daeun": current_daeun,
+            "daeun_sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in postnatal.daeun_sipsin],
+            "seun_clashes": postnatal.seun_clashes,
+            "seun_combines": postnatal.seun_combines,
+            "daeun_clashes": postnatal.daeun_clashes,
+            "daeun_combines": postnatal.daeun_combines,
+            "domain_scores": domain_scores,
+            "sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
+            "sibi_unseong": [{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
+            "sinsal": [{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
+        }
 
     def _interpret_personality(self) -> list[str]:
         my_element = self.natal.my_main_element

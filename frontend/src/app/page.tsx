@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AnalysisInput, AnalysisResponse } from "@/types/analysis";
+import type { AnalysisInput, AnalysisResult } from "@/types/analysis";
 import { analyzeChart } from "@/lib/api";
 import AnalysisForm from "@/components/AnalysisForm";
 import PillarCard from "@/components/PillarCard";
@@ -16,7 +16,7 @@ const OHENG_EMOJI: Record<string, string> = {
 };
 
 export default function Home() {
-  const [result, setResult] = useState<AnalysisResponse | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,23 +54,22 @@ export default function Home() {
   );
 }
 
-function ResultView({ data }: { data: AnalysisResponse }) {
-  const { saju, natal, postnatal, interpretation } = data;
-  const me = natal.my_main_element;
-  const yong = natal.yongshin;
+function ResultView({ data }: { data: AnalysisResult }) {
+  const me = data.my_element;
+  const yong = data.yongshin_info;
 
   return (
     <div className="space-y-8">
       <section>
         <h2 className="text-2xl font-bold text-gray-800 mb-4">사주 원국</h2>
         <div className="grid grid-cols-4 gap-3">
-          {saju.pillars.map((pillar, i) => (
+          {data.pillars.map((pillar, i) => (
             <PillarCard key={i} label={PILLAR_LABELS[i]} pillar={pillar} />
           ))}
         </div>
       </section>
 
-      <ElementRadar stats={natal.element_stats} />
+      <ElementRadar stats={data.element_stats} />
 
       <section className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-xl shadow p-4 text-center">
@@ -82,8 +81,8 @@ function ResultView({ data }: { data: AnalysisResponse }) {
         <div className="bg-white rounded-xl shadow p-4 text-center">
           <div className="text-xs text-gray-500">강약</div>
           <div className="text-lg font-semibold mt-1">
-            {natal.strength.label} ({natal.strength.value > 0 ? "+" : ""}
-            {natal.strength.value})
+            {data.strength_label} ({data.strength_value > 0 ? "+" : ""}
+            {data.strength_value})
           </div>
         </div>
         <div className="bg-white rounded-xl shadow p-4 text-center">
@@ -96,10 +95,10 @@ function ResultView({ data }: { data: AnalysisResponse }) {
 
       <section className="bg-white rounded-2xl shadow-lg p-6">
         <h3 className="text-lg font-bold text-gray-800 mb-3">
-          {postnatal.year}년 세운 — {postnatal.seun_ganji}
+          {data.year}년 세운 — {data.seun_ganji}
         </h3>
         <div className="flex gap-3 mb-3">
-          {postnatal.yongshin_in_seun ? (
+          {data.yongshin_in_seun ? (
             <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
               세운에 용신({yong.name}) 포함
             </span>
@@ -108,7 +107,7 @@ function ResultView({ data }: { data: AnalysisResponse }) {
               세운에 용신 없음
             </span>
           )}
-          {postnatal.yongshin_in_daeun ? (
+          {data.yongshin_in_daeun ? (
             <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
               대운에 용신({yong.name}) 포함
             </span>
@@ -120,30 +119,30 @@ function ResultView({ data }: { data: AnalysisResponse }) {
         </div>
         <div className="space-y-1 text-sm text-gray-700">
           <div>
-            천간 {postnatal.seun_stem.char}({postnatal.seun_stem.sipsin_name}): {postnatal.seun_stem.domain}
+            천간 {data.seun_stem.char}({data.seun_stem.sipsin_name}): {data.seun_stem.domain}
           </div>
           <div>
-            지지 {postnatal.seun_branch.char}({postnatal.seun_branch.sipsin_name}): {postnatal.seun_branch.domain}
+            지지 {data.seun_branch.char}({data.seun_branch.sipsin_name}): {data.seun_branch.domain}
           </div>
         </div>
       </section>
 
-      <DaeunTimeline daeun={postnatal.daeun} />
+      <DaeunTimeline daeun={data.daeun} />
 
-      {(postnatal.seun_clashes.length > 0 || postnatal.daeun_clashes.length > 0) && (
+      {(data.seun_clashes.length > 0 || data.daeun_clashes.length > 0) && (
         <section className="space-y-2">
           <h3 className="text-lg font-bold text-gray-800">충(衝) 감지</h3>
-          {[...postnatal.seun_clashes, ...postnatal.daeun_clashes].map((c, i) => (
+          {[...data.seun_clashes, ...data.daeun_clashes].map((c, i) => (
             <div key={i} className="bg-red-50 border-l-4 border-red-400 rounded-lg px-4 py-2 text-sm text-red-700">
               {c.incoming} ↔ {c.target} ({c.pillar})
             </div>
           ))}
         </section>
       )}
-      {(postnatal.seun_combines.length > 0 || postnatal.daeun_combines.length > 0) && (
+      {(data.seun_combines.length > 0 || data.daeun_combines.length > 0) && (
         <section className="space-y-2">
           <h3 className="text-lg font-bold text-gray-800">합(合) 감지</h3>
-          {[...postnatal.seun_combines, ...postnatal.daeun_combines].map((c, i) => (
+          {[...data.seun_combines, ...data.daeun_combines].map((c, i) => (
             <div key={i} className="bg-green-50 border-l-4 border-green-400 rounded-lg px-4 py-2 text-sm text-green-700">
               {c.incoming} ↔ {c.target} ({c.pillar}, {c.type})
             </div>
@@ -151,18 +150,18 @@ function ResultView({ data }: { data: AnalysisResponse }) {
         </section>
       )}
 
-      <DomainBarChart scores={postnatal.domain_scores} />
+      <DomainBarChart scores={data.domain_scores} />
 
       <section className="space-y-6">
         <h2 className="text-2xl font-bold text-gray-800">종합 해석</h2>
-        <InterpretSection title="성격·기질" lines={interpretation.personality} variant="info" />
-        <InterpretSection title="오행 밸런스" lines={interpretation.element_balance} />
-        <InterpretSection title="용신 분석" lines={interpretation.yongshin} />
-        <InterpretSection title="영역별 운세" lines={interpretation.fortune_by_domain} />
-        <InterpretSection title="올해 운세" lines={interpretation.annual_fortune} />
-        <InterpretSection title="대운 흐름" lines={interpretation.major_fortune} />
-        <InterpretSection title="충·합 관계" lines={interpretation.relationships} variant="warning" />
-        <InterpretSection title="종합 조언" lines={interpretation.advice} variant="success" />
+        <InterpretSection title="성격·기질" lines={data.personality} variant="info" />
+        <InterpretSection title="오행 밸런스" lines={data.element_balance} />
+        <InterpretSection title="용신 분석" lines={data.yongshin} />
+        <InterpretSection title="영역별 운세" lines={data.fortune_by_domain} />
+        <InterpretSection title="올해 운세" lines={data.annual_fortune} />
+        <InterpretSection title="대운 흐름" lines={data.major_fortune} />
+        <InterpretSection title="충·합 관계" lines={data.relationships} variant="warning" />
+        <InterpretSection title="종합 조언" lines={data.advice} variant="success" />
       </section>
     </div>
   );

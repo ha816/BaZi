@@ -1,8 +1,3 @@
-export interface OhengInfo {
-  name: string;
-  meaning: string;
-}
-
 export interface SipsinInfo {
   char: string;
   sipsin_name: string;
@@ -21,33 +16,18 @@ export interface SinsalInfo {
   meaning: string;
 }
 
-export interface StrengthInfo {
-  value: number;
-  label: string;
-}
-
-export interface SajuResponse {
-  pillars: string[];
-  day_stem: string;
-}
-
-export interface NatalResponse {
-  my_main_element: OhengInfo;
-  element_stats: Record<string, number>;
-  strength: StrengthInfo;
-  yongshin: OhengInfo;
-  personality: string;
-  sipsin: SipsinInfo[];
-  sibi_unseong: SibiUnseongInfo[];
-  sinsal: SinsalInfo[];
-}
-
-export interface DaeunPeriodResponse {
+export interface DaeunPeriod {
   ganji: string;
   start_age: number;
   end_age: number;
   has_yongshin: boolean;
   is_current: boolean;
+}
+
+export interface CurrentDaeun {
+  ganji: string;
+  start_age: number;
+  end_age: number;
 }
 
 export interface ClashInfo {
@@ -63,29 +43,51 @@ export interface CombineInfo {
   type: string;
 }
 
-export interface DomainScoreInfo {
+export interface DomainScore {
   score: number;
   level: string;
 }
 
-export interface PostnatalResponse {
+export interface AnalysisResult {
+  // 사주 원국
+  pillars: string[];
+  day_stem: string;
+
+  // 오행·강약·용신
+  element_stats: Record<string, number>;
+  strength_value: number;
+  strength_label: string;
+  my_element: { name: string; meaning: string };
+  yongshin_info: { name: string; meaning: string };
+
+  // 세운
   year: number;
   seun_ganji: string;
   seun_stem: SipsinInfo;
   seun_branch: SipsinInfo;
   yongshin_in_seun: boolean;
   yongshin_in_daeun: boolean;
-  current_daeun: DaeunPeriodResponse | null;
+
+  // 대운
+  daeun: DaeunPeriod[];
+  current_daeun: CurrentDaeun | null;
   daeun_sipsin: SipsinInfo[];
-  daeun: DaeunPeriodResponse[];
+
+  // 충·합
   seun_clashes: ClashInfo[];
   seun_combines: CombineInfo[];
   daeun_clashes: ClashInfo[];
   daeun_combines: CombineInfo[];
-  domain_scores: Record<string, DomainScoreInfo>;
-}
 
-export interface InterpretationResponse {
+  // 영역별 점수
+  domain_scores: Record<string, DomainScore>;
+
+  // 십신·십이운성·신살
+  sipsin: SipsinInfo[];
+  sibi_unseong: SibiUnseongInfo[];
+  sinsal: SinsalInfo[];
+
+  // 텍스트 해석
   personality: string[];
   element_balance: string[];
   yongshin: string[];
@@ -94,13 +96,6 @@ export interface InterpretationResponse {
   major_fortune: string[];
   relationships: string[];
   advice: string[];
-}
-
-export interface AnalysisResponse {
-  saju: SajuResponse;
-  natal: NatalResponse;
-  postnatal: PostnatalResponse;
-  interpretation: InterpretationResponse;
 }
 
 export interface AnalysisInput {

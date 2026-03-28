@@ -9,10 +9,10 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import type { DaeunPeriodResponse } from "@/types/analysis";
+import type { DaeunPeriod } from "@/types/analysis";
 
 interface Props {
-  daeun: DaeunPeriodResponse[];
+  daeun: DaeunPeriod[];
 }
 
 export default function DaeunTimeline({ daeun }: Props) {

@@ -1,8 +1,8 @@
+from dataclasses import asdict
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 
-from bazi.adapter.schema import AnalysisRequest, AnalysisResponse, build_response
 from bazi.application.interpret import Interpreter
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.domain.natal import Saju
@@ -11,27 +11,30 @@ from bazi.domain.user import Gender, User
 router = APIRouter()
 
 
-@router.post("/api/analyze", response_model=AnalysisResponse)
-def analyze(req: AnalysisRequest) -> AnalysisResponse:
+@router.post("/api/analyze")
+def analyze(
+    birth_year: int,
+    birth_month: int,
+    birth_day: int,
+    birth_hour: int,
+    birth_minute: int = 0,
+    gender: str = "male",
+    analysis_year: int = 2026,
+    city: str = "Seoul",
+) -> dict:
     try:
-        birth_dt = datetime(
-            req.birth_year, req.birth_month, req.birth_day,
-            req.birth_hour, req.birth_minute,
-        )
+        birth_dt = datetime(birth_year, birth_month, birth_day, birth_hour, birth_minute)
         user = User(
             name="",
-            gender=Gender.MALE if req.gender == "male" else Gender.FEMALE,
+            gender=Gender.MALE if gender == "male" else Gender.FEMALE,
             birth_dt=birth_dt,
-            city=req.city,
+            city=city,
         )
-        saju = Saju(
-            req.birth_year, req.birth_month, req.birth_day,
-            req.birth_hour, req.birth_minute, city=req.city,
-        )
+        saju = Saju(birth_year, birth_month, birth_day, birth_hour, birth_minute, city=city)
         natal = NatalAnalyzer()(saju)
-        postnatal = PostnatalAnalyzer()(user, natal, year=req.analysis_year)
+        postnatal = PostnatalAnalyzer()(user, natal, year=analysis_year)
         interpretation = Interpreter()(natal, postnatal)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
 
-    return build_response(natal, postnatal, interpretation)
+    return asdict(interpretation)

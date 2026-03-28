@@ -9,7 +9,7 @@ import {
   Cell,
   LabelList,
 } from "recharts";
-import type { DomainScoreInfo } from "@/types/analysis";
+import type { DomainScore } from "@/types/analysis";
 
 const COLORS: Record<string, string> = {
   high: "#4CAF50",
@@ -18,7 +18,7 @@ const COLORS: Record<string, string> = {
 };
 
 interface Props {
-  scores: Record<string, DomainScoreInfo>;
+  scores: Record<string, DomainScore>;
 }
 
 export default function DomainBarChart({ scores }: Props) {
