@@ -8,14 +8,6 @@ from bazi.domain.user import User
 from bazi.domain.util import parse_term_time, year_to_ganji
 
 
-def _char_element(char: str) -> Oheng:
-    """한자 한 글자의 오행을 반환한다. 천간이면 Stem, 아니면 Branch에서 찾는다."""
-    try:
-        return Stem.from_char(char).element
-    except KeyError:
-        return Branch.from_char(char).element
-
-
 class NatalAnalyzer:
     """선천 분석기 — 사주(四柱)를 받아 분석 결과(NatalInfo)를 반환한다."""
 
@@ -45,7 +37,12 @@ class NatalAnalyzer:
 
     def _count_oheng(self) -> dict[Oheng, int]:
         """팔자 8글자의 오행 분포를 집계한다."""
-        counts = Counter(_char_element(char) for char in self.saju.palja)
+        palja = self.saju.palja
+        elements = (
+            Stem.from_char(palja[i]).element if i % 2 == 0 else Branch.from_char(palja[i]).element
+            for i in range(8)
+        )
+        counts = Counter(elements)
         return {o: counts.get(o, 0) for o in Oheng}
 
     def _judge_strength(self, stats: dict[Oheng, int], me: Oheng) -> int:
