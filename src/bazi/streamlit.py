@@ -3,7 +3,8 @@ import datetime
 import plotly.graph_objects as go
 import streamlit as st
 
-from bazi.application.interpret import DOMAIN_MAP, Interpreter
+from bazi.application.constant import DOMAIN_MAP
+from bazi.application.interpret import Interpreter
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
 from bazi.domain.ganji import Stem, Branch
 from bazi.domain.natal import Saju
