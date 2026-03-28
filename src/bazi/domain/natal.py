@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING
 
 from sajupy import calculate_saju as _sajupy_calculate
 
-from bazi.domain.ganji import Branch
-
-if TYPE_CHECKING:
-    from bazi.domain.ganji import Oheng, SibiUnseong, Sipsin
+from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin
 
 
 class Saju:
