@@ -1,51 +1,52 @@
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 
 
-def get_yongshin(natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
-    yongshin = natal.yongshin
-    my_element = natal.my_main_element
-    strength = natal.strength
-    lines = []
+class YongshinInterpreter:
+    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
+        yongshin = natal.yongshin
+        my_element = natal.my_main_element
+        strength = natal.strength
+        lines = []
 
-    if strength > 0:
-        lines.append(
-            f"넘치는 {my_element.name}의 기운을 적절히 빼주는 {yongshin.name}({yongshin.meaning})이 "
-            f"당신의 용신입니다. 마치 뜨거운 여름에 시원한 {yongshin.meaning}을 만난 것과 같아, "
-            f"{yongshin.name}의 기운이 올 때 삶의 균형이 맞춰집니다."
-        )
-    else:
-        lines.append(
-            f"부족한 {my_element.name}의 기운을 채워주는 {yongshin.name}({yongshin.meaning})이 "
-            f"당신의 용신입니다. {yongshin.name}의 기운이 들어오는 해에는 "
-            f"마치 가뭄 끝에 단비가 내리듯, 일이 풀리기 시작합니다."
-        )
+        if strength > 0:
+            lines.append(
+                f"넘치는 {my_element.name}의 기운을 적절히 빼주는 {yongshin.name}({yongshin.meaning})이 "
+                f"당신의 용신입니다. 마치 뜨거운 여름에 시원한 {yongshin.meaning}을 만난 것과 같아, "
+                f"{yongshin.name}의 기운이 올 때 삶의 균형이 맞춰집니다."
+            )
+        else:
+            lines.append(
+                f"부족한 {my_element.name}의 기운을 채워주는 {yongshin.name}({yongshin.meaning})이 "
+                f"당신의 용신입니다. {yongshin.name}의 기운이 들어오는 해에는 "
+                f"마치 가뭄 끝에 단비가 내리듯, 일이 풀리기 시작합니다."
+            )
 
-    in_seun = postnatal.yongshin_in_seun
-    in_daeun = postnatal.yongshin_in_daeun
-    year = postnatal.year
+        in_seun = postnatal.yongshin_in_seun
+        in_daeun = postnatal.yongshin_in_daeun
+        year = postnatal.year
 
-    if in_seun and in_daeun:
-        lines.append(
-            f"반가운 소식입니다! {year}년은 세운과 대운 모두에서 용신({yongshin.name})이 "
-            f"작용하여 매우 유리한 해입니다. 새로운 도전에 적극적으로 나설 때입니다."
-        )
-    elif in_seun:
-        lines.append(
-            f"{year}년 세운에 용신({yongshin.name})이 있습니다. "
-            f"올해 찾아오는 기회를 놓치지 마세요 — 단, 장기적 큰 흐름(대운)에는 "
-            f"용신이 없으니 단기 승부에 집중하는 것이 현명합니다."
-        )
-    elif in_daeun:
-        lines.append(
-            f"대운이라는 큰 강줄기에 용신({yongshin.name})이 흐르고 있어 "
-            f"10년 단위의 큰 흐름은 좋습니다. 다만 {year}년 세운에는 부재하니, "
-            f"올해는 씨앗을 뿌리되 수확은 조급해하지 마세요."
-        )
-    else:
-        lines.append(
-            f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 부재합니다. "
-            f"새 사업·큰 투자·이직 같은 중대한 결정은 한 박자 늦추고, "
-            f"내실을 다지는 데 집중하는 것이 지혜로운 선택입니다."
-        )
+        if in_seun and in_daeun:
+            lines.append(
+                f"반가운 소식입니다! {year}년은 세운과 대운 모두에서 용신({yongshin.name})이 "
+                f"작용하여 매우 유리한 해입니다. 새로운 도전에 적극적으로 나설 때입니다."
+            )
+        elif in_seun:
+            lines.append(
+                f"{year}년 세운에 용신({yongshin.name})이 있습니다. "
+                f"올해 찾아오는 기회를 놓치지 마세요 — 단, 장기적 큰 흐름(대운)에는 "
+                f"용신이 없으니 단기 승부에 집중하는 것이 현명합니다."
+            )
+        elif in_daeun:
+            lines.append(
+                f"대운이라는 큰 강줄기에 용신({yongshin.name})이 흐르고 있어 "
+                f"10년 단위의 큰 흐름은 좋습니다. 다만 {year}년 세운에는 부재하니, "
+                f"올해는 씨앗을 뿌리되 수확은 조급해하지 마세요."
+            )
+        else:
+            lines.append(
+                f"{year}년은 세운과 대운 모두 용신({yongshin.name})이 부재합니다. "
+                f"새 사업·큰 투자·이직 같은 중대한 결정은 한 박자 늦추고, "
+                f"내실을 다지는 데 집중하는 것이 지혜로운 선택입니다."
+            )
 
-    return lines
+        return lines
