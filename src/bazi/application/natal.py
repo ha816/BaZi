@@ -18,10 +18,10 @@ class NatalAnalyzer:
         self.saju = saju
         self.day_stem = Stem.from_char(saju.day_stem)
 
-        stats = self._count_oheng()
+        stats = self._get_oheng()
         me = self.day_stem.element
-        strength = self._judge_strength(stats, me)
-        yongshin = self._find_yongshin(me, strength)
+        strength = self._get_strength(stats, me)
+        yongshin = self._get_yongshin(me, strength)
 
         return NatalInfo(
             saju=saju,
@@ -29,13 +29,13 @@ class NatalAnalyzer:
             element_stats=stats,
             strength=strength,
             yongshin=yongshin,
-            sipsin=self._analyze_sipsin(),
-            sibi_unseong=self._analyze_sibi_unseong(),
-            sinsal=self._analyze_sinsal(),
+            sipsin=self._get_sipsin(),
+            sibi_unseong=self._get_sibi_unseong(),
+            sinsal=self._get_sinsal(),
             personality=me.personality,
         )
 
-    def _count_oheng(self) -> dict[Oheng, int]:
+    def _get_oheng(self) -> dict[Oheng, int]:
         """팔자 8글자의 오행 분포를 집계한다."""
         palja = self.saju.palja
         elements = (
@@ -45,17 +45,17 @@ class NatalAnalyzer:
         counts = Counter(elements)
         return {o: counts.get(o, 0) for o in Oheng}
 
-    def _judge_strength(self, stats: dict[Oheng, int], me: Oheng) -> int:
+    def _get_strength(self, stats: dict[Oheng, int], me: Oheng) -> int:
         """일간 강약을 판단한다. 양수=신강, 0=중화, 음수=신약."""
         helping = stats[me] + stats[me.generated_by]
         draining = sum(stats.values()) - helping
         return helping - draining
 
-    def _find_yongshin(self, me: Oheng, strength: int) -> Oheng:
+    def _get_yongshin(self, me: Oheng, strength: int) -> Oheng:
         """용신(用神)을 선정한다."""
         return me.generates if strength > 0 else me.generated_by
 
-    def _analyze_sipsin(self) -> list[tuple[str, Sipsin]]:
+    def _get_sipsin(self) -> list[tuple[str, Sipsin]]:
         """팔자에서 일간을 제외한 7글자의 십신을 분석한다."""
         palja = self.saju.palja
         day_stem_index = 4
@@ -67,7 +67,7 @@ class NatalAnalyzer:
             results.append((char, Sipsin.of(self.day_stem, target)))
         return results
 
-    def _analyze_sibi_unseong(self) -> list[tuple[str, SibiUnseong]]:
+    def _get_sibi_unseong(self) -> list[tuple[str, SibiUnseong]]:
         """각 기둥 지지의 십이운성을 분석한다."""
         stem = Stem.from_char(self.saju.day_stem)
         return [
@@ -75,7 +75,7 @@ class NatalAnalyzer:
             for pillar in self.saju.pillars
         ]
 
-    def _analyze_sinsal(self) -> list[tuple[Branch, Sinsal]]:
+    def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:
         """사주에서 신살·귀인을 찾는다."""
         day_branch = Branch.from_char(self.saju.day_pillar[1])
         all_branches = [Branch.from_char(p[1]) for p in self.saju.pillars]
@@ -105,8 +105,8 @@ class PostnatalAnalyzer:
         self.seun_ganji = year_to_ganji(year)
         self.day_stem = Stem.from_char(self.saju.day_stem)
 
-        seun_stem, seun_branch = self._calc_seun()
-        daeun = self._calc_daeun()
+        seun_stem, seun_branch = self._get_seun()
+        daeun = self._get_daeun()
         age = user.age(year)
         current_daeun = self._get_current_daeun(daeun, age)
 
@@ -115,17 +115,17 @@ class PostnatalAnalyzer:
             seun_stem=seun_stem,
             seun_branch=seun_branch,
             daeun=daeun,
-            yongshin_in_seun=self._check_yongshin(self.seun_ganji),
-            yongshin_in_daeun=self._check_yongshin(current_daeun.ganji) if current_daeun else False,
+            yongshin_in_seun=self._get_yongshin_check(self.seun_ganji),
+            yongshin_in_daeun=self._get_yongshin_check(current_daeun.ganji) if current_daeun else False,
             current_daeun=current_daeun,
-            daeun_sipsin=self._calc_sipsin(current_daeun.ganji) if current_daeun else [],
-            seun_clashes=self._find_clashes(self.seun_ganji),
-            seun_combines=self._find_combines(self.seun_ganji),
-            daeun_clashes=self._find_clashes(current_daeun.ganji) if current_daeun else [],
-            daeun_combines=self._find_combines(current_daeun.ganji) if current_daeun else [],
+            daeun_sipsin=self._get_sipsin(current_daeun.ganji) if current_daeun else [],
+            seun_clashes=self._get_clashes(self.seun_ganji),
+            seun_combines=self._get_combines(self.seun_ganji),
+            daeun_clashes=self._get_clashes(current_daeun.ganji) if current_daeun else [],
+            daeun_combines=self._get_combines(current_daeun.ganji) if current_daeun else [],
         )
 
-    def _calc_seun(self) -> tuple[tuple[str, Sipsin], tuple[str, Sipsin]]:
+    def _get_seun(self) -> tuple[tuple[str, Sipsin], tuple[str, Sipsin]]:
         """세운(歲運) 분석: 해당 연도의 간지가 일간에 미치는 영향."""
         g = self.seun_ganji
         return (
@@ -140,20 +140,20 @@ class PostnatalAnalyzer:
                 return d
         return None
 
-    def _check_yongshin(self, ganji: str) -> bool:
+    def _get_yongshin_check(self, ganji: str) -> bool:
         """간지에 용신 오행이 포함되어 있는지 확인한다."""
         stem_el = Stem.from_char(ganji[0]).element
         branch_el = Branch.from_char(ganji[1]).element
         return self.natal.yongshin in (stem_el, branch_el)
 
-    def _calc_sipsin(self, ganji: str) -> list[tuple[str, Sipsin]]:
+    def _get_sipsin(self, ganji: str) -> list[tuple[str, Sipsin]]:
         """간지의 십신을 계산한다."""
         return [
             (ganji[0], Sipsin.of(self.day_stem, Stem.from_char(ganji[0]))),
             (ganji[1], Sipsin.of(self.day_stem, Branch.from_char(ganji[1]))),
         ]
 
-    def _find_clashes(self, ganji: str) -> list[dict]:
+    def _get_clashes(self, ganji: str) -> list[dict]:
         """간지와 사주 네 기둥 사이의 지지충(衝)을 찾는다."""
         incoming = Branch.from_char(ganji[1])
         results = []
@@ -166,7 +166,7 @@ class PostnatalAnalyzer:
                 })
         return results
 
-    def _find_combines(self, ganji: str) -> list[dict]:
+    def _get_combines(self, ganji: str) -> list[dict]:
         """간지와 사주 네 기둥 사이의 합(天干合·地支六合)을 찾는다."""
         incoming_stem = Stem.from_char(ganji[0])
         incoming_branch = Branch.from_char(ganji[1])
@@ -188,11 +188,11 @@ class PostnatalAnalyzer:
                 })
         return results
 
-    def _calc_daeun(self) -> list[DaeunPeriod]:
+    def _get_daeun(self) -> list[DaeunPeriod]:
         """대운 목록을 생성한다."""
         forward = Stem.from_char(self.saju.year_pillar[0]).is_yang == self.user.gender.is_male
-        sequence = self._get_daeun_sequence(forward)
-        start_age = self._calc_start_age(forward)
+        sequence = self._get_daeun_seq(forward)
+        start_age = self._get_start_age(forward)
 
         return [
             DaeunPeriod(
@@ -203,7 +203,7 @@ class PostnatalAnalyzer:
             for i, ganji in enumerate(sequence)
         ]
 
-    def _get_daeun_sequence(self, forward: bool, count: int = 8) -> list[str]:
+    def _get_daeun_seq(self, forward: bool, count: int = 8) -> list[str]:
         """대운 순서를 생성한다. 양남/음녀 → 순행, 음남/양녀 → 역행."""
         month_pillar = self.saju.month_pillar
         stem_idx = Stem.from_char(month_pillar[0]).order
@@ -216,7 +216,7 @@ class PostnatalAnalyzer:
             for i in range(1, count + 1)
         ]
 
-    def _calc_start_age(self, forward: bool) -> int:
+    def _get_start_age(self, forward: bool) -> int:
         """대운 시작 나이를 계산한다. 생일에서 가장 가까운 절(節)까지의 일수 ÷ 3."""
         calc = SajuCalculator()
         birth_dt = self.user.birth_dt
