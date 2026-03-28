@@ -5,7 +5,7 @@ import streamlit as st
 
 from bazi.application.interpret import DOMAIN_MAP, Interpreter
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
-from bazi.domain.ganji import lookup
+from bazi.domain.ganji import Stem, Branch
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 from bazi.domain.util import year_to_ganji
@@ -159,8 +159,8 @@ def main():
     daeun_colors = []
     for d in postnatal.daeun:
         daeun_labels.append(f"{d.ganji}\n({d.start_age}~{d.end_age}세)")
-        has_yongshin = any(
-            lookup(ch).element == natal.yongshin for ch in d.ganji
+        has_yongshin = natal.yongshin in (
+            Stem.from_char(d.ganji[0]).element, Branch.from_char(d.ganji[1]).element
         )
         is_current = postnatal.current_daeun and d.ganji == postnatal.current_daeun.ganji
         score = 2 if has_yongshin else 0

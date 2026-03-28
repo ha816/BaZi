@@ -67,6 +67,11 @@ class Stem(Enum):
         """순서(0~9)로 천간을 찾는다. 순환 지원."""
         return list(cls)[index % 10]
 
+    @classmethod
+    def from_char(cls, char: str) -> "Stem":
+        """한자 한 글자로 천간을 찾는다. 없으면 KeyError."""
+        return cls[char]
+
     @property
     def combines(self) -> "Stem":
         """천간합(天干合): 나와 합이 되는 천간."""
@@ -102,6 +107,11 @@ class Branch(Enum):
     def by_order(cls, index: int) -> "Branch":
         """순서(0~11)로 지지를 찾는다. 순환 지원."""
         return list(cls)[index % 12]
+
+    @classmethod
+    def from_char(cls, char: str) -> "Branch":
+        """한자 한 글자로 지지를 찾는다. 없으면 KeyError."""
+        return cls[char]
 
     @property
     def clashes(self) -> "Branch":
@@ -197,14 +207,6 @@ class BranchClash(Enum):
             if pair.second == branch:
                 return pair.first
         raise ValueError(f"No clash partner for {branch}")
-
-
-def lookup(char: str) -> Stem | Branch:
-    """한자 한 글자로 Stem 또는 Branch enum 멤버를 찾는다."""
-    try:
-        return Stem[char]
-    except KeyError:
-        return Branch[char]
 
 
 class Sipsin(Enum):
