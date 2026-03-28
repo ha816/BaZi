@@ -3,10 +3,10 @@ from datetime import datetime
 from enum import Enum
 
 
-class Gender(Enum):
-    """성별"""
-    MALE = "남성"
-    FEMALE = "여성"
+class Gender(str, Enum):
+    """성별. str을 상속하여 JSON 직렬화/Pydantic 호환을 지원한다."""
+    MALE = "male"
+    FEMALE = "female"
 
     @property
     def is_male(self) -> bool:

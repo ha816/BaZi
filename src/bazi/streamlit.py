@@ -35,7 +35,7 @@ def main():
 
         col3, col4 = st.columns(2)
         with col3:
-            gender = st.selectbox("성별", ["남성", "여성"])
+            gender = st.selectbox("성별", ["남성", "여성"], format_func=lambda x: x)
         with col4:
             analysis_year = st.number_input(
                 "분석 연도", min_value=1920, max_value=2100,
@@ -53,7 +53,7 @@ def main():
     )
     user = User(
         name="",
-        gender=Gender.MALE if gender == "남성" else Gender.FEMALE,
+        gender=Gender.MALE if gender == "남성" else Gender.FEMALE,  # UI는 한글, Gender enum은 영문
         birth_dt=birth_dt,
     )
 

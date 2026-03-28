@@ -14,7 +14,7 @@ router = APIRouter()
 
 class AnalysisRequest(BaseModel):
     birth_dt: datetime
-    gender: str = "male"
+    gender: Gender = Gender.MALE
     analysis_year: int = 2026
     city: str = "Seoul"
 
@@ -25,7 +25,7 @@ def analyze(req: AnalysisRequest) -> dict:
         dt = req.birth_dt
         user = User(
             name="",
-            gender=Gender.MALE if req.gender == "male" else Gender.FEMALE,
+            gender=req.gender,
             birth_dt=dt,
             city=req.city,
         )
