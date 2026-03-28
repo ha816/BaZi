@@ -99,11 +99,7 @@ export interface AnalysisResult {
 }
 
 export interface AnalysisInput {
-  birth_year: number;
-  birth_month: number;
-  birth_day: number;
-  birth_hour: number;
-  birth_minute: number;
+  birth_dt: string; // ISO format: "1990-10-10T14:30:00"
   gender: "male" | "female";
   analysis_year: number;
   city?: string;

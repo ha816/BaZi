@@ -2,6 +2,7 @@ from dataclasses import asdict
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from bazi.application.interpret import Interpreter
 from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
@@ -11,28 +12,26 @@ from bazi.domain.user import Gender, User
 router = APIRouter()
 
 
+class AnalysisRequest(BaseModel):
+    birth_dt: datetime
+    gender: str = "male"
+    analysis_year: int = 2026
+    city: str = "Seoul"
+
+
 @router.post("/api/analyze")
-def analyze(
-    birth_year: int,
-    birth_month: int,
-    birth_day: int,
-    birth_hour: int,
-    birth_minute: int = 0,
-    gender: str = "male",
-    analysis_year: int = 2026,
-    city: str = "Seoul",
-) -> dict:
+def analyze(req: AnalysisRequest) -> dict:
     try:
-        birth_dt = datetime(birth_year, birth_month, birth_day, birth_hour, birth_minute)
+        dt = req.birth_dt
         user = User(
             name="",
-            gender=Gender.MALE if gender == "male" else Gender.FEMALE,
-            birth_dt=birth_dt,
-            city=city,
+            gender=Gender.MALE if req.gender == "male" else Gender.FEMALE,
+            birth_dt=dt,
+            city=req.city,
         )
-        saju = Saju(birth_year, birth_month, birth_day, birth_hour, birth_minute, city=city)
+        saju = Saju(dt.year, dt.month, dt.day, dt.hour, dt.minute, city=req.city)
         natal = NatalAnalyzer()(saju)
-        postnatal = PostnatalAnalyzer()(user, natal, year=analysis_year)
+        postnatal = PostnatalAnalyzer()(user, natal, year=req.analysis_year)
         interpretation = Interpreter()(natal, postnatal)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
