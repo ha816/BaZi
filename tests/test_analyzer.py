@@ -1,12 +1,17 @@
+import asyncio
+
 from bazi.domain.natal import Saju
 from bazi.domain.ganji import Oheng, Sipsin, Stem
 from bazi.application.natal_service import NatalAnalyzer
 
-analyze = NatalAnalyzer()
+_analyzer = NatalAnalyzer()
+
+
+def analyze(saju):
+    return asyncio.run(_analyzer.analyze(saju))
 
 
 def test_analyze_basic():
-    """기본 사주 분석 (1990-10-10 14:30)"""
     saju = Saju(1990, 10, 10, 14, 30)
     info = analyze(saju)
 
@@ -17,44 +22,37 @@ def test_analyze_basic():
 
 
 def test_judge_strength_strong():
-    """신강 판단 (1990-10-10 14:30, strength=+4)"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
     assert info.strength == 4
 
 
 def test_judge_strength_weak():
-    """신약 판단 (1983-03-03 15:00, strength=-4)"""
     info = analyze(Saju(1983, 3, 3, 15, 0))
     assert info.strength == -4
 
 
 def test_find_yongshin_for_strong():
-    """신강일 때 용신"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
     assert info.yongshin == Oheng.金
 
 
 def test_find_yongshin_for_weak():
-    """신약일 때 용신"""
     info = analyze(Saju(1983, 3, 3, 15, 0))
     assert info.yongshin == Oheng.土
 
 
 def test_personality():
-    """일간 오행 기반 성격 조회"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
     assert info.personality == "신용을 중시하며 포용력이 있고 듬직합니다."
 
 
 def test_sipsin():
-    """일간 기준 십신 판별"""
     assert Sipsin.of(Stem.戊, Stem.庚) == Sipsin.食神
     assert Sipsin.of(Stem.戊, Stem.丙) == Sipsin.偏印
     assert Sipsin.of(Stem.戊, Stem.己) == Sipsin.劫財
 
 
 def test_analyze_sipsin():
-    """팔자 전체 십신 분석 (일간 제외 7글자)"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
 
     assert len(info.sipsin) == 7
@@ -66,7 +64,6 @@ def test_analyze_sipsin():
 
 
 def test_sipsin_domains():
-    """십신 영역 해석"""
     info = analyze(Saju(1990, 10, 10, 14, 30))
 
     assert info.sipsin[0][1] == Sipsin.食神
@@ -74,7 +71,6 @@ def test_sipsin_domains():
 
 
 def test_pillars_property():
-    """saju.pillars 프로퍼티"""
     saju = Saju(1990, 10, 10, 14, 30)
     assert len(saju.pillars) == 4
     assert all(len(p) == 2 for p in saju.pillars)

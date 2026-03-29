@@ -5,8 +5,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
-from bazi.application.saju_service import Interpreter
+from bazi.application.saju_service import SajuService
 from bazi.container import Container
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
@@ -23,11 +22,9 @@ class AnalysisRequest(BaseModel):
 
 @router.post("/api/analyze")
 @inject
-def analyze(
+async def analyze(
     req: AnalysisRequest,
-    natal_analyzer: NatalAnalyzer = Depends(Provide[Container.natal_analyzer]),
-    postnatal_analyzer: PostnatalAnalyzer = Depends(Provide[Container.postnatal_analyzer]),
-    interpreter: Interpreter = Depends(Provide[Container.interpreter]),
+    saju_service: SajuService = Depends(Provide[Container.saju_service]),
 ) -> dict:
     try:
         user = User(
@@ -38,9 +35,7 @@ def analyze(
         )
         birth_dt = req.birth_dt
         saju = Saju(birth_dt.year, birth_dt.month, birth_dt.day, birth_dt.hour, birth_dt.minute, city=req.city)
-        natal = natal_analyzer(saju)
-        postnatal = postnatal_analyzer(user, natal, year=req.analysis_year)
-        interpretation = interpreter(natal, postnatal)
+        interpretation = await saju_service.analyze(saju, user, req.analysis_year)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
 

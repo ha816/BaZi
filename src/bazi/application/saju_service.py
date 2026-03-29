@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP
+from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.interpreter.advice import AdviceInterpreter
 from bazi.application.interpreter.daeun import DaeunInterpreter
 from bazi.application.interpreter.fortune import FortuneInterpreter
@@ -11,7 +12,8 @@ from bazi.application.interpreter.relationship import RelationshipInterpreter
 from bazi.application.interpreter.seun import SeunInterpreter
 from bazi.application.interpreter.yongshin import YongshinInterpreter
 from bazi.domain.ganji import Branch, Stem
-from bazi.domain.natal import NatalInfo, PostnatalInfo
+from bazi.domain.natal import NatalInfo, PostnatalInfo, Saju
+from bazi.domain.user import User
 from bazi.application.util.util import year_to_ganji
 
 
@@ -74,7 +76,7 @@ class Interpretation:
 class Interpreter:
     """종합 해석기 — 각 해석 컴포넌트를 조합하여 Interpretation을 반환한다."""
 
-    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
+    async def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
         return Interpretation(
             **self._build_chart_data(natal, postnatal),
             personality=PersonalityInterpreter()(natal),
@@ -174,3 +176,22 @@ class Interpreter:
             "sinsal": [{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
             "samjae": samjae,
         }
+
+
+class SajuService:
+    """사주 분석 서비스 — Port를 주입받아 전체 분석 파이프라인을 수행한다."""
+
+    def __init__(
+        self,
+        natal_port: NatalPort,
+        postnatal_port: PostnatalPort,
+        interpreter: Interpreter,
+    ):
+        self.natal_port = natal_port
+        self.postnatal_port = postnatal_port
+        self.interpreter = interpreter
+
+    async def analyze(self, saju: "Saju", user: "User", year: int) -> Interpretation:
+        natal = await self.natal_port.analyze(saju)
+        postnatal = await self.postnatal_port.analyze(user, natal, year)
+        return await self.interpreter.interpret(natal, postnatal)

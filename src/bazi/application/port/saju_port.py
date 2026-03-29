@@ -1,30 +1,28 @@
 from abc import ABC, abstractmethod
 
-from domain.request import NearbyPlacesRequestParams
+from bazi.domain.natal import NatalInfo, PostnatalInfo, Saju
+from bazi.domain.user import User
 
 
-class PlacePort(ABC):
-
-    @abstractmethod
-    async def get_places(self, query: str, language: str) -> dict:
-        pass
+class NatalPort(ABC):
+    """선천 분석 포트."""
 
     @abstractmethod
-    async def get_place(self, place_id: str, language: str) -> dict:
-        pass
-
-
-    @abstractmethod
-    async def get_nearby_places(self, params: NearbyPlacesRequestParams) -> dict:
-        pass
-
-    @abstractmethod
-    def get_image_url(self, photo_reference: str, max_width=int, max_height=int) -> str:
+    async def analyze(self, saju: Saju) -> NatalInfo:
         pass
 
 
-class LocationPort(ABC):
+class PostnatalPort(ABC):
+    """후천 분석 포트."""
 
     @abstractmethod
-    async def get_current_location(self) -> dict:
+    async def analyze(self, user: User, natal: NatalInfo, year: int) -> PostnatalInfo:
+        pass
+
+
+class InterpreterPort(ABC):
+    """종합 해석 포트."""
+
+    @abstractmethod
+    async def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> dict:
         pass
