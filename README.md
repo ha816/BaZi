@@ -28,12 +28,6 @@ uvicorn bazi.fastapi:app --reload --port 8000
 - API 문서: http://localhost:8000/docs
 - 분석 엔드포인트: `POST /saju/interpret`
 
-### Streamlit UI
-
-```bash
-streamlit run src/bazi/streamlit.py --server.port 8501
-```
-
 ## 테스트
 
 ```bash
@@ -70,7 +64,6 @@ src/bazi/
       natal_adapter.py     # NatalAdapter, PostnatalAdapter - sajupy 연동
   container.py             # DI 컨테이너 (dependency-injector)
   fastapi.py               # FastAPI 앱 설정
-  streamlit.py             # Streamlit UI
 tests/                     # 테스트
 docs/                      # 간지 기초 문서
 ```
