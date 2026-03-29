@@ -58,75 +58,37 @@ class Sinsal(Enum):
         day_stem: "Stem",
         day_branch: Branch,
         all_branches: list[Branch],
+        samhap_map: list,
+        stem_map: dict,
     ) -> list[tuple[Branch, "Sinsal"]]:
         """사주 전체 지지에서 신살·귀인을 찾는다."""
         results: list[tuple[Branch, Sinsal]] = []
 
         # 삼합 기반 신살 (역마·도화·화개·장성)
-        for branches, mapping in _SAMHAP_SINSAL:
+        for branches, mapping in samhap_map:
             if day_branch in branches:
-                for sinsal, trigger in mapping.items():
+                for name, trigger in mapping.items():
+                    sinsal = cls[name]
                     for b in all_branches:
                         if b == trigger:
                             results.append((b, sinsal))
                 break
 
         # 일간 기반 귀인 (천을귀인·문창귀인)
-        for stem_triggers in _STEM_SINSAL:
-            if day_stem in stem_triggers:
-                for sinsal, trigger_branches in stem_triggers[day_stem].items():
-                    for b in all_branches:
-                        if b in trigger_branches:
-                            results.append((b, sinsal))
-                break
+        if day_stem in stem_map:
+            for name, trigger_branches in stem_map[day_stem].items():
+                sinsal = cls[name]
+                for b in all_branches:
+                    if b in trigger_branches:
+                        results.append((b, sinsal))
 
-        # 백호살: 일지 기준
-        if day_branch in _BAEKHO_MAP:
-            trigger = _BAEKHO_MAP[day_branch]
-            for b in all_branches:
-                if b == trigger and b != day_branch:
-                    results.append((b, cls.白虎殺))
+        # 백호살: 일지의 충(衝) 지지가 사주에 있으면
+        trigger = day_branch.clashes
+        for b in all_branches:
+            if b == trigger and b != day_branch:
+                results.append((b, cls.白虎殺))
 
         return results
-
-
-_SAMHAP_SINSAL: list[tuple[frozenset[Branch], dict[Sinsal, Branch]]] = [
-    (frozenset({Branch.寅, Branch.午, Branch.戌}),
-     {Sinsal.驛馬: Branch.申, Sinsal.桃花: Branch.卯, Sinsal.華蓋: Branch.戌, Sinsal.將星: Branch.午}),
-    (frozenset({Branch.申, Branch.子, Branch.辰}),
-     {Sinsal.驛馬: Branch.寅, Sinsal.桃花: Branch.酉, Sinsal.華蓋: Branch.辰, Sinsal.將星: Branch.子}),
-    (frozenset({Branch.巳, Branch.酉, Branch.丑}),
-     {Sinsal.驛馬: Branch.亥, Sinsal.桃花: Branch.午, Sinsal.華蓋: Branch.丑, Sinsal.將星: Branch.酉}),
-    (frozenset({Branch.亥, Branch.卯, Branch.未}),
-     {Sinsal.驛馬: Branch.巳, Sinsal.桃花: Branch.子, Sinsal.華蓋: Branch.未, Sinsal.將星: Branch.卯}),
-]
-
-# 천을귀인(天乙貴人): 일간별 해당 지지
-# 문창귀인(文昌貴人): 일간별 해당 지지
-_STEM_SINSAL: list[dict[Stem, dict[Sinsal, list[Branch]]]] = [
-    {
-        Stem.甲: {Sinsal.天乙貴人: [Branch.丑, Branch.未], Sinsal.文昌貴人: [Branch.巳]},
-        Stem.乙: {Sinsal.天乙貴人: [Branch.子, Branch.申], Sinsal.文昌貴人: [Branch.午]},
-        Stem.丙: {Sinsal.天乙貴人: [Branch.酉, Branch.亥], Sinsal.文昌貴人: [Branch.申]},
-        Stem.丁: {Sinsal.天乙貴人: [Branch.酉, Branch.亥], Sinsal.文昌貴人: [Branch.酉]},
-        Stem.戊: {Sinsal.天乙貴人: [Branch.丑, Branch.未], Sinsal.文昌貴人: [Branch.申]},
-        Stem.己: {Sinsal.天乙貴人: [Branch.子, Branch.申], Sinsal.文昌貴人: [Branch.酉]},
-        Stem.庚: {Sinsal.天乙貴人: [Branch.丑, Branch.未], Sinsal.文昌貴人: [Branch.亥]},
-        Stem.辛: {Sinsal.天乙貴人: [Branch.寅, Branch.午], Sinsal.文昌貴人: [Branch.子]},
-        Stem.壬: {Sinsal.天乙貴人: [Branch.卯, Branch.巳], Sinsal.文昌貴人: [Branch.寅]},
-        Stem.癸: {Sinsal.天乙貴人: [Branch.卯, Branch.巳], Sinsal.文昌貴人: [Branch.卯]},
-    },
-]
-
-# 백호살(白虎殺): 일지별 충(衝) 대응 지지
-_BAEKHO_MAP: dict[Branch, Branch] = {
-    Branch.子: Branch.午, Branch.丑: Branch.未,
-    Branch.寅: Branch.申, Branch.卯: Branch.酉,
-    Branch.辰: Branch.戌, Branch.巳: Branch.亥,
-    Branch.午: Branch.子, Branch.未: Branch.丑,
-    Branch.申: Branch.寅, Branch.酉: Branch.卯,
-    Branch.戌: Branch.辰, Branch.亥: Branch.巳,
-}
 
 
 class Saju:

@@ -1,4 +1,4 @@
-from bazi.domain.ganji import Branch, Oheng, Sipsin
+from bazi.domain.ganji import Branch, Oheng, Sipsin, Stem
 
 # 삼재(三災): 년지(띠) 삼합 그룹별 삼재 해당 년지 3개
 # key: 삼합 그룹 (본인 띠가 여기 속하면), value: (들삼재, 눌삼재, 날삼재)
@@ -142,4 +142,30 @@ YONGSHIN_FORTUNE: dict[Oheng, dict[str, str]] = {
         "음식": "짠맛 나는 음식(해산물·미역·김)",
         "투자": "유동성 높은 자산, 해외 투자, 물류·유통",
     },
+}
+
+# 삼합 기반 신살: (삼합 그룹, {신살 이름: 해당 지지})
+SINSAL_SAMHAP = [
+    (frozenset({Branch.寅, Branch.午, Branch.戌}),
+     {"驛馬": Branch.申, "桃花": Branch.卯, "華蓋": Branch.戌, "將星": Branch.午}),
+    (frozenset({Branch.申, Branch.子, Branch.辰}),
+     {"驛馬": Branch.寅, "桃花": Branch.酉, "華蓋": Branch.辰, "將星": Branch.子}),
+    (frozenset({Branch.巳, Branch.酉, Branch.丑}),
+     {"驛馬": Branch.亥, "桃花": Branch.午, "華蓋": Branch.丑, "將星": Branch.酉}),
+    (frozenset({Branch.亥, Branch.卯, Branch.未}),
+     {"驛馬": Branch.巳, "桃花": Branch.子, "華蓋": Branch.未, "將星": Branch.卯}),
+]
+
+# 천간 기반 귀인: {일간: {신살 이름: [해당 지지]}}
+SINSAL_STEM_MAP = {
+    Stem.甲: {"天乙貴人": [Branch.丑, Branch.未], "文昌貴人": [Branch.巳]},
+    Stem.乙: {"天乙貴人": [Branch.子, Branch.申], "文昌貴人": [Branch.午]},
+    Stem.丙: {"天乙貴人": [Branch.酉, Branch.亥], "文昌貴人": [Branch.申]},
+    Stem.丁: {"天乙貴人": [Branch.酉, Branch.亥], "文昌貴人": [Branch.酉]},
+    Stem.戊: {"天乙貴人": [Branch.丑, Branch.未], "文昌貴人": [Branch.申]},
+    Stem.己: {"天乙貴人": [Branch.子, Branch.申], "文昌貴人": [Branch.酉]},
+    Stem.庚: {"天乙貴人": [Branch.丑, Branch.未], "文昌貴人": [Branch.亥]},
+    Stem.辛: {"天乙貴人": [Branch.寅, Branch.午], "文昌貴人": [Branch.子]},
+    Stem.壬: {"天乙貴人": [Branch.卯, Branch.巳], "文昌貴人": [Branch.寅]},
+    Stem.癸: {"天乙貴人": [Branch.卯, Branch.巳], "文昌貴人": [Branch.卯]},
 }

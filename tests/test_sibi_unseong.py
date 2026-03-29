@@ -38,14 +38,16 @@ def test_sibi_unseong_in_natal():
 
 
 def test_sinsal_find_all():
-    results = Sinsal.find_all(Stem.戊, Branch.申, [Branch.午, Branch.戌, Branch.申, Branch.未])
+    from bazi.application.constant import SINSAL_SAMHAP, SINSAL_STEM_MAP
+
+    results = Sinsal.find_all(Stem.戊, Branch.申, [Branch.午, Branch.戌, Branch.申, Branch.未], SINSAL_SAMHAP, SINSAL_STEM_MAP)
     samhap_results = [s for _, s in results if s in (Sinsal.驛馬, Sinsal.桃花, Sinsal.華蓋)]
     assert len(samhap_results) == 0
 
-    results = Sinsal.find_all(Stem.戊, Branch.申, [Branch.寅, Branch.戌, Branch.申, Branch.未])
+    results = Sinsal.find_all(Stem.戊, Branch.申, [Branch.寅, Branch.戌, Branch.申, Branch.未], SINSAL_SAMHAP, SINSAL_STEM_MAP)
     assert any(s == Sinsal.驛馬 for _, s in results)
 
-    results = Sinsal.find_all(Stem.甲, Branch.子, [Branch.丑, Branch.未, Branch.寅, Branch.卯])
+    results = Sinsal.find_all(Stem.甲, Branch.子, [Branch.丑, Branch.未, Branch.寅, Branch.卯], SINSAL_SAMHAP, SINSAL_STEM_MAP)
     assert any(s == Sinsal.天乙貴人 for _, s in results)
 
 

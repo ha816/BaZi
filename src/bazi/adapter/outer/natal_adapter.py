@@ -6,7 +6,7 @@ from sajupy import SajuCalculator, calculate_saju as _sajupy_calculate
 from bazi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
 from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Saju, Sinsal
 from bazi.domain.user import User
-from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP
+from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP, SINSAL_SAMHAP, SINSAL_STEM_MAP
 from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.util.util import parse_term_time, year_to_ganji
 
@@ -18,9 +18,8 @@ class NatalAdapter(NatalPort):
     day_stem: Stem
 
     def analyze(self, user: User) -> NatalInfo:
-        saju = cal_saju(user.birth_dt, city=user.city)
-        self.saju = saju
-        self.day_stem = saju.stem_of_day_pillar
+        self.saju = cal_saju(user.birth_dt, city=user.city)
+        self.day_stem = self.saju.stem_of_day_pillar
 
         stats = self._get_oheng()
         me = self.day_stem.element
@@ -28,7 +27,7 @@ class NatalAdapter(NatalPort):
         yongshin = self._get_yongshin(me, strength)
 
         return NatalInfo(
-            saju=saju,
+            saju=self.saju,
             my_main_element=me,
             element_stats=stats,
             strength=strength,
@@ -73,7 +72,7 @@ class NatalAdapter(NatalPort):
     def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:
         day_branch = self.saju[Pillar.日柱].branch
         all_branches = [sb.branch for sb in self.saju.pillars.values()]
-        return Sinsal.find_all(self.day_stem, day_branch, all_branches)
+        return Sinsal.find_all(self.day_stem, day_branch, all_branches, SINSAL_SAMHAP, SINSAL_STEM_MAP)
 
 
 class PostnatalAdapter(PostnatalPort):
