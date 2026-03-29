@@ -1,4 +1,3 @@
-from bazi.application.constant import PILLAR_MEANING
 from bazi.domain.natal import PostnatalInfo
 
 
@@ -40,3 +39,11 @@ class RelationshipInterpreter:
             )
 
         return lines
+
+
+PILLAR_MEANING: dict[str, str] = {
+    "년주": "조상·사회적 환경",
+    "월주": "부모·직장·사회활동",
+    "일주": "본인·배우자",
+    "시주": "자녀·말년·미래",
+}

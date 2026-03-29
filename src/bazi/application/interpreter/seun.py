@@ -1,7 +1,5 @@
-from bazi.application.constant import SAMJAE_MAP
-from bazi.domain.natal import Samjae
 from bazi.domain.ganji import Branch, Pillar
-from bazi.domain.natal import NatalInfo, PostnatalInfo
+from bazi.domain.natal import NatalInfo, PostnatalInfo, Samjae
 from bazi.application.util.util import year_to_ganji
 
 
@@ -33,7 +31,7 @@ class SeunInterpreter:
         year_branch = natal.saju[Pillar.年柱].branch
         seun_branch = Branch.from_char(year_to_ganji(year)[1])
 
-        for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
+        for group, (entering, sitting, leaving) in Samjae.samjae_map().items():
             if year_branch in group:
                 samjae_branches = (entering, sitting, leaving)
                 if seun_branch in samjae_branches:

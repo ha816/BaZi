@@ -55,7 +55,6 @@ src/bazi/
       daeun.py             # 대운 흐름
       relationship.py      # 충·합 관계
       advice.py            # 종합 조언
-    constant.py            # 해석용 상수 (DOMAIN_MAP, SAMJAE_MAP 등)
     util/                  # 유틸리티
   adapter/                 # 어댑터 (외부 시스템 연동)
     inner/                 # Driving adapter (API)

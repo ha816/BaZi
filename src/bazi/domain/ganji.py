@@ -288,16 +288,6 @@ class Sipsin(Enum):
             return cls.偏官 if same_yinyang else cls.正官
 
 
-# 각 천간의 長生이 시작되는 지지
-_JANGSEONG_START: dict[Stem, Branch] = {
-    Stem.甲: Branch.亥, Stem.乙: Branch.午,
-    Stem.丙: Branch.寅, Stem.丁: Branch.酉,
-    Stem.戊: Branch.寅, Stem.己: Branch.酉,
-    Stem.庚: Branch.巳, Stem.辛: Branch.子,
-    Stem.壬: Branch.申, Stem.癸: Branch.卯,
-}
-
-
 class SibiUnseong(Enum):
     """십이운성(十二運星) - 천간이 지지를 만났을 때의 에너지 상태 12단계.
 
@@ -323,9 +313,22 @@ class SibiUnseong(Enum):
         return self.value
 
     @classmethod
+    def _jangseong_start(cls) -> dict:
+        """각 천간의 長生이 시작되는 지지 (lazy 초기화)."""
+        if not hasattr(cls, '_JANGSEONG_START'):
+            cls._JANGSEONG_START = {
+                Stem.甲: Branch.亥, Stem.乙: Branch.午,
+                Stem.丙: Branch.寅, Stem.丁: Branch.酉,
+                Stem.戊: Branch.寅, Stem.己: Branch.酉,
+                Stem.庚: Branch.巳, Stem.辛: Branch.子,
+                Stem.壬: Branch.申, Stem.癸: Branch.卯,
+            }
+        return cls._JANGSEONG_START
+
+    @classmethod
     def of(cls, stem: Stem, branch: Branch) -> "SibiUnseong":
         """천간이 지지를 만났을 때의 십이운성을 반환한다."""
-        start = _JANGSEONG_START[stem]
+        start = cls._jangseong_start()[stem]
         if stem.is_yang:
             offset = (branch.order - start.order) % 12
         else:

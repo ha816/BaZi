@@ -43,6 +43,18 @@ class Samjae(Enum):
     def by_order(cls, index: int) -> "Samjae":
         return list(cls)[index]
 
+    @classmethod
+    def samjae_map(cls) -> dict[frozenset[Branch], tuple[Branch, Branch, Branch]]:
+        """삼재 매핑: 삼합 그룹 → (들삼재, 눌삼재, 날삼재) 해당 년지 (lazy 초기화)."""
+        if not hasattr(cls, '_SAMJAE_MAP'):
+            cls._SAMJAE_MAP = {
+                frozenset({Branch.申, Branch.子, Branch.辰}): (Branch.寅, Branch.卯, Branch.辰),
+                frozenset({Branch.寅, Branch.午, Branch.戌}): (Branch.申, Branch.酉, Branch.戌),
+                frozenset({Branch.巳, Branch.酉, Branch.丑}): (Branch.亥, Branch.子, Branch.丑),
+                frozenset({Branch.亥, Branch.卯, Branch.未}): (Branch.巳, Branch.午, Branch.未),
+            }
+        return cls._SAMJAE_MAP
+
 
 class Sinsal(Enum):
     """신살(神殺) - 사주에 나타나는 특수한 작용.
@@ -64,42 +76,74 @@ class Sinsal(Enum):
         self.meaning = meaning
 
     @classmethod
-    def find_all(
-        cls,
-        day_stem: "Stem",
-        day_branch: Branch,
-        all_branches: list[Branch],
-        samhap_map: list,
-        stem_map: dict,
-    ) -> list[tuple[Branch, "Sinsal"]]:
-        """사주 전체 지지에서 신살·귀인을 찾는다."""
-        results: list[tuple[Branch, Sinsal]] = []
+    def _samhap_map(cls) -> list:
+        """삼합 기반 신살 매핑 (lazy 초기화)."""
+        if not hasattr(cls, '_SAMHAP_MAP'):
+            cls._SAMHAP_MAP = [
+                (frozenset({Branch.寅, Branch.午, Branch.戌}),
+                 {cls.驛馬: Branch.申, cls.桃花: Branch.卯, cls.華蓋: Branch.戌, cls.將星: Branch.午}),
+                (frozenset({Branch.申, Branch.子, Branch.辰}),
+                 {cls.驛馬: Branch.寅, cls.桃花: Branch.酉, cls.華蓋: Branch.辰, cls.將星: Branch.子}),
+                (frozenset({Branch.巳, Branch.酉, Branch.丑}),
+                 {cls.驛馬: Branch.亥, cls.桃花: Branch.午, cls.華蓋: Branch.丑, cls.將星: Branch.酉}),
+                (frozenset({Branch.亥, Branch.卯, Branch.未}),
+                 {cls.驛馬: Branch.巳, cls.桃花: Branch.子, cls.華蓋: Branch.未, cls.將星: Branch.卯}),
+            ]
+        return cls._SAMHAP_MAP
 
-        # 삼합 기반 신살 (역마·도화·화개·장성)
-        for branches, mapping in samhap_map:
+    @classmethod
+    def get_samhap(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
+        """삼합 기반 신살 (역마·도화·화개·장성)."""
+        for branches, mapping in cls._samhap_map():
             if day_branch in branches:
-                for name, trigger in mapping.items():
-                    sinsal = cls[name]
-                    for b in all_branches:
-                        if b == trigger:
-                            results.append((b, sinsal))
-                break
+                return [
+                    (b, sinsal)
+                    for sinsal, trigger in mapping.items()
+                    for b in all_branches
+                    if b == trigger
+                ]
+        return []
 
-        # 일간 기반 귀인 (천을귀인·문창귀인)
-        if day_stem in stem_map:
-            for name, trigger_branches in stem_map[day_stem].items():
-                sinsal = cls[name]
-                for b in all_branches:
-                    if b in trigger_branches:
-                        results.append((b, sinsal))
+    @classmethod
+    def _guiin_map(cls) -> dict:
+        """천간 기반 귀인 매핑 (lazy 초기화)."""
+        if not hasattr(cls, '_GUIIN_MAP'):
+            cls._GUIIN_MAP = {
+                Stem.甲: {cls.天乙貴人: [Branch.丑, Branch.未], cls.文昌貴人: [Branch.巳]},
+                Stem.乙: {cls.天乙貴人: [Branch.子, Branch.申], cls.文昌貴人: [Branch.午]},
+                Stem.丙: {cls.天乙貴人: [Branch.酉, Branch.亥], cls.文昌貴人: [Branch.申]},
+                Stem.丁: {cls.天乙貴人: [Branch.酉, Branch.亥], cls.文昌貴人: [Branch.酉]},
+                Stem.戊: {cls.天乙貴人: [Branch.丑, Branch.未], cls.文昌貴人: [Branch.申]},
+                Stem.己: {cls.天乙貴人: [Branch.子, Branch.申], cls.文昌貴人: [Branch.酉]},
+                Stem.庚: {cls.天乙貴人: [Branch.丑, Branch.未], cls.文昌貴人: [Branch.亥]},
+                Stem.辛: {cls.天乙貴人: [Branch.寅, Branch.午], cls.文昌貴人: [Branch.子]},
+                Stem.壬: {cls.天乙貴人: [Branch.卯, Branch.巳], cls.文昌貴人: [Branch.寅]},
+                Stem.癸: {cls.天乙貴人: [Branch.卯, Branch.巳], cls.文昌貴人: [Branch.卯]},
+            }
+        return cls._GUIIN_MAP
 
-        # 백호살: 일지의 충(衝) 지지가 사주에 있으면
+    @classmethod
+    def get_guiin(cls, day_stem: "Stem", all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
+        """천간 기반 귀인 (천을귀인·문창귀인)."""
+        guiin_map = cls._guiin_map()
+        if day_stem not in guiin_map:
+            return []
+        return [
+            (b, sinsal)
+            for sinsal, trigger_branches in guiin_map[day_stem].items()
+            for b in all_branches
+            if b in trigger_branches
+        ]
+
+    @classmethod
+    def get_baekho(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
+        """백호살: 일지의 충(衝) 지지가 사주에 있으면."""
         trigger = day_branch.clashes
-        for b in all_branches:
-            if b == trigger and b != day_branch:
-                results.append((b, cls.白虎殺))
-
-        return results
+        return [
+            (b, cls.白虎殺)
+            for b in all_branches
+            if b == trigger and b != day_branch
+        ]
 
 
 class Saju:

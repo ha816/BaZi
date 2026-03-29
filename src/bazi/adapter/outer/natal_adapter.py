@@ -6,7 +6,7 @@ from sajupy import SajuCalculator, calculate_saju as _sajupy_calculate
 from bazi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
 from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Samjae, Saju, Sinsal
 from bazi.domain.user import User
-from bazi.application.constant import DOMAIN_MAP, SAMJAE_MAP, SINSAL_SAMHAP, SINSAL_STEM_MAP
+from bazi.application.interpreter.fortune import DOMAIN_MAP
 from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.util.util import parse_term_time, year_to_ganji
 
@@ -72,7 +72,11 @@ class NatalAdapter(NatalPort):
     def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:
         day_branch = self.saju[Pillar.日柱].branch
         all_branches = [sb.branch for sb in self.saju.pillars.values()]
-        return Sinsal.find_all(self.day_stem, day_branch, all_branches, SINSAL_SAMHAP, SINSAL_STEM_MAP)
+        return (
+            Sinsal.get_samhap(day_branch, all_branches)
+            + Sinsal.get_guiin(self.day_stem, all_branches)
+            + Sinsal.get_baekho(day_branch, all_branches)
+        )
 
 
 class PostnatalAdapter(PostnatalPort):
@@ -190,7 +194,7 @@ class PostnatalAdapter(PostnatalPort):
     def _get_samjae(self) -> dict | None:
         year_branch = self.natal.saju.pillars[Pillar.年柱].branch
         seun_branch = Branch.from_char(self.seun_ganji[1])
-        for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
+        for group, (entering, sitting, leaving) in Samjae.samjae_map().items():
             if year_branch in group:
                 samjae_branches = (entering, sitting, leaving)
                 if seun_branch in samjae_branches:
