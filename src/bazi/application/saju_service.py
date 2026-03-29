@@ -8,6 +8,7 @@ from bazi.application.interpreter.daeun import DaeunInterpreter
 from bazi.application.interpreter.fortune import FortuneInterpreter
 from bazi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
 from bazi.application.interpreter.relationship import RelationshipInterpreter
+from bazi.application.interpreter.samjae import SamjaeInterpreter
 from bazi.application.interpreter.seun import SeunInterpreter
 from bazi.application.interpreter.yongshin import YongshinInterpreter
 from bazi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
@@ -81,6 +82,7 @@ class SajuService(InterpreterPort):
             yongshin=YongshinInterpreter()(natal, postnatal),
             fortune_by_domain=FortuneInterpreter()(postnatal),
             annual_fortune=SeunInterpreter()(natal, postnatal),
+            samjae_fortune=SamjaeInterpreter()(natal, postnatal),
             major_fortune=DaeunInterpreter()(postnatal),
             relationships=RelationshipInterpreter()(postnatal),
             advice=AdviceInterpreter()(natal, postnatal),

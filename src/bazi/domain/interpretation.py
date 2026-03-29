@@ -54,6 +54,7 @@ class Interpretation:
     yongshin: list[str] = field(default_factory=list)
     fortune_by_domain: list[str] = field(default_factory=list)
     annual_fortune: list[str] = field(default_factory=list)
+    samjae_fortune: list[str] = field(default_factory=list)
     major_fortune: list[str] = field(default_factory=list)
     relationships: list[str] = field(default_factory=list)
     advice: list[str] = field(default_factory=list)
