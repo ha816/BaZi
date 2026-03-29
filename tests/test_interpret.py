@@ -3,20 +3,19 @@ from datetime import datetime
 from bazi.domain.ganji import Oheng
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
-from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
-from bazi.application.saju_service import Interpretation, Interpreter
+from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from bazi.application.saju_service import SajuService
+from bazi.domain.interpretation import Interpretation
 
-_natal = NatalAnalyzer()
-_postnatal = PostnatalAnalyzer()
-_interpreter = Interpreter()
+_natal = NatalAdapter()
+_postnatal = PostnatalAdapter()
+_service = SajuService(natal_port=_natal, postnatal_port=_postnatal)
 
 
 def _make_result(year: int = 2026) -> Interpretation:
     user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
     saju = Saju(1990, 10, 10, 14, 30)
-    natal = _natal.analyze(saju)
-    postnatal = _postnatal.analyze(user, natal, year=year)
-    return _interpreter.interpret(natal, postnatal)
+    return _service.analyze(saju, user, year)
 
 
 def test_returns_interpretation_dataclass():

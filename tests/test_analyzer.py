@@ -2,7 +2,7 @@ import asyncio
 
 from bazi.domain.natal import Saju
 from bazi.domain.ganji import Oheng, Sipsin, Stem
-from bazi.application.natal_service import NatalAnalyzer
+from bazi.adapter.outer.natal_adapter import NatalAdapter as NatalAnalyzer
 
 _analyzer = NatalAnalyzer()
 

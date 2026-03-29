@@ -4,7 +4,7 @@ from datetime import datetime
 from bazi.domain.natal import Saju
 from bazi.domain.ganji import Sipsin
 from bazi.domain.user import Gender, User
-from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
+from bazi.adapter.outer.natal_adapter import NatalAdapter as NatalAnalyzer, PostnatalAdapter as PostnatalAnalyzer
 from bazi.application.util.util import year_to_ganji
 
 _natal = NatalAnalyzer()

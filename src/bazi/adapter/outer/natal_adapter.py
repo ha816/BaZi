@@ -2,6 +2,7 @@ from collections import Counter
 
 from sajupy import SajuCalculator
 
+from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP
 from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.util.util import parse_term_time, year_to_ganji
 from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem
@@ -113,6 +114,8 @@ class PostnatalAdapter(PostnatalPort):
             seun_combines=self._get_combines(self.seun_ganji),
             daeun_clashes=self._get_clashes(current_daeun.ganji) if current_daeun else [],
             daeun_combines=self._get_combines(current_daeun.ganji) if current_daeun else [],
+            domain_scores=self._get_domain_scores(seun_stem, seun_branch, current_daeun),
+            samjae=self._get_samjae(),
         )
 
     def _get_seun(self) -> tuple[tuple[str, Sipsin], tuple[str, Sipsin]]:
@@ -172,16 +175,54 @@ class PostnatalAdapter(PostnatalPort):
                 })
         return results
 
+    def _get_domain_scores(
+        self,
+        seun_stem: tuple[str, Sipsin],
+        seun_branch: tuple[str, Sipsin],
+        current_daeun: DaeunPeriod | None,
+    ) -> dict[str, dict]:
+        seun_sipsins = [seun_stem[1], seun_branch[1]]
+        daeun_sipsins = [s for _, s in self._get_sipsin(current_daeun.ganji)] if current_daeun else []
+        scores = {}
+        for domain_name, domain_sipsins in DOMAIN_MAP.items():
+            seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
+            daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
+            score = seun_hit * 2 + daeun_hit
+            level = "high" if score >= 3 else "medium" if score >= 1 else "low"
+            scores[domain_name] = {"score": score, "level": level}
+        return scores
+
+    def _get_samjae(self) -> dict | None:
+        year_branch = Branch.from_char(self.saju.year_pillar[1])
+        seun_branch = Branch.from_char(self.seun_ganji[1])
+        for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
+            if year_branch in group:
+                samjae_branches = (entering, sitting, leaving)
+                if seun_branch in samjae_branches:
+                    idx = samjae_branches.index(seun_branch)
+                    return {
+                        "type": SAMJAE_LABELS[idx],
+                        "year_branch": seun_branch.name,
+                        "birth_branch": year_branch.name,
+                    }
+                break
+        return None
+
     def _get_daeun(self) -> list[DaeunPeriod]:
         forward = Stem.from_char(self.saju.year_pillar[0]).is_yang == self.user.gender.is_male
         sequence = self._get_daeun_seq(forward)
         start_age = self._get_start_age(forward)
+        yongshin = self.natal.yongshin
 
         return [
             DaeunPeriod(
                 ganji=ganji,
                 start_age=start_age + i * 10,
                 end_age=start_age + i * 10 + 9,
+                has_yongshin=yongshin in (
+                    Stem.from_char(ganji[0]).element,
+                    Branch.from_char(ganji[1]).element,
+                ),
             )
             for i, ganji in enumerate(sequence)
         ]

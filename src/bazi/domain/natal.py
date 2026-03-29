@@ -202,6 +202,14 @@ class NatalInfo:
     sinsal: list[tuple[Branch, Sinsal]]
     personality: str
 
+    @property
+    def strength_label(self) -> str:
+        if self.strength > 0:
+            return "신강(身強)"
+        elif self.strength < 0:
+            return "신약(身弱)"
+        return "중화(中和)"
+
 
 @dataclass
 class DaeunPeriod:
@@ -209,6 +217,7 @@ class DaeunPeriod:
     ganji: str
     start_age: int
     end_age: int
+    has_yongshin: bool = False
 
 
 @dataclass
@@ -232,3 +241,9 @@ class PostnatalInfo:
     seun_combines: list[dict] = field(default_factory=list)
     daeun_clashes: list[dict] = field(default_factory=list)
     daeun_combines: list[dict] = field(default_factory=list)
+
+    # 영역별 점수
+    domain_scores: dict[str, dict] = field(default_factory=dict)
+
+    # 삼재
+    samjae: dict | None = None
