@@ -1,26 +1,292 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 수묵(水墨) 팔레트 — 먹색 + 상아 + 금박 */
+  --color-ink: #1C1917;
+  --color-ink-light: #44403C;
+  --color-ink-muted: #78716C;
+  --color-ink-faint: #A8A29E;
+
+  --color-ivory: #F8F6F1;
+  --color-ivory-warm: #F0EDE5;
+  --color-parchment: #E8E2D8;
+
+  --color-gold: #A68B5B;
+  --color-gold-light: #C4AD82;
+  --color-gold-faint: #F2EDDF;
+
+  --color-card: #FFFFFF;
+  --color-border: #E0D9CE;
+  --color-border-light: #EDE8E0;
+
+  /* 오행 — 절제된 톤 */
+  --color-wood: #5B8C6A;
+  --color-fire: #C75B52;
+  --color-earth: #B8945A;
+  --color-metal: #7E7E8A;
+  --color-water: #4A7BA5;
+
+  /* Typography */
+  --font-size-base: 17px;
+  --line-height-base: 1.8;
+
+  --background: #F8F6F1;
+  --foreground: #1C1917;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-noto-sans-kr);
+  --font-serif: var(--font-noto-serif-kr);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  font-weight: 400;
+}
+
+/* Serif heading utility */
+.font-heading {
+  font-family: var(--font-noto-serif-kr), serif;
+  letter-spacing: -0.01em;
+}
+
+/* Accordion */
+.accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-content.open {
+  grid-template-rows: 1fr;
+}
+
+.accordion-inner {
+  overflow: hidden;
+}
+
+/* Tooltip */
+.tooltip-trigger {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted var(--color-ink-faint);
+  transition: border-color 0.2s;
+}
+
+.tooltip-trigger:hover {
+  border-bottom-color: var(--color-gold);
+}
+
+.tooltip-trigger .tooltip-content {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-ink);
+  color: var(--color-ivory);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--font-noto-sans-kr), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  white-space: normal;
+  width: max-content;
+  max-width: 280px;
+  z-index: 50;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tooltip-trigger .tooltip-content::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--color-ink);
+}
+
+@media (hover: hover) {
+  .tooltip-trigger:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.tooltip-trigger:focus .tooltip-content,
+.tooltip-trigger:focus-within .tooltip-content {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Loading */
+@keyframes ink-drop {
+  0%, 100% { opacity: 0.2; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.ink-pulse {
+  animation: ink-drop 1.8s ease-in-out infinite;
+}
+
+/* Elegant divider */
+.divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--color-border) 20%,
+    var(--color-border) 80%,
+    transparent
+  );
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-parchment);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-faint);
+}
+
+/* Selection color */
+::selection {
+  background: var(--color-gold-faint);
+  color: var(--color-ink);
+}
+
+/* ── Embla Carousel ── */
+.embla {
+  position: relative;
+}
+
+.embla__viewport {
+  overflow: hidden;
+}
+
+.embla__container {
+  display: flex;
+  align-items: flex-start;
+  transition: height 0.3s ease;
+}
+
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  padding: 0 2px;
+}
+
+/* Progress bar */
+.embla__progress {
+  height: 3px;
+  background: var(--color-parchment);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.embla__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-gold-light), var(--color-gold));
+  border-radius: 2px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Bottom tab bar */
+.embla__tabbar {
+  display: flex;
+  gap: 2px;
+  margin-top: 24px;
+  padding: 6px;
+  background: var(--color-card);
+  border-radius: 16px;
+  border: 1px solid var(--color-border-light);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.embla__tabbar::-webkit-scrollbar {
+  display: none;
+}
+
+.embla__tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.embla__tab:hover {
+  background: var(--color-ivory-warm);
+}
+
+.embla__tab--active {
+  background: var(--color-gold-faint);
+}
+
+.embla__tab-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.embla__tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--color-ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.embla__tab--active .embla__tab-label {
+  color: var(--color-gold);
+  font-weight: 600;
+}
+
+/* Slide card — reusable wrapper */
+.slide-card {
+  background: var(--color-card);
+  border-radius: 12px;
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.slide-card__header {
+  padding: 20px 28px;
+}
+
+.slide-card__body {
+  padding: 20px 28px 28px;
 }

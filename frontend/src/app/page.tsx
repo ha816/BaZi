@@ -4,16 +4,8 @@ import { useState } from "react";
 import type { AnalysisInput, AnalysisResult } from "@/types/analysis";
 import { analyzeChart } from "@/lib/api";
 import AnalysisForm from "@/components/AnalysisForm";
-import PillarCard from "@/components/PillarCard";
-import ElementRadar from "@/components/ElementRadar";
-import DaeunTimeline from "@/components/DaeunTimeline";
-import DomainBarChart from "@/components/DomainBarChart";
-import InterpretSection from "@/components/InterpretSection";
-
-const PILLAR_LABELS = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
-const OHENG_EMOJI: Record<string, string> = {
-  "木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧",
-};
+import ResultSlides from "@/components/ResultSlides";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -34,135 +26,48 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-10 px-4">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center text-gray-900">
-          사주팔자 분석기
-        </h1>
+    <main className="min-h-screen py-10 md:py-16 px-4">
+      <div className="max-w-4xl mx-auto space-y-10">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+          {/* Counselor image */}
+          <div className="flex-shrink-0">
+            <img
+              src="/counselor.png"
+              alt="명리 상담사"
+              className="w-28 h-28 md:w-36 md:h-36 rounded-full object-cover border-2 border-[var(--color-border-light)] shadow-md"
+            />
+          </div>
+          {/* Text */}
+          <div className="text-center md:text-left space-y-3 flex-1">
+            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">
+              命理相談
+            </p>
+            <h1 className="font-heading text-3xl md:text-4xl font-bold text-[var(--color-ink)] tracking-tight">
+              사주명리 상담
+            </h1>
+            <p className="text-base text-[var(--color-ink-muted)] leading-relaxed">
+              안녕하세요, 명리 상담사입니다.<br className="hidden md:block" />
+              생년월일시를 알려주시면 타고난 기운과 올해의 운세를 풀어드릴게요.
+            </p>
+          </div>
+        </header>
 
         <AnalysisForm onSubmit={handleSubmit} loading={loading} />
 
+        {loading && <LoadingSpinner />}
+
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg text-red-700">
+          <div
+            className="rounded-lg px-5 py-4 text-base text-[var(--color-fire)]"
+            style={{ backgroundColor: "#F7EDEC", borderLeft: "3px solid var(--color-fire)" }}
+          >
             {error}
           </div>
         )}
 
-        {result && <ResultView data={result} />}
+        {result && !loading && <ResultSlides data={result} />}
       </div>
     </main>
-  );
-}
-
-function ResultView({ data }: { data: AnalysisResult }) {
-  const me = data.my_element;
-  const yong = data.yongshin_info;
-
-  return (
-    <div className="space-y-8">
-      <section>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">사주 원국</h2>
-        <div className="grid grid-cols-4 gap-3">
-          {data.pillars.map((pillar, i) => (
-            <PillarCard key={i} label={PILLAR_LABELS[i]} pillar={pillar} />
-          ))}
-        </div>
-      </section>
-
-      <ElementRadar stats={data.element_stats} />
-
-      <section className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl shadow p-4 text-center">
-          <div className="text-xs text-gray-500">일간 오행</div>
-          <div className="text-2xl mt-1">
-            {OHENG_EMOJI[me.name]} {me.name}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow p-4 text-center">
-          <div className="text-xs text-gray-500">강약</div>
-          <div className="text-lg font-semibold mt-1">
-            {data.strength_label} ({data.strength_value > 0 ? "+" : ""}
-            {data.strength_value})
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow p-4 text-center">
-          <div className="text-xs text-gray-500">용신(用神)</div>
-          <div className="text-2xl mt-1">
-            {OHENG_EMOJI[yong.name]} {yong.name}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-3">
-          {data.year}년 세운 — {data.seun_ganji}
-        </h3>
-        <div className="flex gap-3 mb-3">
-          {data.yongshin_in_seun ? (
-            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
-              세운에 용신({yong.name}) 포함
-            </span>
-          ) : (
-            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-semibold">
-              세운에 용신 없음
-            </span>
-          )}
-          {data.yongshin_in_daeun ? (
-            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
-              대운에 용신({yong.name}) 포함
-            </span>
-          ) : (
-            <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-semibold">
-              대운에 용신 없음
-            </span>
-          )}
-        </div>
-        <div className="space-y-1 text-sm text-gray-700">
-          <div>
-            천간 {data.seun_stem.char}({data.seun_stem.sipsin_name}): {data.seun_stem.domain}
-          </div>
-          <div>
-            지지 {data.seun_branch.char}({data.seun_branch.sipsin_name}): {data.seun_branch.domain}
-          </div>
-        </div>
-      </section>
-
-      <DaeunTimeline daeun={data.daeun} />
-
-      {(data.seun_clashes.length > 0 || data.daeun_clashes.length > 0) && (
-        <section className="space-y-2">
-          <h3 className="text-lg font-bold text-gray-800">충(衝) 감지</h3>
-          {[...data.seun_clashes, ...data.daeun_clashes].map((c, i) => (
-            <div key={i} className="bg-red-50 border-l-4 border-red-400 rounded-lg px-4 py-2 text-sm text-red-700">
-              {c.incoming} ↔ {c.target} ({c.pillar})
-            </div>
-          ))}
-        </section>
-      )}
-      {(data.seun_combines.length > 0 || data.daeun_combines.length > 0) && (
-        <section className="space-y-2">
-          <h3 className="text-lg font-bold text-gray-800">합(合) 감지</h3>
-          {[...data.seun_combines, ...data.daeun_combines].map((c, i) => (
-            <div key={i} className="bg-green-50 border-l-4 border-green-400 rounded-lg px-4 py-2 text-sm text-green-700">
-              {c.incoming} ↔ {c.target} ({c.pillar}, {c.type})
-            </div>
-          ))}
-        </section>
-      )}
-
-      <DomainBarChart scores={data.domain_scores} />
-
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-800">종합 해석</h2>
-        <InterpretSection title="성격·기질" lines={data.personality} variant="info" />
-        <InterpretSection title="오행 밸런스" lines={data.element_balance} />
-        <InterpretSection title="용신 분석" lines={data.yongshin} />
-        <InterpretSection title="영역별 운세" lines={data.fortune_by_domain} />
-        <InterpretSection title="올해 운세" lines={data.annual_fortune} />
-        <InterpretSection title="대운 흐름" lines={data.major_fortune} />
-        <InterpretSection title="충·합 관계" lines={data.relationships} variant="warning" />
-        <InterpretSection title="종합 조언" lines={data.advice} variant="success" />
-      </section>
-    </div>
   );
 }

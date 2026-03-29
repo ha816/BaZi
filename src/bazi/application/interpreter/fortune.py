@@ -17,11 +17,7 @@ class FortuneInterpreter:
             if key_sipsin is None:
                 continue
 
-            influence = "세운과 대운 모두 영향" if seun_match and daeun_match \
-                else "올해의 키워드" if seun_match \
-                else "대운의 흐름"
-
-            lines.append(f"[{domain_name}] {influence} — {key_sipsin.name}: {SIPSIN_DETAIL[key_sipsin]}")
+            lines.append(f"[{domain_name}] {SIPSIN_DETAIL[key_sipsin]}")
 
             if domain_name == "재물운":
                 lines.append(f"  💼 투자: {MODERN_INVEST[key_sipsin]}")

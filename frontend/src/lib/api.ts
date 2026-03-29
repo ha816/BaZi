@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export async function analyzeChart(
   input: AnalysisInput
 ): Promise<AnalysisResult> {
-  const res = await fetch(`${API_URL}/api/analyze`, {
+  const res = await fetch(`${API_URL}/saju/interpret`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

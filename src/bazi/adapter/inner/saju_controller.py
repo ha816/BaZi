@@ -19,8 +19,8 @@ class AnalysisRequest(BaseModel):
     city: str = "Seoul"
 
 
-@inject
 @saju_router.post("/saju/interpret")
+@inject
 async def interpret(
     req: AnalysisRequest,
     saju_svc: SajuService = Depends(Provide[Container.saju_service]),

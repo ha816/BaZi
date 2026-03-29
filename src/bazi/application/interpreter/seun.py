@@ -10,12 +10,10 @@ class SeunInterpreter:
         branch_char, branch_sipsin = postnatal.seun_branch
 
         lines.append(
-            f"{year}년 천간 {stem_char}({stem_sipsin.name})은 "
-            f"{stem_sipsin.domain} 방면에 변화를 가져옵니다."
+            f"{year}년 하늘 기운은 {stem_sipsin.domain} 방면에 변화를 가져옵니다."
         )
         lines.append(
-            f"{year}년 지지 {branch_char}({branch_sipsin.name})은 "
-            f"{branch_sipsin.domain} 방면의 환경을 만듭니다."
+            f"{year}년 땅 기운은 {branch_sipsin.domain} 방면의 환경을 만듭니다."
         )
 
         return lines

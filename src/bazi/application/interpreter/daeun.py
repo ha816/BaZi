@@ -9,10 +9,10 @@ class DaeunInterpreter:
         if not current_daeun:
             return lines
 
-        lines.append(f"현재 대운 {current_daeun.ganji}({current_daeun.start_age}~{current_daeun.end_age}세):")
+        lines.append(f"현재 {current_daeun.start_age}~{current_daeun.end_age}세 구간의 큰 흐름:")
 
         for char, sipsin in postnatal.daeun_sipsin:
-            lines.append(f"  {char}({sipsin.name}): {SIPSIN_DETAIL[sipsin]}")
+            lines.append(f"  {SIPSIN_DETAIL[sipsin]}")
 
         daeun_list = postnatal.daeun
         current_idx = next(
@@ -21,10 +21,10 @@ class DaeunInterpreter:
         if current_idx is not None:
             if current_idx > 0:
                 prev = daeun_list[current_idx - 1]
-                lines.append(f"  이전 대운 {prev.ganji}({prev.start_age}~{prev.end_age}세)에서 전환된 흐름입니다.")
+                lines.append(f"  이전 {prev.start_age}~{prev.end_age}세 구간에서 전환된 흐름입니다.")
             if current_idx < len(daeun_list) - 1:
                 nxt = daeun_list[current_idx + 1]
-                lines.append(f"  다음 대운 {nxt.ganji}({nxt.start_age}~{nxt.end_age}세)로의 전환을 준비하세요.")
+                lines.append(f"  다음 {nxt.start_age}~{nxt.end_age}세 구간으로의 전환을 준비하세요.")
 
         return lines
 
