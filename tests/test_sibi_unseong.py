@@ -1,13 +1,17 @@
+from datetime import datetime
+
 from bazi.domain.ganji import Branch, SibiUnseong, Stem
 from bazi.domain.natal import Sinsal
-from bazi.domain.natal import Saju
-from bazi.adapter.outer.natal_adapter import NatalAdapter as NatalAnalyzer
+from bazi.domain.user import Gender, User
+from bazi.adapter.outer.natal_adapter import NatalAdapter
 
-_analyzer = NatalAnalyzer()
+_analyzer = NatalAdapter()
+
+USER_1990 = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
 
 
-def analyze(saju):
-    return _analyzer.analyze(saju)
+def analyze(user):
+    return _analyzer.analyze(user)
 
 
 def test_yang_stem_forward():
@@ -27,7 +31,7 @@ def test_various_stems():
 
 
 def test_sibi_unseong_in_natal():
-    info = analyze(Saju(1990, 10, 10, 14, 30))
+    info = analyze(USER_1990)
     assert len(info.sibi_unseong) == 4
     for pillar, unseong in info.sibi_unseong:
         assert isinstance(unseong, SibiUnseong)
@@ -46,7 +50,7 @@ def test_sinsal_find_all():
 
 
 def test_sinsal_in_natal():
-    info = analyze(Saju(1990, 10, 10, 14, 30))
+    info = analyze(USER_1990)
 
     for branch_char, sinsal in info.sinsal:
         assert isinstance(sinsal, Sinsal)

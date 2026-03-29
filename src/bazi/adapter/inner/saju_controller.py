@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 from bazi.application.saju_service import SajuService
 from bazi.container import Container
-from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 
 saju_router = APIRouter()
@@ -20,11 +19,11 @@ class AnalysisRequest(BaseModel):
     city: str = "Seoul"
 
 
-@saju_router.post("/api/analyze")
 @inject
-async def analyze(
+@saju_router.post("/saju/interpret")
+async def interpret(
     req: AnalysisRequest,
-    saju_service: SajuService = Depends(Provide[Container.saju_service]),
+    saju_svc: SajuService = Depends(Provide[Container.saju_service]),
 ) -> dict:
     try:
         user = User(
@@ -33,9 +32,7 @@ async def analyze(
             birth_dt=req.birth_dt,
             city=req.city,
         )
-        birth_dt = req.birth_dt
-        saju = Saju(birth_dt.year, birth_dt.month, birth_dt.day, birth_dt.hour, birth_dt.minute, city=req.city)
-        interpretation = saju_service.analyze(saju, user, req.analysis_year)
+        interpretation = saju_svc.interpret(user, req.analysis_year)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 
 from sajupy import calculate_saju as _sajupy_calculate
@@ -16,14 +17,13 @@ class Saju:
 
     def __init__(
         self,
-        year: int, month: int, day: int,
-        hour: int, minute: int = 0,
+        birth_dt: datetime,
         city: str = "Seoul",
         use_solar_time: bool = True,
     ):
         result = _sajupy_calculate(
-            year=year, month=month, day=day,
-            hour=hour, minute=minute, city=city,
+            year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
+            hour=birth_dt.hour, minute=birth_dt.minute, city=city,
             use_solar_time=use_solar_time,
         )
         self.year_pillar: str = result["year_pillar"]

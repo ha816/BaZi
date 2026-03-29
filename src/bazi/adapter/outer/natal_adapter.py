@@ -16,7 +16,8 @@ class NatalAdapter(NatalPort):
     saju: Saju
     day_stem: Stem
 
-    def analyze(self, saju: Saju) -> NatalInfo:
+    def analyze(self, user: User) -> NatalInfo:
+        saju = Saju(user.birth_dt, city=user.city)
         self.saju = saju
         self.day_stem = Stem.from_char(saju.day_stem)
 

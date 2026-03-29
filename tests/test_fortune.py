@@ -1,27 +1,25 @@
-import asyncio
 from datetime import datetime
 
 from bazi.domain.natal import Saju
 from bazi.domain.ganji import Sipsin
 from bazi.domain.user import Gender, User
-from bazi.adapter.outer.natal_adapter import NatalAdapter as NatalAnalyzer, PostnatalAdapter as PostnatalAnalyzer
+from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
 from bazi.application.util.util import year_to_ganji
 
-_natal = NatalAnalyzer()
-_postnatal = PostnatalAnalyzer()
+_natal = NatalAdapter()
+_postnatal = PostnatalAdapter()
 
 MALE_USER = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
 FEMALE_USER = User(name="테스트", gender=Gender.FEMALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-SAJU = Saju(1990, 10, 10, 14, 30)
-NATAL = _natal.analyze(SAJU)
+NATAL = _natal.analyze(MALE_USER)
 
 
 def analyze_postnatal(user, natal, year):
     return _postnatal.analyze(user, natal, year)
 
 
-def analyze_natal(saju):
-    return _natal.analyze(saju)
+def analyze_natal(user):
+    return _natal.analyze(user)
 
 
 def test_year_to_ganji():
@@ -72,8 +70,7 @@ def test_check_yongshin_in_seun():
 
 def test_find_clashes():
     user_1984 = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1984, 3, 15, 12, 0))
-    saju = Saju(1984, 3, 15, 12, 0)
-    natal = analyze_natal(saju)
+    natal = analyze_natal(user_1984)
     postnatal = analyze_postnatal(user_1984, natal, year=2026)
     assert len(postnatal.seun_clashes) >= 1
     assert any(c["incoming"] == "午" and c["target"] == "子" for c in postnatal.seun_clashes)

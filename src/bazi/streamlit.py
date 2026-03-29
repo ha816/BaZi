@@ -8,7 +8,6 @@ from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
 from bazi.application.saju_service import SajuService
 from bazi.application.util.util import year_to_ganji
 from bazi.domain.ganji import Stem, Branch
-from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 
 _OHENG_EMOJI: dict[str, str] = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
@@ -59,9 +58,7 @@ def main():
     )
 
     try:
-        dt = user.birth_dt
-        saju = Saju(dt.year, dt.month, dt.day, dt.hour, dt.minute, city=user.city)
-        natal = analyze_natal.analyze(saju)
+        natal = analyze_natal.analyze(user)
         postnatal = analyze_postnatal.analyze(user, natal, year=analysis_year)
         summary = saju_service._interpret(natal, postnatal)
     except Exception as e:
