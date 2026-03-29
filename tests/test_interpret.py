@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 
 from bazi.domain.ganji import Oheng
@@ -7,21 +6,17 @@ from bazi.domain.user import Gender, User
 from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
 from bazi.application.saju_service import Interpretation, Interpreter
 
-analyze_natal = NatalAnalyzer()
-analyze_postnatal = PostnatalAnalyzer()
-interpret = Interpreter()
-
-
-async def _make_result_async(year: int = 2026) -> Interpretation:
-    user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-    saju = Saju(1990, 10, 10, 14, 30)
-    natal = await analyze_natal.analyze(saju)
-    postnatal = await analyze_postnatal.analyze(user, natal, year=year)
-    return await interpret.interpret(natal, postnatal)
+_natal = NatalAnalyzer()
+_postnatal = PostnatalAnalyzer()
+_interpreter = Interpreter()
 
 
 def _make_result(year: int = 2026) -> Interpretation:
-    return asyncio.run(_make_result_async(year))
+    user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
+    saju = Saju(1990, 10, 10, 14, 30)
+    natal = _natal.analyze(saju)
+    postnatal = _postnatal.analyze(user, natal, year=year)
+    return _interpreter.interpret(natal, postnatal)
 
 
 def test_returns_interpretation_dataclass():

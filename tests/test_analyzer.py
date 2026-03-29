@@ -8,7 +8,7 @@ _analyzer = NatalAnalyzer()
 
 
 def analyze(saju):
-    return asyncio.run(_analyzer.analyze(saju))
+    return _analyzer.analyze(saju)
 
 
 def test_analyze_basic():

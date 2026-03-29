@@ -35,7 +35,7 @@ async def analyze(
         )
         birth_dt = req.birth_dt
         saju = Saju(birth_dt.year, birth_dt.month, birth_dt.day, birth_dt.hour, birth_dt.minute, city=req.city)
-        interpretation = await saju_service.analyze(saju, user, req.analysis_year)
+        interpretation = saju_service.analyze(saju, user, req.analysis_year)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
 

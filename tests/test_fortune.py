@@ -13,15 +13,15 @@ _postnatal = PostnatalAnalyzer()
 MALE_USER = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
 FEMALE_USER = User(name="테스트", gender=Gender.FEMALE, birth_dt=datetime(1990, 10, 10, 14, 30))
 SAJU = Saju(1990, 10, 10, 14, 30)
-NATAL = asyncio.run(_natal.analyze(SAJU))
+NATAL = _natal.analyze(SAJU)
 
 
 def analyze_postnatal(user, natal, year):
-    return asyncio.run(_postnatal.analyze(user, natal, year))
+    return _postnatal.analyze(user, natal, year)
 
 
 def analyze_natal(saju):
-    return asyncio.run(_natal.analyze(saju))
+    return _natal.analyze(saju)
 
 
 def test_year_to_ganji():

@@ -15,7 +15,7 @@ class NatalAnalyzer(NatalPort):
     saju: Saju
     day_stem: Stem
 
-    async def analyze(self, saju: Saju) -> NatalInfo:
+    def analyze(self, saju: Saju) -> NatalInfo:
         self.saju = saju
         self.day_stem = Stem.from_char(saju.day_stem)
 
@@ -87,7 +87,7 @@ class PostnatalAnalyzer(PostnatalPort):
     seun_ganji: str
     day_stem: Stem
 
-    async def analyze(self, user: User, natal: NatalInfo, year: int) -> PostnatalInfo:
+    def analyze(self, user: User, natal: NatalInfo, year: int) -> PostnatalInfo:
         self.user = user
         self.natal = natal
         self.saju = natal.saju

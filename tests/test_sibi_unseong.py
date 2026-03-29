@@ -1,5 +1,3 @@
-import asyncio
-
 from bazi.domain.ganji import Branch, SibiUnseong, Stem
 from bazi.domain.natal import Sinsal
 from bazi.domain.natal import Saju
@@ -9,7 +7,7 @@ _analyzer = NatalAnalyzer()
 
 
 def analyze(saju):
-    return asyncio.run(_analyzer.analyze(saju))
+    return _analyzer.analyze(saju)
 
 
 def test_yang_stem_forward():

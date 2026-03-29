@@ -76,7 +76,7 @@ class Interpretation:
 class Interpreter:
     """종합 해석기 — 각 해석 컴포넌트를 조합하여 Interpretation을 반환한다."""
 
-    async def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
+    def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
         return Interpretation(
             **self._build_chart_data(natal, postnatal),
             personality=PersonalityInterpreter()(natal),
@@ -191,7 +191,7 @@ class SajuService:
         self.postnatal_port = postnatal_port
         self.interpreter = interpreter
 
-    async def analyze(self, saju: "Saju", user: "User", year: int) -> Interpretation:
-        natal = await self.natal_port.analyze(saju)
-        postnatal = await self.postnatal_port.analyze(user, natal, year)
-        return await self.interpreter.interpret(natal, postnatal)
+    def analyze(self, saju: "Saju", user: "User", year: int) -> Interpretation:
+        natal = self.natal_port.analyze(saju)
+        postnatal = self.postnatal_port.analyze(user, natal, year)
+        return self.interpreter.interpret(natal, postnatal)
