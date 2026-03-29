@@ -3,16 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP
-from bazi.application.interpret.advice import AdviceInterpreter
-from bazi.application.interpret.daeun import DaeunInterpreter
-from bazi.application.interpret.fortune import FortuneInterpreter
-from bazi.application.interpret.personality import ElementBalanceInterpreter, PersonalityInterpreter
-from bazi.application.interpret.relationship import RelationshipInterpreter
-from bazi.application.interpret.seun import SeunInterpreter
-from bazi.application.interpret.yongshin import YongshinInterpreter
+from bazi.application.interpreter.advice import AdviceInterpreter
+from bazi.application.interpreter.daeun import DaeunInterpreter
+from bazi.application.interpreter.fortune import FortuneInterpreter
+from bazi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
+from bazi.application.interpreter.relationship import RelationshipInterpreter
+from bazi.application.interpreter.seun import SeunInterpreter
+from bazi.application.interpreter.yongshin import YongshinInterpreter
 from bazi.domain.ganji import Branch, Stem
 from bazi.domain.natal import NatalInfo, PostnatalInfo
-from bazi.domain.util import year_to_ganji
+from bazi.application.util.util import year_to_ganji
 
 
 @dataclass

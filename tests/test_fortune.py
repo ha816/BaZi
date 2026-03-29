@@ -3,8 +3,8 @@ from datetime import datetime
 from bazi.domain.natal import Saju
 from bazi.domain.ganji import Sipsin
 from bazi.domain.user import Gender, User
-from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
-from bazi.domain.util import year_to_ganji
+from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
+from bazi.application.util.util import year_to_ganji
 
 analyze_natal = NatalAnalyzer()
 analyze_postnatal = PostnatalAnalyzer()

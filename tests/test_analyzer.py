@@ -1,6 +1,6 @@
 from bazi.domain.natal import Saju
 from bazi.domain.ganji import Oheng, Sipsin, Stem
-from bazi.application.natal import NatalAnalyzer
+from bazi.application.natal_service import NatalAnalyzer
 
 analyze = NatalAnalyzer()
 

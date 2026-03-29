@@ -1,7 +1,7 @@
 from bazi.application.constant import SAMJAE_LABELS, SAMJAE_MAP
 from bazi.domain.ganji import Branch
 from bazi.domain.natal import NatalInfo, PostnatalInfo
-from bazi.domain.util import year_to_ganji
+from bazi.application.util.util import year_to_ganji
 
 
 class SeunInterpreter:

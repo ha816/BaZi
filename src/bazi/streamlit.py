@@ -4,12 +4,12 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from bazi.application.constant import DOMAIN_MAP
-from bazi.application.interpret import Interpreter
-from bazi.application.natal import NatalAnalyzer, PostnatalAnalyzer
+from bazi.application.interpreter import Interpreter
+from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
+from bazi.application.util.util import year_to_ganji
 from bazi.domain.ganji import Stem, Branch
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
-from bazi.domain.util import year_to_ganji
 
 _OHENG_EMOJI: dict[str, str] = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 

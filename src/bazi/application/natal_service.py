@@ -5,7 +5,7 @@ from sajupy import SajuCalculator
 from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem
 from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, Pillar, PostnatalInfo, Saju, Sinsal
 from bazi.domain.user import User
-from bazi.domain.util import parse_term_time, year_to_ganji
+from bazi.application.util.util import parse_term_time, year_to_ganji
 
 
 class NatalAnalyzer:

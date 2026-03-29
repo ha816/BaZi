@@ -27,4 +27,5 @@ Thumbs.db
 .env.*
 
 # uv
-uv.lock
+uv.locksrc/bazi/resource/
+.claude/
