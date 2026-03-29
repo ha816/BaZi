@@ -10,7 +10,7 @@ from bazi.container import Container
 from bazi.domain.natal import Saju
 from bazi.domain.user import Gender, User
 
-router = APIRouter()
+saju_router = APIRouter()
 
 
 class AnalysisRequest(BaseModel):
@@ -20,7 +20,7 @@ class AnalysisRequest(BaseModel):
     city: str = "Seoul"
 
 
-@router.post("/api/analyze")
+@saju_router.post("/api/analyze")
 @inject
 async def analyze(
     req: AnalysisRequest,

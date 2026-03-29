@@ -9,7 +9,7 @@ from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, Pillar, PostnatalInf
 from bazi.domain.user import User
 
 
-class NatalAnalyzer(NatalPort):
+class NatalAdapter(NatalPort):
     """선천 분석기 — NatalPort 구현체."""
 
     saju: Saju
@@ -77,7 +77,7 @@ class NatalAnalyzer(NatalPort):
         return Sinsal.find_all(self.day_stem, day_branch, all_branches)
 
 
-class PostnatalAnalyzer(PostnatalPort):
+class PostnatalAdapter(PostnatalPort):
     """후천 분석기 — PostnatalPort 구현체."""
 
     user: User

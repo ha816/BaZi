@@ -4,8 +4,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from bazi.application.constant import DOMAIN_MAP
-from bazi.application.saju_service import Interpreter
-from bazi.application.natal_service import NatalAnalyzer, PostnatalAnalyzer
+from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from bazi.application.saju_service import SajuService
 from bazi.application.util.util import year_to_ganji
 from bazi.domain.ganji import Stem, Branch
 from bazi.domain.natal import Saju
@@ -13,9 +13,9 @@ from bazi.domain.user import Gender, User
 
 _OHENG_EMOJI: dict[str, str] = {"木": "🌳", "火": "🔥", "土": "⛰️", "金": "🪙", "水": "💧"}
 
-analyze_natal = NatalAnalyzer()
-analyze_postnatal = PostnatalAnalyzer()
-interpret = Interpreter()
+analyze_natal = NatalAdapter()
+analyze_postnatal = PostnatalAdapter()
+saju_service = SajuService(natal_port=analyze_natal, postnatal_port=analyze_postnatal)
 
 
 def main():
@@ -61,9 +61,9 @@ def main():
     try:
         dt = user.birth_dt
         saju = Saju(dt.year, dt.month, dt.day, dt.hour, dt.minute, city=user.city)
-        natal = analyze_natal(saju)
-        postnatal = analyze_postnatal(user, natal, year=analysis_year)
-        summary = interpret(natal, postnatal)
+        natal = analyze_natal.analyze(saju)
+        postnatal = analyze_postnatal.analyze(user, natal, year=analysis_year)
+        summary = saju_service._interpret(natal, postnatal)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return

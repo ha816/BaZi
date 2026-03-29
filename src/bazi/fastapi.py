@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from bazi.adapter.inner.saju_controller import router
+from bazi.adapter.inner.saju_controller import saju_router
 from bazi.container import Container
 
 container = Container()
@@ -15,4 +15,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(saju_router)
