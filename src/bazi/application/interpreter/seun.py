@@ -1,4 +1,5 @@
-from bazi.application.constant import SAMJAE_LABELS, SAMJAE_MAP
+from bazi.application.constant import SAMJAE_MAP
+from bazi.domain.natal import Samjae
 from bazi.domain.ganji import Branch, Pillar
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 from bazi.application.util.util import year_to_ganji
@@ -37,7 +38,7 @@ class SeunInterpreter:
                 samjae_branches = (entering, sitting, leaving)
                 if seun_branch in samjae_branches:
                     idx = samjae_branches.index(seun_branch)
-                    label = SAMJAE_LABELS[idx]
+                    label = Samjae.by_order(idx).value
                     if idx == 0:
                         return (
                             f"{year}년은 삼재(三災)에 진입하는 '{label}'입니다. "

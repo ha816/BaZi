@@ -33,6 +33,17 @@ class Jeol(Enum):
         return frozenset(j.value for j in cls)
 
 
+class Samjae(Enum):
+    """삼재(三災) — 3년간 이어지는 재액의 종류."""
+    入三災 = "들삼재"  # 첫해 — 삼재에 들어감
+    坐三災 = "눌삼재"  # 둘째해 — 삼재가 눌러앉음 (가장 강함)
+    出三災 = "날삼재"  # 셋째해 — 삼재가 날아감
+
+    @classmethod
+    def by_order(cls, index: int) -> "Samjae":
+        return list(cls)[index]
+
+
 class Sinsal(Enum):
     """신살(神殺) - 사주에 나타나는 특수한 작용.
 

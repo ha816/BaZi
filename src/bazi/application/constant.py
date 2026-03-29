@@ -1,5 +1,7 @@
 from bazi.domain.ganji import Branch, Oheng, Sipsin, Stem
 
+
+
 # 삼재(三災): 년지(띠) 삼합 그룹별 삼재 해당 년지 3개
 # key: 삼합 그룹 (본인 띠가 여기 속하면), value: (들삼재, 눌삼재, 날삼재)
 SAMJAE_MAP: dict[frozenset[Branch], tuple[Branch, Branch, Branch]] = {
@@ -7,12 +9,6 @@ SAMJAE_MAP: dict[frozenset[Branch], tuple[Branch, Branch, Branch]] = {
     frozenset({Branch.寅, Branch.午, Branch.戌}): (Branch.申, Branch.酉, Branch.戌),
     frozenset({Branch.巳, Branch.酉, Branch.丑}): (Branch.亥, Branch.子, Branch.丑),
     frozenset({Branch.亥, Branch.卯, Branch.未}): (Branch.巳, Branch.午, Branch.未),
-}
-
-SAMJAE_LABELS: dict[int, str] = {
-    0: "들삼재",  # 첫해 — 삼재에 들어감
-    1: "눌삼재",  # 둘째해 — 삼재가 눌러앉음 (가장 강함)
-    2: "날삼재",  # 셋째해 — 삼재가 날아감
 }
 
 DOMAIN_MAP: dict[str, list[Sipsin]] = {

@@ -4,9 +4,9 @@ from datetime import datetime
 from sajupy import SajuCalculator, calculate_saju as _sajupy_calculate
 
 from bazi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
-from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Saju, Sinsal
+from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Samjae, Saju, Sinsal
 from bazi.domain.user import User
-from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP, SINSAL_SAMHAP, SINSAL_STEM_MAP
+from bazi.application.constant import DOMAIN_MAP, SAMJAE_MAP, SINSAL_SAMHAP, SINSAL_STEM_MAP
 from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.util.util import parse_term_time, year_to_ganji
 
@@ -196,7 +196,7 @@ class PostnatalAdapter(PostnatalPort):
                 if seun_branch in samjae_branches:
                     idx = samjae_branches.index(seun_branch)
                     return {
-                        "type": SAMJAE_LABELS[idx],
+                        "type": Samjae.by_order(idx).value,
                         "year_branch": seun_branch.name,
                         "birth_branch": year_branch.name,
                     }
