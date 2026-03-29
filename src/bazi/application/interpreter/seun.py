@@ -1,5 +1,5 @@
 from bazi.application.constant import SAMJAE_LABELS, SAMJAE_MAP
-from bazi.domain.ganji import Branch
+from bazi.domain.ganji import Branch, Pillar
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 from bazi.application.util.util import year_to_ganji
 
@@ -29,7 +29,7 @@ class SeunInterpreter:
 
     def _get_samjae_text(self, natal: NatalInfo, year: int) -> str | None:
         """삼재 해당 시 해석 문장을 반환한다. 비해당이면 None."""
-        year_branch = Branch.from_char(natal.saju.year_pillar[1])
+        year_branch = natal.saju[Pillar.年柱].branch
         seun_branch = Branch.from_char(year_to_ganji(year)[1])
 
         for group, (entering, sitting, leaving) in SAMJAE_MAP.items():

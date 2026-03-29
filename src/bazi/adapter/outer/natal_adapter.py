@@ -1,13 +1,14 @@
 from collections import Counter
+from datetime import datetime
 
-from sajupy import SajuCalculator
+from sajupy import SajuCalculator, calculate_saju as _sajupy_calculate
 
+from bazi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
+from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Saju, Sinsal
+from bazi.domain.user import User
 from bazi.application.constant import DOMAIN_MAP, SAMJAE_LABELS, SAMJAE_MAP
 from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.util.util import parse_term_time, year_to_ganji
-from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem
-from bazi.domain.natal import DaeunPeriod, Jeol, NatalInfo, Pillar, PostnatalInfo, Saju, Sinsal
-from bazi.domain.user import User
 
 
 class NatalAdapter(NatalPort):
@@ -17,9 +18,9 @@ class NatalAdapter(NatalPort):
     day_stem: Stem
 
     def analyze(self, user: User) -> NatalInfo:
-        saju = Saju(user.birth_dt, city=user.city)
+        saju = cal_saju(user.birth_dt, city=user.city)
         self.saju = saju
-        self.day_stem = Stem.from_char(saju.day_stem)
+        self.day_stem = saju.stem_of_day_pillar
 
         stats = self._get_oheng()
         me = self.day_stem.element
@@ -39,11 +40,10 @@ class NatalAdapter(NatalPort):
         )
 
     def _get_oheng(self) -> dict[Oheng, int]:
-        palja = self.saju.palja
-        elements = (
-            Stem.from_char(palja[i]).element if i % 2 == 0 else Branch.from_char(palja[i]).element
-            for i in range(8)
-        )
+        elements = []
+        for sb in self.saju.pillars.values():
+            elements.append(sb.stem.element)
+            elements.append(sb.branch.element)
         counts = Counter(elements)
         return {o: counts.get(o, 0) for o in Oheng}
 
@@ -56,26 +56,23 @@ class NatalAdapter(NatalPort):
         return me.generates if strength > 0 else me.generated_by
 
     def _get_sipsin(self) -> list[tuple[str, Sipsin]]:
-        palja = self.saju.palja
-        day_stem_index = 4
         results = []
-        for i, char in enumerate(palja):
-            if i == day_stem_index:
-                continue
-            target = Stem.from_char(char) if i % 2 == 0 else Branch.from_char(char)
-            results.append((char, Sipsin.of(self.day_stem, target)))
+        for pillar_type, sb in self.saju.pillars.items():
+            if pillar_type != Pillar.日柱:
+                results.append((sb.stem.name, Sipsin.of(self.day_stem, sb.stem)))
+            results.append((sb.branch.name, Sipsin.of(self.day_stem, sb.branch)))
         return results
 
     def _get_sibi_unseong(self) -> list[tuple[str, SibiUnseong]]:
-        stem = Stem.from_char(self.saju.day_stem)
+        stem = self.saju.stem_of_day_pillar
         return [
-            (pillar, SibiUnseong.of(stem, Branch.from_char(pillar[1])))
-            for pillar in self.saju.pillars
+            (str(sb), SibiUnseong.of(stem, sb.branch))
+            for sb in self.saju.pillars.values()
         ]
 
     def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:
-        day_branch = Branch.from_char(self.saju.day_pillar[1])
-        all_branches = [Branch.from_char(p[1]) for p in self.saju.pillars]
+        day_branch = self.saju[Pillar.日柱].branch
+        all_branches = [sb.branch for sb in self.saju.pillars.values()]
         return Sinsal.find_all(self.day_stem, day_branch, all_branches)
 
 
@@ -84,7 +81,6 @@ class PostnatalAdapter(PostnatalPort):
 
     user: User
     natal: NatalInfo
-    saju: Saju
     year: int
     seun_ganji: str
     day_stem: Stem
@@ -92,10 +88,9 @@ class PostnatalAdapter(PostnatalPort):
     def analyze(self, user: User, natal: NatalInfo, year: int) -> PostnatalInfo:
         self.user = user
         self.natal = natal
-        self.saju = natal.saju
         self.year = year
         self.seun_ganji = year_to_ganji(year)
-        self.day_stem = Stem.from_char(self.saju.day_stem)
+        self.day_stem = natal.saju.stem_of_day_pillar
 
         seun_stem, seun_branch = self._get_seun()
         daeun = self._get_daeun()
@@ -146,12 +141,12 @@ class PostnatalAdapter(PostnatalPort):
     def _get_clashes(self, ganji: str) -> list[dict]:
         incoming = Branch.from_char(ganji[1])
         results = []
-        for i, pillar in enumerate(self.saju.pillars):
-            if incoming.clashes.name == pillar[1]:
+        for pillar_type, sb in zip(Pillar, list(self.natal.saju.pillars.values())):
+            if incoming.clashes == sb.branch:
                 results.append({
                     "incoming": incoming.name,
-                    "target": pillar[1],
-                    "pillar": Pillar.by_order(i).korean,
+                    "target": sb.branch.name,
+                    "pillar": pillar_type.korean,
                 })
         return results
 
@@ -159,19 +154,19 @@ class PostnatalAdapter(PostnatalPort):
         incoming_stem = Stem.from_char(ganji[0])
         incoming_branch = Branch.from_char(ganji[1])
         results = []
-        for i, pillar in enumerate(self.saju.pillars):
-            if incoming_stem.combines.name == pillar[0]:
+        for pillar_type, sb in zip(Pillar, list(self.natal.saju.pillars.values())):
+            if incoming_stem.combines == sb.stem:
                 results.append({
                     "incoming": incoming_stem.name,
-                    "target": pillar[0],
-                    "pillar": Pillar.by_order(i).korean,
+                    "target": sb.stem.name,
+                    "pillar": pillar_type.korean,
                     "type": "천간합",
                 })
-            if incoming_branch.combines.name == pillar[1]:
+            if incoming_branch.combines == sb.branch:
                 results.append({
                     "incoming": incoming_branch.name,
-                    "target": pillar[1],
-                    "pillar": Pillar.by_order(i).korean,
+                    "target": sb.branch.name,
+                    "pillar": pillar_type.korean,
                     "type": "지지합",
                 })
         return results
@@ -194,7 +189,7 @@ class PostnatalAdapter(PostnatalPort):
         return scores
 
     def _get_samjae(self) -> dict | None:
-        year_branch = Branch.from_char(self.saju.year_pillar[1])
+        year_branch = self.natal.saju.pillars[Pillar.年柱].branch
         seun_branch = Branch.from_char(self.seun_ganji[1])
         for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
             if year_branch in group:
@@ -210,7 +205,7 @@ class PostnatalAdapter(PostnatalPort):
         return None
 
     def _get_daeun(self) -> list[DaeunPeriod]:
-        forward = Stem.from_char(self.saju.year_pillar[0]).is_yang == self.user.gender.is_male
+        forward = self.natal.saju.pillars[Pillar.年柱].stem.is_yang == self.user.gender.is_male
         sequence = self._get_daeun_seq(forward)
         start_age = self._get_start_age(forward)
         yongshin = self.natal.yongshin
@@ -229,9 +224,9 @@ class PostnatalAdapter(PostnatalPort):
         ]
 
     def _get_daeun_seq(self, forward: bool, count: int = 8) -> list[str]:
-        month_pillar = self.saju.month_pillar
-        stem_idx = Stem.from_char(month_pillar[0]).order
-        branch_idx = Branch.from_char(month_pillar[1]).order
+        month = self.natal.saju.pillars[Pillar.月柱]
+        stem_idx = month.stem.order
+        branch_idx = month.branch.order
         step = 1 if forward else -1
 
         return [
@@ -262,3 +257,23 @@ class PostnatalAdapter(PostnatalPort):
             nearest = max(dt for dt in term_dates if dt < birth_dt)
 
         return round(abs((nearest - birth_dt).days) / 3)
+
+
+
+def cal_saju(
+    birth_dt: datetime,
+    city: str = "Seoul",
+    use_solar_time: bool = True,
+) -> Saju:
+    """sajupy를 호출하여 도메인 Saju 객체를 생성한다."""
+    result = _sajupy_calculate(
+        year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
+        hour=birth_dt.hour, minute=birth_dt.minute, city=city,
+        use_solar_time=use_solar_time,
+    )
+    return Saju(
+        year=StemBranch.from_text(result["year_pillar"]),
+        month=StemBranch.from_text(result["month_pillar"]),
+        day=StemBranch.from_text(result["day_pillar"]),
+        hour=StemBranch.from_text(result["hour_pillar"]),
+    )

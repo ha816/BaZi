@@ -1,70 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 
-from sajupy import calculate_saju as _sajupy_calculate
-
-from bazi.domain.ganji import Branch, Oheng, SibiUnseong, Sipsin, Stem
-
-
-class Saju:
-    """사주(四柱) - 년주·월주·일주·시주, 생년월일시를 간지로 나타낸 4개의 기둥.
-
-    각 기둥은 천간(天干)+지지(地支) 두 글자로 이루어진 간지(干支) 문자열이다.
-    """
-
-    def __init__(
-        self,
-        birth_dt: datetime,
-        city: str = "Seoul",
-        use_solar_time: bool = True,
-    ):
-        result = _sajupy_calculate(
-            year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
-            hour=birth_dt.hour, minute=birth_dt.minute, city=city,
-            use_solar_time=use_solar_time,
-        )
-        self.year_pillar: str = result["year_pillar"]
-        self.month_pillar: str = result["month_pillar"]
-        self.day_pillar: str = result["day_pillar"]
-        self.hour_pillar: str = result["hour_pillar"]
-
-    @property
-    def pillars(self) -> list[str]:
-        return [self.year_pillar, self.month_pillar, self.day_pillar, self.hour_pillar]
-
-    @property
-    def day_stem(self) -> str:
-        """일간(日干) - 일주의 천간."""
-        return self.day_pillar[0]
-
-    @property
-    def palja(self) -> str:
-        """팔자(八字) - 8글자 전체."""
-        return "".join(self.pillars)
-
-
-class Pillar(Enum):
-    """사주의 네 기둥(四柱).
-
-    order는 기둥의 위치(0~3), korean은 한글 이름이다.
-    """
-
-    年柱 = (0, "년주")  # 연주 - 태어난 해
-    月柱 = (1, "월주")  # 월주 - 태어난 달
-    日柱 = (2, "일주")  # 일주 - 태어난 날
-    時柱 = (3, "시주")  # 시주 - 태어난 시
-
-    def __init__(self, order: int, korean: str):
-        self.order = order
-        self.korean = korean
-
-    @classmethod
-    def by_order(cls, index: int) -> "Pillar":
-        """인덱스(0~3)로 기둥을 찾는다."""
-        return list(cls)[index]
+from bazi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
 
 
 class Jeol(Enum):
@@ -188,6 +127,35 @@ _BAEKHO_MAP: dict[Branch, Branch] = {
     Branch.申: Branch.寅, Branch.酉: Branch.卯,
     Branch.戌: Branch.辰, Branch.亥: Branch.巳,
 }
+
+
+class Saju:
+    """사주(四柱) - 네 기둥의 간지 조합. 순수 도메인 모델."""
+
+    def __init__(self, year: StemBranch, month: StemBranch, day: StemBranch, hour: StemBranch):
+        self._pillars: dict[Pillar, StemBranch] = {
+            Pillar.年柱: year,
+            Pillar.月柱: month,
+            Pillar.日柱: day,
+            Pillar.時柱: hour,
+        }
+
+    def __getitem__(self, pillar: Pillar) -> StemBranch:
+        return self._pillars[pillar]
+
+    @property
+    def pillars(self) -> dict[Pillar, StemBranch]:
+        return self._pillars
+
+    @property
+    def stem_of_day_pillar(self) -> Stem:
+        """일간(日干) - 일주의 천간."""
+        return self[Pillar.日柱].stem
+
+    @property
+    def palja(self) -> str:
+        """팔자(八字) - 8글자 전체."""
+        return "".join(str(sb) for sb in self._pillars.values())
 
 
 @dataclass

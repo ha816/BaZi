@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from bazi.domain.natal import Saju
+
 from bazi.domain.ganji import Sipsin
 from bazi.domain.user import Gender, User
 from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter

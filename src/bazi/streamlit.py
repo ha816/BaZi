@@ -69,9 +69,9 @@ def main():
 
     pillar_labels = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"]
     cols = st.columns(4)
-    for col, label, pillar in zip(cols, pillar_labels, natal.saju.pillars):
+    for col, label, pillar in zip(cols, pillar_labels, natal.saju.pillars.values()):
         with col:
-            st.metric(label=label, value=pillar)
+            st.metric(label=label, value=str(pillar))
 
     st.subheader("오행 분포")
     oheng_cols = st.columns(5)

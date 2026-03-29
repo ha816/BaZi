@@ -40,21 +40,19 @@ class Oheng(Enum):
 
 
 class Stem(Enum):
-    """천간(天干) - 10개의 하늘 기운. 甲 乙 丙 丁 戊 己 庚 辛 壬 癸.
-
+    """천간(天干) - 10개의 하늘 기운.
     각 천간은 순서(order), 오행(element: Oheng), 음양(is_yang)을 속성으로 가진다.
-    천간 하나 + 지지 하나 = 하나의 기둥(柱), 기둥 4개 = 사주(四柱).
     """
 
-    甲 = (0, Oheng.木, True)   # 갑목(甲木) - 양목, 큰 나무
+    甲 = (0, Oheng.木, True)  # 갑목(甲木) - 양목, 큰 나무
     乙 = (1, Oheng.木, False)  # 을목(乙木) - 음목, 풀·꽃
-    丙 = (2, Oheng.火, True)   # 병화(丙火) - 양화, 태양
+    丙 = (2, Oheng.火, True)  # 병화(丙火) - 양화, 태양
     丁 = (3, Oheng.火, False)  # 정화(丁火) - 음화, 촛불
-    戊 = (4, Oheng.土, True)   # 무토(戊土) - 양토, 산·큰 땅
+    戊 = (4, Oheng.土, True)  # 무토(戊土) - 양토, 산·큰 땅
     己 = (5, Oheng.土, False)  # 기토(己土) - 음토, 밭·정원
-    庚 = (6, Oheng.金, True)   # 경금(庚金) - 양금, 바위·칼
+    庚 = (6, Oheng.金, True)  # 경금(庚金) - 양금, 바위·칼
     辛 = (7, Oheng.金, False)  # 신금(辛金) - 음금, 보석·바늘
-    壬 = (8, Oheng.水, True)   # 임수(壬水) - 양수, 바다·큰 강
+    壬 = (8, Oheng.水, True)  # 임수(壬水) - 양수, 바다·큰 강
     癸 = (9, Oheng.水, False)  # 계수(癸水) - 음수, 이슬·샘물
 
     def __init__(self, order: int, element: Oheng, is_yang: bool):
@@ -85,17 +83,17 @@ class Branch(Enum):
     12지지는 12동물(띠)과도 대응된다.
     """
 
-    子 = (0, Oheng.水, True)    # 자(子) - 쥐, 양수
-    丑 = (1, Oheng.土, False)   # 축(丑) - 소, 음토
-    寅 = (2, Oheng.木, True)    # 인(寅) - 호랑이, 양목
-    卯 = (3, Oheng.木, False)   # 묘(卯) - 토끼, 음목
-    辰 = (4, Oheng.土, True)    # 진(辰) - 용, 양토
-    巳 = (5, Oheng.火, False)   # 사(巳) - 뱀, 음화
-    午 = (6, Oheng.火, True)    # 오(午) - 말, 양화
-    未 = (7, Oheng.土, False)   # 미(未) - 양, 음토
-    申 = (8, Oheng.金, True)    # 신(申) - 원숭이, 양금
-    酉 = (9, Oheng.金, False)   # 유(酉) - 닭, 음금
-    戌 = (10, Oheng.土, True)   # 술(戌) - 개, 양토
+    子 = (0, Oheng.水, True)  # 자(子) - 쥐, 양수
+    丑 = (1, Oheng.土, False)  # 축(丑) - 소, 음토
+    寅 = (2, Oheng.木, True)  # 인(寅) - 호랑이, 양목
+    卯 = (3, Oheng.木, False)  # 묘(卯) - 토끼, 음목
+    辰 = (4, Oheng.土, True)  # 진(辰) - 용, 양토
+    巳 = (5, Oheng.火, False)  # 사(巳) - 뱀, 음화
+    午 = (6, Oheng.火, True)  # 오(午) - 말, 양화
+    未 = (7, Oheng.土, False)  # 미(未) - 양, 음토
+    申 = (8, Oheng.金, True)  # 신(申) - 원숭이, 양금
+    酉 = (9, Oheng.金, False)  # 유(酉) - 닭, 음금
+    戌 = (10, Oheng.土, True)  # 술(戌) - 개, 양토
     亥 = (11, Oheng.水, False)  # 해(亥) - 돼지, 음수
 
     def __init__(self, order: int, element: Oheng, is_yang: bool):
@@ -150,6 +148,50 @@ class StemCombine(Enum):
             if pair.second == stem:
                 return pair.first
         raise ValueError(f"No combine partner for {stem}")
+
+
+class StemBranch:
+    """간지(干支) - 천간과 지지의 조합. 사주의 각 기둥을 구성하는 단위."""
+
+    def __init__(self, stem: Stem, branch: Branch):
+        self.stem = stem
+        self.branch = branch
+
+    @classmethod
+    def from_text(cls, text: str) -> "StemBranch":
+        return cls(Stem.from_char(text[0]), Branch.from_char(text[1]))
+
+    def __str__(self) -> str:
+        return self.stem.name + self.branch.name
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, StemBranch):
+            return self.stem == other.stem and self.branch == other.branch
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash((self.stem, self.branch))
+
+
+class Pillar(Enum):
+    """사주의 네 기둥(四柱).
+
+    order는 기둥의 위치(0~3), korean은 한글 이름이다.
+    """
+
+    年柱 = (0, "년주")  # 연주 - 태어난 해
+    月柱 = (1, "월주")  # 월주 - 태어난 달
+    日柱 = (2, "일주")  # 일주 - 태어난 날
+    時柱 = (3, "시주")  # 시주 - 태어난 시
+
+    def __init__(self, order: int, korean: str):
+        self.order = order
+        self.korean = korean
+
+    @classmethod
+    def by_order(cls, index: int) -> "Pillar":
+        """인덱스(0~3)로 기둥을 찾는다."""
+        return list(cls)[index]
 
 
 class BranchCombine(Enum):
@@ -216,16 +258,16 @@ class Sipsin(Enum):
     value는 해당 십신의 영역(domain) 해석이다.
     """
 
-    比肩 = "동료·경쟁·독립"      # 비견 - 같은 오행, 같은 음양
-    劫財 = "경쟁·손재·형제"      # 겁재 - 같은 오행, 다른 음양
-    食神 = "재능·표현·식복"      # 식신 - 내가 생함, 같은 음양
-    傷官 = "자유·반항·창의"      # 상관 - 내가 생함, 다른 음양
+    比肩 = "동료·경쟁·독립"  # 비견 - 같은 오행, 같은 음양
+    劫財 = "경쟁·손재·형제"  # 겁재 - 같은 오행, 다른 음양
+    食神 = "재능·표현·식복"  # 식신 - 내가 생함, 같은 음양
+    傷官 = "자유·반항·창의"  # 상관 - 내가 생함, 다른 음양
     偏財 = "투자·유동재산·아버지"  # 편재 - 내가 극함, 같은 음양
     正財 = "안정적수입·저축·근면"  # 정재 - 내가 극함, 다른 음양
-    偏官 = "권력·압박·변동"      # 편관 - 나를 극함, 같은 음양
-    正官 = "직장·명예·규율"      # 정관 - 나를 극함, 다른 음양
-    偏印 = "영감·편학·고독"      # 편인 - 나를 생함, 같은 음양
-    正印 = "학문·자격·어머니"     # 정인 - 나를 생함, 다른 음양
+    偏官 = "권력·압박·변동"  # 편관 - 나를 극함, 같은 음양
+    正官 = "직장·명예·규율"  # 정관 - 나를 극함, 다른 음양
+    偏印 = "영감·편학·고독"  # 편인 - 나를 생함, 같은 음양
+    正印 = "학문·자격·어머니"  # 정인 - 나를 생함, 다른 음양
 
     @property
     def domain(self) -> str:

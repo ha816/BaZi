@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from bazi.application.port.saju_port import NatalPort, PostnatalPort
+from bazi.domain.interpretation import Interpretation
+from bazi.domain.natal import NatalInfo, PostnatalInfo
+from bazi.domain.user import User
 from bazi.application.interpreter.advice import AdviceInterpreter
 from bazi.application.interpreter.daeun import DaeunInterpreter
 from bazi.application.interpreter.fortune import FortuneInterpreter
@@ -8,9 +10,7 @@ from bazi.application.interpreter.personality import ElementBalanceInterpreter, 
 from bazi.application.interpreter.relationship import RelationshipInterpreter
 from bazi.application.interpreter.seun import SeunInterpreter
 from bazi.application.interpreter.yongshin import YongshinInterpreter
-from bazi.domain.interpretation import Interpretation
-from bazi.domain.natal import NatalInfo, PostnatalInfo
-from bazi.domain.user import User
+from bazi.application.port.saju_port import NatalPort, PostnatalPort
 from bazi.application.util.util import year_to_ganji
 
 
@@ -35,8 +35,8 @@ class SajuService:
 
         return Interpretation(
             # 사주 원국
-            pillars=natal.saju.pillars,
-            day_stem=natal.saju.day_stem,
+            pillars=[str(sb) for sb in natal.saju.pillars.values()],
+            day_stem=natal.saju.stem_of_day_pillar.name,
             element_stats={o.name: c for o, c in natal.element_stats.items()},
             strength_value=natal.strength,
             strength_label=natal.strength_label,

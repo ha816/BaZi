@@ -17,9 +17,9 @@ def analyze(user):
 def test_analyze_basic():
     info = analyze(USER_1990)
 
-    assert info.saju.pillars == ["庚午", "丙戌", "戊申", "己未"]
+    assert [str(p) for p in info.saju.pillars.values()] == ["庚午", "丙戌", "戊申", "己未"]
     assert info.my_main_element == Oheng.土
-    assert info.saju.day_stem == "戊"
+    assert info.saju.stem_of_day_pillar == Stem.戊
     assert info.element_stats == {Oheng.木: 0, Oheng.火: 2, Oheng.土: 4, Oheng.金: 2, Oheng.水: 0}
 
 
@@ -74,6 +74,6 @@ def test_sipsin_domains():
 
 def test_pillars_property():
     info = analyze(USER_1990)
-    assert len(info.saju.pillars) == 4
-    assert all(len(p) == 2 for p in info.saju.pillars)
+    assert len(info.saju.pillars.values()) == 4
+    assert all(len(str(p)) == 2 for p in info.saju.pillars.values())
     assert sum(info.element_stats.values()) == 8
