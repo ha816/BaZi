@@ -60,7 +60,7 @@ def main():
     try:
         natal = analyze_natal.analyze(user)
         postnatal = analyze_postnatal.analyze(user, natal, year=analysis_year)
-        summary = saju_service._interpret(natal, postnatal)
+        summary = saju_service.interpret(natal, postnatal)
     except Exception as e:
         st.error(f"분석 중 오류가 발생했습니다: {e}")
         return

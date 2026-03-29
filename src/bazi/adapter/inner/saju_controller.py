@@ -32,7 +32,8 @@ async def interpret(
             birth_dt=req.birth_dt,
             city=req.city,
         )
-        interpretation = saju_svc.interpret(user, req.analysis_year)
+        natal, postnatal = saju_svc.analyze(user, req.analysis_year)
+        interpretation = saju_svc.interpret(natal, postnatal)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
 

@@ -13,7 +13,8 @@ _service = SajuService(natal_port=_natal, postnatal_port=_postnatal)
 
 def _make_result(year: int = 2026) -> Interpretation:
     user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-    return _service.interpret(user, year)
+    natal, postnatal = _service.analyze(user, year)
+    return _service.interpret(natal, postnatal)
 
 
 def test_returns_interpretation_dataclass():

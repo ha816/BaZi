@@ -179,19 +179,14 @@ class Pillar(Enum):
     order는 기둥의 위치(0~3), korean은 한글 이름이다.
     """
 
-    年柱 = (0, "년주")  # 연주 - 태어난 해
-    月柱 = (1, "월주")  # 월주 - 태어난 달
-    日柱 = (2, "일주")  # 일주 - 태어난 날
-    時柱 = (3, "시주")  # 시주 - 태어난 시
+    年柱 = "년주"  # 연주 - 태어난 해
+    月柱 = "월주"  # 월주 - 태어난 달
+    日柱 = "일주"  # 일주 - 태어난 날
+    時柱 = "시주"  # 시주 - 태어난 시
 
-    def __init__(self, order: int, korean: str):
-        self.order = order
-        self.korean = korean
-
-    @classmethod
-    def by_order(cls, index: int) -> "Pillar":
-        """인덱스(0~3)로 기둥을 찾는다."""
-        return list(cls)[index]
+    @property
+    def korean(self) -> str:
+        return self.value
 
 
 class BranchCombine(Enum):

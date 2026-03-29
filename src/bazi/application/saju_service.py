@@ -10,11 +10,11 @@ from bazi.application.interpreter.personality import ElementBalanceInterpreter, 
 from bazi.application.interpreter.relationship import RelationshipInterpreter
 from bazi.application.interpreter.seun import SeunInterpreter
 from bazi.application.interpreter.yongshin import YongshinInterpreter
-from bazi.application.port.saju_port import NatalPort, PostnatalPort
+from bazi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
 from bazi.application.util.util import year_to_ganji
 
 
-class SajuService:
+class SajuService(InterpreterPort):
     """사주 분석 서비스 — Port를 주입받아 전체 분석 파이프라인을 수행한다."""
 
     def __init__(
@@ -25,12 +25,12 @@ class SajuService:
         self.natal_port = natal_port
         self.postnatal_port = postnatal_port
 
-    def interpret(self, user: User, year: int) -> Interpretation:
-        natal: NatalInfo = self.natal_port.analyze(user)
-        postnatal: PostnatalInfo = self.postnatal_port.analyze(user, natal, year)
-        return self._interpret(natal, postnatal)
+    def analyze(self, user: User, year: int) -> tuple[NatalInfo, PostnatalInfo]:
+        natal = self.natal_port.analyze(user)
+        postnatal = self.postnatal_port.analyze(user, natal, year)
+        return natal, postnatal
 
-    def _interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
+    def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
         current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
 
         return Interpretation(
