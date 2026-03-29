@@ -71,101 +71,12 @@ class Interpretation:
     advice: list[str] = field(default_factory=list)
 
 
-def build_chart_data(natal: NatalInfo, postnatal: PostnatalInfo) -> dict:
-    """프론트엔드 차트/UI에 필요한 데이터를 구성한다."""
-    yongshin_el = natal.yongshin
-    current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
-
-    if natal.strength > 0:
-        strength_label = "신강(身強)"
-    elif natal.strength < 0:
-        strength_label = "신약(身弱)"
-    else:
-        strength_label = "중화(中和)"
-
-    daeun_list = []
-    for d in postnatal.daeun:
-        has_yongshin = yongshin_el in (
-            Stem.from_char(d.ganji[0]).element,
-            Branch.from_char(d.ganji[1]).element,
-        )
-        daeun_list.append({
-            "ganji": d.ganji,
-            "start_age": d.start_age,
-            "end_age": d.end_age,
-            "has_yongshin": has_yongshin,
-            "is_current": d.ganji == current_ganji,
-        })
-
-    current_daeun = None
-    if postnatal.current_daeun:
-        cd = postnatal.current_daeun
-        current_daeun = {
-            "ganji": cd.ganji,
-            "start_age": cd.start_age,
-            "end_age": cd.end_age,
-        }
-
-    seun_sipsins = [postnatal.seun_stem[1], postnatal.seun_branch[1]]
-    daeun_sipsins = [s for _, s in postnatal.daeun_sipsin]
-    domain_scores = {}
-    for domain_name, domain_sipsins in DOMAIN_MAP.items():
-        seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
-        daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
-        score = seun_hit * 2 + daeun_hit
-        level = "high" if score >= 3 else "medium" if score >= 1 else "low"
-        domain_scores[domain_name] = {"score": score, "level": level}
-
-    year_branch = Branch.from_char(natal.saju.year_pillar[1])
-    seun_branch = Branch.from_char(year_to_ganji(postnatal.year)[1])
-    samjae = None
-    for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
-        if year_branch in group:
-            samjae_branches = (entering, sitting, leaving)
-            if seun_branch in samjae_branches:
-                idx = samjae_branches.index(seun_branch)
-                samjae = {
-                    "type": SAMJAE_LABELS[idx],
-                    "year_branch": seun_branch.name,
-                    "birth_branch": year_branch.name,
-                }
-            break
-
-    return {
-        "pillars": natal.saju.pillars,
-        "day_stem": natal.saju.day_stem,
-        "element_stats": {o.name: c for o, c in natal.element_stats.items()},
-        "strength_value": natal.strength,
-        "strength_label": strength_label,
-        "my_element": {"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
-        "yongshin_info": {"name": yongshin_el.name, "meaning": yongshin_el.meaning},
-        "year": postnatal.year,
-        "seun_ganji": year_to_ganji(postnatal.year),
-        "seun_stem": {"char": postnatal.seun_stem[0], "sipsin_name": postnatal.seun_stem[1].name, "domain": postnatal.seun_stem[1].domain},
-        "seun_branch": {"char": postnatal.seun_branch[0], "sipsin_name": postnatal.seun_branch[1].name, "domain": postnatal.seun_branch[1].domain},
-        "yongshin_in_seun": postnatal.yongshin_in_seun,
-        "yongshin_in_daeun": postnatal.yongshin_in_daeun,
-        "daeun": daeun_list,
-        "current_daeun": current_daeun,
-        "daeun_sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in postnatal.daeun_sipsin],
-        "seun_clashes": postnatal.seun_clashes,
-        "seun_combines": postnatal.seun_combines,
-        "daeun_clashes": postnatal.daeun_clashes,
-        "daeun_combines": postnatal.daeun_combines,
-        "domain_scores": domain_scores,
-        "sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
-        "sibi_unseong": [{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
-        "sinsal": [{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
-        "samjae": samjae,
-    }
-
-
 class Interpreter:
     """종합 해석기 — 각 해석 컴포넌트를 조합하여 Interpretation을 반환한다."""
 
     def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
         return Interpretation(
-            **build_chart_data(natal, postnatal),
+            **self._build_chart_data(natal, postnatal),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),
             yongshin=YongshinInterpreter()(natal, postnatal),
@@ -175,3 +86,91 @@ class Interpreter:
             relationships=RelationshipInterpreter()(postnatal),
             advice=AdviceInterpreter()(natal, postnatal),
         )
+
+    def _build_chart_data(self, natal: NatalInfo, postnatal: PostnatalInfo) -> dict:
+        """프론트엔드 차트/UI에 필요한 데이터를 구성한다."""
+        yongshin_el = natal.yongshin
+        current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
+
+        if natal.strength > 0:
+            strength_label = "신강(身強)"
+        elif natal.strength < 0:
+            strength_label = "신약(身弱)"
+        else:
+            strength_label = "중화(中和)"
+
+        daeun_list = []
+        for d in postnatal.daeun:
+            has_yongshin = yongshin_el in (
+                Stem.from_char(d.ganji[0]).element,
+                Branch.from_char(d.ganji[1]).element,
+            )
+            daeun_list.append({
+                "ganji": d.ganji,
+                "start_age": d.start_age,
+                "end_age": d.end_age,
+                "has_yongshin": has_yongshin,
+                "is_current": d.ganji == current_ganji,
+            })
+
+        current_daeun = None
+        if postnatal.current_daeun:
+            cd = postnatal.current_daeun
+            current_daeun = {
+                "ganji": cd.ganji,
+                "start_age": cd.start_age,
+                "end_age": cd.end_age,
+            }
+
+        seun_sipsins = [postnatal.seun_stem[1], postnatal.seun_branch[1]]
+        daeun_sipsins = [s for _, s in postnatal.daeun_sipsin]
+        domain_scores = {}
+        for domain_name, domain_sipsins in DOMAIN_MAP.items():
+            seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
+            daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
+            score = seun_hit * 2 + daeun_hit
+            level = "high" if score >= 3 else "medium" if score >= 1 else "low"
+            domain_scores[domain_name] = {"score": score, "level": level}
+
+        year_branch = Branch.from_char(natal.saju.year_pillar[1])
+        seun_branch = Branch.from_char(year_to_ganji(postnatal.year)[1])
+        samjae = None
+        for group, (entering, sitting, leaving) in SAMJAE_MAP.items():
+            if year_branch in group:
+                samjae_branches = (entering, sitting, leaving)
+                if seun_branch in samjae_branches:
+                    idx = samjae_branches.index(seun_branch)
+                    samjae = {
+                        "type": SAMJAE_LABELS[idx],
+                        "year_branch": seun_branch.name,
+                        "birth_branch": year_branch.name,
+                    }
+                break
+
+        return {
+            "pillars": natal.saju.pillars,
+            "day_stem": natal.saju.day_stem,
+            "element_stats": {o.name: c for o, c in natal.element_stats.items()},
+            "strength_value": natal.strength,
+            "strength_label": strength_label,
+            "my_element": {"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
+            "yongshin_info": {"name": yongshin_el.name, "meaning": yongshin_el.meaning},
+            "year": postnatal.year,
+            "seun_ganji": year_to_ganji(postnatal.year),
+            "seun_stem": {"char": postnatal.seun_stem[0], "sipsin_name": postnatal.seun_stem[1].name, "domain": postnatal.seun_stem[1].domain},
+            "seun_branch": {"char": postnatal.seun_branch[0], "sipsin_name": postnatal.seun_branch[1].name, "domain": postnatal.seun_branch[1].domain},
+            "yongshin_in_seun": postnatal.yongshin_in_seun,
+            "yongshin_in_daeun": postnatal.yongshin_in_daeun,
+            "daeun": daeun_list,
+            "current_daeun": current_daeun,
+            "daeun_sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in postnatal.daeun_sipsin],
+            "seun_clashes": postnatal.seun_clashes,
+            "seun_combines": postnatal.seun_combines,
+            "daeun_clashes": postnatal.daeun_clashes,
+            "daeun_combines": postnatal.daeun_combines,
+            "domain_scores": domain_scores,
+            "sipsin": [{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
+            "sibi_unseong": [{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
+            "sinsal": [{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
+            "samjae": samjae,
+        }
