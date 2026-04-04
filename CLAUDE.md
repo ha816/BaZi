@@ -12,6 +12,12 @@
 ## 실행
 
 ```bash
+# DB (PostgreSQL 17 — Colima 또는 OrbStack 필요)
+docker compose -f docker/docker-compose.yml up -d
+
+# Alembic 마이그레이션
+uv run alembic upgrade head
+
 # 백엔드
 uv run uvicorn bazi.fastapi:app --reload --port 8000
 
@@ -26,22 +32,39 @@ uv run pytest -v
 ## 코드 구조
 
 ```
-src/bazi/
+BaZi/
+├── alembic/                 # DB 마이그레이션 (루트에 위치 — alembic.ini와 같은 레벨)
+├── alembic.ini
+├── docker/
+│   └── docker-compose.yml   # 로컬 개발용 PostgreSQL 17
+├── src/bazi/
 ├── fastapi.py               # FastAPI 앱 + CORS + 라우터 등록
 ├── container.py             # DI Container (dependency-injector Singleton)
 ├── domain/
 │   ├── ganji.py             # Oheng, Stem, Branch, Sipsin, SibiUnseong enum
 │   ├── natal.py             # Saju, NatalInfo, PostnatalInfo, DaeunPeriod dataclass
 │   ├── user.py              # User dataclass, Gender enum
-│   └── interpretation.py    # Interpretation dataclass (최종 결과)
+│   ├── interpretation.py    # NatalResult + PostnatalResult + Interpretation dataclass
+│   ├── member.py            # Member dataclass
+│   └── profile.py           # Profile + Analysis dataclass
 ├── application/
 │   ├── saju_service.py      # SajuService: analyze() + interpret() 오케스트레이션
+│   ├── member_service.py    # MemberService: create/get (이메일 중복 시 기존 반환)
+│   ├── profile_service.py   # ProfileService: analyze_profile() 캐시 우선
 │   ├── port/saju_port.py    # NatalPort, PostnatalPort, InterpreterPort ABC
+│   ├── port/member_port.py  # MemberPort, ProfilePort, AnalysisPort ABC
 │   ├── interpreter/         # 9개 텍스트 해석기 클래스
 │   └── util/util.py         # year_to_ganji 등 유틸
 └── adapter/
-    ├── inner/saju_controller.py   # FastAPI 라우터 POST /saju/interpret
-    └── outer/natal_adapter.py     # NatalAdapter + PostnatalAdapter (sajupy 연동)
+    ├── inner/saju_controller.py      # POST /saju/interpret
+    ├── inner/member_controller.py    # POST/GET /members
+    ├── inner/profile_controller.py   # /members/{id}/profiles + /analyze
+    ├── outer/natal_adapter.py        # NatalAdapter + PostnatalAdapter (sajupy 연동)
+    └── outer/db/
+        ├── base.py          # make_engine, make_session_factory
+        ├── models.py        # MemberModel, ProfileModel, AnalysisModel (SQLAlchemy ORM)
+        ├── member_repo.py   # MemberPort 구현
+        └── profile_repo.py  # ProfilePort + AnalysisPort 구현
 
 frontend/src/
 ├── app/page.tsx             # 메인 페이지
@@ -136,8 +159,17 @@ domain_scores의 점수가 **왜** 나왔는지 근거를 툴팁으로 제공 �
 
 ```
 POST /saju/interpret
-Request:  { birth_dt: datetime, gender: "M"|"F", analysis_year: int, city: str }
-Response: asdict(Interpretation)
+  Request:  { birth_dt: datetime, gender: "M"|"F", analysis_year: int, city: str }
+  Response: { natal: NatalResult, postnatal: PostnatalResult }
+
+POST   /members                                          # 생성 (이메일 중복 시 기존 반환)
+GET    /members/{member_id}
+
+POST   /members/{member_id}/profiles
+GET    /members/{member_id}/profiles
+GET    /members/{member_id}/profiles/{profile_id}
+DELETE /members/{member_id}/profiles/{profile_id}
+POST   /members/{member_id}/profiles/{profile_id}/analyze  # { year: int } → 캐시 우선 반환
 ```
 
 ## 테스트
