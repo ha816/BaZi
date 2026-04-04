@@ -46,31 +46,37 @@ BaZi/
 │   ├── user.py              # User dataclass, Gender enum
 │   ├── interpretation.py    # NatalResult + PostnatalResult + Interpretation dataclass
 │   ├── member.py            # Member dataclass
-│   └── profile.py           # Profile + Analysis dataclass
+│   ├── profile.py           # Profile + Analysis dataclass
+│   └── compatibility.py     # CompatibilityResult + Compatibility dataclass
 ├── application/
-│   ├── saju_service.py      # SajuService: analyze() + interpret() 오케스트레이션
-│   ├── member_service.py    # MemberService: create/get (이메일 중복 시 기존 반환)
-│   ├── profile_service.py   # ProfileService: analyze_profile() 캐시 우선
-│   ├── port/saju_port.py    # NatalPort, PostnatalPort, InterpreterPort ABC
-│   ├── port/member_port.py  # MemberPort, ProfilePort, AnalysisPort ABC
-│   ├── interpreter/         # 9개 텍스트 해석기 클래스
-│   └── util/util.py         # year_to_ganji 등 유틸
+│   ├── saju_service.py           # SajuService: analyze() + interpret() 오케스트레이션
+│   ├── member_service.py         # MemberService: create/get (이메일 중복 시 기존 반환)
+│   ├── profile_service.py        # ProfileService: analyze_profile() 캐시 우선
+│   ├── compatibility_service.py  # CompatibilityService: 오행 기반 궁합 계산 + 캐시
+│   ├── port/saju_port.py         # NatalPort, PostnatalPort, InterpreterPort ABC
+│   ├── port/member_port.py       # MemberPort, ProfilePort, AnalysisPort, CompatibilityPort ABC
+│   ├── interpreter/              # 9개 텍스트 해석기 클래스
+│   └── util/util.py              # year_to_ganji 등 유틸
 └── adapter/
-    ├── inner/saju_controller.py      # POST /saju/interpret
-    ├── inner/member_controller.py    # POST/GET /members
-    ├── inner/profile_controller.py   # /members/{id}/profiles + /analyze
-    ├── outer/natal_adapter.py        # NatalAdapter + PostnatalAdapter (sajupy 연동)
+    ├── inner/saju_controller.py            # POST /saju/interpret
+    ├── inner/member_controller.py          # POST/GET /members
+    ├── inner/profile_controller.py         # /members/{id}/profiles + /analyze
+    ├── inner/compatibility_controller.py   # POST /compatibility, POST /compatibility/direct
+    ├── outer/natal_adapter.py              # NatalAdapter + PostnatalAdapter (sajupy 연동)
     └── outer/db/
         ├── base.py          # make_engine, make_session_factory
-        ├── models.py        # MemberModel, ProfileModel, AnalysisModel (SQLAlchemy ORM)
+        ├── models.py        # MemberModel, ProfileModel, AnalysisModel, CompatibilityModel
         ├── member_repo.py   # MemberPort 구현
-        └── profile_repo.py  # ProfilePort + AnalysisPort 구현
+        └── profile_repo.py  # ProfilePort + AnalysisPort + CompatibilityRepo 구현
 
 frontend/src/
-├── app/page.tsx             # 메인 페이지
-├── components/              # 18개 React 컴포넌트
-├── lib/                     # api.ts, elementColors.ts, glossary.ts
-└── types/analysis.ts        # TypeScript 타입 정의
+├── app/
+│   ├── page.tsx              # 메인 페이지 (직접 입력 / 프로필 선택 분석)
+│   ├── compatibility/        # 궁합 페이지 (프로필 선택 or 직접 입력)
+│   └── my/                   # 회원 가입 + 프로필 관리 페이지
+├── components/               # React 컴포넌트 (CompatibilityResult 포함)
+├── lib/api.ts                # API 호출 함수 전체
+└── types/analysis.ts         # TypeScript 타입 정의
 ```
 
 ## 아키텍처 원칙
@@ -162,15 +168,40 @@ POST /saju/interpret
   Request:  { birth_dt: datetime, gender: "M"|"F", analysis_year: int, city: str }
   Response: { natal: NatalResult, postnatal: PostnatalResult }
 
-POST   /members                                          # 생성 (이메일 중복 시 기존 반환)
+POST   /members                                              # 생성 (이메일 중복 시 기존 반환)
 GET    /members/{member_id}
 
 POST   /members/{member_id}/profiles
 GET    /members/{member_id}/profiles
 GET    /members/{member_id}/profiles/{profile_id}
 DELETE /members/{member_id}/profiles/{profile_id}
-POST   /members/{member_id}/profiles/{profile_id}/analyze  # { year: int } → 캐시 우선 반환
+POST   /members/{member_id}/profiles/{profile_id}/analyze   # { year: int } → 캐시 우선 반환
+
+POST   /compatibility         # { profile_id_1, profile_id_2, year } → 캐시 우선 반환
+POST   /compatibility/direct  # { person1: {name,gender,birth_dt,city}, person2, year } → stateless
 ```
+
+## DB 스키마
+
+| 테이블 | 핵심 컬럼 |
+|--------|----------|
+| `members` | id(UUID PK), name, email(UNIQUE), created_at |
+| `profiles` | id(UUID PK), member_id(FK), name, gender, birth_dt, city, created_at |
+| `analyses` | id(UUID PK), profile_id(FK), year, result(JSONB), UNIQUE(profile_id, year) |
+| `compatibilities` | id(UUID PK), profile_id_1(FK), profile_id_2(FK), year, result(JSONB), UNIQUE(pid1, pid2, year) |
+
+- `analyses`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
+- `compatibilities`의 profile_id_1/2는 항상 `min(id) / max(id)` 순으로 저장 (순서 무관 캐시)
+
+## 프론트엔드 페이지
+
+| 경로 | 설명 |
+|------|------|
+| `/` | 사주 분석 — 직접 입력 or 저장된 프로필 선택 |
+| `/compatibility` | 궁합 — 프로필 선택 or 직접 입력, 둘 다 프로필이면 캐시 적용 |
+| `/my` | 회원 가입/로그인(이메일 기반) + 프로필 추가/삭제 |
+
+- `localStorage["bazi_member_id"]`로 로그인 상태 유지
 
 ## 테스트
 
