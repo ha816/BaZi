@@ -128,3 +128,27 @@ export interface CompatibilityInput {
   person2: PersonInput;
   year: number;
 }
+
+export interface Member {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+}
+
+export interface Profile {
+  id: string;
+  member_id: string;
+  name: string;
+  gender: "male" | "female";
+  birth_dt: string;
+  city: string;
+  created_at: string;
+}
+
+export interface ProfileCreateInput {
+  name: string;
+  gender: "male" | "female";
+  birth_dt: string;
+  city: string;
+}

@@ -51,12 +51,14 @@ export default function Home() {
               안녕하세요, 명리 상담사입니다.<br className="hidden md:block" />
               생년월일시를 알려주시면 타고난 기운과 올해의 운세를 풀어드릴게요.
             </p>
-            <Link
-              href="/compatibility"
-              className="inline-block text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
-            >
-              💕 사주 궁합 보기 →
-            </Link>
+            <div className="flex gap-4 flex-wrap justify-center md:justify-start">
+              <Link href="/compatibility" className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors">
+                💕 사주 궁합 →
+              </Link>
+              <Link href="/my" className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors">
+                👤 내 프로필 →
+              </Link>
+            </div>
           </div>
         </header>
 
