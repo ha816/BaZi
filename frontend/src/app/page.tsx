@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { AnalysisInput, AnalysisResult } from "@/types/analysis";
 import { analyzeChart } from "@/lib/api";
 import AnalysisForm from "@/components/AnalysisForm";
@@ -50,6 +51,12 @@ export default function Home() {
               안녕하세요, 명리 상담사입니다.<br className="hidden md:block" />
               생년월일시를 알려주시면 타고난 기운과 올해의 운세를 풀어드릴게요.
             </p>
+            <Link
+              href="/compatibility"
+              className="inline-block text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors"
+            >
+              💕 사주 궁합 보기 →
+            </Link>
           </div>
         </header>
 

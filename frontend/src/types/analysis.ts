@@ -100,3 +100,31 @@ export interface AnalysisInput {
   analysis_year: number;
   city?: string;
 }
+
+export interface CompatibilityDomainScore {
+  score: number;
+  level: string;
+  reason: string;
+}
+
+export interface CompatibilityResult {
+  total_score: number;
+  domain_scores: Record<string, CompatibilityDomainScore>;
+  description: string;
+  stem_combine: boolean;
+  branch_combine: boolean;
+  branch_clash: boolean;
+}
+
+export interface PersonInput {
+  name: string;
+  gender: "male" | "female";
+  birth_dt: string;
+  city: string;
+}
+
+export interface CompatibilityInput {
+  person1: PersonInput;
+  person2: PersonInput;
+  year: number;
+}

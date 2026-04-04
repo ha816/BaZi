@@ -155,6 +155,11 @@ class CompatibilityService:
         self._compatibility_port = compatibility_port
         self._saju_service = saju_service
 
+    def compute_direct(self, user1: User, user2: User, year: int) -> dict:
+        natal1, postnatal1 = self._saju_service.analyze(user1, year)
+        natal2, postnatal2 = self._saju_service.analyze(user2, year)
+        return asdict(self._compute(natal1, natal2, postnatal1, postnatal2))
+
     async def analyze_compatibility(self, pid1: UUID, pid2: UUID, year: int) -> dict:
         lo, hi = (pid1, pid2) if str(pid1) < str(pid2) else (pid2, pid1)
 
