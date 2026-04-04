@@ -1,3 +1,6 @@
+[db]
+url = "postgresql+asyncpg://bazi:bazi@localhost:5432/bazi"
+
 [korea_weather_api]
 # base_url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
 base_url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
