@@ -19,6 +19,11 @@ class AnalysisRequest(BaseModel):
     city: str = "Seoul"
 
 
+def _make_user(req: AnalysisRequest) -> User:
+    return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city)
+
+
+
 @saju_router.post("/saju/interpret")
 @inject
 async def interpret(
@@ -26,15 +31,9 @@ async def interpret(
     saju_svc: SajuService = Depends(Provide[Container.saju_service]),
 ) -> dict:
     try:
-        user = User(
-            name="",
-            gender=req.gender,
-            birth_dt=req.birth_dt,
-            city=req.city,
-        )
-        natal, postnatal = saju_svc.analyze(user, req.analysis_year)
-        interpretation = saju_svc.interpret(natal, postnatal)
+        user = _make_user(req)
+        natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
+        result = saju_svc.interpret(natal_info, postnatal_info)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
-
-    return asdict(interpretation)
+    return asdict(result)

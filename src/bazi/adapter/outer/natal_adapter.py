@@ -184,11 +184,12 @@ class PostnatalAdapter(PostnatalPort):
         daeun_sipsins = [s for _, s in self._get_sipsin(current_daeun.ganji)] if current_daeun else []
         scores = {}
         for domain_name, domain_sipsins in DOMAIN_MAP.items():
-            seun_hit = sum(1 for s in seun_sipsins if s in domain_sipsins)
-            daeun_hit = sum(1 for s in daeun_sipsins if s in domain_sipsins)
-            score = seun_hit * 2 + daeun_hit
+            seun_matches = [s for s in seun_sipsins if s in domain_sipsins]
+            daeun_matches = [s for s in daeun_sipsins if s in domain_sipsins]
+            score = len(seun_matches) * 2 + len(daeun_matches)
             level = "high" if score >= 3 else "medium" if score >= 1 else "low"
-            scores[domain_name] = {"score": score, "level": level}
+            reason = _make_domain_reason(seun_matches, daeun_matches)
+            scores[domain_name] = {"score": score, "level": level, "reason": reason}
         return scores
 
     def _get_samjae(self) -> dict | None:
@@ -261,6 +262,33 @@ class PostnatalAdapter(PostnatalPort):
 
         return round(abs((nearest - birth_dt).days) / 3)
 
+
+
+_SIPSIN_KO: dict[Sipsin, str] = {
+    Sipsin.比肩: "비견(比肩)",
+    Sipsin.劫財: "겁재(劫財)",
+    Sipsin.食神: "식신(食神)",
+    Sipsin.傷官: "상관(傷官)",
+    Sipsin.偏財: "편재(偏財)",
+    Sipsin.正財: "정재(正財)",
+    Sipsin.偏官: "편관(偏官)",
+    Sipsin.正官: "정관(正官)",
+    Sipsin.偏印: "편인(偏印)",
+    Sipsin.正印: "정인(正印)",
+}
+
+
+def _make_domain_reason(seun: list[Sipsin], daeun: list[Sipsin]) -> str:
+    seun_names = list(dict.fromkeys(_SIPSIN_KO[s] for s in seun))
+    daeun_names = list(dict.fromkeys(_SIPSIN_KO[s] for s in daeun))
+
+    if seun_names and daeun_names:
+        return f"세운 {', '.join(seun_names)}과 대운 {', '.join(daeun_names)}이 겹쳐 작용합니다."
+    if seun_names:
+        return f"세운에 {', '.join(seun_names)}이 들어옵니다."
+    if daeun_names:
+        return f"대운 {', '.join(daeun_names)}의 흐름 속에 있습니다."
+    return "이번 해는 이 영역에 직접적인 기운의 작용이 없습니다."
 
 
 def cal_saju(

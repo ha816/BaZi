@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from bazi.domain.interpretation import Interpretation
+from bazi.domain.interpretation import Interpretation, NatalResult, PostnatalResult
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 from bazi.domain.user import User
 
@@ -23,6 +23,14 @@ class PostnatalPort(ABC):
 
 class InterpreterPort(ABC):
     """종합 해석 포트."""
+
+    @abstractmethod
+    def interpret_natal(self, natal: NatalInfo) -> NatalResult:
+        pass
+
+    @abstractmethod
+    def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo) -> PostnatalResult:
+        pass
 
     @abstractmethod
     def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:

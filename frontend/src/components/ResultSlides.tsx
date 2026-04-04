@@ -13,7 +13,6 @@ import CounselorComment from "./CounselorComment";
 import DetailToggle from "./DetailToggle";
 import TermBadge from "./TermBadge";
 
-/* ── 세운 해석 헬퍼 ── */
 const SIPSIN_YEAR_DESC: Record<string, string> = {
   "比肩": "나와 비슷한 기운이 들어와요. 경쟁이 늘거나 동료·친구와의 인연이 활발해지는 해예요.",
   "劫財": "경쟁과 지출이 늘기 쉬운 해예요. 투자나 보증은 신중하게, 대신 추진력은 강해져요.",
@@ -53,7 +52,6 @@ function buildCombineNarrative(combines: CombineInfo[]): string {
   return `올해 기운이 내 사주의 ${areas.join(", ")} 자리와 잘 어울려요. 이 영역에서 좋은 인연이나 기회가 자연스럽게 찾아올 수 있어요.`;
 }
 
-/* ── 상세 슬라이드 메타 ── */
 const DETAIL_SLIDES = [
   { key: "personality", label: "성격", icon: "\uD83E\uDDE0", title: "성격과 기질", desc: "타고난 성격과 대인관계 스타일", color: "var(--color-water)", variant: "info" as const, comment: "타고난 성격과 대인관계 스타일을 살펴볼게요." },
   { key: "element_balance", label: "균형", icon: "\u2696\uFE0F", title: "다섯 기운의 균형", desc: "오행 분포로 보는 강점과 약점", color: "var(--color-earth)", variant: "default" as const, comment: "다섯 가지 기운이 어떻게 분포되어 있는지, 강점과 약점을 짚어드릴게요." },
@@ -67,19 +65,20 @@ interface Props {
 }
 
 export default function ResultSlides({ data }: Props) {
-  const meInfo = getElementInfo(data.my_element.name);
-  const yongInfo = getElementInfo(data.yongshin_info.name);
+  const { natal, postnatal } = data;
+  const meInfo = getElementInfo(natal.my_element.name);
+  const yongInfo = getElementInfo(natal.yongshin_info.name);
 
-  const domainEntries = Object.entries(data.domain_scores);
+  const domainEntries = Object.entries(postnatal.domain_scores);
   const bestDomain = domainEntries.reduce((a, b) => (b[1].score > a[1].score ? b : a));
   const worstDomain = domainEntries.reduce((a, b) => (b[1].score < a[1].score ? b : a));
 
   const detailDataMap: Record<string, string[]> = {
-    personality: data.personality,
-    element_balance: data.element_balance,
-    yongshin: data.yongshin,
-    major_fortune: data.major_fortune,
-    relationships: data.relationships,
+    personality: natal.personality,
+    element_balance: natal.element_balance,
+    yongshin: postnatal.yongshin,
+    major_fortune: postnatal.major_fortune,
+    relationships: postnatal.relationships,
   };
 
   const detailSlides = DETAIL_SLIDES.map((sec) => ({
@@ -108,10 +107,9 @@ export default function ResultSlides({ data }: Props) {
   }));
 
   const slides = [
-    /* ── Slide 1: 결과 요약 ── */
     {
       label: "결과 요약",
-      icon: "\u2728", // sparkles
+      icon: "\u2728",
       content: (
         <div className="space-y-5">
           <CounselorComment pose="greeting">
@@ -122,10 +120,9 @@ export default function ResultSlides({ data }: Props) {
       ),
     },
 
-    /* ── Slide 2: 타고난 사주 ── */
     {
       label: "타고난 사주",
-      icon: "\u2600", // sun
+      icon: "\u2600",
       content: (
         <div className="space-y-5">
           <CounselorComment>
@@ -139,11 +136,11 @@ export default function ResultSlides({ data }: Props) {
             <div className="divider" />
             <div className="slide-card__body">
               <PillarDetail
-                pillars={data.pillars}
-                sipsin={data.sipsin}
-                sibiUnseong={data.sibi_unseong}
-                sinsal={data.sinsal}
-                dayStem={data.day_stem}
+                pillars={natal.pillars}
+                sipsin={natal.sipsin}
+                sibiUnseong={natal.sibi_unseong}
+                sinsal={natal.sinsal}
+                dayStem={natal.day_stem}
               />
             </div>
           </div>
@@ -153,55 +150,54 @@ export default function ResultSlides({ data }: Props) {
             </div>
             <div className="divider" />
             <div className="slide-card__body">
-              <ElementRadar stats={data.element_stats} />
+              <ElementRadar stats={natal.element_stats} />
             </div>
           </div>
         </div>
       ),
     },
 
-    /* ── Slide 3: 올해의 운세 ── */
     {
       label: "올해의 운세",
-      icon: "\u2B50", // star
+      icon: "\u2B50",
       content: (
         <div className="space-y-5">
           <CounselorComment>
-            {data.year}년 올해의 운세를 자세히 볼게요.
+            {postnatal.year}년 올해의 운세를 자세히 볼게요.
             당신에게 도움이 되는 <strong>{yongInfo.korean}</strong>의 기운이
-            {data.yongshin_in_seun ? " 올해 운에 들어와 있어서 좋은 흐름이에요." : " 올해 운에는 직접 오지 않았지만, 아래에서 어떤 영향이 있는지 살펴볼게요."}
+            {postnatal.yongshin_in_seun ? " 올해 운에 들어와 있어서 좋은 흐름이에요." : " 올해 운에는 직접 오지 않았지만, 아래에서 어떤 영향이 있는지 살펴볼게요."}
           </CounselorComment>
 
           <div className="slide-card">
             <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">{data.year}년 올해의 운세 상세</h3>
+              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">{postnatal.year}년 올해의 운세 상세</h3>
             </div>
             <div className="divider" />
             <div className="slide-card__body space-y-5">
               <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
-                {buildSeunNarrative(data.seun_stem, data.seun_branch)}
+                {buildSeunNarrative(postnatal.seun_stem, postnatal.seun_branch)}
               </p>
 
-              {(data.seun_clashes.length > 0 || data.daeun_clashes.length > 0) && (
+              {(postnatal.seun_clashes.length > 0 || postnatal.daeun_clashes.length > 0) && (
                 <div
                   className="rounded-lg px-5 py-4 text-sm leading-relaxed bg-[var(--color-ivory)]"
                   style={{ borderLeft: "3px solid var(--color-fire)" }}
                 >
                   <span className="font-medium text-[var(--color-fire)]">주의할 점</span>
                   <span className="text-[var(--color-ink-light)] ml-2">
-                    {buildClashNarrative([...data.seun_clashes, ...data.daeun_clashes])}
+                    {buildClashNarrative([...postnatal.seun_clashes, ...postnatal.daeun_clashes])}
                   </span>
                 </div>
               )}
 
-              {(data.seun_combines.length > 0 || data.daeun_combines.length > 0) && (
+              {(postnatal.seun_combines.length > 0 || postnatal.daeun_combines.length > 0) && (
                 <div
                   className="rounded-lg px-5 py-4 text-sm leading-relaxed bg-[var(--color-ivory)]"
                   style={{ borderLeft: "3px solid var(--color-wood)" }}
                 >
                   <span className="font-medium text-[var(--color-wood)]">좋은 신호</span>
                   <span className="text-[var(--color-ink-light)] ml-2">
-                    {buildCombineNarrative([...data.seun_combines, ...data.daeun_combines])}
+                    {buildCombineNarrative([...postnatal.seun_combines, ...postnatal.daeun_combines])}
                   </span>
                 </div>
               )}
@@ -213,10 +209,10 @@ export default function ResultSlides({ data }: Props) {
                       하늘 기운 <span className="normal-case">(<TermBadge term="천간" />)</span>
                     </div>
                     <div className="font-heading text-2xl font-bold text-[var(--color-ink)]">
-                      {data.seun_stem.char}
+                      {postnatal.seun_stem.char}
                     </div>
                     <div className="text-sm text-[var(--color-ink-muted)] mt-2">
-                      {data.seun_stem.sipsin_name} — {data.seun_stem.domain}
+                      {postnatal.seun_stem.sipsin_name} — {postnatal.seun_stem.domain}
                     </div>
                   </div>
                   <div className="rounded-lg p-5 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
@@ -224,21 +220,21 @@ export default function ResultSlides({ data }: Props) {
                       땅 기운 <span className="normal-case">(<TermBadge term="지지" />)</span>
                     </div>
                     <div className="font-heading text-2xl font-bold text-[var(--color-ink)]">
-                      {data.seun_branch.char}
+                      {postnatal.seun_branch.char}
                     </div>
                     <div className="text-sm text-[var(--color-ink-muted)] mt-2">
-                      {data.seun_branch.sipsin_name} — {data.seun_branch.domain}
+                      {postnatal.seun_branch.sipsin_name} — {postnatal.seun_branch.domain}
                     </div>
                   </div>
                 </div>
 
-                {(data.seun_clashes.length > 0 || data.daeun_clashes.length > 0) && (
+                {(postnatal.seun_clashes.length > 0 || postnatal.daeun_clashes.length > 0) && (
                   <div className="space-y-2 mt-4">
                     <h4 className="font-heading text-sm font-semibold text-[var(--color-ink)]">
                       부딪히는 기운
                       <span className="font-normal text-[var(--color-ink-faint)] ml-1">(<TermBadge term="충" />)</span>
                     </h4>
-                    {[...data.seun_clashes, ...data.daeun_clashes].map((c, i) => (
+                    {[...postnatal.seun_clashes, ...postnatal.daeun_clashes].map((c, i) => (
                       <div
                         key={i}
                         className="rounded-lg px-5 py-3 text-sm bg-[var(--color-ivory)]"
@@ -250,13 +246,13 @@ export default function ResultSlides({ data }: Props) {
                   </div>
                 )}
 
-                {(data.seun_combines.length > 0 || data.daeun_combines.length > 0) && (
+                {(postnatal.seun_combines.length > 0 || postnatal.daeun_combines.length > 0) && (
                   <div className="space-y-2 mt-4">
                     <h4 className="font-heading text-sm font-semibold text-[var(--color-ink)]">
                       어울리는 기운
                       <span className="font-normal text-[var(--color-ink-faint)] ml-1">(<TermBadge term="합" />)</span>
                     </h4>
-                    {[...data.seun_combines, ...data.daeun_combines].map((c, i) => (
+                    {[...postnatal.seun_combines, ...postnatal.daeun_combines].map((c, i) => (
                       <div
                         key={i}
                         className="rounded-lg px-5 py-3 text-sm bg-[var(--color-ivory)]"
@@ -277,18 +273,17 @@ export default function ResultSlides({ data }: Props) {
             </div>
             <div className="divider" />
             <div className="slide-card__body">
-              <DomainBarChart scores={data.domain_scores} />
-              <InterpretSection title="" lines={data.fortune_by_domain} />
+              <DomainBarChart scores={postnatal.domain_scores} />
+              <InterpretSection title="" lines={postnatal.fortune_by_domain} />
             </div>
           </div>
         </div>
       ),
     },
 
-    /* ── Slide 4: 인생의 큰 흐름 ── */
     {
       label: "큰 흐름",
-      icon: "\uD83C\uDF0A", // wave
+      icon: "\uD83C\uDF0A",
       content: (
         <div className="space-y-5">
           <CounselorComment>
@@ -305,7 +300,7 @@ export default function ResultSlides({ data }: Props) {
             </div>
             <div className="divider" />
             <div className="slide-card__body">
-              <DaeunTimeline daeun={data.daeun} />
+              <DaeunTimeline daeun={postnatal.daeun} />
             </div>
           </div>
 
@@ -315,17 +310,16 @@ export default function ResultSlides({ data }: Props) {
             </div>
             <div className="divider" />
             <div className="slide-card__body">
-              <InterpretSection title="" lines={data.annual_fortune} />
+              <InterpretSection title="" lines={postnatal.annual_fortune} />
             </div>
           </div>
         </div>
       ),
     },
 
-    /* ── Slide 5: 종합 조언 ── */
     {
       label: "종합 조언",
-      icon: "\uD83D\uDCAC", // speech bubble
+      icon: "\uD83D\uDCAC",
       content: (
         <div className="space-y-5">
           <CounselorComment pose="greeting">
@@ -337,14 +331,13 @@ export default function ResultSlides({ data }: Props) {
             </div>
             <div className="divider" />
             <div className="slide-card__body">
-              <InterpretSection title="" lines={data.advice} variant="success" />
+              <InterpretSection title="" lines={postnatal.advice} variant="success" />
             </div>
           </div>
         </div>
       ),
     },
 
-    /* ── Slides 6-10: 상세 분석 ── */
     ...detailSlides,
   ];
 

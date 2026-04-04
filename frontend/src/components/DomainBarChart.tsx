@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Cell,
   LabelList,
+  Tooltip,
 } from "recharts";
 import type { DomainScore } from "@/types/analysis";
 
@@ -20,12 +21,6 @@ const COLORS: Record<string, string> = {
 interface Props {
   scores: Record<string, DomainScore>;
 }
-
-const LEVEL_DESC: Record<string, string> = {
-  high: "좋은 편",
-  medium: "보통",
-  low: "아쉬운 편",
-};
 
 function buildDomainNarrative(scores: Record<string, DomainScore>): string {
   const entries = Object.entries(scores);
@@ -47,16 +42,28 @@ function buildDomainNarrative(scores: Record<string, DomainScore>): string {
   return text;
 }
 
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: { payload: { name: string; reason: string } }[] }) {
+  if (!active || !payload?.length) return null;
+  const { name, reason } = payload[0].payload;
+  return (
+    <div className="rounded-lg px-4 py-3 text-sm shadow-lg max-w-[220px]"
+      style={{ backgroundColor: "var(--color-card)", border: "1px solid var(--color-border)", color: "var(--color-ink-light)" }}>
+      <p className="font-semibold text-[var(--color-ink)] mb-1">{name}</p>
+      <p className="leading-relaxed">{reason}</p>
+    </div>
+  );
+}
+
 export default function DomainBarChart({ scores }: Props) {
   const data = Object.entries(scores).map(([name, info]) => ({
     name,
     score: info.score,
     color: COLORS[info.level] ?? COLORS.low,
+    reason: info.reason,
   }));
 
   return (
     <div className="mb-4">
-      {/* Narrative summary */}
       <p className="text-sm text-[var(--color-ink-light)] leading-relaxed mb-4">
         {buildDomainNarrative(scores)}
       </p>
@@ -75,6 +82,7 @@ export default function DomainBarChart({ scores }: Props) {
             axisLine={false}
             tickLine={false}
           />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-parchment)", opacity: 0.5 }} />
           <Bar dataKey="score" radius={[6, 6, 0, 0]} barSize={44}>
             {data.map((d, i) => (
               <Cell key={i} fill={d.color} />

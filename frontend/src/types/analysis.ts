@@ -46,56 +46,52 @@ export interface CombineInfo {
 export interface DomainScore {
   score: number;
   level: string;
+  reason: string;
 }
 
-export interface AnalysisResult {
-  // 사주 원국
+export interface NatalResult {
   pillars: string[];
   day_stem: string;
-
-  // 오행·강약·용신
   element_stats: Record<string, number>;
   strength_value: number;
   strength_label: string;
   my_element: { name: string; meaning: string };
   yongshin_info: { name: string; meaning: string };
+  sipsin: SipsinInfo[];
+  sibi_unseong: SibiUnseongInfo[];
+  sinsal: SinsalInfo[];
+  personality: string[];
+  element_balance: string[];
+}
 
-  // 세운
+export interface PostnatalResult {
   year: number;
   seun_ganji: string;
   seun_stem: SipsinInfo;
   seun_branch: SipsinInfo;
   yongshin_in_seun: boolean;
   yongshin_in_daeun: boolean;
-
-  // 대운
   daeun: DaeunPeriod[];
   current_daeun: CurrentDaeun | null;
   daeun_sipsin: SipsinInfo[];
-
-  // 충·합
   seun_clashes: ClashInfo[];
   seun_combines: CombineInfo[];
   daeun_clashes: ClashInfo[];
   daeun_combines: CombineInfo[];
-
-  // 영역별 점수
   domain_scores: Record<string, DomainScore>;
-
-  // 십신·십이운성·신살
-  sipsin: SipsinInfo[];
-  sibi_unseong: SibiUnseongInfo[];
-  sinsal: SinsalInfo[];
-
-  // 텍스트 해석
-  personality: string[];
-  element_balance: string[];
+  samjae: { type: string; year_branch: string; birth_branch: string } | null;
   yongshin: string[];
   fortune_by_domain: string[];
   annual_fortune: string[];
+  samjae_fortune: string[];
   major_fortune: string[];
   relationships: string[];
   advice: string[];
+}
+
+export interface AnalysisResult {
+  natal: NatalResult;
+  postnatal: PostnatalResult;
 }
 
 export interface AnalysisInput {

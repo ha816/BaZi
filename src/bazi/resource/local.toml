@@ -1,0 +1,11 @@
+[korea_weather_api]
+# base_url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst"
+base_url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst"
+service_key = "A0l5FGkki6cgR3FuBuh/JB7fmRC9DrvK6b2iu6FTfLjlJMK2FCsAPivmsdEDOvdjXHvxzNSSvEhRJDnFazg95g=="
+
+[ipapi_api]
+base_url = "https://ipapi.co"
+json_path = "/json"
+
+[api-key]
+openai = ""

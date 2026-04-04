@@ -20,7 +20,6 @@ function ScoreBar({ score, color }: { score: number; color: string }) {
   );
 }
 
-/** 오행별 성격 한 줄 해석 */
 function getElementPersonality(name: string): string {
   const map: Record<string, string> = {
     "木": "새싹처럼 성장을 추구하고, 사람들에게 따뜻하게 다가가는 성격이에요.",
@@ -32,8 +31,7 @@ function getElementPersonality(name: string): string {
   return map[name] ?? "";
 }
 
-/** 강약 한 줄 해석 */
-function getStrengthExplanation(label: string, value: number): string {
+function getStrengthExplanation(value: number): string {
   if (value > 2) return "본인의 기운이 강한 편이에요. 주도적이고 독립적인 성향이 있어요.";
   if (value > 0) return "본인의 기운이 약간 강한 편이에요. 자기 주관이 뚜렷해요.";
   if (value === 0) return "기운이 균형 잡혀 있어요. 안정적인 흐름이에요.";
@@ -41,14 +39,12 @@ function getStrengthExplanation(label: string, value: number): string {
   return "본인의 기운이 약한 편이에요. 도움이 되는 기운이 특히 중요해요.";
 }
 
-/** 용신 한 줄 해석 */
 function getYongshinExplanation(myElement: string, yongElement: string): string {
   const myInfo = getElementInfo(myElement);
   const yongInfo = getElementInfo(yongElement);
   return `${myInfo.korean}(${myElement}) 기운인 당신에게는 ${yongInfo.korean}(${yongElement})의 기운이 균형을 잡아줘요. ${yongInfo.korean} 기운이 있는 해에 운이 좋아져요.`;
 }
 
-/** 올해 운 한 줄 해석 */
 function getSeunExplanation(inSeun: boolean, inDaeun: boolean): string {
   if (inSeun && inDaeun) return "올해는 나에게 좋은 기운이 올해 운과 10년 운 모두에 있어서, 여러 면에서 순조로운 한 해가 될 수 있어요.";
   if (inSeun) return "올해 운에 나에게 좋은 기운이 있어서, 새로운 기회가 찾아올 수 있는 해예요.";
@@ -56,22 +52,13 @@ function getSeunExplanation(inSeun: boolean, inDaeun: boolean): string {
   return "올해는 나에게 좋은 기운이 직접 오지 않는 해예요. 무리하기보다 내실을 다지는 데 집중하면 좋겠어요.";
 }
 
-const DOMAIN_LABEL: Record<string, string> = {
-  재물: "재물",
-  직업: "직업",
-  건강: "건강",
-  관계: "관계",
-  학업: "학업",
-  명예: "명예",
-};
-
 export default function FortuneSummary({ data }: Props) {
-  const meInfo = getElementInfo(data.my_element.name);
-  const yongInfo = getElementInfo(data.yongshin_info.name);
+  const { natal, postnatal } = data;
+  const meInfo = getElementInfo(natal.my_element.name);
+  const yongInfo = getElementInfo(natal.yongshin_info.name);
 
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-sm overflow-hidden">
-      {/* Header band */}
       <div
         className="px-7 py-5"
         style={{ background: `linear-gradient(135deg, ${meInfo.bgColor}, var(--color-card))` }}
@@ -83,9 +70,7 @@ export default function FortuneSummary({ data }: Props) {
 
       <div className="divider" />
 
-      {/* Three columns: my element, strength, yongshin */}
       <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--color-border-light)]">
-        {/* My element */}
         <div className="px-7 py-6 text-center">
           <p className="text-xs text-[var(--color-ink-faint)] mb-3">
             나의 타고난 기운 <span className="opacity-60">(<TermBadge term="오행" />)</span>
@@ -100,27 +85,25 @@ export default function FortuneSummary({ data }: Props) {
             {meInfo.korean}
           </p>
           <p className="text-sm text-[var(--color-ink-muted)] mt-2 leading-relaxed">
-            {getElementPersonality(data.my_element.name)}
+            {getElementPersonality(natal.my_element.name)}
           </p>
         </div>
 
-        {/* Strength */}
         <div className="px-7 py-6 text-center">
           <p className="text-xs text-[var(--color-ink-faint)] mb-3">
             기운의 세기 <span className="opacity-60">(<TermBadge term="강약" />)</span>
           </p>
           <p className="text-3xl font-heading font-bold text-[var(--color-ink)] mb-1">
-            {data.strength_label}
+            {natal.strength_label}
           </p>
           <p className="text-sm text-[var(--color-ink-faint)] mb-2">
-            {data.strength_value > 0 ? "+" : ""}{data.strength_value}
+            {natal.strength_value > 0 ? "+" : ""}{natal.strength_value}
           </p>
           <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
-            {getStrengthExplanation(data.strength_label, data.strength_value)}
+            {getStrengthExplanation(natal.strength_value)}
           </p>
         </div>
 
-        {/* Yongshin */}
         <div className="px-7 py-6 text-center">
           <p className="text-xs text-[var(--color-ink-faint)] mb-3">
             도움이 되는 기운 <span className="opacity-60">(<TermBadge term="용신" />)</span>
@@ -135,52 +118,50 @@ export default function FortuneSummary({ data }: Props) {
             {yongInfo.korean}
           </p>
           <p className="text-sm text-[var(--color-ink-muted)] mt-2 leading-relaxed">
-            {getYongshinExplanation(data.my_element.name, data.yongshin_info.name)}
+            {getYongshinExplanation(natal.my_element.name, natal.yongshin_info.name)}
           </p>
         </div>
       </div>
 
       <div className="divider" />
 
-      {/* Year fortune — with explanation */}
       <div className="px-7 py-5">
         <h3 className="font-heading text-base font-semibold text-[var(--color-ink)] mb-2">
-          {data.year}년 올해의 운 — <span className="text-[var(--color-gold)]">{data.seun_ganji}</span>
+          {postnatal.year}년 올해의 운 — <span className="text-[var(--color-gold)]">{postnatal.seun_ganji}</span>
         </h3>
         <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed mb-3">
-          {getSeunExplanation(data.yongshin_in_seun, data.yongshin_in_daeun)}
+          {getSeunExplanation(postnatal.yongshin_in_seun, postnatal.yongshin_in_daeun)}
         </p>
         <div className="flex flex-wrap gap-2">
           <span
             className="px-4 py-1.5 rounded-full text-sm font-medium border"
             style={
-              data.yongshin_in_seun
+              postnatal.yongshin_in_seun
                 ? { color: "var(--color-wood)", borderColor: "var(--color-wood)", backgroundColor: getElementInfo("木").bgColor }
                 : { color: "var(--color-ink-faint)", borderColor: "var(--color-border)", backgroundColor: "var(--color-ivory)" }
             }
           >
-            올해 운에 나에게 좋은 기운 {data.yongshin_in_seun ? "있음" : "없음"}
+            올해 운에 나에게 좋은 기운 {postnatal.yongshin_in_seun ? "있음" : "없음"}
           </span>
           <span
             className="px-4 py-1.5 rounded-full text-sm font-medium border"
             style={
-              data.yongshin_in_daeun
+              postnatal.yongshin_in_daeun
                 ? { color: "var(--color-wood)", borderColor: "var(--color-wood)", backgroundColor: getElementInfo("木").bgColor }
                 : { color: "var(--color-ink-faint)", borderColor: "var(--color-border)", backgroundColor: "var(--color-ivory)" }
             }
           >
-            10년 운에 나에게 좋은 기운 {data.yongshin_in_daeun ? "있음" : "없음"}
+            10년 운에 나에게 좋은 기운 {postnatal.yongshin_in_daeun ? "있음" : "없음"}
           </span>
         </div>
       </div>
 
       <div className="divider" />
 
-      {/* Domain scores */}
       <div className="px-7 py-5">
         <h3 className="text-sm text-[var(--color-ink-faint)] mb-4">영역별 운세</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-4">
-          {Object.entries(data.domain_scores).map(([name, info]) => {
+          {Object.entries(postnatal.domain_scores).map(([name, info]) => {
             const color =
               info.level === "high"
                 ? "var(--color-wood)"
@@ -190,9 +171,7 @@ export default function FortuneSummary({ data }: Props) {
             return (
               <div key={name}>
                 <div className="flex justify-between items-baseline mb-1.5">
-                  <span className="text-sm font-medium text-[var(--color-ink)]">
-                    {DOMAIN_LABEL[name] ?? name}
-                  </span>
+                  <span className="text-sm font-medium text-[var(--color-ink)]">{name}</span>
                   <span className="text-xs font-semibold" style={{ color }}>{info.score}점</span>
                 </div>
                 <ScoreBar score={info.score} color={color} />
