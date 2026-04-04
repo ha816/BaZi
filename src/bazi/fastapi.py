@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from bazi.adapter.inner.compatibility_controller import compatibility_router
 from bazi.adapter.inner.member_controller import member_router
 from bazi.adapter.inner.profile_controller import profile_router
 from bazi.adapter.inner.saju_controller import saju_router
@@ -32,3 +33,4 @@ app.add_middleware(
 app.include_router(saju_router)
 app.include_router(member_router)
 app.include_router(profile_router)
+app.include_router(compatibility_router)

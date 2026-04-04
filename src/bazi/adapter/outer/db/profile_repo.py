@@ -4,8 +4,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from bazi.adapter.outer.db.models import AnalysisModel, ProfileModel
-from bazi.application.port.member_port import AnalysisPort, ProfilePort
+from bazi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, ProfileModel
+from bazi.application.port.member_port import AnalysisPort, CompatibilityPort, ProfilePort
+from bazi.domain.compatibility import Compatibility
 from bazi.domain.profile import Analysis, Profile
 from bazi.domain.user import Gender
 
@@ -87,3 +88,39 @@ class AnalysisRepo(AnalysisPort):
                 select(AnalysisModel).where(AnalysisModel.profile_id == profile_id).order_by(AnalysisModel.year.desc())
             )
             return [_to_analysis(a) for a in result.scalars()]
+
+
+def _to_compatibility(m: CompatibilityModel) -> Compatibility:
+    return Compatibility(
+        id=m.id,
+        profile_id_1=m.profile_id_1,
+        profile_id_2=m.profile_id_2,
+        year=m.year,
+        result=m.result,
+        created_at=m.created_at,
+    )
+
+
+class CompatibilityRepo(CompatibilityPort):
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
+        self._sf = session_factory
+
+    async def save(self, pid1: UUID, pid2: UUID, year: int, result: dict) -> Compatibility:
+        async with self._sf() as session:
+            c = CompatibilityModel(profile_id_1=pid1, profile_id_2=pid2, year=year, result=result)
+            session.add(c)
+            await session.commit()
+            await session.refresh(c)
+            return _to_compatibility(c)
+
+    async def get(self, pid1: UUID, pid2: UUID, year: int) -> Compatibility | None:
+        async with self._sf() as session:
+            result = await session.execute(
+                select(CompatibilityModel).where(
+                    CompatibilityModel.profile_id_1 == pid1,
+                    CompatibilityModel.profile_id_2 == pid2,
+                    CompatibilityModel.year == year,
+                )
+            )
+            c = result.scalar_one_or_none()
+            return _to_compatibility(c) if c else None

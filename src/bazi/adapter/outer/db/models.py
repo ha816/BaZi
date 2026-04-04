@@ -45,3 +45,15 @@ class AnalysisModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     profile: Mapped["ProfileModel"] = relationship(back_populates="analyses")
+
+
+class CompatibilityModel(Base):
+    __tablename__ = "compatibilities"
+    __table_args__ = (UniqueConstraint("profile_id_1", "profile_id_2", "year", name="uq_compat_profiles_year"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id_1: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
+    profile_id_2: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    result: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

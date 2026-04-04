@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from uuid import UUID
 
+from bazi.domain.compatibility import Compatibility
 from bazi.domain.member import Member
 from bazi.domain.profile import Analysis, Profile
 from bazi.domain.user import Gender
@@ -41,3 +42,11 @@ class AnalysisPort(ABC):
 
     @abstractmethod
     async def list_by_profile(self, profile_id: UUID) -> list[Analysis]: ...
+
+
+class CompatibilityPort(ABC):
+    @abstractmethod
+    async def save(self, pid1: UUID, pid2: UUID, year: int, result: dict) -> Compatibility: ...
+
+    @abstractmethod
+    async def get(self, pid1: UUID, pid2: UUID, year: int) -> Compatibility | None: ...
