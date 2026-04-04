@@ -66,6 +66,28 @@ export async function deleteProfile(memberId: string, profileId: string): Promis
   if (!res.ok) throw new Error("삭제 실패");
 }
 
+export async function analyzeProfileChart(
+  memberId: string,
+  profileId: string,
+  year: number
+): Promise<AnalysisResult> {
+  return request<AnalysisResult>(`/members/${memberId}/profiles/${profileId}/analyze`, {
+    method: "POST",
+    body: JSON.stringify({ year }),
+  });
+}
+
+export async function analyzeCompatibilityByProfiles(
+  profileId1: string,
+  profileId2: string,
+  year: number
+): Promise<CompatibilityResult> {
+  return request<CompatibilityResult>("/compatibility", {
+    method: "POST",
+    body: JSON.stringify({ profile_id_1: profileId1, profile_id_2: profileId2, year }),
+  });
+}
+
 export async function analyzeCompatibility(
   input: CompatibilityInput
 ): Promise<CompatibilityResult> {
