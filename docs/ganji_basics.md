@@ -34,7 +34,7 @@
 
 ## 코드에서의 표현
 
-`sajupy`의 `calculate_saju()` 반환값 기준:
+`sajupy`의 `cal_saju()` 반환값 기준:
 
 ```python
 result["year_pillar"]   # "庚午" (천간 + 지지)
