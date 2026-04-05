@@ -5,7 +5,7 @@ from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from bazi.application.daily_fortune_service import DailyFortuneService
+from bazi.application.fortune_service import FortuneService
 from bazi.application.profile_service import ProfileService
 from bazi.container import Container
 from bazi.domain.user import Gender
@@ -94,13 +94,13 @@ async def analyze_profile(
 
 @profile_router.get("/{profile_id}/daily")
 @inject
-async def get_daily_fortune(
+async def get_fortune(
     member_id: UUID,
     profile_id: UUID,
-    svc: DailyFortuneService = Depends(Provide[Container.daily_fortune_service]),
+    svc: FortuneService = Depends(Provide[Container.fortune_service]),
 ) -> dict:
     try:
-        return await svc.get_daily_fortune(profile_id)
+        return await svc.get_fortune(profile_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -111,7 +111,7 @@ async def get_forecast(
     member_id: UUID,
     profile_id: UUID,
     days: int = 7,
-    svc: DailyFortuneService = Depends(Provide[Container.daily_fortune_service]),
+    svc: FortuneService = Depends(Provide[Container.fortune_service]),
 ) -> list[dict]:
     try:
         return await svc.get_forecast(profile_id, days=min(days, 14))

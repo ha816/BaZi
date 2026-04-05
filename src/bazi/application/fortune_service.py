@@ -4,11 +4,11 @@ from uuid import UUID
 
 from sajupy import calculate_saju as _sajupy_calculate
 
-from bazi.application.port.daily_fortune_port import DailyFortunePort
+from bazi.application.port.fortune_port import FortunePort
 from bazi.application.port.profile_port import ProfilePort
 from bazi.application.port.weather_port import WeatherPort
 from bazi.application.saju_service import SajuService
-from bazi.domain.daily_fortune import DailyFortune
+from bazi.domain.fortune import Fortune
 from bazi.domain.ganji import Branch, Oheng, Pillar, Sipsin, StemBranch
 from bazi.domain.natal import NatalInfo
 
@@ -59,7 +59,7 @@ def _get_day_stembrach(today: date) -> StemBranch:
     return StemBranch.from_text(result["day_pillar"])
 
 
-def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> DailyFortune:
+def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fortune:
     day_sb = _get_day_stembrach(today)
     day_stem = day_sb.stem
     day_branch = day_sb.branch
@@ -132,7 +132,7 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Dail
     description = _make_description(total_score, day_element, natal, branch_combine, branch_clash, reasons)
     tips = _make_tips(total_score, branch_combine, branch_clash, natal.yongshin, day_element)
 
-    return DailyFortune(
+    return Fortune(
         date=today.isoformat(),
         day_pillar=str(day_sb),
         day_element=day_element.name,
@@ -271,16 +271,16 @@ def _make_tips(
     return tips[:3]
 
 
-class DailyFortuneService:
+class FortuneService:
     def __init__(
         self,
         profile_port: ProfilePort,
-        daily_fortune_port: DailyFortunePort,
+        fortune_port: FortunePort,
         saju_service: SajuService,
         weather_adapter: WeatherPort | None = None,
     ):
         self._profile_port = profile_port
-        self._daily_fortune_port = daily_fortune_port
+        self._fortune_port = fortune_port
         self._saju_service = saju_service
         self._weather = weather_adapter
 
@@ -293,11 +293,11 @@ class DailyFortuneService:
             return {}
         return {w["date"]: w for w in forecast}
 
-    async def get_daily_fortune(self, profile_id: UUID, today: date | None = None) -> dict:
+    async def get_fortune(self, profile_id: UUID, today: date | None = None) -> dict:
         if today is None:
             today = date.today()
 
-        cached = await self._daily_fortune_port.get(profile_id, today)
+        cached = await self._fortune_port.get(profile_id, today)
         # 날씨 어댑터가 있는데 캐시에 날씨가 없으면 재계산
         if cached and (self._weather is None or cached.result.get("weather") is not None):
             return cached.result
@@ -314,7 +314,7 @@ class DailyFortuneService:
 
         fortune = _compute(natal, today, weather)
         result = asdict(fortune)
-        await self._daily_fortune_port.save(profile_id, today, result)
+        await self._fortune_port.save(profile_id, today, result)
         return result
 
     async def get_forecast(self, profile_id: UUID, days: int = 7) -> list[dict]:
@@ -333,7 +333,7 @@ class DailyFortuneService:
             target_str = target.isoformat()
             weather = weather_map.get(target_str)
 
-            cached = await self._daily_fortune_port.get(profile_id, target)
+            cached = await self._fortune_port.get(profile_id, target)
             # 캐시 재사용 조건: 날씨 데이터 있거나, 날씨 어댑터 없거나, 캐시에 이미 날씨 있음
             if cached and (weather is None or cached.result.get("weather") is not None):
                 results.append(cached.result)
@@ -342,6 +342,6 @@ class DailyFortuneService:
             natal, _ = self._saju_service.analyze(user, target.year)
             fortune = _compute(natal, target, weather)
             result = asdict(fortune)
-            await self._daily_fortune_port.save(profile_id, target, result)
+            await self._fortune_port.save(profile_id, target, result)
             results.append(result)
         return results

@@ -2,11 +2,11 @@ from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from bazi.adapter.outer.db.member_repo import MemberRepo
-from bazi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, DailyFortuneRepo, ProfileRepo
+from bazi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FortuneRepo, ProfileRepo
 from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
 from bazi.adapter.outer.weather_adapter import WeatherAdapter
 from bazi.application.compatibility_service import CompatibilityService
-from bazi.application.daily_fortune_service import DailyFortuneService
+from bazi.application.fortune_service import FortuneService
 from bazi.application.member_service import MemberService
 from bazi.application.profile_service import ProfileService
 from bazi.application.saju_service import SajuService
@@ -58,11 +58,11 @@ class Container(containers.DeclarativeContainer):
         saju_service=saju_service,
     )
     weather_adapter = providers.Singleton(WeatherAdapter)
-    daily_fortune_repo = providers.Singleton(DailyFortuneRepo, session_factory=session_factory)
-    daily_fortune_service = providers.Singleton(
-        DailyFortuneService,
+    fortune_repo = providers.Singleton(FortuneRepo, session_factory=session_factory)
+    fortune_service = providers.Singleton(
+        FortuneService,
         profile_port=profile_repo,
-        daily_fortune_port=daily_fortune_repo,
+        fortune_port=fortune_repo,
         saju_service=saju_service,
         weather_adapter=weather_adapter,
     )

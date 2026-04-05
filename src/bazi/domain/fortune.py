@@ -3,7 +3,7 @@ from datetime import date
 
 
 @dataclass
-class DailyFortune:
+class Fortune:
     date: str           # "2026-04-05"
     day_pillar: str     # "丙午"
     day_element: str    # "火"
@@ -16,7 +16,7 @@ class DailyFortune:
 
 
 @dataclass
-class DailyFortuneCache:
+class FortuneCache:
     id: object
     profile_id: object
     fortune_date: date

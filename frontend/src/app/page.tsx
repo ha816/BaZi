@@ -121,26 +121,19 @@ function Dashboard({ memberId }: { memberId: string }) {
   const dateLabel = today.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 
   return (
-    <main className="min-h-screen py-10 md:py-16 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="flex items-end justify-between">
-          <div className="space-y-1">
-            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
-            <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">{dateLabel}</h1>
+    <main className="min-h-screen py-8 md:py-16 px-4">
+      <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+        <header className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-[10px] tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
+            <h1 className="font-heading text-2xl md:text-3xl font-bold text-[var(--color-ink)]">{dateLabel}</h1>
           </div>
-          <nav className="flex gap-4 text-sm">
-            <Link href="/analysis" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
-              사주 분석
-            </Link>
-            <Link href="/compatibility" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
-              궁합
-            </Link>
-            <Link href="/profile" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
-              프로필
-            </Link>
-            <Link href="/my" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
-              계정
-            </Link>
+          {/* 데스크톱 nav — 모바일은 하단 탭바 */}
+          <nav className="hidden md:flex gap-4 text-sm">
+            <Link href="/analysis" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">사주 분석</Link>
+            <Link href="/compatibility" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">궁합</Link>
+            <Link href="/profile" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">프로필</Link>
+            <Link href="/my" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">계정</Link>
           </nav>
         </header>
 
@@ -190,49 +183,50 @@ function Landing() {
   };
 
   return (
-    <main className="min-h-screen py-10 md:py-16 px-4">
-      <div className="max-w-4xl mx-auto space-y-10">
+    <main className="min-h-screen px-4">
+      <div className="max-w-2xl mx-auto">
         {/* 히어로 */}
-        <header className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
-          <div className="flex-shrink-0">
-            <img
-              src="/counselor.png"
-              alt="명리 상담사"
-              className="w-28 h-28 md:w-36 md:h-36 rounded-full object-cover border-2 border-[var(--color-border-light)] shadow-md"
-            />
-          </div>
-          <div className="text-center md:text-left space-y-3 flex-1">
-            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
-            <h1 className="font-heading text-3xl md:text-4xl font-bold text-[var(--color-ink)] tracking-tight">
-              사주로 오늘을 읽다
-            </h1>
-            <p className="text-base text-[var(--color-ink-muted)] leading-relaxed">
-              까치가 울면 반가운 소식이 온다 했죠.<br className="hidden md:block" />
-              오늘 당신의 기운이 어떤지, 사주까치가 먼저 알려드릴게요.
-            </p>
+        <header className="pt-14 pb-8 text-center space-y-4">
+          <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
+          <h1 className="font-heading text-4xl md:text-5xl font-bold text-[var(--color-ink)] tracking-tight leading-tight">
+            사주로<br className="md:hidden" /> 오늘을 읽다
+          </h1>
+          <p className="text-sm md:text-base text-[var(--color-ink-muted)] leading-relaxed">
+            까치가 울면 반가운 소식이 온다 했죠.<br />
+            오늘 당신의 기운이 어떤지 알려드릴게요.
+          </p>
+          <div className="flex gap-3 justify-center pt-1">
+            <a
+              href="#form"
+              className="px-6 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-xl text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors shadow-sm"
+            >
+              내 사주 보기
+            </a>
             <Link
               href="/join"
-              className="inline-block text-sm px-4 py-2 rounded-lg border border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white transition-colors"
+              className="px-6 py-3 border border-[var(--color-gold)] text-[var(--color-gold)] rounded-xl text-sm font-semibold hover:bg-[var(--color-gold)] hover:text-white transition-colors"
             >
-              로그인 · 회원가입
+              로그인
             </Link>
           </div>
         </header>
 
-        <AnalysisForm onSubmit={handleSubmit} loading={loading} defaultCity={detectedCity} />
+        <div id="form" className="pb-10 space-y-6">
+          <AnalysisForm onSubmit={handleSubmit} loading={loading} defaultCity={detectedCity} />
 
-        {loading && <LoadingSpinner />}
+          {loading && <LoadingSpinner />}
 
-        {error && (
-          <div
-            className="rounded-lg px-5 py-4 text-base text-[var(--color-fire)]"
-            style={{ backgroundColor: "#F7EDEC", borderLeft: "3px solid var(--color-fire)" }}
-          >
-            {error}
-          </div>
-        )}
+          {error && (
+            <div
+              className="rounded-lg px-5 py-4 text-sm text-[var(--color-fire)]"
+              style={{ backgroundColor: "#F7EDEC", borderLeft: "3px solid var(--color-fire)" }}
+            >
+              {error}
+            </div>
+          )}
 
-        {result && !loading && <ResultSlides data={result} gated />}
+          {result && !loading && <ResultSlides data={result} gated />}
+        </div>
       </div>
     </main>
   );
