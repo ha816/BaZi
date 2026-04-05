@@ -1,5 +1,6 @@
 import httpx
 
+from bazi.application.port.weather_port import WeatherPort
 from bazi.domain.ganji import Oheng
 
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
@@ -53,7 +54,7 @@ async def _resolve_latlon(city: str) -> tuple[float, float]:
     return _geo_cache["Seoul"]  # fallback
 
 
-class WeatherAdapter:
+class WeatherAdapter(WeatherPort):
     async def get_forecast(self, city: str, days: int = 7) -> list[dict] | None:
         """도시명으로 days일치 날씨 반환. 실패 시 None."""
         lat, lon = await _resolve_latlon(city)

@@ -1,7 +1,8 @@
 from dataclasses import asdict
 from uuid import UUID
 
-from bazi.application.port.member_port import CompatibilityPort, ProfilePort
+from bazi.application.port.compatibility_port import CompatibilityPort
+from bazi.application.port.profile_port import ProfilePort
 from bazi.application.saju_service import SajuService
 from bazi.domain.compatibility import CompatibilityResult
 from bazi.domain.ganji import Pillar, Sipsin

@@ -2,7 +2,8 @@ from dataclasses import asdict
 from datetime import datetime
 from uuid import UUID
 
-from bazi.application.port.member_port import AnalysisPort, ProfilePort
+from bazi.application.port.analysis_port import AnalysisPort
+from bazi.application.port.profile_port import ProfilePort
 from bazi.application.saju_service import SajuService
 from bazi.domain.profile import Analysis, Profile
 from bazi.domain.user import Gender, User

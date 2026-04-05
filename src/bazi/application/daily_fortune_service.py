@@ -4,7 +4,9 @@ from uuid import UUID
 
 from sajupy import calculate_saju as _sajupy_calculate
 
-from bazi.application.port.member_port import DailyFortunePort, ProfilePort
+from bazi.application.port.daily_fortune_port import DailyFortunePort
+from bazi.application.port.profile_port import ProfilePort
+from bazi.application.port.weather_port import WeatherPort
 from bazi.application.saju_service import SajuService
 from bazi.domain.daily_fortune import DailyFortune
 from bazi.domain.ganji import Branch, Oheng, Pillar, Sipsin, StemBranch
@@ -275,7 +277,7 @@ class DailyFortuneService:
         profile_port: ProfilePort,
         daily_fortune_port: DailyFortunePort,
         saju_service: SajuService,
-        weather_adapter=None,
+        weather_adapter: WeatherPort | None = None,
     ):
         self._profile_port = profile_port
         self._daily_fortune_port = daily_fortune_port

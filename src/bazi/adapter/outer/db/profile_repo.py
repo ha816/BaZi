@@ -5,7 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from bazi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, DailyFortuneModel, ProfileModel
-from bazi.application.port.member_port import AnalysisPort, CompatibilityPort, DailyFortunePort, ProfilePort
+from bazi.application.port.compatibility_port import CompatibilityPort
+from bazi.application.port.daily_fortune_port import DailyFortunePort
+from bazi.application.port.analysis_port import AnalysisPort
+from bazi.application.port.profile_port import ProfilePort
 from bazi.domain.compatibility import Compatibility
 from bazi.domain.daily_fortune import DailyFortuneCache
 from bazi.domain.profile import Analysis, Profile

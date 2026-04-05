@@ -55,8 +55,13 @@ BaZi/
 │   ├── profile_service.py        # ProfileService: analyze_profile() 캐시 우선
 │   ├── compatibility_service.py  # CompatibilityService: 오행 기반 궁합 계산 + 캐시
 │   ├── daily_fortune_service.py  # DailyFortuneService: 일진+날씨 기반 운세, 7일 예보
-│   ├── port/saju_port.py         # NatalPort, PostnatalPort, InterpreterPort ABC
-│   ├── port/member_port.py       # MemberPort, ProfilePort, AnalysisPort, CompatibilityPort, DailyFortunePort ABC
+│   ├── port/saju_port.py             # NatalPort, PostnatalPort, InterpreterPort ABC
+│   ├── port/member_port.py           # MemberPort ABC
+│   ├── port/profile_port.py          # ProfilePort ABC
+│   ├── port/analysis_port.py         # AnalysisPort ABC
+│   ├── port/compatibility_port.py    # CompatibilityPort ABC
+│   ├── port/daily_fortune_port.py    # DailyFortunePort ABC
+│   └── port/weather_port.py          # WeatherPort ABC
 │   ├── interpreter/              # 9개 텍스트 해석기 클래스
 │   └── util/util.py              # year_to_ganji 등 유틸
 └── adapter/
