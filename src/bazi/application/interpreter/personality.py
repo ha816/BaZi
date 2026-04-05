@@ -1,9 +1,10 @@
 from bazi.domain.ganji import Oheng
+from bazi.domain.interpretation import InterpretBlock
 from bazi.domain.natal import NatalInfo
 
 
 class PersonalityInterpreter:
-    def __call__(self, natal: NatalInfo) -> list[str]:
+    def __call__(self, natal: NatalInfo) -> list[InterpretBlock]:
         my_element = natal.my_main_element
         metaphor = OHENG_METAPHOR[my_element]
         lines = [
@@ -23,11 +24,11 @@ class PersonalityInterpreter:
                 seen.add(sinsal.korean)
                 lines.append(f"특히 {sinsal.korean}이 있어 {sinsal.meaning} 성향이 두드러집니다.")
 
-        return lines
+        return [InterpretBlock(description=l) for l in lines]
 
 
 class ElementBalanceInterpreter:
-    def __call__(self, natal: NatalInfo) -> list[str]:
+    def __call__(self, natal: NatalInfo) -> list[InterpretBlock]:
         stats = natal.element_stats
         my_element = natal.my_main_element
         lines = []
@@ -64,7 +65,7 @@ class ElementBalanceInterpreter:
                 "다섯 기운이 균형을 이루고 있어 어떤 환경에서든 안정적으로 적응할 수 있습니다."
             )
 
-        return lines
+        return [InterpretBlock(description=l) for l in lines]
 
 
 OHENG_METAPHOR: dict[Oheng, str] = {

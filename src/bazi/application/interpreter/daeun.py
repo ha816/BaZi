@@ -1,18 +1,16 @@
 from bazi.domain.ganji import Sipsin
+from bazi.domain.interpretation import InterpretBlock, InterpretTip
 from bazi.domain.natal import PostnatalInfo
 
 
 class DaeunInterpreter:
-    def __call__(self, postnatal: PostnatalInfo) -> list[str]:
-        lines = []
+    def __call__(self, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         current_daeun = postnatal.current_daeun
         if not current_daeun:
-            return lines
+            return []
 
-        lines.append(f"현재 {current_daeun.start_age}~{current_daeun.end_age}세 구간의 큰 흐름:")
-
-        for char, sipsin in postnatal.daeun_sipsin:
-            lines.append(f"  {SIPSIN_DETAIL[sipsin]}")
+        tips = [InterpretTip(label="", text=SIPSIN_DETAIL[sipsin])
+                for _, sipsin in postnatal.daeun_sipsin]
 
         daeun_list = postnatal.daeun
         current_idx = next(
@@ -21,12 +19,16 @@ class DaeunInterpreter:
         if current_idx is not None:
             if current_idx > 0:
                 prev = daeun_list[current_idx - 1]
-                lines.append(f"  이전 {prev.start_age}~{prev.end_age}세 구간에서 전환된 흐름입니다.")
+                tips.append(InterpretTip(label="", text=f"이전 {prev.start_age}~{prev.end_age}세 구간에서 전환된 흐름입니다."))
             if current_idx < len(daeun_list) - 1:
                 nxt = daeun_list[current_idx + 1]
-                lines.append(f"  다음 {nxt.start_age}~{nxt.end_age}세 구간으로의 전환을 준비하세요.")
+                tips.append(InterpretTip(label="", text=f"다음 {nxt.start_age}~{nxt.end_age}세 구간으로의 전환을 준비하세요."))
 
-        return lines
+        return [InterpretBlock(
+            category=f"현재 {current_daeun.start_age}~{current_daeun.end_age}세 큰 흐름",
+            description="",
+            tips=tips,
+        )]
 
 
 SIPSIN_DETAIL: dict[Sipsin, str] = {

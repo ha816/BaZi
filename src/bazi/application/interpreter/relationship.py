@@ -1,8 +1,9 @@
+from bazi.domain.interpretation import InterpretBlock
 from bazi.domain.natal import PostnatalInfo
 
 
 class RelationshipInterpreter:
-    def __call__(self, postnatal: PostnatalInfo) -> list[str]:
+    def __call__(self, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         lines = []
 
         for clash in postnatal.seun_clashes:
@@ -35,7 +36,7 @@ class RelationshipInterpreter:
                 f"장기적으로 이 영역에서 긍정적인 변화와 협력 관계가 형성됩니다."
             )
 
-        return lines
+        return [InterpretBlock(description=l) for l in lines]
 
 
 PILLAR_MEANING: dict[str, str] = {

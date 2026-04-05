@@ -1,15 +1,13 @@
-from bazi.domain.ganji import Branch, Pillar
-from bazi.domain.natal import NatalInfo, PostnatalInfo, Samjae
 from bazi.application.util.util import year_to_ganji
+from bazi.domain.ganji import Branch, Pillar
+from bazi.domain.interpretation import InterpretBlock
+from bazi.domain.natal import NatalInfo, PostnatalInfo, Samjae
 
 
 class SamjaeInterpreter:
-    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
-        lines = []
+    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         text = self._get_samjae_text(natal, postnatal.year)
-        if text:
-            lines.append(text)
-        return lines
+        return [InterpretBlock(description=text)] if text else []
 
     def _get_samjae_text(self, natal: NatalInfo, year: int) -> str | None:
         """삼재 해당 시 해석 문장을 반환한다. 비해당이면 None."""

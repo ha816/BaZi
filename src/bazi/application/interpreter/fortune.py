@@ -1,10 +1,10 @@
 from bazi.domain.ganji import Sipsin
+from bazi.domain.interpretation import InterpretBlock, InterpretTip
 from bazi.domain.natal import PostnatalInfo
 
-
 class FortuneInterpreter:
-    def __call__(self, postnatal: PostnatalInfo) -> list[str]:
-        lines = []
+    def __call__(self, postnatal: PostnatalInfo) -> list[InterpretBlock]:
+        blocks = []
 
         seun_sipsins = [postnatal.seun_stem[1], postnatal.seun_branch[1]]
         daeun_sipsins = [sipsin for _, sipsin in postnatal.daeun_sipsin]
@@ -17,18 +17,21 @@ class FortuneInterpreter:
             if key_sipsin is None:
                 continue
 
-            lines.append(f"[{domain_name}] {SIPSIN_DETAIL[key_sipsin]}")
-
+            tips = []
             if domain_name == "재물운":
-                lines.append(f"  💼 투자: {MODERN_INVEST[key_sipsin]}")
-            elif domain_name == "직장·사회운":
-                lines.append(f"  💼 커리어: {MODERN_CAREER[key_sipsin]}")
-            elif domain_name == "학업·자격운":
-                lines.append(f"  💼 커리어: {MODERN_CAREER[key_sipsin]}")
+                tips.append(InterpretTip(label="투자", text=MODERN_INVEST[key_sipsin]))
+            elif domain_name in ("직장·사회운", "학업·자격운"):
+                tips.append(InterpretTip(label="커리어", text=MODERN_CAREER[key_sipsin]))
             elif domain_name in ("표현·건강운", "대인관계"):
-                lines.append(f"  🌿 라이프: {MODERN_LIFESTYLE[key_sipsin]}")
+                tips.append(InterpretTip(label="라이프", text=MODERN_LIFESTYLE[key_sipsin]))
 
-        return lines
+            blocks.append(InterpretBlock(
+                category=domain_name,
+                description=SIPSIN_DETAIL[key_sipsin],
+                tips=tips,
+            ))
+
+        return blocks
 
 
 DOMAIN_MAP: dict[str, list[Sipsin]] = {

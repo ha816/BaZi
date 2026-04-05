@@ -4,6 +4,19 @@ from dataclasses import dataclass, field
 
 
 @dataclass
+class InterpretTip:
+    label: str
+    text: str
+
+
+@dataclass
+class InterpretBlock:
+    description: str
+    category: str | None = None
+    tips: list[InterpretTip] = field(default_factory=list)
+
+
+@dataclass
 class NatalResult:
     """선천 분석 결과 — 생년월일로 고정되는 값."""
 
@@ -24,8 +37,8 @@ class NatalResult:
     sinsal: list[dict[str, str]] = field(default_factory=list)
 
     # 텍스트 해석
-    personality: list[str] = field(default_factory=list)
-    element_balance: list[str] = field(default_factory=list)
+    personality: list[InterpretBlock] = field(default_factory=list)
+    element_balance: list[InterpretBlock] = field(default_factory=list)
 
 
 @dataclass
@@ -56,13 +69,13 @@ class PostnatalResult:
     samjae: dict | None = None
 
     # 텍스트 해석
-    yongshin: list[str] = field(default_factory=list)
-    fortune_by_domain: list[str] = field(default_factory=list)
-    annual_fortune: list[str] = field(default_factory=list)
-    samjae_fortune: list[str] = field(default_factory=list)
-    major_fortune: list[str] = field(default_factory=list)
-    relationships: list[str] = field(default_factory=list)
-    advice: list[str] = field(default_factory=list)
+    yongshin: list[InterpretBlock] = field(default_factory=list)
+    fortune_by_domain: list[InterpretBlock] = field(default_factory=list)
+    annual_fortune: list[InterpretBlock] = field(default_factory=list)
+    samjae_fortune: list[InterpretBlock] = field(default_factory=list)
+    major_fortune: list[InterpretBlock] = field(default_factory=list)
+    relationships: list[InterpretBlock] = field(default_factory=list)
+    advice: list[InterpretBlock] = field(default_factory=list)
 
 
 @dataclass

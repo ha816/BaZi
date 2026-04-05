@@ -1,8 +1,9 @@
+from bazi.domain.interpretation import InterpretBlock
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 
 
 class YongshinInterpreter:
-    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
+    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         yongshin = natal.yongshin
         my_element = natal.my_main_element
         strength = natal.strength
@@ -50,4 +51,4 @@ class YongshinInterpreter:
                 f"내실을 다지는 데 집중하는 것이 지혜로운 선택입니다."
             )
 
-        return lines
+        return [InterpretBlock(description=l) for l in lines]

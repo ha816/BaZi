@@ -1,8 +1,9 @@
+from bazi.domain.interpretation import InterpretBlock
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 
 
 class SeunInterpreter:
-    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
+    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         lines = []
         year = postnatal.year
 
@@ -16,4 +17,4 @@ class SeunInterpreter:
             f"{year}년 땅 기운은 {branch_sipsin.domain} 방면의 환경을 만듭니다."
         )
 
-        return lines
+        return [InterpretBlock(description=l) for l in lines]

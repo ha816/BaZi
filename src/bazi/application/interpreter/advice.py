@@ -1,10 +1,11 @@
 from bazi.domain.ganji import Oheng
+from bazi.domain.interpretation import InterpretBlock, InterpretTip
 from bazi.domain.natal import NatalInfo, PostnatalInfo
 
 
 class AdviceInterpreter:
-    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[str]:
-        lines = []
+    def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
+        blocks = []
         yongshin = natal.yongshin
         year = postnatal.year
         in_seun = postnatal.yongshin_in_seun
@@ -13,47 +14,53 @@ class AdviceInterpreter:
         has_combine = bool(postnatal.seun_combines or postnatal.daeun_combines)
 
         if in_seun and in_daeun and not has_clash:
-            lines.append(
+            desc = (
                 f"{year}년은 바람이 돛을 가득 채운 배와 같습니다. "
                 f"나에게 좋은 기운이 올해 운과 큰 흐름 모두에 작용하고 부딪히는 기운도 없어서, "
                 f"새로운 사업 시작·이직·투자 등 적극적으로 추진하기 좋은 해입니다."
             )
         elif in_seun and has_clash:
-            lines.append(
+            desc = (
                 f"{year}년은 폭풍 속에 보물이 숨어있는 해입니다. "
                 f"나에게 좋은 기운이 있어 기회는 분명히 오지만, 부딪히는 기운도 함께하므로 "
                 f"갈등 한가운데서 냉정하게 기회를 잡는 지혜가 필요합니다."
             )
         elif in_daeun and not in_seun and has_combine:
-            lines.append(
+            desc = (
                 f"{year}년은 강의 흐름은 좋으나 잔물결이 이는 해입니다. "
                 f"10년 큰 흐름이 좋고 어울리는 기운이 귀인을 데려오지만, "
                 f"올해 운에 나에게 좋은 기운이 없으니 내실을 다지며 다음 해를 준비하세요."
             )
         elif not in_seun and not in_daeun and has_clash:
-            lines.append(
+            desc = (
                 f"{year}년은 거센 역풍을 맞는 시기입니다. "
                 f"나에게 좋은 기운이 없고 부딪히는 기운까지 있으므로, 새로운 시도보다는 "
                 f"현재 가진 것을 지키는 데 집중하세요. 큰 결정은 반드시 한 박자 늦추세요."
             )
-        elif not in_seun and not in_daeun:
-            lines.append(
+        else:
+            desc = (
                 f"{year}년은 겨울처럼 에너지를 안으로 모으는 시기입니다. "
                 f"무리한 확장보다는 자기 계발·건강 관리·인간관계 정리 등 "
                 f"내면을 가꾸는 데 집중하면, 다가올 봄에 크게 도약할 수 있습니다."
             )
 
-        fortune = YONGSHIN_FORTUNE[yongshin]
-        lines.append(
-            f"[개운법] {yongshin.meaning}의 기운을 보강하는 방법"
-        )
-        lines.append(f"  🎯 추천 활동: {fortune['활동']}")
-        lines.append(f"  🎨 행운의 색상: {fortune['색상']}")
-        lines.append(f"  🧭 좋은 방향: {fortune['방향']}")
-        lines.append(f"  🍽️ 보충 음식: {fortune['음식']}")
-        lines.append(f"  💰 투자 방향: {fortune['투자']}")
+        if desc:
+            blocks.append(InterpretBlock(description=desc))
 
-        return lines
+        fortune = YONGSHIN_FORTUNE[yongshin]
+        blocks.append(InterpretBlock(
+            category="개운법",
+            description=f"{yongshin.meaning}의 기운을 보강하는 방법",
+            tips=[
+                InterpretTip(label="추천 활동", text=fortune["활동"]),
+                InterpretTip(label="행운의 색상", text=fortune["색상"]),
+                InterpretTip(label="좋은 방향", text=fortune["방향"]),
+                InterpretTip(label="보충 음식", text=fortune["음식"]),
+                InterpretTip(label="투자 방향", text=fortune["투자"]),
+            ],
+        ))
+
+        return blocks
 
 
 YONGSHIN_FORTUNE: dict[Oheng, dict[str, str]] = {

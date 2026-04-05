@@ -150,7 +150,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
               </div>
               <div className="divider" />
               <div className="slide-card__body">
-                <InterpretSection title="" lines={natal.personality} />
+                <InterpretSection title="" blocks={natal.personality} />
               </div>
             </div>
           )}
@@ -257,7 +257,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
                 <div className="divider" />
                 <div className="slide-card__body">
                   <DomainBarChart scores={postnatal.domain_scores} />
-                  <InterpretSection title="" lines={postnatal.fortune_by_domain} />
+                  <InterpretSection title="" blocks={postnatal.fortune_by_domain} />
                 </div>
               </div>
             </div>
@@ -285,7 +285,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
                 </div>
                 <div className="divider" />
                 <div className="slide-card__body">
-                  <InterpretSection title="" lines={postnatal.annual_fortune} />
+                  <InterpretSection title="" blocks={postnatal.annual_fortune} />
                 </div>
               </div>
               <div className="slide-card">
@@ -294,7 +294,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
                 </div>
                 <div className="divider" />
                 <div className="slide-card__body">
-                  <InterpretSection title="" lines={postnatal.major_fortune} />
+                  <InterpretSection title="" blocks={postnatal.major_fortune} />
                 </div>
               </div>
             </div>
@@ -310,7 +310,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
                 </div>
                 <div className="divider" />
                 <div className="slide-card__body">
-                  <InterpretSection title="" lines={postnatal.advice} variant="success" />
+                  <InterpretSection title="" blocks={postnatal.advice} variant="success" />
                 </div>
               </div>
               <div className="slide-card">
@@ -319,7 +319,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
                 </div>
                 <div className="divider" />
                 <div className="slide-card__body">
-                  <InterpretSection title="" lines={natal.element_balance} />
+                  <InterpretSection title="" blocks={natal.element_balance} />
                 </div>
               </div>
               <div className="slide-card">
@@ -328,7 +328,7 @@ export default function ResultSlides({ data, mode = "full" }: Props) {
                 </div>
                 <div className="divider" />
                 <div className="slide-card__body">
-                  <InterpretSection title="" lines={postnatal.yongshin} />
+                  <InterpretSection title="" blocks={postnatal.yongshin} />
                 </div>
               </div>
             </div>

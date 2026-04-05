@@ -60,8 +60,8 @@ export interface NatalResult {
   sipsin: SipsinInfo[];
   sibi_unseong: SibiUnseongInfo[];
   sinsal: SinsalInfo[];
-  personality: string[];
-  element_balance: string[];
+  personality: InterpretBlock[];
+  element_balance: InterpretBlock[];
 }
 
 export interface PostnatalResult {
@@ -80,13 +80,13 @@ export interface PostnatalResult {
   daeun_combines: CombineInfo[];
   domain_scores: Record<string, DomainScore>;
   samjae: { type: string; year_branch: string; birth_branch: string } | null;
-  yongshin: string[];
-  fortune_by_domain: string[];
-  annual_fortune: string[];
-  samjae_fortune: string[];
-  major_fortune: string[];
-  relationships: string[];
-  advice: string[];
+  yongshin: InterpretBlock[];
+  fortune_by_domain: InterpretBlock[];
+  annual_fortune: InterpretBlock[];
+  samjae_fortune: InterpretBlock[];
+  major_fortune: InterpretBlock[];
+  relationships: InterpretBlock[];
+  advice: InterpretBlock[];
 }
 
 export interface AnalysisResult {
@@ -109,6 +109,17 @@ export interface AnalysisInput {
   analysis_year: number;
   city?: string;
   longitude?: number;
+}
+
+export interface InterpretTip {
+  label: string;
+  text: string;
+}
+
+export interface InterpretBlock {
+  description: string;
+  category: string | null;
+  tips: InterpretTip[];
 }
 
 export interface CompatibilityDomainScore {
