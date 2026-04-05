@@ -62,9 +62,10 @@ const DETAIL_SLIDES = [
 
 interface Props {
   data: AnalysisResult;
+  gated?: boolean;
 }
 
-export default function ResultSlides({ data }: Props) {
+export default function ResultSlides({ data, gated = false }: Props) {
   const { natal, postnatal } = data;
   const meInfo = getElementInfo(natal.my_element.name);
   const yongInfo = getElementInfo(natal.yongshin_info.name);
@@ -340,6 +341,85 @@ export default function ResultSlides({ data }: Props) {
 
     ...detailSlides,
   ];
+
+  if (gated) {
+    const basicSlide = {
+      label: "기초",
+      icon: "🌱",
+      content: (
+        <div className="space-y-5">
+          <CounselorComment pose="greeting">
+            사주를 풀어봤어요. 태어난 시간으로 뽑은 여덟 글자와 오행 분포를 보여드릴게요.
+            당신은 <strong>{meInfo.korean}</strong>의 기운을 타고났어요.
+          </CounselorComment>
+          <div className="slide-card">
+            <div className="slide-card__header">
+              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">나의 팔자</h3>
+            </div>
+            <div className="divider" />
+            <div className="slide-card__body">
+              <PillarDetail
+                pillars={natal.pillars}
+                sipsin={natal.sipsin}
+                sibiUnseong={natal.sibi_unseong}
+                sinsal={natal.sinsal}
+                dayStem={natal.day_stem}
+                basic
+              />
+            </div>
+          </div>
+          <div className="slide-card">
+            <div className="slide-card__header">
+              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">다섯 가지 기운 분포</h3>
+            </div>
+            <div className="divider" />
+            <div className="slide-card__body">
+              <ElementRadar stats={natal.element_stats} />
+            </div>
+          </div>
+        </div>
+      ),
+    };
+    const gateSlide = {
+      label: "전체 보기",
+      icon: "🔒",
+      content: (
+        <div className="relative">
+          <div className="blur-sm pointer-events-none select-none opacity-60 space-y-5">
+            <CounselorComment>
+              {postnatal.year}년 올해의 운세를 자세히 볼게요.
+              당신에게 도움이 되는 <strong>{yongInfo.korean}</strong>의 기운이
+              {postnatal.yongshin_in_seun ? " 올해 운에 들어와 있어요." : " 올해 운에는 직접 오지 않았어요."}
+            </CounselorComment>
+            <div className="slide-card">
+              <div className="slide-card__header">
+                <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">{postnatal.year}년 올해의 운세</h3>
+              </div>
+              <div className="divider" />
+              <div className="slide-card__body">
+                <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
+                  {buildSeunNarrative(postnatal.seun_stem, postnatal.seun_branch)}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-gradient-to-b from-transparent via-[var(--color-parchment)]/80 to-[var(--color-parchment)]">
+            <div className="text-center space-y-2 px-4">
+              <p className="font-heading text-xl font-bold text-[var(--color-ink)]">올해의 운세 · 인생 흐름 · 종합 조언</p>
+              <p className="text-sm text-[var(--color-ink-muted)]">프로필을 저장하면 전체 분석 결과를 매번 볼 수 있어요</p>
+            </div>
+            <a
+              href="/join"
+              className="px-8 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-xl text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors shadow-md"
+            >
+              무료로 시작하기 →
+            </a>
+          </div>
+        </div>
+      ),
+    };
+    return <SlideCarousel slides={[basicSlide, gateSlide]} />;
+  }
 
   return <SlideCarousel slides={slides} />;
 }

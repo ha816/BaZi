@@ -11,6 +11,7 @@ interface Props {
   sibiUnseong: SibiUnseongInfo[];
   sinsal: SinsalInfo[];
   dayStem: string;
+  basic?: boolean;
 }
 
 const PILLAR_LABELS = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"];
@@ -148,6 +149,7 @@ export default function PillarDetail({
   sipsin,
   sibiUnseong,
   sinsal,
+  basic = false,
 }: Props) {
   const summary = buildPillarSummary(pillars);
 
@@ -240,7 +242,7 @@ export default function PillarDetail({
       </div>
 
       {/* Sipsin */}
-      {sipsin.length > 0 && (
+      {!basic && sipsin.length > 0 && (
         <div className="mb-6">
           <h4 className="font-heading text-base font-semibold text-[var(--color-ink)] mb-3">
             글자들의 관계와 역할
@@ -267,7 +269,7 @@ export default function PillarDetail({
       )}
 
       {/* Sibi unseong */}
-      {sibiUnseong.length > 0 && (
+      {!basic && sibiUnseong.length > 0 && (
         <div className="mb-6">
           <h4 className="font-heading text-base font-semibold text-[var(--color-ink)] mb-3">
             에너지 단계
@@ -294,7 +296,7 @@ export default function PillarDetail({
       )}
 
       {/* Sinsal */}
-      {sinsal.length > 0 && (
+      {!basic && sinsal.length > 0 && (
         <div>
           <h4 className="font-heading text-base font-semibold text-[var(--color-ink)] mb-3">
             특별한 기운
