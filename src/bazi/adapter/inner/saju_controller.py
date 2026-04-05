@@ -5,6 +5,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from bazi.adapter.outer.weather_adapter import WeatherAdapter
 from bazi.application.saju_service import SajuService
 from bazi.container import Container
 from bazi.domain.user import Gender, User
@@ -22,6 +23,31 @@ class AnalysisRequest(BaseModel):
 def _make_user(req: AnalysisRequest) -> User:
     return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city)
 
+
+
+@saju_router.get("/weather")
+@inject
+async def get_weather(
+    city: str = "Seoul",
+    weather_adapter: WeatherAdapter = Depends(Provide[Container.weather_adapter]),
+) -> dict:
+    forecast = await weather_adapter.get_forecast(city, days=3)
+    if not forecast:
+        fallback = {"temperature": 15.0, "element": "土", "condition": "흐림 15°C"}
+        return {"city": city, "days": [fallback, fallback, fallback]}
+    return {
+        "city": city,
+        "days": [
+            {
+                "date": d["date"],
+                "temperature": d["temperature"],
+                "element": d["element"],
+                "condition": d["condition"],
+                "hours": d.get("hours", []),
+            }
+            for d in forecast[:3]
+        ],
+    }
 
 
 @saju_router.post("/saju/interpret")

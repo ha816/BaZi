@@ -4,6 +4,7 @@ import type {
   CompatibilityInput,
   CompatibilityResult,
   DailyFortune,
+  DailyWeather,
   Member,
   Profile,
   ProfileCreateInput,
@@ -96,6 +97,10 @@ export async function analyzeCompatibilityByProfiles(
 
 export async function getDailyFortune(memberId: string, profileId: string): Promise<DailyFortune> {
   return request<DailyFortune>(`/members/${memberId}/profiles/${profileId}/daily`);
+}
+
+export async function getWeather(city: string): Promise<{ city: string; days: DailyWeather[] }> {
+  return request<{ city: string; days: DailyWeather[] }>(`/weather?city=${encodeURIComponent(city)}`);
 }
 
 export async function getForecast(memberId: string, profileId: string, days = 7): Promise<DailyFortune[]> {

@@ -159,10 +159,19 @@ export interface DailyDomainScore {
   reason: string;
 }
 
+export interface HourlyWeather {
+  hour: string;
+  temperature: number;
+  condition: string;
+  element: string;
+}
+
 export interface DailyWeather {
+  date?: string;
   temperature: number;
   element: string;
   condition: string;
+  hours?: HourlyWeather[];
 }
 
 export interface DailyFortune {
