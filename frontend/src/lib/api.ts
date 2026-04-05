@@ -1,6 +1,7 @@
 import type {
   AnalysisInput,
   AnalysisResult,
+  BasicResult,
   CompatibilityInput,
   CompatibilityResult,
   DailyFortune,
@@ -11,6 +12,20 @@ import type {
 } from "@/types/analysis";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export async function getBasicChart(input: AnalysisInput): Promise<BasicResult> {
+  const { analysis_year, ...rest } = input;
+  const res = await fetch(`${API_URL}/saju/basic`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...rest, year: analysis_year }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text);
+  }
+  return res.json();
+}
 
 export async function analyzeChart(
   input: AnalysisInput

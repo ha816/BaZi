@@ -4,9 +4,11 @@ import { useState } from "react";
 import type { AnalysisInput } from "@/types/analysis";
 
 interface Props {
-  onSubmit: (input: AnalysisInput) => void;
+  onSubmit: (input: AnalysisInput, name: string) => void;
+  onSave?: (name: string, gender: "male" | "female", birth_dt: string, city: string) => Promise<void>;
   loading: boolean;
   defaultCity?: string;
+  defaultLongitude?: number;
 }
 
 const HOUR_OPTIONS = [
@@ -25,28 +27,57 @@ const HOUR_OPTIONS = [
   { value: "21", label: "해시 (亥) 21:00 ~ 23:00", time: "21:00" },
 ];
 
-export default function AnalysisForm({ onSubmit, loading, defaultCity }: Props) {
+export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, defaultLongitude }: Props) {
+  const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("1990-01-01");
   const [selectedHour, setSelectedHour] = useState("");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [analysisYear, setAnalysisYear] = useState(new Date().getFullYear());
-  const [city, setCity] = useState(defaultCity ?? "Seoul");
+  const [longitude, setLongitude] = useState<string>(
+    defaultLongitude != null ? String(defaultLongitude) : ""
+  );
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // defaultCity가 비동기로 들어올 때 반영
-  if (defaultCity && city === "Seoul" && defaultCity !== "Seoul") {
-    setCity(defaultCity);
+  // defaultLongitude가 비동기로 들어올 때 반영
+  if (defaultLongitude != null && longitude === "") {
+    setLongitude(String(defaultLongitude));
   }
+
+  const isReady = name.trim() !== "";
+
+  const handleNameChange = (v: string) => { setName(v); setSaved(false); };
+  const handleBirthDateChange = (v: string) => { setBirthDate(v); setSaved(false); };
+  const handleGenderChange = (v: "male" | "female") => { setGender(v); setSaved(false); };
+
+  const handleSave = async () => {
+    if (onSave) {
+      setSaving(true);
+      try {
+        const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
+        const time = hourOpt?.time ?? "12:00";
+        await onSave(name.trim(), gender, `${birthDate}T${time}:00`, defaultCity ?? "Seoul");
+      } finally {
+        setSaving(false);
+      }
+    }
+    setSaved(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!saved) return;
     const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
     const time = hourOpt?.time ?? "12:00";
+    const lon = longitude !== "" ? parseFloat(longitude) : undefined;
     onSubmit({
       birth_dt: `${birthDate}T${time}:00`,
       gender,
       analysis_year: analysisYear,
-      city,
-    });
+      city: defaultCity ?? "Seoul",
+      longitude: lon,
+    }, name);
   };
 
   const inputClass =
@@ -57,22 +88,51 @@ export default function AnalysisForm({ onSubmit, loading, defaultCity }: Props) 
       onSubmit={handleSubmit}
       className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-7"
     >
-      <div>
-        <h2 className="font-heading text-xl font-semibold text-[var(--color-ink)]">
-          생년월일시 입력
-        </h2>
-        <p className="text-sm text-[var(--color-ink-faint)] mt-1.5">
-          정확한 생년월일시를 입력할수록 더 정확한 분석이 가능합니다
-        </p>
+      {/* Row 1: 이름 + 성별 */}
+      <div className="flex gap-4">
+        <label className="flex-1 space-y-2">
+          <span className="text-sm font-medium text-[var(--color-ink-light)]">이름 <span className="text-red-500">*</span></span>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            placeholder="홍길동"
+            className={inputClass}
+          />
+        </label>
+        <div className="space-y-2 w-36">
+          <span className="text-sm font-medium text-[var(--color-ink-light)]">성별 <span className="text-red-500">*</span></span>
+          <div className="flex gap-2 h-[50px]">
+            {(["male", "female"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => handleGenderChange(g)}
+                className={`flex-1 rounded-lg text-sm font-medium transition-all ${
+                  g === "male"
+                    ? gender === "male"
+                      ? "bg-blue-100 text-blue-600 border border-blue-300"
+                      : "bg-[var(--color-ivory)] text-[var(--color-ink-faint)] border border-[var(--color-border)]"
+                    : gender === "female"
+                      ? "bg-pink-100 text-pink-500 border border-pink-300"
+                      : "bg-[var(--color-ivory)] text-[var(--color-ink-faint)] border border-[var(--color-border)]"
+                }`}
+              >
+                {g === "male" ? "남" : "여"}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      {/* Row 2: 생년월일 + 시간 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <label className="space-y-2">
-          <span className="text-sm font-medium text-[var(--color-ink-light)]">생년월일</span>
+          <span className="text-sm font-medium text-[var(--color-ink-light)]">생년월일 <span className="text-red-500">*</span></span>
           <input
             type="date"
             value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
+            onChange={(e) => handleBirthDateChange(e.target.value)}
             className={inputClass}
             min="1920-01-01"
             max="2025-12-31"
@@ -92,69 +152,67 @@ export default function AnalysisForm({ onSubmit, loading, defaultCity }: Props) 
               </option>
             ))}
           </select>
-          <span className="text-xs text-[var(--color-ink-faint)]">
-            모르시면 그대로 두셔도 됩니다
-          </span>
-        </label>
-
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
-          <input
-            type="number"
-            value={analysisYear}
-            onChange={(e) => setAnalysisYear(+e.target.value)}
-            className={inputClass}
-            min={1920}
-            max={2100}
-          />
-          <span className="text-xs text-[var(--color-ink-faint)]">
-            어느 해의 운세를 보고 싶으신가요?
-          </span>
-        </label>
-
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-[var(--color-ink-light)]">출생 도시</span>
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="Seoul"
-            className={inputClass}
-          />
-          <span className="text-xs text-[var(--color-ink-faint)]">
-            {defaultCity ? "📍 위치 자동 감지됨" : "사주 정밀도에 영향"}
-          </span>
         </label>
       </div>
 
-      {/* Gender toggle */}
-      <div className="space-y-2">
-        <span className="text-sm font-medium text-[var(--color-ink-light)]">성별</span>
-        <div className="flex gap-3">
-          {(["male", "female"] as const).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => setGender(g)}
-              className={`flex-1 py-3.5 rounded-lg text-base font-medium transition-all min-h-[48px] ${
-                gender === g
-                  ? "bg-[var(--color-ink)] text-[var(--color-ivory)] shadow-sm"
-                  : "bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border border-[var(--color-border)] hover:border-[var(--color-ink-faint)]"
-              }`}
-            >
-              {g === "male" ? "남성" : "여성"}
-            </button>
-          ))}
-        </div>
-      </div>
-
+      {/* 고급 설정 토글 */}
       <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors min-h-[52px] shadow-sm"
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="flex items-center gap-1.5 text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink-light)] transition-colors"
       >
-        {loading ? "분석 중..." : "사주 분석하기"}
+        <span className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}>▶</span>
+        정밀 설정
       </button>
+
+      {/* 정밀 설정: 분석 연도 */}
+      {showAdvanced && (
+        <div className="pt-1">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도 <span className="text-red-500">*</span></span>
+            <input
+              type="number"
+              value={analysisYear}
+              onChange={(e) => setAnalysisYear(+e.target.value)}
+              className={inputClass}
+              min={1920}
+              max={2100}
+            />
+          </label>
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <span
+          className="flex-1"
+          title={!isReady ? "이름을 입력해 주세요" : undefined}
+        >
+          <button
+            type="button"
+            disabled={!isReady || saved}
+            onClick={handleSave}
+            className="w-full border border-[var(--color-border)] rounded-lg py-4 text-base font-semibold transition-colors min-h-[52px]
+              disabled:text-[var(--color-ink-faint)] disabled:border-[var(--color-border-light)] disabled:cursor-not-allowed
+              enabled:text-[var(--color-ink)] enabled:hover:bg-[var(--color-ivory-warm)]
+              data-[saved=true]:text-emerald-600 data-[saved=true]:border-emerald-300 data-[saved=true]:bg-emerald-50"
+            data-saved={saved}
+          >
+            {saved ? "✓ 저장됨" : "프로필 저장"}
+          </button>
+        </span>
+        <span
+          className="flex-1"
+          title={!saved && !loading ? "먼저 프로필 저장을 눌러 주세요" : undefined}
+        >
+          <button
+            type="submit"
+            disabled={!saved || loading}
+            className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] disabled:cursor-not-allowed transition-colors min-h-[52px] shadow-sm"
+          >
+            {loading ? "분석 중..." : "분석 시작"}
+          </button>
+        </span>
+      </div>
     </form>
   );
 }

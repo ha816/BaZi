@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
-import { analyzeChart, analyzeProfileChart, listProfiles } from "@/lib/api";
+import type { AnalysisInput, BasicResult, Profile } from "@/types/analysis";
+import { getBasicChart, analyzeProfileChart, createProfile, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
-import ResultSlides from "@/components/ResultSlides";
+import FreeResultSlides from "@/components/FreeResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const MEMBER_ID_KEY = "bazi_member_id";
@@ -15,7 +14,7 @@ const inputClass =
   "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
 
 export default function AnalysisPage() {
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [result, setResult] = useState<BasicResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -24,9 +23,15 @@ export default function AnalysisPage() {
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [profileYear, setProfileYear] = useState(new Date().getFullYear());
   const [detectedCity, setDetectedCity] = useState<string | undefined>();
+  const [detectedLongitude, setDetectedLongitude] = useState<number | undefined>();
 
   useEffect(() => {
-    detectLocation().then((loc) => { if (loc) setDetectedCity(loc.city); });
+    detectLocation().then((loc) => {
+      if (loc) {
+        setDetectedCity(loc.city);
+        setDetectedLongitude(loc.longitude);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -42,11 +47,19 @@ export default function AnalysisPage() {
     }).catch(() => {});
   }, []);
 
+  const handleSaveProfile = async (name: string, gender: "male" | "female", birth_dt: string, city: string) => {
+    if (!memberId) return;
+    await createProfile(memberId, { name, gender, birth_dt, city });
+    listProfiles(memberId).then(setProfiles).catch(() => {});
+  };
+
   const handleDirectSubmit = async (input: AnalysisInput) => {
     setLoading(true);
     setError(null);
     try {
-      setResult(await analyzeChart(input));
+      const data = await getBasicChart(input);
+      sessionStorage.setItem("bazi_analysis_input", JSON.stringify(input));
+      setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
     } finally {
@@ -60,7 +73,19 @@ export default function AnalysisPage() {
     setLoading(true);
     setError(null);
     try {
-      setResult(await analyzeProfileChart(memberId, selectedProfileId, profileYear));
+      sessionStorage.setItem("bazi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year: profileYear }));
+      const profile = profiles.find((p) => p.id === selectedProfileId);
+      if (profile) {
+        const input: AnalysisInput = {
+          birth_dt: profile.birth_dt,
+          gender: profile.gender,
+          analysis_year: profileYear,
+          city: profile.city,
+        };
+        const data = await getBasicChart(input);
+        sessionStorage.setItem("bazi_analysis_input", JSON.stringify(input));
+        setResult(data);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
     } finally {
@@ -69,23 +94,16 @@ export default function AnalysisPage() {
   };
 
   return (
-    <main className="min-h-screen py-10 md:py-16 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="space-y-3">
-          <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-            ← 홈으로
-          </Link>
-          <div>
-            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">命理分析</p>
-            <h1 className="font-heading text-3xl md:text-4xl font-bold text-[var(--color-ink)] mt-1">
-              사주 분석
-            </h1>
-            <p className="text-base text-[var(--color-ink-muted)] mt-2">
-              타고난 사주와 올해의 운세를 풀어드립니다.
-            </p>
-          </div>
+    <main className="min-h-screen py-8 px-4">
+      <div className="max-w-2xl mx-auto space-y-6">
+
+        {/* 헤더 */}
+        <header className="space-y-1">
+          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">사주 분석</h1>
+          <p className="text-sm text-[var(--color-ink-muted)]">타고난 사주와 올해의 운세를 풀어드립니다.</p>
         </header>
 
+        {/* 탭 (프로필 있을 때) */}
         {profiles.length > 0 && (
           <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)] w-fit">
             {(["profile", "direct"] as const).map((m) => (
@@ -104,13 +122,14 @@ export default function AnalysisPage() {
           </div>
         )}
 
+        {/* 프로필 선택 폼 */}
         {mode === "profile" && profiles.length > 0 && (
           <form
             onSubmit={handleProfileSubmit}
-            className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-6"
+            className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-5 space-y-4"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <label className="md:col-span-2 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <label className="sm:col-span-2 space-y-1.5">
                 <span className="text-sm font-medium text-[var(--color-ink-light)]">프로필</span>
                 <select
                   value={selectedProfileId}
@@ -119,12 +138,12 @@ export default function AnalysisPage() {
                 >
                   {profiles.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {p.gender === "male" ? "남" : "여"})
+                      {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {new Date(p.birth_dt).getHours().toString().padStart(2, "0")}:{new Date(p.birth_dt).getMinutes().toString().padStart(2, "0")} · {p.gender === "male" ? "남" : "여"})
                     </option>
                   ))}
                 </select>
               </label>
-              <label className="space-y-2">
+              <label className="space-y-1.5">
                 <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
                 <input
                   type="number"
@@ -139,29 +158,41 @@ export default function AnalysisPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm"
+              className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3.5 text-sm font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors"
             >
-              {loading ? "분석 중..." : "사주 분석하기"}
+              {loading ? "분석 중..." : "분석 시작"}
             </button>
           </form>
         )}
 
+        {/* 직접 입력 폼 */}
         {mode === "direct" && (
-          <AnalysisForm onSubmit={handleDirectSubmit} loading={loading} defaultCity={detectedCity} />
+          <AnalysisForm
+            onSubmit={handleDirectSubmit}
+            loading={loading}
+            defaultCity={detectedCity}
+            defaultLongitude={detectedLongitude}
+            onSave={memberId ? handleSaveProfile : undefined}
+          />
         )}
 
         {loading && <LoadingSpinner />}
 
         {error && (
           <div
-            className="rounded-lg px-5 py-4 text-base text-[var(--color-fire)]"
+            className="rounded-lg px-5 py-4 text-sm text-[var(--color-fire)]"
             style={{ backgroundColor: "#F7EDEC", borderLeft: "3px solid var(--color-fire)" }}
           >
             {error}
           </div>
         )}
 
-        {result && !loading && <ResultSlides data={result} />}
+
+        {/* 결과 */}
+        {result && !loading && (
+          <FreeResultSlides data={result} />
+        )}
+
       </div>
     </main>
   );

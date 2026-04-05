@@ -20,6 +20,7 @@ class User:
     gender: Gender
     birth_dt: datetime
     city: str = "Seoul"
+    longitude: float | None = None
 
     def age(self, base_year: int | None = None) -> int:
         """한국 나이를 계산한다."""

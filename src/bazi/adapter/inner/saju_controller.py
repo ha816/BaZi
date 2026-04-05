@@ -13,15 +13,24 @@ from bazi.domain.user import Gender, User
 saju_router = APIRouter()
 
 
+class BasicRequest(BaseModel):
+    birth_dt: datetime
+    gender: Gender = Gender.MALE
+    city: str = "Seoul"
+    longitude: float | None = None
+    year: int = 2026
+
+
 class AnalysisRequest(BaseModel):
     birth_dt: datetime
     gender: Gender = Gender.MALE
     analysis_year: int = 2026
     city: str = "Seoul"
+    longitude: float | None = None
 
 
-def _make_user(req: AnalysisRequest) -> User:
-    return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city)
+def _make_user(req: BasicRequest | AnalysisRequest) -> User:
+    return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city, longitude=req.longitude)
 
 
 
@@ -48,6 +57,18 @@ async def get_weather(
             for d in forecast[:3]
         ],
     }
+
+
+@saju_router.post("/saju/basic")
+@inject
+async def basic(
+    req: BasicRequest,
+    saju_svc: SajuService = Depends(Provide[Container.saju_service]),
+) -> dict:
+    try:
+        return saju_svc.basic_analyze(_make_user(req), req.year)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
 
 
 @saju_router.post("/saju/interpret")

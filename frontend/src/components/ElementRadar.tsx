@@ -1,17 +1,10 @@
 "use client";
 
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
 import { getElementInfo } from "@/lib/elementColors";
 
 interface Props {
   stats: Record<string, number>;
+  showNarrative?: boolean;
 }
 
 function buildElementNarrative(stats: Record<string, number>): string {
@@ -22,7 +15,6 @@ function buildElementNarrative(stats: Record<string, number>): string {
   const strongest = sorted[0];
   const strongestInfo = getElementInfo(strongest[0]);
 
-  // 동률 체크
   const topCount = strongest[1];
   const topTied = sorted.filter(([, v]) => v === topCount);
 
@@ -45,67 +37,61 @@ function buildElementNarrative(stats: Record<string, number>): string {
   return text;
 }
 
-export default function ElementRadar({ stats }: Props) {
-  const data = Object.entries(stats).map(([name, value]) => {
-    const info = getElementInfo(name);
-    return { name: info.korean, value };
-  });
-  const maxVal = Math.max(...Object.values(stats)) + 1;
+const ELEMENT_ORDER = ["木", "火", "土", "金", "水"];
+
+export default function ElementRadar({ stats, showNarrative = true }: Props) {
+  const maxVal = Math.max(...Object.values(stats), 1);
 
   return (
     <div>
-      {/* Narrative summary */}
-      <p className="text-sm text-[var(--color-ink-light)] leading-relaxed mb-5">
-        {buildElementNarrative(stats)}
-      </p>
+      {showNarrative && (
+        <p className="text-sm text-[var(--color-ink-light)] leading-relaxed mb-5">
+          {buildElementNarrative(stats)}
+        </p>
+      )}
 
-      {/* Element summary cards */}
-      <div className="flex justify-center gap-4 mb-6 flex-wrap">
-        {Object.entries(stats).map(([name, count]) => {
-          const info = getElementInfo(name);
+      <div className="space-y-3">
+        {ELEMENT_ORDER.map((key) => {
+          const info = getElementInfo(key);
+          const count = stats[key] ?? 0;
+          const pct = (count / maxVal) * 100;
+
           return (
-            <div
-              key={name}
-              className="text-center rounded-lg px-5 py-3 min-w-[72px] border"
-              style={{
-                backgroundColor: info.bgColor,
-                borderColor: info.borderColor,
-              }}
-            >
-              <div className="font-heading text-lg font-bold" style={{ color: info.color }}>
-                {info.korean}
+            <div key={key} className="flex items-center gap-3">
+              {/* 라벨 */}
+              <div
+                className="w-16 shrink-0 text-sm font-semibold text-right"
+                style={{ color: info.color }}
+              >
+                {info.korean}({info.label})
               </div>
-              <div className="text-xs text-[var(--color-ink-faint)] mt-0.5">{info.meaning}</div>
-              <div className="text-xl font-bold mt-1" style={{ color: info.color }}>
+
+              {/* 바 */}
+              <div
+                className="flex-1 h-3 rounded-full overflow-hidden"
+                style={{ backgroundColor: info.bgColor }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: info.color,
+                    opacity: count === 0 ? 0 : 1,
+                  }}
+                />
+              </div>
+
+              {/* 숫자 */}
+              <div
+                className="w-5 shrink-0 text-sm font-bold text-center"
+                style={{ color: count === 0 ? "var(--color-ink-faint)" : info.color }}
+              >
                 {count}
               </div>
             </div>
           );
         })}
       </div>
-
-      {/* Radar chart */}
-      <ResponsiveContainer width="100%" height={340}>
-        <RadarChart data={data}>
-          <PolarGrid stroke="var(--color-parchment)" />
-          <PolarAngleAxis
-            dataKey="name"
-            tick={{ fontSize: 14, fill: "var(--color-ink-muted)" }}
-          />
-          <PolarRadiusAxis
-            domain={[0, maxVal]}
-            tickCount={maxVal + 1}
-            tick={{ fontSize: 12, fill: "var(--color-ink-faint)" }}
-          />
-          <Radar
-            dataKey="value"
-            stroke="var(--color-gold)"
-            fill="var(--color-gold)"
-            fillOpacity={0.15}
-            strokeWidth={2}
-          />
-        </RadarChart>
-      </ResponsiveContainer>
     </div>
   );
 }

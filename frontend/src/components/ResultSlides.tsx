@@ -1,18 +1,58 @@
 "use client";
 
+import Link from "next/link";
 import type { AnalysisResult, SipsinInfo, ClashInfo, CombineInfo } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
-import SlideCarousel from "./SlideCarousel";
-import FortuneSummary from "./FortuneSummary";
 import PillarDetail from "./PillarDetail";
 import ElementRadar from "./ElementRadar";
 import DaeunTimeline from "./DaeunTimeline";
 import DomainBarChart from "./DomainBarChart";
 import InterpretSection from "./InterpretSection";
-import CounselorComment from "./CounselorComment";
 import DetailToggle from "./DetailToggle";
 import TermBadge from "./TermBadge";
+import SectionHeader from "./SectionHeader";
 
+// ── 올해 년지 계산 ──────────────────────────────────────────────────────────
+const BRANCHES = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+function yearBranch(year: number): string {
+  return BRANCHES[(year - 4) % 12];
+}
+
+// ── 12지신 데이터 ────────────────────────────────────────────────────────────
+const ZODIAC: Record<string, { kor: string; emoji: string; keywords: string[] }> = {
+  "子": { kor: "쥐", emoji: "🐭", keywords: ["영민함", "민첩함", "사교성"] },
+  "丑": { kor: "소", emoji: "🐂", keywords: ["성실함", "인내", "신뢰"] },
+  "寅": { kor: "호랑이", emoji: "🐯", keywords: ["용기", "리더십", "열정"] },
+  "卯": { kor: "토끼", emoji: "🐰", keywords: ["온화함", "직관", "예술성"] },
+  "辰": { kor: "용", emoji: "🐲", keywords: ["카리스마", "야망", "창의"] },
+  "巳": { kor: "뱀", emoji: "🐍", keywords: ["지혜", "신중함", "통찰"] },
+  "午": { kor: "말", emoji: "🐴", keywords: ["자유", "활동성", "독립"] },
+  "未": { kor: "양", emoji: "🐑", keywords: ["평화", "온순", "예술감"] },
+  "申": { kor: "원숭이", emoji: "🐒", keywords: ["기지", "유머", "적응력"] },
+  "酉": { kor: "닭", emoji: "🐓", keywords: ["꼼꼼함", "성실", "완벽주의"] },
+  "戌": { kor: "개", emoji: "🐕", keywords: ["충직함", "의리", "정직"] },
+  "亥": { kor: "돼지", emoji: "🐗", keywords: ["복", "너그러움", "성실"] },
+};
+
+const CLASH_PAIRS: [string, string][] = [
+  ["子", "午"], ["丑", "未"], ["寅", "申"], ["卯", "酉"], ["辰", "戌"], ["巳", "亥"],
+];
+const SAMHAP: [string[], string][] = [
+  [["寅", "午", "戌"], "火"], [["亥", "卯", "未"], "木"],
+  [["申", "子", "辰"], "水"], [["巳", "酉", "丑"], "金"],
+];
+
+function getZodiacRelation(myBranch: string, thisYear: number): string {
+  const yb = yearBranch(thisYear);
+  if (myBranch === yb) return `올해(${yb}年)와 같은 해예요. 본명년(本命年)으로 변화가 많은 해입니다.`;
+  const clash = CLASH_PAIRS.find(([a, b]) => (a === myBranch && b === yb) || (b === myBranch && a === yb));
+  if (clash) return `올해(${yb}年)와 충(衝)이 있어요. 예상치 못한 변화에 유연하게 대처하세요.`;
+  const samhap = SAMHAP.find(([group]) => group.includes(myBranch) && group.includes(yb));
+  if (samhap) return `올해(${yb}年)와 삼합(${samhap[1]}気)이 맞아요. 좋은 기운이 따릅니다.`;
+  return `올해(${yb}年)와 특별한 충·합은 없어요. 꾸준히 나아가기 좋은 해예요.`;
+}
+
+// ── 세운 해석 헬퍼 ──────────────────────────────────────────────────────────
 const SIPSIN_YEAR_DESC: Record<string, string> = {
   "比肩": "나와 비슷한 기운이 들어와요. 경쟁이 늘거나 동료·친구와의 인연이 활발해지는 해예요.",
   "劫財": "경쟁과 지출이 늘기 쉬운 해예요. 투자나 보증은 신중하게, 대신 추진력은 강해져요.",
@@ -26,19 +66,17 @@ const SIPSIN_YEAR_DESC: Record<string, string> = {
   "正印": "학문적 지원과 안정이 들어오는 해예요. 어머니나 윗사람의 도움을 받기 좋은 시기예요.",
 };
 
+const PILLAR_LABEL_MAP: Record<string, string> = {
+  "년주": "태어난 해", "월주": "태어난 달", "일주": "태어난 날", "시주": "태어난 시간",
+};
+
 function buildSeunNarrative(stem: SipsinInfo, branch: SipsinInfo): string {
   const stemDesc = SIPSIN_YEAR_DESC[stem.sipsin_name] ?? "";
   if (stem.sipsin_name === branch.sipsin_name) {
     return stemDesc + " 하늘과 땅 모두 같은 기운이라 이 영향이 특히 강하게 나타나요.";
   }
-  const branchDesc = SIPSIN_YEAR_DESC[branch.sipsin_name] ?? "";
-  return `${stemDesc} 여기에 ${branchDesc}`;
+  return `${stemDesc} 여기에 ${SIPSIN_YEAR_DESC[branch.sipsin_name] ?? ""}`;
 }
-
-const PILLAR_LABEL_MAP: Record<string, string> = {
-  "년주": "태어난 해", "월주": "태어난 달",
-  "일주": "태어난 날", "시주": "태어난 시간",
-};
 
 function buildClashNarrative(clashes: ClashInfo[]): string {
   if (clashes.length === 0) return "";
@@ -52,309 +90,37 @@ function buildCombineNarrative(combines: CombineInfo[]): string {
   return `올해 기운이 내 사주의 ${areas.join(", ")} 자리와 잘 어울려요. 이 영역에서 좋은 인연이나 기회가 자연스럽게 찾아올 수 있어요.`;
 }
 
-const DETAIL_SLIDES = [
-  { key: "personality", label: "성격", icon: "\uD83E\uDDE0", title: "성격과 기질", desc: "타고난 성격과 대인관계 스타일", color: "var(--color-water)", variant: "info" as const, comment: "타고난 성격과 대인관계 스타일을 살펴볼게요." },
-  { key: "element_balance", label: "균형", icon: "\u2696\uFE0F", title: "다섯 기운의 균형", desc: "오행 분포로 보는 강점과 약점", color: "var(--color-earth)", variant: "default" as const, comment: "다섯 가지 기운이 어떻게 분포되어 있는지, 강점과 약점을 짚어드릴게요." },
-  { key: "yongshin", label: "용신", icon: "\uD83C\uDF3F", title: "도움이 되는 기운 분석", desc: "나에게 필요한 기운과 활용법", color: "var(--color-wood)", variant: "default" as const, comment: "나에게 부족한 기운을 채워주는 용신에 대해 자세히 알아볼게요." },
-  { key: "major_fortune", label: "흐름 상세", icon: "\uD83D\uDCC5", title: "인생 흐름 상세", desc: "10년 주기별 상세 해석", color: "var(--color-gold)", variant: "default" as const, comment: "10년 주기별로 어떤 변화가 있는지 상세하게 풀어볼게요." },
-  { key: "relationships", label: "충돌/조화", icon: "\u26A1", title: "기운의 충돌과 조화", desc: "올해 충/합으로 보는 변화 포인트", color: "var(--color-fire)", variant: "warning" as const, comment: "올해 사주와 부딪히거나 어울리는 기운을 정리했어요." },
-] as const;
-
+// ── Props ────────────────────────────────────────────────────────────────────
 interface Props {
   data: AnalysisResult;
-  gated?: boolean;
+  mode?: "free" | "full";
 }
 
-export default function ResultSlides({ data, gated = false }: Props) {
+export default function ResultSlides({ data, mode = "full" }: Props) {
   const { natal, postnatal } = data;
   const meInfo = getElementInfo(natal.my_element.name);
   const yongInfo = getElementInfo(natal.yongshin_info.name);
 
-  const domainEntries = Object.entries(postnatal.domain_scores);
-  const bestDomain = domainEntries.reduce((a, b) => (b[1].score > a[1].score ? b : a));
-  const worstDomain = domainEntries.reduce((a, b) => (b[1].score < a[1].score ? b : a));
+  const yearBranch_ = natal.pillars[0]?.[1] ?? "";
+  const zodiac = ZODIAC[yearBranch_];
+  const zodiacRelation = zodiac ? getZodiacRelation(yearBranch_, postnatal.year) : "";
 
-  const detailDataMap: Record<string, string[]> = {
-    personality: natal.personality,
-    element_balance: natal.element_balance,
-    yongshin: postnatal.yongshin,
-    major_fortune: postnatal.major_fortune,
-    relationships: postnatal.relationships,
-  };
+  const allClashes = [...postnatal.seun_clashes, ...postnatal.daeun_clashes];
+  const allCombines = [...postnatal.seun_combines, ...postnatal.daeun_combines];
 
-  const detailSlides = DETAIL_SLIDES.map((sec) => ({
-    label: sec.label,
-    icon: sec.icon,
-    content: (
-      <div className="space-y-5">
-        <CounselorComment>{sec.comment}</CounselorComment>
-        <div
-          className="slide-card"
-          style={{ borderLeftWidth: 3, borderLeftColor: sec.color }}
-        >
-          <div className="slide-card__header">
-            <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">
-              {sec.title}
-            </h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">{sec.desc}</p>
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body">
-            <InterpretSection title="" lines={detailDataMap[sec.key]} variant={sec.variant} />
-          </div>
-        </div>
-      </div>
-    ),
-  }));
+  return (
+    <div className="space-y-8">
 
-  const slides = [
-    {
-      label: "결과 요약",
-      icon: "\u2728",
-      content: (
-        <div className="space-y-5">
-          <CounselorComment pose="greeting">
-            사주를 풀어봤어요. 먼저 전체적인 요약부터 보여드릴게요.
-          </CounselorComment>
-          <FortuneSummary data={data} />
-        </div>
-      ),
-    },
-
-    {
-      label: "타고난 사주",
-      icon: "\u2600",
-      content: (
-        <div className="space-y-5">
-          <CounselorComment>
-            이제 태어난 시간으로 뽑은 사주 여덟 글자를 하나씩 살펴볼게요.
-            당신은 <strong>{meInfo.korean}</strong>의 기운을 타고났어요.
-          </CounselorComment>
+      {/* ── 섹션 1: 기초 (무료) ───────────────────────────────────── */}
+      <section>
+        <SectionHeader emoji="🌱" title="타고난 사주팔자" free />
+        <div className="space-y-4">
           <div className="slide-card">
             <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">나의 타고난 사주</h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              <PillarDetail
-                pillars={natal.pillars}
-                sipsin={natal.sipsin}
-                sibiUnseong={natal.sibi_unseong}
-                sinsal={natal.sinsal}
-                dayStem={natal.day_stem}
-              />
-            </div>
-          </div>
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">다섯 가지 기운 분포</h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              <ElementRadar stats={natal.element_stats} />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      label: "올해의 운세",
-      icon: "\u2B50",
-      content: (
-        <div className="space-y-5">
-          <CounselorComment>
-            {postnatal.year}년 올해의 운세를 자세히 볼게요.
-            당신에게 도움이 되는 <strong>{yongInfo.korean}</strong>의 기운이
-            {postnatal.yongshin_in_seun ? " 올해 운에 들어와 있어서 좋은 흐름이에요." : " 올해 운에는 직접 오지 않았지만, 아래에서 어떤 영향이 있는지 살펴볼게요."}
-          </CounselorComment>
-
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">{postnatal.year}년 올해의 운세 상세</h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body space-y-5">
-              <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
-                {buildSeunNarrative(postnatal.seun_stem, postnatal.seun_branch)}
+              <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">나의 팔자</h3>
+              <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">
+                당신은 <strong>{meInfo.korean}</strong>의 기운을 타고났어요
               </p>
-
-              {(postnatal.seun_clashes.length > 0 || postnatal.daeun_clashes.length > 0) && (
-                <div
-                  className="rounded-lg px-5 py-4 text-sm leading-relaxed bg-[var(--color-ivory)]"
-                  style={{ borderLeft: "3px solid var(--color-fire)" }}
-                >
-                  <span className="font-medium text-[var(--color-fire)]">주의할 점</span>
-                  <span className="text-[var(--color-ink-light)] ml-2">
-                    {buildClashNarrative([...postnatal.seun_clashes, ...postnatal.daeun_clashes])}
-                  </span>
-                </div>
-              )}
-
-              {(postnatal.seun_combines.length > 0 || postnatal.daeun_combines.length > 0) && (
-                <div
-                  className="rounded-lg px-5 py-4 text-sm leading-relaxed bg-[var(--color-ivory)]"
-                  style={{ borderLeft: "3px solid var(--color-wood)" }}
-                >
-                  <span className="font-medium text-[var(--color-wood)]">좋은 신호</span>
-                  <span className="text-[var(--color-ink-light)] ml-2">
-                    {buildCombineNarrative([...postnatal.seun_combines, ...postnatal.daeun_combines])}
-                  </span>
-                </div>
-              )}
-
-              <DetailToggle>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-lg p-5 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-                    <div className="text-xs text-[var(--color-ink-faint)] uppercase tracking-wider mb-2">
-                      하늘 기운 <span className="normal-case">(<TermBadge term="천간" />)</span>
-                    </div>
-                    <div className="font-heading text-2xl font-bold text-[var(--color-ink)]">
-                      {postnatal.seun_stem.char}
-                    </div>
-                    <div className="text-sm text-[var(--color-ink-muted)] mt-2">
-                      {postnatal.seun_stem.sipsin_name} — {postnatal.seun_stem.domain}
-                    </div>
-                  </div>
-                  <div className="rounded-lg p-5 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-                    <div className="text-xs text-[var(--color-ink-faint)] uppercase tracking-wider mb-2">
-                      땅 기운 <span className="normal-case">(<TermBadge term="지지" />)</span>
-                    </div>
-                    <div className="font-heading text-2xl font-bold text-[var(--color-ink)]">
-                      {postnatal.seun_branch.char}
-                    </div>
-                    <div className="text-sm text-[var(--color-ink-muted)] mt-2">
-                      {postnatal.seun_branch.sipsin_name} — {postnatal.seun_branch.domain}
-                    </div>
-                  </div>
-                </div>
-
-                {(postnatal.seun_clashes.length > 0 || postnatal.daeun_clashes.length > 0) && (
-                  <div className="space-y-2 mt-4">
-                    <h4 className="font-heading text-sm font-semibold text-[var(--color-ink)]">
-                      부딪히는 기운
-                      <span className="font-normal text-[var(--color-ink-faint)] ml-1">(<TermBadge term="충" />)</span>
-                    </h4>
-                    {[...postnatal.seun_clashes, ...postnatal.daeun_clashes].map((c, i) => (
-                      <div
-                        key={i}
-                        className="rounded-lg px-5 py-3 text-sm bg-[var(--color-ivory)]"
-                        style={{ borderLeft: "3px solid var(--color-fire)", color: "var(--color-fire)" }}
-                      >
-                        {c.incoming} ↔ {c.target} ({c.pillar})
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {(postnatal.seun_combines.length > 0 || postnatal.daeun_combines.length > 0) && (
-                  <div className="space-y-2 mt-4">
-                    <h4 className="font-heading text-sm font-semibold text-[var(--color-ink)]">
-                      어울리는 기운
-                      <span className="font-normal text-[var(--color-ink-faint)] ml-1">(<TermBadge term="합" />)</span>
-                    </h4>
-                    {[...postnatal.seun_combines, ...postnatal.daeun_combines].map((c, i) => (
-                      <div
-                        key={i}
-                        className="rounded-lg px-5 py-3 text-sm bg-[var(--color-ivory)]"
-                        style={{ borderLeft: "3px solid var(--color-wood)", color: "var(--color-wood)" }}
-                      >
-                        {c.incoming} ↔ {c.target} ({c.pillar}, {c.type})
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </DetailToggle>
-            </div>
-          </div>
-
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">영역별 운세</h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              <DomainBarChart scores={postnatal.domain_scores} />
-              <InterpretSection title="" lines={postnatal.fortune_by_domain} />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      label: "큰 흐름",
-      icon: "\uD83C\uDF0A",
-      content: (
-        <div className="space-y-5">
-          <CounselorComment>
-            영역별로 보면 <strong>{bestDomain[0]}</strong> 쪽 운이 {bestDomain[1].score}점으로 가장 좋고,
-            {worstDomain[0] !== bestDomain[0] && <> <strong>{worstDomain[0]}</strong> 쪽은 {worstDomain[1].score}점으로 조금 아쉬워요.</>}
-            {" "}이제 인생 전체의 큰 흐름도 한번 살펴볼게요.
-          </CounselorComment>
-
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">
-                인생의 큰 흐름 <span className="text-sm font-normal text-[var(--color-ink-faint)] ml-2">10년 주기</span>
-              </h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              <DaeunTimeline daeun={postnatal.daeun} />
-            </div>
-          </div>
-
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">올해 운세</h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              <InterpretSection title="" lines={postnatal.annual_fortune} />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      label: "종합 조언",
-      icon: "\uD83D\uDCAC",
-      content: (
-        <div className="space-y-5">
-          <CounselorComment pose="greeting">
-            마지막으로 종합 조언을 드릴게요. 가장 중요한 부분이니 꼭 읽어보세요.
-          </CounselorComment>
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">종합 조언</h3>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              <InterpretSection title="" lines={postnatal.advice} variant="success" />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    ...detailSlides,
-  ];
-
-  if (gated) {
-    const basicSlide = {
-      label: "기초",
-      icon: "🌱",
-      content: (
-        <div className="space-y-5">
-          <CounselorComment pose="greeting">
-            사주를 풀어봤어요. 태어난 시간으로 뽑은 여덟 글자와 오행 분포를 보여드릴게요.
-            당신은 <strong>{meInfo.korean}</strong>의 기운을 타고났어요.
-          </CounselorComment>
-          <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">나의 팔자</h3>
             </div>
             <div className="divider" />
             <div className="slide-card__body">
@@ -364,62 +130,212 @@ export default function ResultSlides({ data, gated = false }: Props) {
                 sibiUnseong={natal.sibi_unseong}
                 sinsal={natal.sinsal}
                 dayStem={natal.day_stem}
-                basic
+                basic={mode === "free"}
               />
             </div>
           </div>
           <div className="slide-card">
             <div className="slide-card__header">
-              <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">다섯 가지 기운 분포</h3>
+              <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행(五行) 분포</h3>
             </div>
             <div className="divider" />
             <div className="slide-card__body">
               <ElementRadar stats={natal.element_stats} />
             </div>
           </div>
-        </div>
-      ),
-    };
-    const gateSlide = {
-      label: "전체 보기",
-      icon: "🔒",
-      content: (
-        <div className="relative">
-          <div className="blur-sm pointer-events-none select-none opacity-60 space-y-5">
-            <CounselorComment>
-              {postnatal.year}년 올해의 운세를 자세히 볼게요.
-              당신에게 도움이 되는 <strong>{yongInfo.korean}</strong>의 기운이
-              {postnatal.yongshin_in_seun ? " 올해 운에 들어와 있어요." : " 올해 운에는 직접 오지 않았어요."}
-            </CounselorComment>
+          {mode === "full" && (
             <div className="slide-card">
               <div className="slide-card__header">
-                <h3 className="font-heading text-lg font-semibold text-[var(--color-ink)]">{postnatal.year}년 올해의 운세</h3>
+                <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">성격과 기질</h3>
               </div>
               <div className="divider" />
               <div className="slide-card__body">
-                <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
-                  {buildSeunNarrative(postnatal.seun_stem, postnatal.seun_branch)}
-                </p>
+                <InterpretSection title="" lines={natal.personality} />
               </div>
             </div>
-          </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-gradient-to-b from-transparent via-[var(--color-parchment)]/80 to-[var(--color-parchment)]">
-            <div className="text-center space-y-2 px-4">
-              <p className="font-heading text-xl font-bold text-[var(--color-ink)]">올해의 운세 · 인생 흐름 · 종합 조언</p>
-              <p className="text-sm text-[var(--color-ink-muted)]">프로필을 저장하면 전체 분석 결과를 매번 볼 수 있어요</p>
-            </div>
-            <a
-              href="/join"
-              className="px-8 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-xl text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors shadow-md"
-            >
-              무료로 시작하기 →
-            </a>
-          </div>
+          )}
         </div>
-      ),
-    };
-    return <SlideCarousel slides={[basicSlide, gateSlide]} />;
-  }
+      </section>
 
-  return <SlideCarousel slides={slides} />;
+      {/* ── 섹션 2: 12지신 (무료) ─────────────────────────────────── */}
+      {zodiac && (
+        <section>
+          <SectionHeader emoji={zodiac.emoji} title="나의 띠 · 12지신" free />
+          <div className="slide-card">
+            <div className="slide-card__body">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-[var(--color-ivory-warm)] flex items-center justify-center text-4xl">
+                  {zodiac.emoji}
+                </div>
+                <div>
+                  <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{zodiac.kor}띠</p>
+                  <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">{yearBranch_}年 생</p>
+                  <div className="flex gap-1.5 mt-2 flex-wrap">
+                    {zodiac.keywords.map((kw) => (
+                      <span key={kw} className="text-xs bg-[var(--color-ivory)] border border-[var(--color-border-light)] rounded-full px-2.5 py-0.5 text-[var(--color-ink-muted)]">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-[var(--color-ink-light)] leading-relaxed mt-4 pt-4 border-t border-[var(--color-border-light)]">
+                {zodiacRelation}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── 심층분석 CTA (free 모드) ──────────────────────────────── */}
+      {mode === "free" && (
+        <div className="flex flex-col items-center gap-4 py-6">
+          <div className="text-center space-y-1">
+            <p className="font-heading text-base font-bold text-[var(--color-ink)]">올해 운세 · 인생 흐름 · 종합 조언이 준비됐어요</p>
+            <p className="text-sm text-[var(--color-ink-muted)]">심층분석으로 더 자세한 내용을 확인하세요</p>
+          </div>
+          <Link
+            href="/analysis/deep"
+            className="px-8 py-3.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-xl text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors shadow-md"
+          >
+            심층분석 시작하기 →
+          </Link>
+        </div>
+      )}
+
+      {/* ── 프리미엄 섹션 (full 모드) ────────────────────────────── */}
+      {mode === "full" && (
+        <>
+          {/* ── 섹션 3: 올해의 운세 ────────────────────────────────── */}
+          <section>
+            <SectionHeader emoji="⭐" title={`올해의 운세 · ${postnatal.year}`} free={false} />
+            <div className="space-y-4">
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">{postnatal.year}년 운세 요약</h3>
+                  <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">
+                    용신 <strong>{yongInfo.korean}</strong>이 올해 운에 {postnatal.yongshin_in_seun ? "들어와 있어요 ✓" : "직접 오지 않았어요"}
+                  </p>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body space-y-4">
+                  <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
+                    {buildSeunNarrative(postnatal.seun_stem, postnatal.seun_branch)}
+                  </p>
+
+                  {allClashes.length > 0 && (
+                    <div className="rounded-lg px-4 py-3 text-sm leading-relaxed bg-[var(--color-ivory)]" style={{ borderLeft: "3px solid var(--color-fire)" }}>
+                      <span className="font-medium text-[var(--color-fire)]">주의할 점</span>
+                      <span className="text-[var(--color-ink-light)] ml-2">{buildClashNarrative(allClashes)}</span>
+                    </div>
+                  )}
+                  {allCombines.length > 0 && (
+                    <div className="rounded-lg px-4 py-3 text-sm leading-relaxed bg-[var(--color-ivory)]" style={{ borderLeft: "3px solid var(--color-wood)" }}>
+                      <span className="font-medium text-[var(--color-wood)]">좋은 신호</span>
+                      <span className="text-[var(--color-ink-light)] ml-2">{buildCombineNarrative(allCombines)}</span>
+                    </div>
+                  )}
+
+                  <DetailToggle>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[{ label: "하늘 기운", term: "천간", info: postnatal.seun_stem }, { label: "땅 기운", term: "지지", info: postnatal.seun_branch }].map(({ label, term, info }) => (
+                        <div key={term} className="rounded-lg p-4 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
+                          <div className="text-xs text-[var(--color-ink-faint)] mb-1">{label} <TermBadge term={term} /></div>
+                          <div className="font-heading text-2xl font-bold text-[var(--color-ink)]">{info.char}</div>
+                          <div className="text-xs text-[var(--color-ink-muted)] mt-1">{info.sipsin_name} — {info.domain}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </DetailToggle>
+                </div>
+              </div>
+
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">영역별 운세</h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <DomainBarChart scores={postnatal.domain_scores} />
+                  <InterpretSection title="" lines={postnatal.fortune_by_domain} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 섹션 4: 큰 흐름 ────────────────────────────────────── */}
+          <section>
+            <SectionHeader emoji="🌊" title="큰 흐름 · 대운" free={false} />
+            <div className="space-y-4">
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">
+                    인생의 큰 흐름
+                    <span className="text-xs font-normal text-[var(--color-ink-faint)] ml-2">10년 주기</span>
+                  </h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <DaeunTimeline daeun={postnatal.daeun} />
+                </div>
+              </div>
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">올해 세운</h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <InterpretSection title="" lines={postnatal.annual_fortune} />
+                </div>
+              </div>
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">인생 흐름 상세</h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <InterpretSection title="" lines={postnatal.major_fortune} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 섹션 5: 종합 조언 ──────────────────────────────────── */}
+          <section>
+            <SectionHeader emoji="💬" title="종합 조언" free={false} />
+            <div className="space-y-4">
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">종합 조언 및 개운법</h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <InterpretSection title="" lines={postnatal.advice} variant="success" />
+                </div>
+              </div>
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행 균형</h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <InterpretSection title="" lines={natal.element_balance} />
+                </div>
+              </div>
+              <div className="slide-card">
+                <div className="slide-card__header">
+                  <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">도움이 되는 기운 · 용신</h3>
+                </div>
+                <div className="divider" />
+                <div className="slide-card__body">
+                  <InterpretSection title="" lines={postnatal.yongshin} />
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+    </div>
+  );
 }

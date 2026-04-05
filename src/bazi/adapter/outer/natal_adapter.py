@@ -18,7 +18,7 @@ class NatalAdapter(NatalPort):
     day_stem: Stem
 
     def analyze(self, user: User) -> NatalInfo:
-        self.saju = cal_saju(user.birth_dt, city=user.city)
+        self.saju = cal_saju(user.birth_dt, city=user.city, longitude=user.longitude)
         self.day_stem = self.saju.stem_of_day_pillar
 
         stats = self._get_oheng()
@@ -294,12 +294,15 @@ def _make_domain_reason(seun: list[Sipsin], daeun: list[Sipsin]) -> str:
 def cal_saju(
     birth_dt: datetime,
     city: str = "Seoul",
+    longitude: float | None = None,
     use_solar_time: bool = True,
 ) -> Saju:
     """sajupy를 호출하여 도메인 Saju 객체를 생성한다."""
     result = _sajupy_calculate(
         year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
-        hour=birth_dt.hour, minute=birth_dt.minute, city=city,
+        hour=birth_dt.hour, minute=birth_dt.minute,
+        city=None if longitude is not None else city,
+        longitude=longitude,
         use_solar_time=use_solar_time,
     )
     return Saju(

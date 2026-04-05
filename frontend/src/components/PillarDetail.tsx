@@ -17,6 +17,7 @@ interface Props {
 const PILLAR_LABELS = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"];
 const PILLAR_SUB = ["조상·사회", "부모·성장", "나·배우자", "자녀·노년"];
 const PILLAR_TERMS = ["년주", "월주", "일주", "시주"];
+const PILLAR_TERMS_HAN = ["年柱", "月柱", "日柱", "時柱"];
 
 const STEM_ELEMENT: Record<string, string> = {
   // 한글
@@ -156,12 +157,18 @@ export default function PillarDetail({
   return (
     <div>
       {/* Summary explanation */}
-      <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed mb-5 px-1">
-        아래는 태어난 시간을 바탕으로 뽑은 여덟 글자예요.
-        각 글자는 하늘과 땅의 기운을 담고 있고, 이 조합이 나의 성격과 운세의 바탕이 됩니다.
-        <br />
-        <span className="text-[var(--color-ink)] font-medium">{summary}</span>
-      </p>
+      {basic ? (
+        <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed mb-5 px-1">
+          태어난 년·월·일·시의 네 기둥으로 이루어진 여덟 글자, 이것이 나의 사주팔자입니다.
+        </p>
+      ) : (
+        <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed mb-5 px-1">
+          아래는 태어난 시간을 바탕으로 뽑은 여덟 글자예요.
+          각 글자는 하늘과 땅의 기운을 담고 있고, 이 조합이 나의 성격과 운세의 바탕이 됩니다.
+          <br />
+          <span className="text-[var(--color-ink)] font-medium">{summary}</span>
+        </p>
+      )}
 
       {/* Pillar grid */}
       <div className="grid grid-cols-4 gap-3 md:gap-4 mb-8">
@@ -189,7 +196,10 @@ export default function PillarDetail({
                   {PILLAR_LABELS[i]}
                 </div>
                 <div className="text-xs text-[var(--color-ink-faint)]">
-                  {PILLAR_SUB[i]} <span className="opacity-60">(<TermBadge term={PILLAR_TERMS[i]} />)</span>
+                  {basic
+                    ? PILLAR_TERMS_HAN[i]
+                    : <>{PILLAR_SUB[i]} <span className="opacity-60">(<TermBadge term={PILLAR_TERMS[i]} />)</span></>
+                  }
                 </div>
               </div>
 
@@ -206,7 +216,7 @@ export default function PillarDetail({
                 </div>
                 {stemInfo && (
                   <div className="text-xs mt-1" style={{ color: stemInfo.color }}>
-                    {stemInfo.korean}
+                    {stemInfo.korean}({stemInfo.label})
                   </div>
                 )}
                 {isMe && (
@@ -232,7 +242,7 @@ export default function PillarDetail({
                 </div>
                 {branchInfo && (
                   <div className="text-xs mt-1" style={{ color: branchInfo.color }}>
-                    {branchInfo.korean}
+                    {branchInfo.korean}({branchInfo.label})
                   </div>
                 )}
               </div>
