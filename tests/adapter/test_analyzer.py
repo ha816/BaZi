@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from bazi.domain.ganji import Oheng, Sipsin, Stem
-from bazi.domain.user import Gender, User
-from bazi.adapter.outer.natal_adapter import NatalAdapter
+from kkachi.domain.ganji import Oheng, Sipsin, Stem
+from kkachi.domain.user import Gender, User
+from kkachi.adapter.outer.natal_adapter import NatalAdapter
 
 _analyzer = NatalAdapter()
 

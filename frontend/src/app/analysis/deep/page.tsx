@@ -7,7 +7,7 @@ import { analyzeChart } from "@/lib/api";
 import ResultSlides from "@/components/ResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-const MEMBER_ID_KEY = "bazi_member_id";
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 export default function DeepAnalysisPage() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export default function DeepAnalysisPage() {
       router.replace("/join");
       return;
     }
-    const raw = sessionStorage.getItem("bazi_analysis_input");
+    const raw = sessionStorage.getItem("kkachi_analysis_input");
     if (!raw) {
       router.replace("/analysis");
       return;

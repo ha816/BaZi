@@ -8,7 +8,7 @@ import AnalysisForm from "@/components/AnalysisForm";
 import FreeResultSlides from "@/components/FreeResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-const MEMBER_ID_KEY = "bazi_member_id";
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 const inputClass =
   "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
@@ -58,7 +58,7 @@ export default function AnalysisPage() {
     setError(null);
     try {
       const data = await getBasicChart(input);
-      sessionStorage.setItem("bazi_analysis_input", JSON.stringify(input));
+      sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
       setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
@@ -73,7 +73,7 @@ export default function AnalysisPage() {
     setLoading(true);
     setError(null);
     try {
-      sessionStorage.setItem("bazi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year: profileYear }));
+      sessionStorage.setItem("kkachi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year: profileYear }));
       const profile = profiles.find((p) => p.id === selectedProfileId);
       if (profile) {
         const input: AnalysisInput = {
@@ -83,7 +83,7 @@ export default function AnalysisPage() {
           city: profile.city,
         };
         const data = await getBasicChart(input);
-        sessionStorage.setItem("bazi_analysis_input", JSON.stringify(input));
+        sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
         setResult(data);
       }
     } catch (e) {

@@ -8,7 +8,7 @@ import { detectLocation } from "@/lib/location";
 import DailyFortunePanel from "@/components/DailyFortune";
 import FeedPost from "@/components/FeedPost";
 
-const MEMBER_ID_KEY = "bazi_member_id";
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 const LEVEL_META: Record<string, { color: string; icon: string }> = {
   "좋은 날":         { color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: "🌟" },

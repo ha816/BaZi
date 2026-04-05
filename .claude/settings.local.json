@@ -26,7 +26,15 @@
       "Bash(docker exec bazi-db-1:*)",
       "Bash(curl -s 'http://localhost:8000/members/__TRACKED_VAR__/profiles/__TRACKED_VAR__/forecast?days=3')",
       "Bash(xargs kill:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(curl -s http://localhost:8000/docs)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(pkill -f \"uvicorn bazi.fastapi\")",
+      "Bash(curl -s \"http://localhost:8000/weather?city=Seoul\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('days:', len\\(d['days']\\)\\); print\\('hours[0]:', len\\(d['days'][0].get\\('hours',[]\\)\\), '건'\\)\")",
+      "Bash(pkill -f \"uvicorn\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(day['date'], day['condition']\\) for day in d['days']]\")",
+      "Bash(lsof -ti:8000)"
     ],
     "deny": [
       "Bash(git push --force *)",

@@ -1,10 +1,10 @@
 from datetime import datetime
 
 
-from bazi.domain.ganji import Sipsin
-from bazi.domain.user import Gender, User
-from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
-from bazi.application.util.util import year_to_ganji
+from kkachi.domain.ganji import Sipsin
+from kkachi.domain.user import Gender, User
+from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from kkachi.application.util.util import year_to_ganji
 
 _natal = NatalAdapter()
 _postnatal = PostnatalAdapter()

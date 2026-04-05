@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
-from bazi.application.saju_service import SajuService
-from bazi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
-from bazi.domain.user import Gender, User
+from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from kkachi.application.saju_service import SajuService
+from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
+from kkachi.domain.user import Gender, User
 
 _natal = NatalAdapter()
 _postnatal = PostnatalAdapter()

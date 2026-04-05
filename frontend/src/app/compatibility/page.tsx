@@ -12,7 +12,7 @@ import { detectLocation } from "@/lib/location";
 import CompatibilityResultView from "@/components/CompatibilityResult";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-const MEMBER_ID_KEY = "bazi_member_id";
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 const HOUR_OPTIONS = [
   { value: "", label: "모르겠어요", time: "12:00" },

@@ -7,7 +7,7 @@ import type { Profile, ProfileCreateInput } from "@/types/analysis";
 import { listProfiles, createProfile, deleteProfile } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 
-const MEMBER_ID_KEY = "bazi_member_id";
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 const HOUR_OPTIONS = [
   { value: "", label: "모르겠어요", time: "12:00" },

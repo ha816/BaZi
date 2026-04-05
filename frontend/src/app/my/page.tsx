@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Member } from "@/types/analysis";
 import { getMember, deleteMember } from "@/lib/api";
 
-const MEMBER_ID_KEY = "bazi_member_id";
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 export default function MyPage() {
   const router = useRouter();
