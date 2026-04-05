@@ -47,35 +47,45 @@ BaZi/
 │   ├── interpretation.py    # NatalResult + PostnatalResult + Interpretation dataclass
 │   ├── member.py            # Member dataclass
 │   ├── profile.py           # Profile + Analysis dataclass
-│   └── compatibility.py     # CompatibilityResult + Compatibility dataclass
+│   ├── compatibility.py     # CompatibilityResult + Compatibility dataclass
+│   └── daily_fortune.py     # DailyFortune + DailyFortuneCache dataclass
 ├── application/
 │   ├── saju_service.py           # SajuService: analyze() + interpret() 오케스트레이션
 │   ├── member_service.py         # MemberService: create/get (이메일 중복 시 기존 반환)
 │   ├── profile_service.py        # ProfileService: analyze_profile() 캐시 우선
 │   ├── compatibility_service.py  # CompatibilityService: 오행 기반 궁합 계산 + 캐시
+│   ├── daily_fortune_service.py  # DailyFortuneService: 일진+날씨 기반 운세, 7일 예보
 │   ├── port/saju_port.py         # NatalPort, PostnatalPort, InterpreterPort ABC
-│   ├── port/member_port.py       # MemberPort, ProfilePort, AnalysisPort, CompatibilityPort ABC
+│   ├── port/member_port.py       # MemberPort, ProfilePort, AnalysisPort, CompatibilityPort, DailyFortunePort ABC
 │   ├── interpreter/              # 9개 텍스트 해석기 클래스
 │   └── util/util.py              # year_to_ganji 등 유틸
 └── adapter/
     ├── inner/saju_controller.py            # POST /saju/interpret
     ├── inner/member_controller.py          # POST/GET /members
-    ├── inner/profile_controller.py         # /members/{id}/profiles + /analyze
+    ├── inner/profile_controller.py         # /members/{id}/profiles + /analyze + /daily + /forecast
     ├── inner/compatibility_controller.py   # POST /compatibility, POST /compatibility/direct
     ├── outer/natal_adapter.py              # NatalAdapter + PostnatalAdapter (sajupy 연동)
+    ├── outer/weather_adapter.py            # WeatherAdapter (Open-Meteo, 7일 예보, 도시→lat/lon 지오코딩)
     └── outer/db/
         ├── base.py          # make_engine, make_session_factory
-        ├── models.py        # MemberModel, ProfileModel, AnalysisModel, CompatibilityModel
+        ├── models.py        # MemberModel, ProfileModel, AnalysisModel, CompatibilityModel, DailyFortuneModel
         ├── member_repo.py   # MemberPort 구현
-        └── profile_repo.py  # ProfilePort + AnalysisPort + CompatibilityRepo 구현
+        └── profile_repo.py  # ProfilePort + AnalysisPort + CompatibilityRepo + DailyFortuneRepo 구현
 
 frontend/src/
 ├── app/
-│   ├── page.tsx              # 메인 페이지 (직접 입력 / 프로필 선택 분석)
+│   ├── page.tsx              # 메인 페이지 (직접 입력 / 프로필 선택 분석, IP 위치 자동 감지)
 │   ├── compatibility/        # 궁합 페이지 (프로필 선택 or 직접 입력)
-│   └── my/                   # 회원 가입 + 프로필 관리 페이지
-├── components/               # React 컴포넌트 (CompatibilityResult 포함)
-├── lib/api.ts                # API 호출 함수 전체
+│   └── my/                   # 회원 가입 + 프로필 관리 + 오늘의 운세
+├── components/
+│   ├── AnalysisForm.tsx      # 사주 입력 폼 (city 자동입력 포함)
+│   ├── CompatibilityResult.tsx
+│   ├── DailyFortune.tsx      # 오늘/내일/주간 탭 운세 패널 (날씨 배지 포함)
+│   ├── ResultSlides.tsx
+│   └── LoadingSpinner.tsx
+├── lib/
+│   ├── api.ts                # API 호출 함수 전체
+│   └── location.ts           # ipapi.co 기반 IP 위치 감지
 └── types/analysis.ts         # TypeScript 타입 정의
 ```
 
@@ -179,6 +189,9 @@ POST   /members/{member_id}/profiles/{profile_id}/analyze   # { year: int } → 
 
 POST   /compatibility         # { profile_id_1, profile_id_2, year } → 캐시 우선 반환
 POST   /compatibility/direct  # { person1: {name,gender,birth_dt,city}, person2, year } → stateless
+
+GET    /members/{member_id}/profiles/{profile_id}/daily     # 오늘 운세 (캐시 우선)
+GET    /members/{member_id}/profiles/{profile_id}/forecast  # ?days=7 (기본 7일, 최대 14일)
 ```
 
 ## DB 스키마
@@ -189,9 +202,11 @@ POST   /compatibility/direct  # { person1: {name,gender,birth_dt,city}, person2,
 | `profiles` | id(UUID PK), member_id(FK), name, gender, birth_dt, city, created_at |
 | `analyses` | id(UUID PK), profile_id(FK), year, result(JSONB), UNIQUE(profile_id, year) |
 | `compatibilities` | id(UUID PK), profile_id_1(FK), profile_id_2(FK), year, result(JSONB), UNIQUE(pid1, pid2, year) |
+| `daily_fortunes` | id(UUID PK), profile_id(FK), fortune_date(Date), result(JSONB), UNIQUE(profile_id, fortune_date) |
 
-- `analyses`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
+- `analyses`, `compatibilities`, `daily_fortunes`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
 - `compatibilities`의 profile_id_1/2는 항상 `min(id) / max(id)` 순으로 저장 (순서 무관 캐시)
+- `daily_fortunes`는 날씨 포함 여부에 따라 upsert (날씨 없이 캐시된 경우 재계산)
 
 ## 프론트엔드 페이지
 
@@ -199,9 +214,33 @@ POST   /compatibility/direct  # { person1: {name,gender,birth_dt,city}, person2,
 |------|------|
 | `/` | 사주 분석 — 직접 입력 or 저장된 프로필 선택 |
 | `/compatibility` | 궁합 — 프로필 선택 or 직접 입력, 둘 다 프로필이면 캐시 적용 |
-| `/my` | 회원 가입/로그인(이메일 기반) + 프로필 추가/삭제 |
+| `/my` | 회원 가입/로그인(이메일 기반) + 프로필 추가/삭제 + 오늘의 운세(7일 예보) |
 
 - `localStorage["bazi_member_id"]`로 로그인 상태 유지
+- 페이지 진입 시 `ipapi.co`로 IP 위치 자동 감지 → city 필드 자동 입력
+
+## 오늘의 운세 설계
+
+### 점수 계산 (base 50 + 보정)
+| 조건 | 점수 |
+|------|------|
+| 오늘 일간 오행 = 용신 | +25 |
+| 오늘 일간이 용신을 生 | +15 |
+| 오늘 일지와 내 일지 육합 | +15 |
+| 오늘 오행이 내 주 오행을 生 | +10 |
+| 길신 십신 (食神/正財/正官/正印) | +8 |
+| 날씨 오행 = 용신 | +10 |
+| 날씨 오행이 용신을 生 | +5 |
+| 흉신 십신 (偏官/劫財) | -8 |
+| 오늘 일지와 내 일지 충 | -15 |
+| 오늘 일간이 용신을 剋 | -15 |
+| 날씨 오행이 용신을 剋 | -8 |
+
+### 날씨 연동 (Open-Meteo)
+- API 키 불필요, 전세계 커버
+- 도시명 → Open-Meteo Geocoding API → lat/lon (프로세스 내 캐시)
+- WMO 날씨 코드 → 오행: 맑음=火, 구름많음=土, 흐림=金, 비/눈=水, 강풍=木
+- 7일 예보 한번에 fetch → 각 날짜에 날씨 주입
 
 ## 테스트
 

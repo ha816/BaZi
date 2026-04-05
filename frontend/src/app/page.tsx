@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
 import { analyzeChart, analyzeProfileChart, listProfiles } from "@/lib/api";
+import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import ResultSlides from "@/components/ResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -21,6 +22,11 @@ export default function Home() {
   const [mode, setMode] = useState<"direct" | "profile">("direct");
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [profileYear, setProfileYear] = useState(new Date().getFullYear());
+  const [detectedCity, setDetectedCity] = useState<string | undefined>();
+
+  useEffect(() => {
+    detectLocation().then((loc) => { if (loc) setDetectedCity(loc.city); });
+  }, []);
 
   useEffect(() => {
     const id = localStorage.getItem(MEMBER_ID_KEY);
@@ -165,7 +171,7 @@ export default function Home() {
         )}
 
         {/* 직접 입력 폼 */}
-        {mode === "direct" && <AnalysisForm onSubmit={handleDirectSubmit} loading={loading} />}
+        {mode === "direct" && <AnalysisForm onSubmit={handleDirectSubmit} loading={loading} defaultCity={detectedCity} />}
 
         {loading && <LoadingSpinner />}
 

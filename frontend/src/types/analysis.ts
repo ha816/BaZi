@@ -152,3 +152,27 @@ export interface ProfileCreateInput {
   birth_dt: string;
   city: string;
 }
+
+export interface DailyDomainScore {
+  score: number;
+  level: string;
+  reason: string;
+}
+
+export interface DailyWeather {
+  temperature: number;
+  element: string;
+  condition: string;
+}
+
+export interface DailyFortune {
+  date: string;
+  day_pillar: string;
+  day_element: string;
+  total_score: number;
+  level: string;
+  domain_scores: Record<string, DailyDomainScore>;
+  description: string;
+  tips: string[];
+  weather: DailyWeather | null;
+}

@@ -1,12 +1,13 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from bazi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, ProfileModel
-from bazi.application.port.member_port import AnalysisPort, CompatibilityPort, ProfilePort
+from bazi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, DailyFortuneModel, ProfileModel
+from bazi.application.port.member_port import AnalysisPort, CompatibilityPort, DailyFortunePort, ProfilePort
 from bazi.domain.compatibility import Compatibility
+from bazi.domain.daily_fortune import DailyFortuneCache
 from bazi.domain.profile import Analysis, Profile
 from bazi.domain.user import Gender
 
@@ -88,6 +89,50 @@ class AnalysisRepo(AnalysisPort):
                 select(AnalysisModel).where(AnalysisModel.profile_id == profile_id).order_by(AnalysisModel.year.desc())
             )
             return [_to_analysis(a) for a in result.scalars()]
+
+
+def _to_daily_fortune(m: DailyFortuneModel) -> DailyFortuneCache:
+    return DailyFortuneCache(
+        id=m.id,
+        profile_id=m.profile_id,
+        fortune_date=m.fortune_date,
+        result=m.result,
+        created_at=m.created_at,
+    )
+
+
+class DailyFortuneRepo(DailyFortunePort):
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
+        self._sf = session_factory
+
+    async def save(self, profile_id: UUID, fortune_date: date, result: dict) -> DailyFortuneCache:
+        async with self._sf() as session:
+            existing = await session.execute(
+                select(DailyFortuneModel).where(
+                    DailyFortuneModel.profile_id == profile_id,
+                    DailyFortuneModel.fortune_date == fortune_date,
+                )
+            )
+            m = existing.scalar_one_or_none()
+            if m:
+                m.result = result
+            else:
+                m = DailyFortuneModel(profile_id=profile_id, fortune_date=fortune_date, result=result)
+                session.add(m)
+            await session.commit()
+            await session.refresh(m)
+            return _to_daily_fortune(m)
+
+    async def get(self, profile_id: UUID, fortune_date: date) -> DailyFortuneCache | None:
+        async with self._sf() as session:
+            result = await session.execute(
+                select(DailyFortuneModel).where(
+                    DailyFortuneModel.profile_id == profile_id,
+                    DailyFortuneModel.fortune_date == fortune_date,
+                )
+            )
+            m = result.scalar_one_or_none()
+            return _to_daily_fortune(m) if m else None
 
 
 def _to_compatibility(m: CompatibilityModel) -> Compatibility:

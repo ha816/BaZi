@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,7 @@ class ProfileModel(Base):
 
     member: Mapped["MemberModel"] = relationship(back_populates="profiles")
     analyses: Mapped[list["AnalysisModel"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
+    daily_fortunes: Mapped[list["DailyFortuneModel"]] = relationship(back_populates="profile", cascade="all, delete-orphan")
 
 
 class AnalysisModel(Base):
@@ -45,6 +46,19 @@ class AnalysisModel(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     profile: Mapped["ProfileModel"] = relationship(back_populates="analyses")
+
+
+class DailyFortuneModel(Base):
+    __tablename__ = "daily_fortunes"
+    __table_args__ = (UniqueConstraint("profile_id", "fortune_date", name="uq_daily_fortune_profile_date"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("profiles.id"), nullable=False)
+    fortune_date: Mapped[date] = mapped_column(Date, nullable=False)
+    result: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    profile: Mapped["ProfileModel"] = relationship(back_populates="daily_fortunes")
 
 
 class CompatibilityModel(Base):

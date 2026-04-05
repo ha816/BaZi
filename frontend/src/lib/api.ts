@@ -3,6 +3,7 @@ import type {
   AnalysisResult,
   CompatibilityInput,
   CompatibilityResult,
+  DailyFortune,
   Member,
   Profile,
   ProfileCreateInput,
@@ -86,6 +87,14 @@ export async function analyzeCompatibilityByProfiles(
     method: "POST",
     body: JSON.stringify({ profile_id_1: profileId1, profile_id_2: profileId2, year }),
   });
+}
+
+export async function getDailyFortune(memberId: string, profileId: string): Promise<DailyFortune> {
+  return request<DailyFortune>(`/members/${memberId}/profiles/${profileId}/daily`);
+}
+
+export async function getForecast(memberId: string, profileId: string, days = 7): Promise<DailyFortune[]> {
+  return request<DailyFortune[]>(`/members/${memberId}/profiles/${profileId}/forecast?days=${days}`);
 }
 
 export async function analyzeCompatibility(

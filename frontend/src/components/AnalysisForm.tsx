@@ -6,6 +6,7 @@ import type { AnalysisInput } from "@/types/analysis";
 interface Props {
   onSubmit: (input: AnalysisInput) => void;
   loading: boolean;
+  defaultCity?: string;
 }
 
 const HOUR_OPTIONS = [
@@ -24,11 +25,17 @@ const HOUR_OPTIONS = [
   { value: "21", label: "해시 (亥) 21:00 ~ 23:00", time: "21:00" },
 ];
 
-export default function AnalysisForm({ onSubmit, loading }: Props) {
+export default function AnalysisForm({ onSubmit, loading, defaultCity }: Props) {
   const [birthDate, setBirthDate] = useState("1990-01-01");
   const [selectedHour, setSelectedHour] = useState("");
   const [gender, setGender] = useState<"male" | "female">("male");
   const [analysisYear, setAnalysisYear] = useState(new Date().getFullYear());
+  const [city, setCity] = useState(defaultCity ?? "Seoul");
+
+  // defaultCity가 비동기로 들어올 때 반영
+  if (defaultCity && city === "Seoul" && defaultCity !== "Seoul") {
+    setCity(defaultCity);
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +45,7 @@ export default function AnalysisForm({ onSubmit, loading }: Props) {
       birth_dt: `${birthDate}T${time}:00`,
       gender,
       analysis_year: analysisYear,
+      city,
     });
   };
 
@@ -58,7 +66,7 @@ export default function AnalysisForm({ onSubmit, loading }: Props) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         <label className="space-y-2">
           <span className="text-sm font-medium text-[var(--color-ink-light)]">생년월일</span>
           <input
@@ -101,6 +109,20 @@ export default function AnalysisForm({ onSubmit, loading }: Props) {
           />
           <span className="text-xs text-[var(--color-ink-faint)]">
             어느 해의 운세를 보고 싶으신가요?
+          </span>
+        </label>
+
+        <label className="space-y-2">
+          <span className="text-sm font-medium text-[var(--color-ink-light)]">출생 도시</span>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Seoul"
+            className={inputClass}
+          />
+          <span className="text-xs text-[var(--color-ink-faint)]">
+            {defaultCity ? "📍 위치 자동 감지됨" : "사주 정밀도에 영향"}
           </span>
         </label>
       </div>

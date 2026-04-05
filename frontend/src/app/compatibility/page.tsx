@@ -8,6 +8,7 @@ import {
   analyzeCompatibilityByProfiles,
   listProfiles,
 } from "@/lib/api";
+import { detectLocation } from "@/lib/location";
 import CompatibilityResultView from "@/components/CompatibilityResult";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -34,6 +35,7 @@ interface ManualState {
   birthDate: string;
   selectedHour: string;
   gender: "male" | "female";
+  city: string;
 }
 
 interface PersonState {
@@ -137,6 +139,16 @@ function PersonCard({
               ))}
             </select>
           </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-[var(--color-ink-light)]">도시</span>
+            <input
+              type="text"
+              value={manual.city}
+              onChange={(e) => onChange({ manual: { ...manual, city: e.target.value } })}
+              placeholder="Seoul"
+              className={inputClass}
+            />
+          </label>
           <div className="space-y-1.5">
             <span className="text-xs font-medium text-[var(--color-ink-light)]">성별</span>
             <div className="flex gap-2">
@@ -162,17 +174,22 @@ function PersonCard({
   );
 }
 
-const DEFAULT_MANUAL: ManualState = { name: "", birthDate: "1990-01-01", selectedHour: "", gender: "male" };
+const DEFAULT_MANUAL: ManualState = { name: "", birthDate: "1990-01-01", selectedHour: "", gender: "male", city: "Seoul" };
 
 export default function CompatibilityPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [memberId, setMemberId] = useState<string | null>(null);
+  const [detectedCity, setDetectedCity] = useState("Seoul");
   const [person1, setPerson1] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "male" }, profileId: "" });
   const [person2, setPerson2] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "female", birthDate: "1993-01-01" }, profileId: "" });
   const [year, setYear] = useState(new Date().getFullYear());
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    detectLocation().then((loc) => { if (loc) setDetectedCity(loc.city); });
+  }, []);
 
   useEffect(() => {
     const id = localStorage.getItem(MEMBER_ID_KEY);
@@ -193,7 +210,7 @@ export default function CompatibilityPage() {
       name: s.manual.name || "이름 없음",
       gender: s.manual.gender,
       birth_dt: `${s.manual.birthDate}T${hourOpt?.time ?? "12:00"}:00`,
-      city: "Seoul",
+      city: s.manual.city || detectedCity,
     };
   };
 

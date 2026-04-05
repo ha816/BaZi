@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from bazi.domain.compatibility import Compatibility
+from bazi.domain.daily_fortune import DailyFortuneCache
 from bazi.domain.member import Member
 from bazi.domain.profile import Analysis, Profile
 from bazi.domain.user import Gender
@@ -50,3 +51,11 @@ class CompatibilityPort(ABC):
 
     @abstractmethod
     async def get(self, pid1: UUID, pid2: UUID, year: int) -> Compatibility | None: ...
+
+
+class DailyFortunePort(ABC):
+    @abstractmethod
+    async def save(self, profile_id: UUID, fortune_date: date, result: dict) -> DailyFortuneCache: ...
+
+    @abstractmethod
+    async def get(self, profile_id: UUID, fortune_date: date) -> DailyFortuneCache | None: ...
