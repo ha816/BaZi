@@ -6,6 +6,7 @@ from uuid import UUID
 @dataclass
 class CompatibilityResult:
     total_score: int
+    label: str
     domain_scores: dict[str, dict]  # {연애/결혼/재물/직업: {score, level, reason}}
     description: str
     stem_combine: bool

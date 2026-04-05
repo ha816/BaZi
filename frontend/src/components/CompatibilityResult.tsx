@@ -61,11 +61,8 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 export default function CompatibilityResult({ data, name1, name2 }: Props) {
-  const { total_score, domain_scores, description, stem_combine, branch_combine, branch_clash } =
+  const { total_score, label, domain_scores, description, stem_combine, branch_combine, branch_clash } =
     data;
-
-  const label =
-    total_score >= 80 ? "천생연분" : total_score >= 65 ? "잘 맞는 인연" : total_score >= 45 ? "무난한 인연" : "노력이 필요한 인연";
 
   const badges = [
     stem_combine && { text: "천간합 ✓", positive: true },

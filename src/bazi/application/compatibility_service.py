@@ -22,6 +22,16 @@ def _level(score: int) -> str:
     return "주의"
 
 
+def _label(score: int) -> str:
+    if score >= 80:
+        return "천생연분"
+    if score >= 65:
+        return "잘 맞는 인연"
+    if score >= 45:
+        return "무난한 인연"
+    return "노력이 필요한 인연"
+
+
 def _make_description(natal1: NatalInfo, natal2: NatalInfo, stem_combine: bool, branch_combine: bool, branch_clash: bool) -> str:
     el1 = natal1.my_main_element
     el2 = natal2.my_main_element
@@ -236,6 +246,7 @@ class CompatibilityService:
 
         return CompatibilityResult(
             total_score=total_score,
+            label=_label(total_score),
             domain_scores=_compute_domain_scores(natal1, natal2, postnatal1, postnatal2, branch_combine, branch_clash),
             description=_make_description(natal1, natal2, stem_combine, branch_combine, branch_clash),
             stem_combine=stem_combine,

@@ -119,6 +119,7 @@ export interface CompatibilityDomainScore {
 
 export interface CompatibilityResult {
   total_score: number;
+  label: string;
   domain_scores: Record<string, CompatibilityDomainScore>;
   description: string;
   stem_combine: boolean;
