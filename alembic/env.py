@@ -4,8 +4,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from bazi.adapter.outer.db.base import Base
-from bazi.adapter.outer.db.models import AnalysisModel, MemberModel, ProfileModel  # noqa: F401
+from bazi.adapter.outer.db.models import AnalysisModel, Base, MemberModel, ProfileModel  # noqa: F401
 
 config = context.config
 

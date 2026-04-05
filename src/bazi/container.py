@@ -1,6 +1,6 @@
 from dependency_injector import containers, providers
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from bazi.adapter.outer.db.base import make_engine, make_session_factory
 from bazi.adapter.outer.db.member_repo import MemberRepo
 from bazi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, DailyFortuneRepo, ProfileRepo
 from bazi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
@@ -25,8 +25,8 @@ class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     # DB
-    db_engine = providers.Singleton(make_engine, db_url=config.db.url)
-    session_factory = providers.Singleton(make_session_factory, engine=db_engine)
+    db_engine = providers.Singleton(create_async_engine, url=config.db.url, echo=False)
+    session_factory = providers.Singleton(async_sessionmaker, bind=db_engine, expire_on_commit=False)
 
     # Repos
     member_repo = providers.Singleton(MemberRepo, session_factory=session_factory)

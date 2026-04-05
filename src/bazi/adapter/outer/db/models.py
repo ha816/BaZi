@@ -3,9 +3,11 @@ from datetime import date, datetime
 
 from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from bazi.adapter.outer.db.base import Base
+
+class Base(DeclarativeBase):
+    pass
 
 
 class MemberModel(Base):
