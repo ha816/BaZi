@@ -11,6 +11,7 @@ from bazi.application.saju_service import SajuService
 from bazi.domain.fortune import Fortune
 from bazi.domain.ganji import Branch, Oheng, Pillar, Sipsin, StemBranch
 from bazi.domain.natal import NatalInfo
+from bazi.domain.user import User
 
 
 GOOD_SIPSIN = {Sipsin.食神, Sipsin.正財, Sipsin.正官, Sipsin.正印}
@@ -306,7 +307,6 @@ class FortuneService:
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
-        from bazi.domain.user import User
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
         natal, _ = self._saju_service.analyze(user, today.year)
         weather_map = await self._get_weather_map(profile.city, days=1)
@@ -323,7 +323,6 @@ class FortuneService:
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
-        from bazi.domain.user import User
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
         weather_map = await self._get_weather_map(profile.city, days=days)
 

@@ -1,3 +1,5 @@
+from collections import Counter
+
 import httpx
 
 from bazi.application.port.weather_port import WeatherPort
@@ -54,6 +56,9 @@ async def _resolve_latlon(city: str) -> tuple[float, float]:
     return _geo_cache["Seoul"]  # fallback
 
 
+_SHOW_HOURS = {0, 3, 6, 9, 12, 15, 18, 21}
+
+
 class WeatherAdapter(WeatherPort):
     async def get_forecast(self, city: str, days: int = 7) -> list[dict] | None:
         """도시명으로 days일치 날씨 반환. 실패 시 None."""
@@ -61,7 +66,8 @@ class WeatherAdapter(WeatherPort):
         params = {
             "latitude": lat,
             "longitude": lon,
-            "daily": "weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max",
+            "daily": "weather_code,temperature_2m_max,temperature_2m_min",
+            "hourly": "temperature_2m,weather_code",
             "timezone": "Asia/Seoul",
             "forecast_days": min(days, 16),
         }
@@ -79,10 +85,33 @@ class WeatherAdapter(WeatherPort):
         t_max = daily.get("temperature_2m_max", [])
         t_min = daily.get("temperature_2m_min", [])
 
+        hourly = data.get("hourly", {})
+        h_times = hourly.get("time", [])
+        h_temps = hourly.get("temperature_2m", [])
+        h_codes = hourly.get("weather_code", [])
+
+        hours_by_date: dict[str, list[dict]] = {}
+        raw_codes_by_date: dict[str, list[int]] = {}
+        for i, ts in enumerate(h_times):
+            date_part, time_part = ts.split("T")
+            hour = int(time_part.split(":")[0])
+            if hour not in _SHOW_HOURS:
+                continue
+            code = int(h_codes[i]) if i < len(h_codes) else 0
+            temp = h_temps[i] if i < len(h_temps) else 15.0
+            hours_by_date.setdefault(date_part, []).append({
+                "hour": f"{hour:02d}시",
+                "temperature": round(temp, 1),
+                "condition": WMO_LABEL.get(code, "흐림"),
+                "element": WMO_OHENG.get(code, Oheng.土).name,
+            })
+            raw_codes_by_date.setdefault(date_part, []).append(code)
+
         result = []
         for i, date_str in enumerate(dates):
-            code = int(codes[i]) if i < len(codes) else 0
             temp = (t_max[i] + t_min[i]) / 2 if i < len(t_max) and i < len(t_min) else 15.0
+            day_raw_codes = raw_codes_by_date.get(date_str)
+            code = Counter(day_raw_codes).most_common(1)[0][0] if day_raw_codes else (int(codes[i]) if i < len(codes) else 0)
             element = WMO_OHENG.get(code, Oheng.土)
             label = WMO_LABEL.get(code, "흐림")
             result.append({
@@ -91,5 +120,6 @@ class WeatherAdapter(WeatherPort):
                 "weather_code": code,
                 "element": element.name,
                 "condition": f"{label} {temp:.0f}°C",
+                "hours": hours_by_date.get(date_str, []),
             })
         return result
