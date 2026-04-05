@@ -99,7 +99,7 @@ function ProfileFortuneCard({
           사주 분석 →
         </Link>
         <Link
-          href={`/compatibility?profileId=${profile.id}`}
+          href={`/compatibility`}
           className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
         >
           궁합 보기 →
@@ -125,7 +125,7 @@ function Dashboard({ memberId }: { memberId: string }) {
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="flex items-end justify-between">
           <div className="space-y-1">
-            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">오늘의 운세</p>
+            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
             <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">{dateLabel}</h1>
           </div>
           <nav className="flex gap-4 text-sm">
@@ -135,8 +135,11 @@ function Dashboard({ memberId }: { memberId: string }) {
             <Link href="/compatibility" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
               궁합
             </Link>
-            <Link href="/my" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
+            <Link href="/profile" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
               프로필
+            </Link>
+            <Link href="/my" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
+              계정
             </Link>
           </nav>
         </header>
@@ -145,7 +148,7 @@ function Dashboard({ memberId }: { memberId: string }) {
           <div className="text-center py-20 space-y-4">
             <p className="text-[var(--color-ink-faint)]">저장된 프로필이 없습니다.</p>
             <Link
-              href="/my"
+              href="/profile"
               className="inline-block px-6 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-medium hover:bg-[var(--color-ink-light)] transition-colors"
             >
               프로필 추가하기
@@ -199,15 +202,16 @@ function Landing() {
             />
           </div>
           <div className="text-center md:text-left space-y-3 flex-1">
-            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">命理相談</p>
+            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
             <h1 className="font-heading text-3xl md:text-4xl font-bold text-[var(--color-ink)] tracking-tight">
-              사주명리 상담
+              사주로 오늘을 읽다
             </h1>
             <p className="text-base text-[var(--color-ink-muted)] leading-relaxed">
-              생년월일시를 알려주시면 타고난 기운과 올해의 운세를 풀어드릴게요.
+              까치가 울면 반가운 소식이 온다 했죠.<br className="hidden md:block" />
+              오늘 당신의 기운이 어떤지, 사주까치가 먼저 알려드릴게요.
             </p>
             <Link
-              href="/my"
+              href="/join"
               className="inline-block text-sm px-4 py-2 rounded-lg border border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white transition-colors"
             >
               로그인 · 회원가입
@@ -228,22 +232,7 @@ function Landing() {
           </div>
         )}
 
-        {result && !loading && (
-          <>
-            <ResultSlides data={result} />
-            <div className="text-center py-6 border-t border-[var(--color-border-light)]">
-              <p className="text-sm text-[var(--color-ink-faint)] mb-3">
-                프로필을 저장하면 매일 오늘의 운세를 받아볼 수 있어요.
-              </p>
-              <Link
-                href="/my"
-                className="inline-block px-6 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-medium hover:bg-[var(--color-ink-light)] transition-colors"
-              >
-                프로필 저장하고 매일 운세 받기 →
-              </Link>
-            </div>
-          </>
-        )}
+        {result && !loading && <ResultSlides data={result} gated />}
       </div>
     </main>
   );

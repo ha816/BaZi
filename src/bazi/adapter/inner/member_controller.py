@@ -43,3 +43,15 @@ async def get_member(
     if member is None:
         raise HTTPException(status_code=404, detail="Member not found")
     return MemberResponse(**vars(member))
+
+
+@member_router.delete("/{member_id}", status_code=204)
+@inject
+async def delete_member(
+    member_id: UUID,
+    svc: MemberService = Depends(Provide[Container.member_service]),
+) -> None:
+    member = await svc.get_member(member_id)
+    if member is None:
+        raise HTTPException(status_code=404, detail="Member not found")
+    await svc.delete_member(member_id)

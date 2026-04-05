@@ -49,6 +49,11 @@ export async function getMember(memberId: string): Promise<Member> {
   return request<Member>(`/members/${memberId}`);
 }
 
+export async function deleteMember(memberId: string): Promise<void> {
+  const res = await fetch(`${API_URL}/members/${memberId}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("탈퇴 실패");
+}
+
 export async function listProfiles(memberId: string): Promise<Profile[]> {
   return request<Profile[]>(`/members/${memberId}/profiles`);
 }

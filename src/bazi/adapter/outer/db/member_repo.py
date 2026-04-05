@@ -33,3 +33,10 @@ class MemberRepo(MemberPort):
             result = await session.execute(select(MemberModel).where(MemberModel.email == email))
             m = result.scalar_one_or_none()
             return self._to_domain(m) if m else None
+
+    async def delete(self, member_id: UUID) -> None:
+        async with self._sf() as session:
+            m = await session.get(MemberModel, member_id)
+            if m:
+                await session.delete(m)
+                await session.commit()

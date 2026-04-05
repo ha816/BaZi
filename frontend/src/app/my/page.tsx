@@ -2,449 +2,157 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Member, Profile, ProfileCreateInput } from "@/types/analysis";
-import {
-  createOrGetMember,
-  getMember,
-  listProfiles,
-  createProfile,
-  deleteProfile,
-} from "@/lib/api";
-import { detectLocation } from "@/lib/location";
+import { useRouter } from "next/navigation";
+import type { Member } from "@/types/analysis";
+import { getMember, deleteMember } from "@/lib/api";
 
 const MEMBER_ID_KEY = "bazi_member_id";
 
-const HOUR_OPTIONS = [
-  { value: "", label: "모르겠어요", time: "12:00" },
-  { value: "23", label: "자시 (子) 23~01시", time: "23:00" },
-  { value: "01", label: "축시 (丑) 01~03시", time: "01:00" },
-  { value: "03", label: "인시 (寅) 03~05시", time: "03:00" },
-  { value: "05", label: "묘시 (卯) 05~07시", time: "05:00" },
-  { value: "07", label: "진시 (辰) 07~09시", time: "07:00" },
-  { value: "09", label: "사시 (巳) 09~11시", time: "09:00" },
-  { value: "11", label: "오시 (午) 11~13시", time: "11:00" },
-  { value: "13", label: "미시 (未) 13~15시", time: "13:00" },
-  { value: "15", label: "신시 (申) 15~17시", time: "15:00" },
-  { value: "17", label: "유시 (酉) 17~19시", time: "17:00" },
-  { value: "19", label: "술시 (戌) 19~21시", time: "19:00" },
-  { value: "21", label: "해시 (亥) 21~23시", time: "21:00" },
-];
-
-const inputClass =
-  "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
-
-// ─── 회원 등록/로그인 폼 ───────────────────────────────────────────
-function MemberForm({ onSuccess }: { onSuccess: (member: Member) => void }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const member = await createOrGetMember(name.trim(), email.trim());
-      localStorage.setItem(MEMBER_ID_KEY, member.id);
-      onSuccess(member);
-    } catch {
-      setError("오류가 발생했습니다. 다시 시도해주세요.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-6"
-    >
-      <div>
-        <h2 className="font-heading text-xl font-semibold text-[var(--color-ink)]">시작하기</h2>
-        <p className="text-sm text-[var(--color-ink-faint)] mt-1.5">
-          이름과 이메일로 바로 시작하세요. 이미 가입한 이메일이면 기존 정보를 불러옵니다.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-[var(--color-ink-light)]">이름</span>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="홍길동"
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className="space-y-2">
-          <span className="text-sm font-medium text-[var(--color-ink-light)]">이메일</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="hong@example.com"
-            required
-            className={inputClass}
-          />
-        </label>
-      </div>
-
-      {error && (
-        <p className="text-sm text-[var(--color-fire)]">{error}</p>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm"
-      >
-        {loading ? "확인 중..." : "시작하기"}
-      </button>
-    </form>
-  );
-}
-
-// ─── 프로필 추가 폼 ───────────────────────────────────────────────
-function ProfileForm({
-  memberId,
-  onSuccess,
-  onCancel,
-  defaultCity,
-}: {
-  memberId: string;
-  onSuccess: (profile: Profile) => void;
-  onCancel: () => void;
-  defaultCity?: string;
-}) {
-  const [name, setName] = useState("");
-  const [birthDate, setBirthDate] = useState("1990-01-01");
-  const [selectedHour, setSelectedHour] = useState("");
-  const [gender, setGender] = useState<"male" | "female">("male");
-  const [city, setCity] = useState(defaultCity ?? "Seoul");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
-      const data: ProfileCreateInput = {
-        name: name.trim(),
-        gender,
-        birth_dt: `${birthDate}T${hourOpt?.time ?? "12:00"}:00`,
-        city,
-      };
-      const profile = await createProfile(memberId, data);
-      onSuccess(profile);
-    } catch {
-      setError("프로필 추가에 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="border border-[var(--color-border)] rounded-xl p-5 space-y-4 bg-[var(--color-ivory-warm)]"
-    >
-      <p className="text-sm font-medium text-[var(--color-ink)]">새 프로필 추가</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="space-y-1.5">
-          <span className="text-xs font-medium text-[var(--color-ink-light)]">이름</span>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="홍길동"
-            required
-            className={inputClass}
-          />
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-medium text-[var(--color-ink-light)]">생년월일</span>
-          <input
-            type="date"
-            value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
-            className={inputClass}
-            min="1920-01-01"
-            max="2025-12-31"
-          />
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-medium text-[var(--color-ink-light)]">태어난 시간</span>
-          <select
-            value={selectedHour}
-            onChange={(e) => setSelectedHour(e.target.value)}
-            className={`${inputClass} appearance-none`}
-          >
-            {HOUR_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1.5">
-          <span className="text-xs font-medium text-[var(--color-ink-light)]">도시</span>
-          <input
-            type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="Seoul"
-            className={inputClass}
-          />
-        </label>
-      </div>
-
-      <div className="space-y-1.5">
-        <span className="text-xs font-medium text-[var(--color-ink-light)]">성별</span>
-        <div className="flex gap-3">
-          {(["male", "female"] as const).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => setGender(g)}
-              className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
-                gender === g
-                  ? "bg-[var(--color-ink)] text-[var(--color-ivory)]"
-                  : "bg-white text-[var(--color-ink-muted)] border border-[var(--color-border)]"
-              }`}
-            >
-              {g === "male" ? "남성" : "여성"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {error && <p className="text-sm text-[var(--color-fire)]">{error}</p>}
-
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-3 rounded-lg text-sm border border-[var(--color-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-ink-faint)] transition-colors"
-        >
-          취소
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 text-sm font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors"
-        >
-          {loading ? "저장 중..." : "저장하기"}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-// ─── 프로필 카드 ──────────────────────────────────────────────────
-function ProfileCard({
-  profile,
-  memberId,
-  onDelete,
-}: {
-  profile: Profile;
-  memberId: string;
-  onDelete: (id: string) => void;
-}) {
-  const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
-  const birthYear = new Date(profile.birth_dt).getFullYear();
-  const genderLabel = profile.gender === "male" ? "남성" : "여성";
-
-  const handleDelete = async () => {
-    setDeleting(true);
-    try {
-      await deleteProfile(memberId, profile.id);
-      onDelete(profile.id);
-    } catch {
-      setDeleting(false);
-      setConfirming(false);
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)]">
-      <div className="space-y-0.5">
-        <p className="text-base font-medium text-[var(--color-ink)]">{profile.name}</p>
-        <p className="text-sm text-[var(--color-ink-faint)]">
-          {birthYear}년생 · {genderLabel} · {profile.city}
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        {confirming ? (
-          <>
-            <button
-              onClick={() => setConfirming(false)}
-              className="text-xs text-[var(--color-ink-faint)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]"
-            >
-              취소
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="text-xs text-white px-3 py-1.5 rounded-lg bg-[var(--color-fire)] hover:opacity-80 transition-opacity"
-            >
-              {deleting ? "삭제 중" : "삭제 확인"}
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setConfirming(true)}
-            className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-fire)] transition-colors px-2 py-1"
-          >
-            삭제
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── 메인 페이지 ──────────────────────────────────────────────────
 export default function MyPage() {
+  const router = useRouter();
   const [member, setMember] = useState<Member | null>(null);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [detectedCity, setDetectedCity] = useState<string | undefined>();
+  const [deleteStep, setDeleteStep] = useState<"idle" | "confirm" | "deleting">("idle");
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    detectLocation().then((loc) => { if (loc) setDetectedCity(loc.city); });
-  }, []);
-
-  useEffect(() => {
-    const savedId = localStorage.getItem(MEMBER_ID_KEY);
-    if (!savedId) { setLoading(false); return; }
-    getMember(savedId)
-      .then(async (m) => {
-        setMember(m);
-        const ps = await listProfiles(m.id);
-        setProfiles(ps);
-      })
-      .catch(() => localStorage.removeItem(MEMBER_ID_KEY))
+    const id = localStorage.getItem(MEMBER_ID_KEY);
+    if (!id) { router.replace("/join"); return; }
+    getMember(id)
+      .then(setMember)
+      .catch(() => { localStorage.removeItem(MEMBER_ID_KEY); router.replace("/join"); })
       .finally(() => setLoading(false));
-  }, []);
-
-  const handleMemberSuccess = async (m: Member) => {
-    setMember(m);
-    const ps = await listProfiles(m.id);
-    setProfiles(ps);
-  };
-
-  const handleProfileSuccess = (profile: Profile) => {
-    setProfiles((prev) => [profile, ...prev]);
-    setShowForm(false);
-  };
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem(MEMBER_ID_KEY);
-    setMember(null);
-    setProfiles([]);
+    router.push("/");
+  };
+
+  const handleDelete = async () => {
+    if (!member) return;
+    if (deleteInput.trim() !== member.email) {
+      setDeleteError("이메일이 일치하지 않습니다.");
+      return;
+    }
+    setDeleteStep("deleting");
+    try {
+      await deleteMember(member.id);
+      localStorage.removeItem(MEMBER_ID_KEY);
+      router.push("/");
+    } catch {
+      setDeleteStep("confirm");
+      setDeleteError("탈퇴 처리 중 오류가 발생했습니다.");
+    }
   };
 
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="ink-pulse w-8 h-8 rounded-full bg-[var(--color-gold-light)]" />
+        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
       </main>
     );
   }
 
+  if (!member) return null;
+
   return (
     <main className="min-h-screen py-10 md:py-16 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
-        {/* 헤더 */}
         <header className="space-y-3">
           <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
             ← 홈으로
           </Link>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">내 정보</p>
-              <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)] mt-1">
-                프로필 관리
-              </h1>
+              <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">내 계정</p>
+              <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)] mt-1">계정 설정</h1>
             </div>
-            {member && (
-              <button
-                onClick={handleLogout}
-                className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors"
-              >
-                로그아웃
-              </button>
-            )}
+            <button
+              onClick={handleLogout}
+              className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors"
+            >
+              로그아웃
+            </button>
           </div>
-          {member && (
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              {member.name} · {member.email}
-            </p>
-          )}
         </header>
 
-        {/* 미로그인 */}
-        {!member && <MemberForm onSuccess={handleMemberSuccess} />}
-
-        {/* 로그인 후: 프로필 목록 */}
-        {member && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-semibold text-[var(--color-ink)]">
-                저장된 프로필
-                {profiles.length > 0 && (
-                  <span className="ml-2 text-sm font-normal text-[var(--color-ink-faint)]">
-                    {profiles.length}개
-                  </span>
-                )}
-              </h2>
-              {!showForm && (
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors font-medium"
-                >
-                  + 프로필 추가
-                </button>
-              )}
+        {/* 계정 정보 */}
+        <section className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 space-y-4">
+          <h2 className="font-heading text-lg font-semibold text-[var(--color-ink)]">계정 정보</h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-light)]">
+              <span className="text-sm text-[var(--color-ink-faint)]">이름</span>
+              <span className="text-sm font-medium text-[var(--color-ink)]">{member.name}</span>
             </div>
-
-            {showForm && (
-              <ProfileForm
-                memberId={member.id}
-                onSuccess={handleProfileSuccess}
-                onCancel={() => setShowForm(false)}
-                defaultCity={detectedCity}
-              />
-            )}
-
-            {profiles.length === 0 && !showForm && (
-              <div className="text-center py-12 text-[var(--color-ink-faint)] text-sm">
-                아직 저장된 프로필이 없습니다.<br />
-                나와 소중한 분들의 사주를 등록해보세요.
-              </div>
-            )}
-
-            <div className="space-y-3">
-              {profiles.map((p) => (
-                <ProfileCard
-                  key={p.id}
-                  profile={p}
-                  memberId={member.id}
-                  onDelete={(id) => setProfiles((prev) => prev.filter((x) => x.id !== id))}
-                />
-              ))}
+            <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-light)]">
+              <span className="text-sm text-[var(--color-ink-faint)]">이메일</span>
+              <span className="text-sm font-medium text-[var(--color-ink)]">{member.email}</span>
+            </div>
+            <div className="flex items-center justify-between py-3">
+              <span className="text-sm text-[var(--color-ink-faint)]">가입일</span>
+              <span className="text-sm text-[var(--color-ink-muted)]">
+                {new Date(member.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}
+              </span>
             </div>
           </div>
-        )}
+          <Link
+            href="/profile"
+            className="inline-block text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors font-medium"
+          >
+            프로필 관리 →
+          </Link>
+        </section>
+
+        {/* 탈퇴 */}
+        <section className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 space-y-4">
+          <h2 className="font-heading text-lg font-semibold text-[var(--color-ink)]">회원 탈퇴</h2>
+          <p className="text-sm text-[var(--color-ink-faint)] leading-relaxed">
+            탈퇴하면 저장된 모든 프로필과 분석 결과가 영구 삭제되며 복구할 수 없습니다.
+          </p>
+
+          {deleteStep === "idle" && (
+            <button
+              onClick={() => setDeleteStep("confirm")}
+              className="text-sm text-[var(--color-fire)] hover:opacity-70 transition-opacity"
+            >
+              탈퇴하기
+            </button>
+          )}
+
+          {(deleteStep === "confirm" || deleteStep === "deleting") && (
+            <div className="space-y-3 pt-2 border-t border-[var(--color-border-light)]">
+              <p className="text-sm text-[var(--color-ink-light)]">
+                확인을 위해 가입한 이메일 주소를 입력해주세요.
+              </p>
+              <input
+                type="email"
+                value={deleteInput}
+                onChange={(e) => { setDeleteInput(e.target.value); setDeleteError(null); }}
+                placeholder={member.email}
+                className="w-full border border-[var(--color-border)] rounded-lg px-4 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-fire)] focus:outline-none transition-colors"
+              />
+              {deleteError && <p className="text-xs text-[var(--color-fire)]">{deleteError}</p>}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setDeleteStep("idle"); setDeleteInput(""); setDeleteError(null); }}
+                  disabled={deleteStep === "deleting"}
+                  className="flex-1 py-2.5 rounded-lg text-sm border border-[var(--color-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-ink-faint)] transition-colors disabled:opacity-50"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteStep === "deleting"}
+                  className="flex-1 py-2.5 rounded-lg text-sm bg-[var(--color-fire)] text-white hover:opacity-80 transition-opacity disabled:opacity-50"
+                >
+                  {deleteStep === "deleting" ? "처리 중..." : "탈퇴 확인"}
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

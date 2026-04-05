@@ -16,3 +16,6 @@ class MemberService:
 
     async def get_member(self, member_id: UUID) -> Member | None:
         return await self.member_port.get(member_id)
+
+    async def delete_member(self, member_id: UUID) -> None:
+        await self.member_port.delete(member_id)
