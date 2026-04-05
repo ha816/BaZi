@@ -2,17 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { DailyFortune, Member, Profile, ProfileCreateInput } from "@/types/analysis";
+import type { Member, Profile, ProfileCreateInput } from "@/types/analysis";
 import {
   createOrGetMember,
   getMember,
   listProfiles,
   createProfile,
   deleteProfile,
-  getForecast,
 } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
-import DailyFortunePanel from "@/components/DailyFortune";
 
 const MEMBER_ID_KEY = "bazi_member_id";
 
@@ -260,9 +258,6 @@ function ProfileCard({
 }) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [forecast, setForecast] = useState<DailyFortune[] | null>(null);
-  const [loadingFortune, setLoadingFortune] = useState(false);
-  const [showFortune, setShowFortune] = useState(false);
 
   const birthYear = new Date(profile.birth_dt).getFullYear();
   const genderLabel = profile.gender === "male" ? "남성" : "여성";
@@ -278,68 +273,40 @@ function ProfileCard({
     }
   };
 
-  const handleDailyFortune = async () => {
-    if (showFortune) { setShowFortune(false); return; }
-    setShowFortune(true);
-    if (forecast) return;
-    setLoadingFortune(true);
-    try {
-      setForecast(await getForecast(memberId, profile.id));
-    } finally {
-      setLoadingFortune(false);
-    }
-  };
-
   return (
-    <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-4 space-y-0">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <p className="text-base font-medium text-[var(--color-ink)]">{profile.name}</p>
-          <p className="text-sm text-[var(--color-ink-faint)]">
-            {birthYear}년생 · {genderLabel} · {profile.city}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleDailyFortune}
-            className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              showFortune
-                ? "bg-[var(--color-gold-light)] text-white border-[var(--color-gold)]"
-                : "border-[var(--color-border)] text-[var(--color-gold)] hover:border-[var(--color-gold)]"
-            }`}
-          >
-            ✨ 오늘의 운세
-          </button>
-          {confirming ? (
-            <>
-              <button
-                onClick={() => setConfirming(false)}
-                className="text-xs text-[var(--color-ink-faint)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="text-xs text-white px-3 py-1.5 rounded-lg bg-[var(--color-fire)] hover:opacity-80 transition-opacity"
-              >
-                {deleting ? "삭제 중" : "삭제 확인"}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setConfirming(true)}
-              className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-fire)] transition-colors px-2 py-1"
-            >
-              삭제
-            </button>
-          )}
-        </div>
+    <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)]">
+      <div className="space-y-0.5">
+        <p className="text-base font-medium text-[var(--color-ink)]">{profile.name}</p>
+        <p className="text-sm text-[var(--color-ink-faint)]">
+          {birthYear}년생 · {genderLabel} · {profile.city}
+        </p>
       </div>
-
-      {showFortune && (
-        <DailyFortunePanel forecast={forecast} loading={loadingFortune} />
-      )}
+      <div className="flex items-center gap-2">
+        {confirming ? (
+          <>
+            <button
+              onClick={() => setConfirming(false)}
+              className="text-xs text-[var(--color-ink-faint)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-xs text-white px-3 py-1.5 rounded-lg bg-[var(--color-fire)] hover:opacity-80 transition-opacity"
+            >
+              {deleting ? "삭제 중" : "삭제 확인"}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => setConfirming(true)}
+            className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-fire)] transition-colors px-2 py-1"
+          >
+            삭제
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -400,7 +367,7 @@ export default function MyPage() {
         {/* 헤더 */}
         <header className="space-y-3">
           <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-            ← 사주 분석으로
+            ← 홈으로
           </Link>
           <div className="flex items-end justify-between">
             <div>

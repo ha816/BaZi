@@ -2,48 +2,179 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
-import { analyzeChart, analyzeProfileChart, listProfiles } from "@/lib/api";
+import type { AnalysisInput, AnalysisResult, DailyFortune, Profile } from "@/types/analysis";
+import { analyzeChart, getForecast, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import ResultSlides from "@/components/ResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import DailyFortunePanel from "@/components/DailyFortune";
 
 const MEMBER_ID_KEY = "bazi_member_id";
 
-export default function Home() {
+const LEVEL_META: Record<string, { color: string; icon: string }> = {
+  "좋은 날":         { color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: "🌟" },
+  "평범한 날":       { color: "text-amber-700 bg-amber-50 border-amber-200",       icon: "☁️" },
+  "주의가 필요한 날": { color: "text-rose-700 bg-rose-50 border-rose-200",          icon: "⚠️" },
+};
+
+// ── 대시보드 프로필 카드 ────────────────────────────────────────────────────
+function ProfileFortuneCard({
+  profile,
+  memberId,
+}: {
+  profile: Profile;
+  memberId: string;
+}) {
+  const [forecast, setForecast] = useState<DailyFortune[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    getForecast(memberId, profile.id, 7)
+      .then(setForecast)
+      .finally(() => setLoading(false));
+  }, [memberId, profile.id]);
+
+  const today = forecast?.[0];
+  const meta = today ? LEVEL_META[today.level] ?? LEVEL_META["평범한 날"] : null;
+
+  return (
+    <div className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm overflow-hidden">
+      {/* 카드 헤더 */}
+      <div className="p-5 flex items-start justify-between gap-4">
+        <div className="space-y-0.5">
+          <p className="font-heading text-lg font-semibold text-[var(--color-ink)]">{profile.name}</p>
+          <p className="text-sm text-[var(--color-ink-faint)]">
+            {new Date(profile.birth_dt).getFullYear()}년생 · {profile.gender === "male" ? "남" : "여"} · {profile.city}
+          </p>
+        </div>
+        {loading && (
+          <div className="w-5 h-5 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin flex-shrink-0 mt-1" />
+        )}
+        {today && meta && !loading && (
+          <div className={`flex-shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${meta.color}`}>
+            <span>{meta.icon}</span>
+            <span>{today.total_score}점</span>
+          </div>
+        )}
+      </div>
+
+      {/* 오늘 일진 + 날씨 요약 */}
+      {today && !loading && (
+        <div className="px-5 pb-4 flex items-center gap-3">
+          <span className="font-heading text-2xl text-[var(--color-ink-muted)]">{today.day_pillar}</span>
+          <span className="text-xs text-[var(--color-ink-faint)]">{today.day_element} · {today.level}</span>
+          {today.weather && (
+            <span className="text-xs text-[var(--color-ink-faint)]">| {today.weather.condition}</span>
+          )}
+        </div>
+      )}
+
+      {/* 운세 상세 토글 */}
+      {forecast && (
+        <div className="border-t border-[var(--color-border-light)]">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="w-full px-5 py-3 text-left text-xs font-medium text-[var(--color-gold)] hover:bg-[var(--color-ivory-warm)] transition-colors flex items-center justify-between"
+          >
+            <span>오늘/내일/주간 운세</span>
+            <span className="text-[var(--color-ink-faint)]">{open ? "▲" : "▼"}</span>
+          </button>
+          {open && (
+            <div className="px-5 pb-5">
+              <DailyFortunePanel forecast={forecast} loading={false} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 빠른 이동 */}
+      <div className="border-t border-[var(--color-border-light)] px-5 py-3 flex gap-3">
+        <Link
+          href={`/analysis?profileId=${profile.id}`}
+          className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
+        >
+          사주 분석 →
+        </Link>
+        <Link
+          href={`/compatibility?profileId=${profile.id}`}
+          className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors"
+        >
+          궁합 보기 →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── 대시보드 (로그인) ───────────────────────────────────────────────────────
+function Dashboard({ memberId }: { memberId: string }) {
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+
+  useEffect(() => {
+    listProfiles(memberId).then(setProfiles).catch(() => {});
+  }, [memberId]);
+
+  const today = new Date();
+  const dateLabel = today.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+
+  return (
+    <main className="min-h-screen py-10 md:py-16 px-4">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <header className="flex items-end justify-between">
+          <div className="space-y-1">
+            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">오늘의 운세</p>
+            <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">{dateLabel}</h1>
+          </div>
+          <nav className="flex gap-4 text-sm">
+            <Link href="/analysis" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
+              사주 분석
+            </Link>
+            <Link href="/compatibility" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
+              궁합
+            </Link>
+            <Link href="/my" className="text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] transition-colors">
+              프로필
+            </Link>
+          </nav>
+        </header>
+
+        {profiles.length === 0 ? (
+          <div className="text-center py-20 space-y-4">
+            <p className="text-[var(--color-ink-faint)]">저장된 프로필이 없습니다.</p>
+            <Link
+              href="/my"
+              className="inline-block px-6 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-medium hover:bg-[var(--color-ink-light)] transition-colors"
+            >
+              프로필 추가하기
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {profiles.map((p) => (
+              <ProfileFortuneCard key={p.id} profile={p} memberId={memberId} />
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+// ── 랜딩 (비로그인) ─────────────────────────────────────────────────────────
+function Landing() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // 프로필 분석 모드
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [memberId, setMemberId] = useState<string | null>(null);
-  const [mode, setMode] = useState<"direct" | "profile">("direct");
-  const [selectedProfileId, setSelectedProfileId] = useState("");
-  const [profileYear, setProfileYear] = useState(new Date().getFullYear());
   const [detectedCity, setDetectedCity] = useState<string | undefined>();
 
   useEffect(() => {
     detectLocation().then((loc) => { if (loc) setDetectedCity(loc.city); });
   }, []);
 
-  useEffect(() => {
-    const id = localStorage.getItem(MEMBER_ID_KEY);
-    if (!id) return;
-    setMemberId(id);
-    listProfiles(id)
-      .then((ps) => {
-        setProfiles(ps);
-        if (ps.length > 0) {
-          setMode("profile");
-          setSelectedProfileId(ps[0].id);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleDirectSubmit = async (input: AnalysisInput) => {
+  const handleSubmit = async (input: AnalysisInput) => {
     setLoading(true);
     setError(null);
     try {
@@ -55,27 +186,10 @@ export default function Home() {
     }
   };
 
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!memberId || !selectedProfileId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      setResult(await analyzeProfileChart(memberId, selectedProfileId, profileYear));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const inputClass =
-    "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
-
   return (
     <main className="min-h-screen py-10 md:py-16 px-4">
       <div className="max-w-4xl mx-auto space-y-10">
-        {/* Header */}
+        {/* 히어로 */}
         <header className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
           <div className="flex-shrink-0">
             <img
@@ -90,88 +204,18 @@ export default function Home() {
               사주명리 상담
             </h1>
             <p className="text-base text-[var(--color-ink-muted)] leading-relaxed">
-              안녕하세요, 명리 상담사입니다.<br className="hidden md:block" />
               생년월일시를 알려주시면 타고난 기운과 올해의 운세를 풀어드릴게요.
             </p>
-            <div className="flex gap-4 flex-wrap justify-center md:justify-start">
-              <Link href="/compatibility" className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors">
-                💕 사주 궁합 →
-              </Link>
-              <Link href="/my" className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors">
-                👤 내 프로필 →
-              </Link>
-            </div>
+            <Link
+              href="/my"
+              className="inline-block text-sm px-4 py-2 rounded-lg border border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white transition-colors"
+            >
+              로그인 · 회원가입
+            </Link>
           </div>
         </header>
 
-        {/* 모드 탭 — 저장된 프로필이 있을 때만 표시 */}
-        {profiles.length > 0 && (
-          <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)] w-fit">
-            {(["profile", "direct"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                  mode === m
-                    ? "bg-white text-[var(--color-ink)] shadow-sm"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                }`}
-              >
-                {m === "profile" ? "저장된 프로필로" : "직접 입력"}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* 프로필 선택 폼 */}
-        {mode === "profile" && profiles.length > 0 && (
-          <form
-            onSubmit={handleProfileSubmit}
-            className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-6"
-          >
-            <div>
-              <h2 className="font-heading text-xl font-semibold text-[var(--color-ink)]">프로필 선택</h2>
-              <p className="text-sm text-[var(--color-ink-faint)] mt-1.5">저장된 프로필을 선택해 바로 분석합니다.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <label className="md:col-span-2 space-y-2">
-                <span className="text-sm font-medium text-[var(--color-ink-light)]">프로필</span>
-                <select
-                  value={selectedProfileId}
-                  onChange={(e) => setSelectedProfileId(e.target.value)}
-                  className={`${inputClass} appearance-none`}
-                >
-                  {profiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {p.gender === "male" ? "남" : "여"})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
-                <input
-                  type="number"
-                  value={profileYear}
-                  onChange={(e) => setProfileYear(+e.target.value)}
-                  className={inputClass}
-                  min={1920}
-                  max={2100}
-                />
-              </label>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm"
-            >
-              {loading ? "분석 중..." : "사주 분석하기"}
-            </button>
-          </form>
-        )}
-
-        {/* 직접 입력 폼 */}
-        {mode === "direct" && <AnalysisForm onSubmit={handleDirectSubmit} loading={loading} defaultCity={detectedCity} />}
+        <AnalysisForm onSubmit={handleSubmit} loading={loading} defaultCity={detectedCity} />
 
         {loading && <LoadingSpinner />}
 
@@ -184,8 +228,37 @@ export default function Home() {
           </div>
         )}
 
-        {result && !loading && <ResultSlides data={result} />}
+        {result && !loading && (
+          <>
+            <ResultSlides data={result} />
+            <div className="text-center py-6 border-t border-[var(--color-border-light)]">
+              <p className="text-sm text-[var(--color-ink-faint)] mb-3">
+                프로필을 저장하면 매일 오늘의 운세를 받아볼 수 있어요.
+              </p>
+              <Link
+                href="/my"
+                className="inline-block px-6 py-3 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-medium hover:bg-[var(--color-ink-light)] transition-colors"
+              >
+                프로필 저장하고 매일 운세 받기 →
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );
+}
+
+// ── 루트 ────────────────────────────────────────────────────────────────────
+export default function Home() {
+  const [memberId, setMemberId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMemberId(localStorage.getItem(MEMBER_ID_KEY));
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  return memberId ? <Dashboard memberId={memberId} /> : <Landing />;
 }

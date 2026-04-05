@@ -258,7 +258,7 @@ export default function CompatibilityPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="space-y-3">
           <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-            ← 사주 분석으로
+            ← 홈으로
           </Link>
           <div>
             <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">合宮 궁합</p>
