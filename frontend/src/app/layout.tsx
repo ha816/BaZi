@@ -15,8 +15,8 @@ const notoSerifKr = Noto_Serif_KR({
 });
 
 export const metadata: Metadata = {
-  title: "사주팔자 분석기",
-  description: "사주팔자 기반 운세 분석 서비스",
+  title: "사주까치",
+  description: "까치가 울면 반가운 소식이 온다 — 사주까치가 오늘의 기운을 가장 먼저 전해드립니다",
 };
 
 export default function RootLayout({

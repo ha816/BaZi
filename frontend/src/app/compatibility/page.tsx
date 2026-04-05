@@ -261,12 +261,12 @@ export default function CompatibilityPage() {
             ← 홈으로
           </Link>
           <div>
-            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">合宮 궁합</p>
+            <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">오작교 · 궁합</p>
             <h1 className="font-heading text-3xl md:text-4xl font-bold text-[var(--color-ink)] mt-1">
               사주 궁합 보기
             </h1>
             <p className="text-base text-[var(--color-ink-muted)] mt-2 leading-relaxed">
-              두 분의 사주를 비교해 오행 기반 궁합을 풀어드립니다.
+              까치가 놓은 오작교처럼, 두 분의 인연을 풀어드립니다.
             </p>
           </div>
         </header>
