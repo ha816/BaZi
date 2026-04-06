@@ -63,10 +63,14 @@ class NatalAdapter(NatalPort):
         return results
 
     def _get_sibi_unseong(self) -> list[tuple[str, SibiUnseong]]:
+        _LABELS = {
+            Pillar.年柱: "년주", Pillar.月柱: "월주",
+            Pillar.日柱: "일주", Pillar.時柱: "시주",
+        }
         stem = self.saju.stem_of_day_pillar
         return [
-            (str(sb), SibiUnseong.of(stem, sb.branch))
-            for sb in self.saju.pillars.values()
+            (_LABELS[pillar], SibiUnseong.of(stem, sb.branch))
+            for pillar, sb in self.saju.pillars.items()
         ]
 
     def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:

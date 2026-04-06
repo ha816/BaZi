@@ -12,6 +12,7 @@ const MEMBER_ID_KEY = "kkachi_member_id";
 export default function DeepAnalysisPage() {
   const router = useRouter();
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function DeepAnalysisPage() {
       router.replace("/join");
       return;
     }
+    setName(sessionStorage.getItem("kkachi_analysis_name") ?? "");
     const raw = sessionStorage.getItem("kkachi_analysis_input");
     if (!raw) {
       router.replace("/analysis");
@@ -57,7 +59,7 @@ export default function DeepAnalysisPage() {
           <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">심층분석</h1>
           <p className="text-sm text-[var(--color-ink-muted)]">올해의 운세, 인생 흐름, 종합 조언을 확인하세요.</p>
         </header>
-        <ResultSlides data={result} mode="full" />
+        <ResultSlides data={result} name={name} />
       </div>
     </main>
   );

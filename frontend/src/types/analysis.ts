@@ -60,6 +60,7 @@ export interface NatalResult {
   sipsin: SipsinInfo[];
   sibi_unseong: SibiUnseongInfo[];
   sinsal: SinsalInfo[];
+  pillar_summary: string;
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];
 }

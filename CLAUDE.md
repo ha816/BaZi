@@ -89,16 +89,36 @@ frontend/src/
 │   ├── AnalysisForm.tsx      # 사주 입력 폼 — 이름+성별+생년월일+경도, 프로필 저장 버튼, 정밀 설정 collapsible
 │   ├── SectionHeader.tsx     # 섹션 헤더 공통 컴포넌트 (emoji + 제목 + 무료/프리미엄 뱃지)
 │   ├── FreeResultSlides.tsx  # 무료 결과 화면 — 팔자+오행분포+십이지신+블러 CTA
-│   ├── ResultSlides.tsx      # 심층 분석 결과 화면 (로그인 사용자)
+│   ├── ResultSlides.tsx      # 심층 분석 결과 화면 — 탭 오케스트레이터, name prop 포함
+│   ├── KkachiTip.tsx         # 까치 마스코트 말풍선 컴포넌트 (설명·조언에 사용)
 │   ├── ElementRadar.tsx      # 오행 분포 — CSS 가로 바 차트 (recharts 제거)
-│   ├── PillarDetail.tsx      # 사주팔자 그리드 (basic=true 시 한자 기둥명, 간략 설명)
+│   ├── PillarDetail.tsx      # 사주팔자 그리드 — pillarSummary prop 추가 (sipsin/sinsal 섹션 제거)
 │   ├── CompatibilityResult.tsx
 │   ├── DailyFortune.tsx      # 오늘/내일/주간 탭 운세 패널 (날씨 배지 포함)
 │   └── LoadingSpinner.tsx
+│   └── tabs/
+│       ├── NatalTab.tsx        # 사주팔자 탭 — 팔자그리드·오행·십신·십이운성·신살
+│       ├── PersonalityTab.tsx  # 성격분석 탭
+│       ├── FortuneTab.tsx      # 올해운세 탭
+│       ├── DaeunTab.tsx        # 대운흐름 탭
+│       ├── RelationshipTab.tsx # 인간관계 탭
+│       ├── AdviceTab.tsx       # 종합조언 탭
+│       └── ZodiacTab.tsx       # 12지신 탭
 ├── lib/
 │   ├── api.ts                # API 호출 함수 전체 (getBasicChart 포함)
 │   └── location.ts           # ipapi.co 기반 IP 위치 감지
-└── types/analysis.ts         # TypeScript 타입 정의 (BasicResult 포함)
+└── types/analysis.ts         # TypeScript 타입 정의 (NatalResult.pillar_summary 추가)
+
+frontend/public/kkachi/
+├── normal_kkachi_00.png      # 기본 까치 (KkachiTip에 사용)
+├── seven_sinsal.png          # 7가지 신살 까치 원본 스프라이트
+├── sinsal_역마살.png          # 신살별 까치 이미지 (seven_sinsal.png에서 분리)
+├── sinsal_도화살.png
+├── sinsal_화개살.png
+├── sinsal_천을귀인.png
+├── sinsal_문창귀인.png
+├── sinsal_백호살.png
+└── sinsal_장성살.png
 ```
 
 ## 아키텍처 원칙
@@ -332,6 +352,38 @@ erDiagram
 - 도시명 → Open-Meteo Geocoding API → lat/lon (프로세스 내 캐시)
 - WMO 날씨 코드 → 오행: 맑음=火, 구름많음=土, 흐림=金, 비/눈=水, 강풍=木
 - 7일 예보 한번에 fetch → 각 날짜에 날씨 주입
+
+## NatalTab 설계 원칙
+
+### 카드 구성 (위→아래)
+1. **정체성 요약 배너** — 일간 타일 + 오행/강약/용신 pill
+2. **나의 사주팔자** — PillarDetail + pillar_summary(백엔드 생성 1문장)
+3. **오행 분포** — ElementRadar
+4. **십신(十神) 구성** — 일간 기준 배너 + `grid-cols-2` 카드(×count 배지) + KkachiTip
+5. **십이운성(十二運星)** — 일간 기준 배너 + 4단계(성장기→번영기→수렴기→태동기) × `grid-cols-3` + KkachiTip×2
+6. **신살(神殺)** — 보유한 신살만 `grid-cols-2` 카드 + 까치 이미지 + 콤보/백호살 KkachiTip
+
+### 십이운성 표시 방식
+- 4단계를 항상 전부 표시, 해당하는 것만 불투명 / 없는 것은 `opacity: 0.35`
+- 각 단계 내 `grid-cols-3` (성장기 3종, 번영기 3종, 수렴기 3종, 태동기 3종)
+- KkachiTip 두 개: ① 각 기둥별 운성 나열 ② 전체 에너지 요약
+
+### 신살 카드 설계
+- `SINSAL_INFO`: 7종 × `{ hanja, tagline, desc, color, bg, border }`
+- `SINSAL_COMBOS`: 5가지 시너지 조합 메시지
+- 보유한 신살만 렌더 (없는 것 LOCKED 표시 안 함)
+- 이미지: `/kkachi/sinsal_{이름}.png` — 없으면 `normal_kkachi_00.png` 폴백
+- 백호살 보유 시 리프레이밍 KkachiTip 자동 표시
+- 2개 이상 보유 시 해당 콤보 KkachiTip 표시
+
+### 백엔드 변경사항
+- `NatalResult.pillar_summary: str` — SajuService가 오행 분포 기반 1문장 생성
+- `_get_sibi_unseong()` 반환값: 간지 문자열 → "년주/월주/일주/시주" 한글 레이블
+- 신살 7종: 驛馬·桃花·華蓋·天乙貴人·文昌貴人·白虎殺·將星
+
+### 이름 개인화
+- `sessionStorage["kkachi_analysis_name"]` → deep/page.tsx에서 읽어 ResultSlides → 각 탭 prop으로 전달
+- KkachiTip 내 서술문에 `{name}님은~` 형태로 사용
 
 ## 테스트
 

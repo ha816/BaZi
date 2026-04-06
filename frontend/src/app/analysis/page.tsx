@@ -53,12 +53,13 @@ export default function AnalysisPage() {
     listProfiles(memberId).then(setProfiles).catch(() => {});
   };
 
-  const handleDirectSubmit = async (input: AnalysisInput) => {
+  const handleDirectSubmit = async (input: AnalysisInput, name: string) => {
     setLoading(true);
     setError(null);
     try {
       const data = await getBasicChart(input);
       sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
+      sessionStorage.setItem("kkachi_analysis_name", name);
       setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
@@ -84,6 +85,7 @@ export default function AnalysisPage() {
         };
         const data = await getBasicChart(input);
         sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
+        sessionStorage.setItem("kkachi_analysis_name", profile.name);
         setResult(data);
       }
     } catch (e) {

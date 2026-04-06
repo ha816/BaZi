@@ -36,6 +36,9 @@ class NatalResult:
     sibi_unseong: list[dict[str, str]] = field(default_factory=list)
     sinsal: list[dict[str, str]] = field(default_factory=list)
 
+    # 팔자 요약
+    pillar_summary: str = ""
+
     # 텍스트 해석
     personality: list[InterpretBlock] = field(default_factory=list)
     element_balance: list[InterpretBlock] = field(default_factory=list)

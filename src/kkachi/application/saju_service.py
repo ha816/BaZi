@@ -67,6 +67,20 @@ class SajuService(InterpreterPort):
         postnatal = self.postnatal_port.analyze(user, natal, year)
         return natal, postnatal
 
+    def _build_pillar_summary(self, natal: NatalInfo) -> str:
+        sorted_elements = sorted(natal.element_stats.items(), key=lambda x: x[1], reverse=True)
+        if not sorted_elements or sorted_elements[0][1] == 0:
+            return ""
+        strongest, count = sorted_elements[0]
+        missing = [o for o, c in natal.element_stats.items() if c == 0]
+        summary = f"여덟 글자 중 {strongest.meaning}({strongest.name})의 기운이 {count}개로 가장 많아요."
+        if missing:
+            names = "·".join(o.meaning for o in missing)
+            summary += f" {names}의 기운이 없어서, 이를 보완하는 운이 오면 좋아요."
+        else:
+            summary += " 다섯 기운이 모두 있어 균형 잡힌 구성이에요."
+        return summary
+
     def interpret_natal(self, natal: NatalInfo) -> NatalResult:
         return NatalResult(
             pillars=[str(sb) for sb in natal.saju.pillars.values()],
@@ -79,6 +93,7 @@ class SajuService(InterpreterPort):
             sipsin=[{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
             sibi_unseong=[{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
             sinsal=[{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
+            pillar_summary=self._build_pillar_summary(natal),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),
         )

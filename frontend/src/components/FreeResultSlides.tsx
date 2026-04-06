@@ -42,9 +42,6 @@ export default function FreeResultSlides({ data }: Props) {
           <div className="slide-card__body">
             <PillarDetail
               pillars={data.pillars}
-              sipsin={[]}
-              sibiUnseong={[]}
-              sinsal={[]}
               dayStem={data.day_stem}
               basic
             />
