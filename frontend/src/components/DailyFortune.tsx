@@ -1,7 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { DailyFortune } from "@/types/analysis";
+
+function useStreak(todayDate: string): number {
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    const LAST_KEY = "kkachi_last_visit";
+    const STREAK_KEY = "kkachi_streak";
+
+    const last = localStorage.getItem(LAST_KEY);
+    const saved = parseInt(localStorage.getItem(STREAK_KEY) ?? "0", 10);
+
+    const today = new Date(todayDate);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    let next = 1;
+    if (last === todayDate) {
+      next = saved; // 오늘 이미 방문
+    } else if (last === yesterdayStr) {
+      next = saved + 1; // 연속 방문
+    }
+
+    localStorage.setItem(LAST_KEY, todayDate);
+    localStorage.setItem(STREAK_KEY, String(next));
+    setStreak(next);
+  }, [todayDate]);
+
+  return streak;
+}
 
 const DOMAIN_LABELS: Record<string, string> = {
   재물: "재물운",
@@ -49,6 +79,11 @@ function DetailView({ data }: { data: DailyFortune }) {
           <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-ivory-warm)] text-[var(--color-ink-muted)] border border-[var(--color-border-light)]">
             {data.day_element}
           </span>
+          {data.solar_term && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+              🌿 {data.solar_term}
+            </span>
+          )}
           {data.weather && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
               {WEATHER_ICON[data.weather.element] ?? "🌤️"} {data.weather.condition}
@@ -155,6 +190,7 @@ export default function DailyFortunePanel({
   loading: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("오늘");
+  const streak = useStreak(forecast?.[0]?.date ?? new Date().toISOString().split("T")[0]);
 
   if (loading) {
     return (
@@ -171,6 +207,15 @@ export default function DailyFortunePanel({
 
   return (
     <div className="mt-3 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-5 space-y-4 text-sm">
+      {/* 스트릭 카운터 */}
+      {streak >= 2 && (
+        <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+          <span>🔥</span>
+          <span className="font-medium">{streak}일 연속 방문 중</span>
+          {streak >= 7 && <span className="text-amber-500">— 까치가 기뻐합니다!</span>}
+        </div>
+      )}
+
       {/* 탭 */}
       <div className="flex gap-0.5 p-0.5 bg-[var(--color-parchment)] rounded-lg w-fit">
         {(["오늘", "내일", "주간"] as Tab[]).map((t) => (

@@ -1,10 +1,93 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import type { BasicResult } from "@/types/analysis";
 import PillarDetail from "./PillarDetail";
 import ElementRadar from "./ElementRadar";
 import SectionHeader from "./SectionHeader";
+import ShareCard from "./ShareCard";
+
+function ShareButtons({ data }: { data: BasicResult }) {
+  const [copied, setCopied] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [name, setName] = useState("");
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setName(sessionStorage.getItem("kkachi_analysis_name") ?? "");
+  }, []);
+
+  const shareText = [
+    name ? `${name}의 사주팔자` : "나의 사주팔자",
+    `${data.pillars.join(" ")}`,
+    `${data.my_element.meaning}(${data.my_element.name}) 기운을 타고났어요 🪶`,
+    "",
+    "사주까치에서 내 사주를 확인해봤어요",
+    typeof window !== "undefined" ? window.location.origin : "",
+  ].join("\n");
+
+  const handleTextShare = async () => {
+    if (navigator.share) {
+      await navigator.share({ text: shareText }).catch(() => {});
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleImageShare = async () => {
+    if (!cardRef.current) return;
+    setCapturing(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2 });
+
+      // Web Share API로 이미지 파일 공유 (지원 시)
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], "내사주.png", { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], text: "사주까치에서 내 사주를 확인해봤어요 🪶" }).catch(() => {});
+      } else {
+        // 폴백: 다운로드
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `${name || "내"}사주.png`;
+        a.click();
+      }
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  return (
+    <>
+      {/* 숨겨진 공유 카드 (캡처용) */}
+      <div style={{ position: "absolute", left: -9999, top: -9999, pointerEvents: "none" }}>
+        <ShareCard ref={cardRef} data={data} name={name} />
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={handleImageShare}
+          disabled={capturing}
+          className="flex items-center gap-1.5 text-xs font-medium bg-[var(--color-card)] text-[var(--color-ink)] border border-[var(--color-border-light)] rounded-lg px-3 py-2 hover:bg-[var(--color-ivory-warm)] transition-colors disabled:opacity-60"
+        >
+          {capturing ? "생성 중..." : "🖼️ 이미지 카드"}
+        </button>
+        <button
+          type="button"
+          onClick={handleTextShare}
+          className="flex items-center gap-1.5 text-xs text-[var(--color-ink-muted)] border border-[var(--color-border-light)] rounded-lg px-3 py-2 hover:bg-[var(--color-ivory-warm)] transition-colors"
+        >
+          {copied ? "✓ 복사됨" : "🔗 링크 공유"}
+        </button>
+      </div>
+    </>
+  );
+}
 
 const ZODIAC: Record<string, { kor: string; emoji: string; keywords: string[] }> = {
   "子": { kor: "쥐", emoji: "🐭", keywords: ["영민함", "민첩함", "사교성"] },
@@ -30,7 +113,7 @@ export default function FreeResultSlides({ data }: Props) {
   const zodiac = ZODIAC[data.year_branch];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
 
       {/* ── 섹션 1: 기초 (무료) */}
       <div className="space-y-4">
@@ -61,41 +144,49 @@ export default function FreeResultSlides({ data }: Props) {
         </div>
       </div>
 
-      {/* ── 섹션 2: 12지신 (무료) */}
+      {/* ── 섹션 2: 12지신 — 기본 정보 무료, zodiac_relation부터 블러 시작 */}
       {zodiac && (
-        <div className="slide-card">
+        <div className="slide-card overflow-hidden">
           <div className="slide-card__header">
             <SectionHeader emoji="" title="나의 띠 · 십이지신(十二支神)" free noMargin />
           </div>
           <div className="divider" />
           <div className="slide-card__body">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-[var(--color-ivory-warm)] flex items-center justify-center text-4xl">
-                  {zodiac.emoji}
-                </div>
-                <div>
-                  <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{zodiac.kor}띠</p>
-                  <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">{data.year_branch}年 생</p>
-                  <div className="flex gap-1.5 mt-2 flex-wrap">
-                    {zodiac.keywords.map((kw) => (
-                      <span key={kw} className="text-xs bg-[var(--color-ivory)] border border-[var(--color-border-light)] rounded-full px-2.5 py-0.5 text-[var(--color-ink-muted)]">
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-[var(--color-ivory-warm)] flex items-center justify-center text-4xl">
+                {zodiac.emoji}
+              </div>
+              <div>
+                <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{zodiac.kor}띠</p>
+                <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">{data.year_branch}年 생</p>
+                <div className="flex gap-1.5 mt-2 flex-wrap">
+                  {zodiac.keywords.map((kw) => (
+                    <span key={kw} className="text-xs bg-[var(--color-ivory)] border border-[var(--color-border-light)] rounded-full px-2.5 py-0.5 text-[var(--color-ink-muted)]">
+                      {kw}
+                    </span>
+                  ))}
                 </div>
               </div>
-              <p className="text-sm text-[var(--color-ink-light)] leading-relaxed mt-4 pt-4 border-t border-[var(--color-border-light)]">
+            </div>
+
+            {/* zodiac_relation 부터 블러 — 이야기가 끊기는 지점 */}
+            <div className="relative mt-4 pt-4 border-t border-[var(--color-border-light)]">
+              <p className="text-sm text-[var(--color-ink-light)] leading-relaxed blur-sm select-none pointer-events-none opacity-80 line-clamp-3">
                 {data.zodiac_relation}
               </p>
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(to bottom, transparent 10%, var(--color-card) 70%)" }}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── 심층분석 블러 미리보기 + CTA */}
+      {/* ── 심층분석 CTA — 60% 지점 */}
       <div className="relative">
         {/* 블러 처리된 미리보기 */}
-        <div className="blur-sm pointer-events-none select-none space-y-4 opacity-70">
+        <div className="blur-sm pointer-events-none select-none space-y-4 opacity-60">
           <div className="flex items-center gap-2">
             <span className="text-base">⭐</span>
             <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">올해의 운세</h2>
@@ -133,8 +224,9 @@ export default function FreeResultSlides({ data }: Props) {
         </div>
 
         {/* 그라데이션 페이드 + CTA 오버레이 */}
-        <div className="absolute inset-0 flex flex-col items-end justify-end pb-4"
-          style={{ background: "linear-gradient(to bottom, transparent 0%, var(--color-parchment) 55%)" }}
+        <div
+          className="absolute inset-0 flex flex-col items-end justify-end pb-4"
+          style={{ background: "linear-gradient(to bottom, transparent 0%, var(--color-parchment) 40%)" }}
         >
           <div className="w-full flex flex-col items-center gap-3">
             <div className="text-center space-y-1 px-4">
@@ -147,6 +239,7 @@ export default function FreeResultSlides({ data }: Props) {
             >
               심층분석 시작하기 →
             </Link>
+            <ShareButtons data={data} />
           </div>
         </div>
       </div>

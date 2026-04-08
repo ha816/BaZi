@@ -14,6 +14,40 @@ from kkachi.domain.natal import NatalInfo
 from kkachi.domain.user import User
 
 
+# 24절기 — (월, 일): (절기명, 오행, 특별 팁)
+# 날짜는 연도별로 ±1일 차이가 있으나 MVP에서는 대표 날짜 사용
+SOLAR_TERMS: dict[tuple[int, int], tuple[str, Oheng, str]] = {
+    (1, 6):  ("소한(小寒)", Oheng.水, "겨울 추위의 절정. 체력 관리를 우선순위에 두세요."),
+    (1, 20): ("대한(大寒)", Oheng.水, "가장 추운 날. 차분히 봄을 준비할 에너지를 모을 때입니다."),
+    (2, 4):  ("입춘(立春)", Oheng.木, "봄의 기운이 시작됩니다. 새로운 시작과 도전에 길한 날입니다."),
+    (2, 19): ("우수(雨水)", Oheng.木, "봄비로 만물이 소생합니다. 막혔던 일이 풀리기 시작하는 기운입니다."),
+    (3, 6):  ("경칩(驚蟄)", Oheng.木, "겨울잠에서 깨어나는 날. 잠재된 에너지를 깨울 절호의 기회입니다."),
+    (3, 20): ("춘분(春分)", Oheng.木, "낮과 밤의 길이가 같아집니다. 균형을 되찾기 좋은 날입니다."),
+    (4, 5):  ("청명(淸明)", Oheng.木, "하늘이 맑고 밝아지는 날. 새 계획을 실행에 옮기기 좋은 기운입니다."),
+    (4, 20): ("곡우(穀雨)", Oheng.木, "봄비로 곡식이 자라는 시기. 꾸준한 노력이 결실을 맺기 시작합니다."),
+    (5, 6):  ("입하(立夏)", Oheng.火, "여름이 시작됩니다. 열정과 활력이 넘치는 기운이 함께합니다."),
+    (5, 21): ("소만(小滿)", Oheng.火, "만물이 가득 차는 시기. 활발한 활동으로 에너지를 발산하세요."),
+    (6, 6):  ("망종(芒種)", Oheng.火, "씨앗을 뿌리는 절기. 지금의 노력이 나중에 큰 열매가 됩니다."),
+    (6, 21): ("하지(夏至)", Oheng.火, "일 년 중 낮이 가장 긴 날. 강한 火 기운이 최고조입니다."),
+    (7, 7):  ("소서(小暑)", Oheng.火, "더위가 시작됩니다. 무리하지 말고 체력을 비축하세요."),
+    (7, 23): ("대서(大暑)", Oheng.火, "일 년 중 가장 더운 시기. 여유를 갖는 것이 지혜입니다."),
+    (8, 7):  ("입추(立秋)", Oheng.金, "가을이 시작됩니다. 성과를 정리하고 수확을 준비할 시기입니다."),
+    (8, 23): ("처서(處暑)", Oheng.金, "더위가 물러갑니다. 활기차게 재도약할 기운이 모입니다."),
+    (9, 8):  ("백로(白露)", Oheng.金, "이슬이 맺히는 청명한 가을. 중요한 결정을 내리기 좋습니다."),
+    (9, 23): ("추분(秋分)", Oheng.金, "낮과 밤이 다시 같아집니다. 균형 잡힌 시각으로 상황을 돌아보세요."),
+    (10, 8): ("한로(寒露)", Oheng.金, "찬 이슬이 내리는 시기. 주변 관계를 돌아보고 정리할 좋은 때입니다."),
+    (10, 23):("상강(霜降)", Oheng.金, "서리가 내리기 시작합니다. 한 해의 성과를 점검하는 날로 삼으세요."),
+    (11, 7): ("입동(立冬)", Oheng.水, "겨울이 시작됩니다. 에너지를 비축하고 내면을 돌아볼 시기입니다."),
+    (11, 22):("소설(小雪)", Oheng.水, "첫눈이 내리는 시기. 차분히 마음을 정돈하고 내년을 계획하세요."),
+    (12, 7): ("대설(大雪)", Oheng.水, "눈이 많이 내리는 시기. 조용히 실력을 다지는 내실의 시간입니다."),
+    (12, 22):("동지(冬至)", Oheng.水, "밤이 가장 긴 날. 동지팥죽으로 나쁜 기운을 쫓고 새 에너지를 맞이하세요."),
+}
+
+
+def _get_solar_term(today: date) -> tuple[str, Oheng, str] | None:
+    return SOLAR_TERMS.get((today.month, today.day))
+
+
 GOOD_SIPSIN = {Sipsin.食神, Sipsin.正財, Sipsin.正官, Sipsin.正印}
 BAD_SIPSIN = {Sipsin.偏官, Sipsin.劫財}
 
@@ -131,7 +165,14 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
     )
 
     description = _make_description(total_score, day_element, natal, branch_combine, branch_clash, reasons)
-    tips = _make_tips(total_score, branch_combine, branch_clash, natal.yongshin, day_element)
+    tips = _make_tips(total_score, branch_combine, branch_clash, natal.yongshin, day_element, weather)
+
+    solar_term_info = _get_solar_term(today)
+    solar_term_name: str | None = None
+    if solar_term_info:
+        name, st_element, st_tip = solar_term_info
+        solar_term_name = name
+        tips = [f"오늘은 {name}입니다. {st_tip}", *tips][:3]
 
     return Fortune(
         date=today.isoformat(),
@@ -143,6 +184,7 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
         description=description,
         tips=tips,
         weather=weather,
+        solar_term=solar_term_name,
     )
 
 
@@ -251,12 +293,45 @@ def _make_description(
     return " ".join(parts)
 
 
+# 점수 구간 × 날씨 오행 → 맞춤 팁 (20가지 조합)
+_WEATHER_TIPS: dict[tuple[str, str], str] = {
+    ("high",   "火"): "맑고 활기찬 기운 속에 자신감 있게 움직이세요. 오늘은 먼저 연락하기 좋은 날입니다.",
+    ("high",   "土"): "흐린 하늘이지만 내 기운은 좋습니다. 조용히 집중하면 큰 성과를 낼 수 있어요.",
+    ("high",   "金"): "서늘한 기운이 머리를 맑게 합니다. 중요한 판단이나 협상에 적합한 날입니다.",
+    ("high",   "水"): "비가 내려도 기운은 충만합니다. 창의적인 아이디어가 샘솟는 하루가 될 거예요.",
+    ("high",   "木"): "바람이 불어도 든든한 날. 새로운 시작이나 도전을 결심하기 좋은 타이밍입니다.",
+    ("mid",    "火"): "날씨도 사주도 평범한 날. 무리하지 않고 루틴에 충실하면 충분합니다.",
+    ("mid",    "土"): "흐린 날씨에 에너지가 분산될 수 있어요. 할 일 목록을 작성해 집중해보세요.",
+    ("mid",    "金"): "차분한 날씨처럼 조용히 실력을 쌓는 데 집중해보세요. 내실의 하루입니다.",
+    ("mid",    "水"): "비 오는 날엔 독서나 기록이 잘 됩니다. 생각을 정리하는 시간으로 활용하세요.",
+    ("mid",    "木"): "바람 부는 날, 몸과 마음이 가벼운 상태입니다. 산책으로 에너지를 환기하세요.",
+    ("low",    "火"): "맑은 날씨와 달리 내 기운은 다소 긴장 상태입니다. 무리한 약속은 피하세요.",
+    ("low",    "土"): "날씨도, 기운도 무거운 날. 최소한의 일만 하고 충분한 휴식을 취하세요.",
+    ("low",    "金"): "차갑고 예민해지기 쉬운 날. 감정적 대화는 내일로 미루는 것이 현명합니다.",
+    ("low",    "水"): "비와 함께 기운도 가라앉는 날. 몸을 따뜻하게 하고 무리하지 마세요.",
+    ("low",    "木"): "바람처럼 기운이 흔들리는 날. 중심을 잡고 외부 자극에 흔들리지 마세요.",
+    ("caution","火"): "화창한 날씨도 지금은 위로가 되지 않을 수 있어요. 작은 것에 감사하며 버티세요.",
+    ("caution","土"): "흐린 하늘처럼 마음도 무거운 날. 혼자 해결하려 하지 말고 주변에 기대세요.",
+    ("caution","金"): "차가운 기운이 겹치는 날. 건강에 특히 신경 쓰고, 자극적인 음식을 피하세요.",
+    ("caution","水"): "비에 기운까지 겹치는 힘든 날. 오늘은 그냥 쉬어도 됩니다. 내일이 더 낫습니다.",
+    ("caution","木"): "바람처럼 예측 불가한 날. 이동이나 야외 활동을 최소화하고 안전하게 있으세요.",
+}
+
+
+def _score_tier(score: int) -> str:
+    if score >= 85: return "high"
+    if score >= 70: return "mid"
+    if score >= 40: return "low"
+    return "caution"
+
+
 def _make_tips(
     score: int,
     branch_combine: bool,
     branch_clash: bool,
     yongshin: Oheng,
     day_element: Oheng,
+    weather: dict | None = None,
 ) -> list[str]:
     tips = []
     if branch_clash:
@@ -264,7 +339,15 @@ def _make_tips(
     if branch_combine:
         tips.append("오늘은 소중한 사람과 시간을 보내면 좋은 에너지가 됩니다.")
     if day_element == yongshin:
-        tips.append(f"{yongshin.meaning} 관련 활동(운동·야외·물 등)이 힘이 됩니다.")
+        tips.append(f"{yongshin.meaning} 관련 활동이 힘이 됩니다.")
+
+    # 날씨×점수 조합 맞춤 팁
+    if weather:
+        key = (_score_tier(score), weather["element"])
+        weather_tip = _WEATHER_TIPS.get(key)
+        if weather_tip:
+            tips.append(weather_tip)
+
     if score < 40 and not tips:
         tips.append("체력 관리에 집중하고, 새로운 시작보다 마무리에 집중하세요.")
     if not tips:

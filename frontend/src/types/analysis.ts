@@ -207,4 +207,5 @@ export interface DailyFortune {
   description: string;
   tips: string[];
   weather: DailyWeather | null;
+  solar_term?: string;
 }

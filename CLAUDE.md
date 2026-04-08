@@ -157,7 +157,6 @@ POST /saju/interpret  (심층 — 로그인 필요)
 - `git push --force`
 - `rm -rf`
 - `.env` 파일 수정 또는 외부 전송
-- main 브랜치에 직접 push
 
 ## Anti-bloat rules
 
