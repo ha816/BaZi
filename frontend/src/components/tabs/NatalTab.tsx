@@ -1,7 +1,6 @@
 import type { NatalResult, SipsinInfo, SibiUnseongInfo, SinsalInfo } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import PillarDetail from "@/components/PillarDetail";
-import ElementRadar from "@/components/ElementRadar";
 import SectionHeader from "@/components/SectionHeader";
 import KkachiTip from "@/components/KkachiTip";
 
@@ -119,59 +118,9 @@ const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
 
 export default function NatalTab({ natal, name }: Props) {
   const meInfo = getElementInfo(natal.my_element.name);
-  const yongshinInfo = getElementInfo(natal.yongshin_info.name);
-  const isStrong = natal.strength_value >= 0;
 
   return (
     <div className="space-y-4">
-      {/* 정체성 요약 배너 */}
-      <div className="slide-card" style={{ borderColor: meInfo.borderColor }}>
-        <div className="slide-card__body">
-          <div className="flex items-center gap-4">
-            <div
-              className="flex-shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5"
-              style={{ backgroundColor: meInfo.bgColor, border: `1.5px solid ${meInfo.borderColor}` }}
-            >
-              <span className="font-heading text-3xl font-bold leading-none" style={{ color: meInfo.color }}>
-                {natal.day_stem}
-              </span>
-              <span className="text-[10px] font-medium" style={{ color: meInfo.color }}>
-                {meInfo.label}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                <span
-                  className="text-xs px-2.5 py-0.5 rounded-full border font-semibold"
-                  style={{ color: meInfo.color, backgroundColor: meInfo.bgColor, borderColor: meInfo.borderColor }}
-                >
-                  {meInfo.korean}({meInfo.label})
-                </span>
-                <span
-                  className="text-xs px-2.5 py-0.5 rounded-full border font-semibold"
-                  style={{
-                    color: isStrong ? "#C75B52" : "#4A7BA5",
-                    backgroundColor: isStrong ? "#F7EDEC" : "#ECF1F6",
-                    borderColor: isStrong ? "#E0B5B1" : "#B3CAD9",
-                  }}
-                >
-                  {natal.strength_label}
-                </span>
-                <span
-                  className="text-xs px-2.5 py-0.5 rounded-full border font-semibold"
-                  style={{ color: yongshinInfo.color, backgroundColor: yongshinInfo.bgColor, borderColor: yongshinInfo.borderColor }}
-                >
-                  용신 {yongshinInfo.korean}({yongshinInfo.label})
-                </span>
-              </div>
-              <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
-                {natal.my_element.meaning} — {natal.yongshin_info.meaning}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 팔자 그리드 */}
       <div className="slide-card">
         <div className="slide-card__header">
@@ -184,17 +133,6 @@ export default function NatalTab({ natal, name }: Props) {
             dayStem={natal.day_stem}
             pillarSummary={natal.pillar_summary ? `${name ? `${name}님의 ` : ""}${natal.pillar_summary}` : ""}
           />
-        </div>
-      </div>
-
-      {/* 오행 분포 */}
-      <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행(五行) 분포</h3>
-        </div>
-        <div className="divider" />
-        <div className="slide-card__body">
-          <ElementRadar stats={natal.element_stats} />
         </div>
       </div>
 

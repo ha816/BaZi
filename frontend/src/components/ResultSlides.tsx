@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { AnalysisResult } from "@/types/analysis";
 import NatalTab from "./tabs/NatalTab";
 import PersonalityTab from "./tabs/PersonalityTab";
@@ -12,7 +12,7 @@ import ZodiacTab from "./tabs/ZodiacTab";
 
 const FEATURE_TABS = [
   { id: "natal",        emoji: "🌱", label: "사주팔자" },
-  { id: "personality",  emoji: "✨", label: "성격분석" },
+  { id: "ki",           emoji: "✨", label: "기운" },
   { id: "fortune",      emoji: "⭐", label: "올해운세" },
   { id: "daeun",        emoji: "🌊", label: "대운흐름" },
   { id: "relationship", emoji: "🤝", label: "인간관계" },
@@ -28,7 +28,17 @@ interface Props {
 }
 
 export default function ResultSlides({ data, name }: Props) {
-  const [active, setActive] = useState<FeatureId>("natal");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const tabParam = searchParams.get("tab");
+  const active: FeatureId = (FEATURE_TABS.find((t) => t.id === tabParam)?.id) ?? "natal";
+
+  const handleTabChange = (id: FeatureId) => {
+    router.replace(`${pathname}?tab=${id}`, { scroll: false });
+  };
+
   const { natal, postnatal } = data;
   const tabProps = { natal, postnatal, name };
 
@@ -39,7 +49,7 @@ export default function ResultSlides({ data, name }: Props) {
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActive(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={`feature-tab ${active === tab.id ? "feature-tab--active" : ""}`}
           >
             <span>{tab.emoji}</span>
@@ -50,7 +60,7 @@ export default function ResultSlides({ data, name }: Props) {
 
       <div>
         {active === "natal"        && <NatalTab        {...tabProps} />}
-        {active === "personality"  && <PersonalityTab  {...tabProps} />}
+        {active === "ki"           && <PersonalityTab  {...tabProps} />}
         {active === "fortune"      && <FortuneTab      {...tabProps} />}
         {active === "daeun"        && <DaeunTab        {...tabProps} />}
         {active === "relationship" && <RelationshipTab {...tabProps} />}
