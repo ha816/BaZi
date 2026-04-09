@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from kkachi.adapter.inner.compatibility_controller import compatibility_router
 from kkachi.adapter.inner.member_controller import member_router
+from kkachi.adapter.inner.payment_controller import payment_router
 from kkachi.adapter.inner.profile_controller import profile_router
 from kkachi.adapter.inner.saju_controller import saju_router
 from kkachi.container import Container
@@ -34,3 +35,4 @@ app.include_router(saju_router)
 app.include_router(member_router)
 app.include_router(profile_router)
 app.include_router(compatibility_router)
+app.include_router(payment_router)

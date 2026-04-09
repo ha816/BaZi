@@ -148,3 +148,24 @@ export async function postFeedback(
     { method: "POST", body: JSON.stringify({ tab_id: tabId, rating }) }
   );
 }
+
+export async function preparePayment(params: {
+  member_id: string;
+  feature_type: "deep_analysis" | "daily_fortune" | "compatibility";
+}): Promise<{ order_id: string; amount: number; feature_type: string; order_name: string }> {
+  return request("/payments/prepare", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+export async function confirmPayment(params: {
+  payment_key: string;
+  order_id: string;
+  amount: number;
+}): Promise<{ success: boolean }> {
+  return request("/payments/confirm", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}

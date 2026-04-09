@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile } from "@/types/analysis";
 import {
   analyzeCompatibility,
   analyzeCompatibilityByProfiles,
   listProfiles,
+  preparePayment,
 } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import CompatibilityResultView from "@/components/CompatibilityResult";
@@ -177,6 +179,7 @@ function PersonCard({
 const DEFAULT_MANUAL: ManualState = { name: "", birthDate: "1990-01-01", selectedHour: "", gender: "male", city: "Seoul" };
 
 export default function CompatibilityPage() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [memberId, setMemberId] = useState<string | null>(null);
   const [detectedCity, setDetectedCity] = useState("Seoul");
@@ -224,6 +227,29 @@ export default function CompatibilityPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const credit = sessionStorage.getItem("kkachi_credit_compatibility");
+    if (!credit) {
+      const mid = localStorage.getItem(MEMBER_ID_KEY);
+      if (!mid) {
+        router.push("/join");
+        return;
+      }
+      try {
+        const { order_id, amount, feature_type, order_name } = await preparePayment({
+          member_id: mid,
+          feature_type: "compatibility",
+        });
+        router.push(
+          `/payment/checkout?order_id=${order_id}&amount=${amount}&feature_type=${feature_type}&order_name=${encodeURIComponent(order_name)}`
+        );
+      } catch {
+        router.push("/join");
+      }
+      return;
+    }
+    sessionStorage.removeItem("kkachi_credit_compatibility");
+
     setLoading(true);
     setError(null);
     setResult(null);

@@ -3,8 +3,10 @@ from datetime import datetime
 from uuid import UUID
 
 from kkachi.application.port.analysis_port import AnalysisPort
+from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.saju_service import SajuService
+from kkachi.domain.payment import PaymentRequiredError
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender, User
 
@@ -15,10 +17,12 @@ class ProfileService:
         profile_port: ProfilePort,
         analysis_port: AnalysisPort,
         saju_service: SajuService,
+        payment_port: PaymentPort | None = None,
     ):
         self.profile_port = profile_port
         self.analysis_port = analysis_port
         self.saju_service = saju_service
+        self._payment_port = payment_port
 
     async def create_profile(
         self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str
@@ -37,10 +41,15 @@ class ProfileService:
     async def list_analyses(self, profile_id: UUID) -> list[Analysis]:
         return await self.analysis_port.list_by_profile(profile_id)
 
-    async def analyze_profile(self, profile_id: UUID, year: int) -> dict:
+    async def analyze_profile(self, profile_id: UUID, year: int, member_id: UUID | None = None) -> dict:
         cached = await self.analysis_port.get(profile_id, year)
         if cached:
             return cached.result
+
+        if self._payment_port and member_id:
+            credit = await self._payment_port.pop_credit(member_id, "deep_analysis")
+            if credit is None:
+                raise PaymentRequiredError("심층분석 크레딧이 없습니다.")
 
         profile = await self.profile_port.get(profile_id)
         if profile is None:

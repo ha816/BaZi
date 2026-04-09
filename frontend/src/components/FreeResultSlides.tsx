@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { BasicResult } from "@/types/analysis";
 import PillarDetail from "./PillarDetail";
 import ElementRadar from "./ElementRadar";
 import SectionHeader from "./SectionHeader";
 import ShareCard from "./ShareCard";
+import { preparePayment } from "@/lib/api";
+
+
+const MEMBER_ID_KEY = "kkachi_member_id";
 
 function ShareButtons({ data }: { data: BasicResult }) {
   const [copied, setCopied] = useState(false);
@@ -111,6 +115,26 @@ interface Props {
 
 export default function FreeResultSlides({ data }: Props) {
   const zodiac = ZODIAC[data.year_branch];
+  const router = useRouter();
+
+  const handleDeepAnalysis = async () => {
+    const memberId = localStorage.getItem(MEMBER_ID_KEY);
+    if (!memberId) {
+      router.push("/join");
+      return;
+    }
+    try {
+      const { order_id, amount, feature_type, order_name } = await preparePayment({
+        member_id: memberId,
+        feature_type: "deep_analysis",
+      });
+      router.push(
+        `/payment/checkout?order_id=${order_id}&amount=${amount}&feature_type=${feature_type}&order_name=${encodeURIComponent(order_name)}`
+      );
+    } catch {
+      router.push("/join");
+    }
+  };
 
   return (
     <div className="space-y-8 relative">
@@ -233,12 +257,12 @@ export default function FreeResultSlides({ data }: Props) {
               <p className="font-heading text-base font-bold text-[var(--color-ink)]">올해 운세 · 인생 흐름 · 종합 조언</p>
               <p className="text-sm text-[var(--color-ink-muted)]">심층분석으로 전체 내용을 확인하세요</p>
             </div>
-            <Link
-              href="/analysis/deep"
+            <button
+              onClick={handleDeepAnalysis}
               className="px-8 py-3.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-xl text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors shadow-md"
             >
               심층분석 시작하기 →
-            </Link>
+            </button>
             <ShareButtons data={data} />
           </div>
         </div>

@@ -24,6 +24,14 @@ export default function DeepAnalysisPage() {
       return;
     }
     setMemberId(mid);
+
+    const credit = sessionStorage.getItem("kkachi_credit_deep_analysis");
+    if (!credit) {
+      router.replace("/analysis");
+      return;
+    }
+    sessionStorage.removeItem("kkachi_credit_deep_analysis");
+
     setName(sessionStorage.getItem("kkachi_analysis_name") ?? "");
 
     const profileRaw = sessionStorage.getItem("kkachi_profile_input");

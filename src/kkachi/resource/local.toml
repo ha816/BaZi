@@ -12,3 +12,6 @@ json_path = "/json"
 
 [api-key]
 openai = ""
+
+[toss]
+secret_key = "test_sk_test_placeholder"

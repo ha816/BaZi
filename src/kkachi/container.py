@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from kkachi.adapter.outer.db.member_repo import MemberRepo
+from kkachi.adapter.outer.db.payment_repo import PaymentRepo
 from kkachi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FeedbackRepo, FortuneRepo, ProfileRepo
 from kkachi.adapter.outer.llm_adapter import LlmAdapter
 from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
@@ -9,6 +10,7 @@ from kkachi.adapter.outer.weather_adapter import WeatherAdapter
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.member_service import MemberService
+from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
 from kkachi.application.saju_service import SajuService
 
@@ -20,6 +22,7 @@ class Container(containers.DeclarativeContainer):
             "kkachi.adapter.inner.member_controller",
             "kkachi.adapter.inner.profile_controller",
             "kkachi.adapter.inner.compatibility_controller",
+            "kkachi.adapter.inner.payment_controller",
         ],
     )
 
@@ -34,6 +37,7 @@ class Container(containers.DeclarativeContainer):
     profile_repo = providers.Singleton(ProfileRepo, session_factory=session_factory)
     analysis_repo = providers.Singleton(AnalysisRepo, session_factory=session_factory)
     feedback_repo = providers.Singleton(FeedbackRepo, session_factory=session_factory)
+    payment_repo = providers.Singleton(PaymentRepo, session_factory=session_factory)
 
     # Saju (기존)
     natal_adapter = providers.Singleton(NatalAdapter)
@@ -48,11 +52,17 @@ class Container(containers.DeclarativeContainer):
 
     # 신규
     member_service = providers.Singleton(MemberService, member_port=member_repo)
+    payment_service = providers.Singleton(
+        PaymentService,
+        payment_port=payment_repo,
+        toss_secret_key=config.toss.secret_key,
+    )
     profile_service = providers.Singleton(
         ProfileService,
         profile_port=profile_repo,
         analysis_port=analysis_repo,
         saju_service=saju_service,
+        payment_port=payment_repo,
     )
     compatibility_repo = providers.Singleton(CompatibilityRepo, session_factory=session_factory)
     compatibility_service = providers.Singleton(

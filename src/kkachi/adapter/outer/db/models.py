@@ -83,3 +83,17 @@ class InterpretFeedbackModel(Base):
     tab_id: Mapped[str] = mapped_column(String(50), nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PaymentModel(Base):
+    __tablename__ = "payments"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    member_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("members.id", ondelete="CASCADE"), nullable=False)
+    feature_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    toss_order_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    toss_payment_key: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
