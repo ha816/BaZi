@@ -4,7 +4,8 @@ import { useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loadTossPayments, ANONYMOUS, type TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
 
-const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? "test_ck_test_...";
+const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+const DEV_BYPASS = !CLIENT_KEY;
 const MEMBER_ID_KEY = "kkachi_member_id";
 
 function CheckoutContent() {
@@ -18,8 +19,9 @@ function CheckoutContent() {
   const orderName = searchParams.get("order_name") ?? "사주까치";
 
   useEffect(() => {
+    if (DEV_BYPASS) return;
     const customerKey = localStorage.getItem(MEMBER_ID_KEY) ?? ANONYMOUS;
-    loadTossPayments(CLIENT_KEY).then(async (tossPayments) => {
+    loadTossPayments(CLIENT_KEY!).then(async (tossPayments) => {
       const widgets = tossPayments.widgets({ customerKey });
       widgetsRef.current = widgets;
       await widgets.setAmount({ currency: "KRW", value: amount });
@@ -29,6 +31,17 @@ function CheckoutContent() {
   }, [amount]);
 
   const handlePay = async () => {
+    if (DEV_BYPASS) {
+      // 개발 bypass: confirm 없이 바로 크레딧 부여
+      sessionStorage.setItem(`kkachi_credit_${featureType}`, "1");
+      const redirectMap: Record<string, string> = {
+        deep_analysis: "/analysis/deep",
+        daily_fortune: "/analysis",
+        compatibility: "/compatibility",
+      };
+      router.replace(redirectMap[featureType] ?? "/");
+      return;
+    }
     if (!widgetsRef.current) return;
     try {
       await widgetsRef.current.requestPayment({
@@ -46,15 +59,22 @@ function CheckoutContent() {
     <div className="min-h-screen bg-[var(--color-parchment)] flex flex-col items-center py-8 px-4">
       <h1 className="text-xl font-bold text-[var(--color-ink)] mb-2">{orderName}</h1>
       <p className="text-[var(--color-ink-light)] mb-6">₩{amount.toLocaleString()}</p>
-      <div className="w-full max-w-md bg-white rounded-2xl shadow p-4 mb-4">
-        <div id="payment-widget" />
-        <div id="agreement" />
-      </div>
+      {DEV_BYPASS ? (
+        <div className="w-full max-w-md bg-yellow-50 border border-yellow-300 rounded-2xl p-4 mb-4 text-sm text-yellow-700">
+          <p className="font-bold mb-1">개발 모드 (결제 bypass)</p>
+          <p>NEXT_PUBLIC_TOSS_CLIENT_KEY 미설정. 결제 없이 바로 진행됩니다.</p>
+        </div>
+      ) : (
+        <div className="w-full max-w-md bg-white rounded-2xl shadow p-4 mb-4">
+          <div id="payment-widget" />
+          <div id="agreement" />
+        </div>
+      )}
       <button
         onClick={handlePay}
         className="w-full max-w-md bg-[var(--color-accent)] text-white font-bold py-4 rounded-2xl text-lg"
       >
-        결제하기
+        {DEV_BYPASS ? "결제 없이 진행 (개발)" : "결제하기"}
       </button>
       <button
         onClick={() => router.back()}
