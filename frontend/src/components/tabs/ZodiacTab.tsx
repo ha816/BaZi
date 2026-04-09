@@ -1,3 +1,5 @@
+"use client";
+import React, { useState } from "react";
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
 import KkachiTip from "@/components/KkachiTip";
 import PillarDetail from "@/components/PillarDetail";
@@ -137,12 +139,12 @@ function getRelation(a: string, b: string): RelationType {
 }
 
 const RELATION_STYLE: Record<RelationType, { label: string; color: string; bg: string; border: string }> = {
-  "나":   { label: "나",   color: "#B8945A", bg: "#F5F0E7", border: "#D9C49A" },
-  "삼합": { label: "삼합", color: "#5B8C6A", bg: "#EEF4F0", border: "#A8C9B5" },
-  "육합": { label: "육합", color: "#4A7BA5", bg: "#ECF1F6", border: "#9BB8D0" },
-  "보통": { label: "보통", color: "#8A8A96", bg: "#F4F4F6", border: "#D0D0D8" },
-  "원진": { label: "원진", color: "#A07060", bg: "#F6EFEC", border: "#D4B0A0" },
-  "충":   { label: "충",   color: "#C75B52", bg: "#F7EDEC", border: "#E0A8A3" },
+  "나":   { label: "나",        color: "#8A5A10", bg: "#F5DC90", border: "#C89030" },
+  "삼합": { label: "삼합(三合)", color: "#1A7A4A", bg: "#C8EDD8", border: "#5CB882" },
+  "육합": { label: "육합(六合)", color: "#1A5FA0", bg: "#C8DFF5", border: "#5A9ED0" },
+  "보통": { label: "보통",        color: "#8A8A96", bg: "#F0F0F4", border: "#C8C8D4" },
+  "원진": { label: "원진(怨嗔)", color: "#B05A20", bg: "#FCDDC0", border: "#E09050" },
+  "충":   { label: "충(衝)",     color: "#B82020", bg: "#FBCFC8", border: "#E07070" },
 };
 
 function getYearBranch(year: number): string {
@@ -156,6 +158,7 @@ interface Props {
 }
 
 export default function ZodiacTab({ natal, postnatal, name }: Props) {
+  const [showYearGungham, setShowYearGungham] = useState(false);
   const yearBranch = natal.pillars[0]?.[1] ?? "";
   const zodiac = ZODIAC_INFO[yearBranch];
 
@@ -178,10 +181,6 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
   const samhapPartners = mySamhap ? mySamhap[0].filter((b) => b !== yearBranch) : [];
   const hasSamhapInPillars = pillarBranches.some((b) => samhapPartners.includes(b));
 
-  // 원진 여부
-  const wonjinPair = WONJIN_PAIRS.find(([a, b]) => a === yearBranch || b === yearBranch);
-  const wonjinPartner = wonjinPair ? (wonjinPair[0] === yearBranch ? wonjinPair[1] : wonjinPair[0]) : null;
-  const wonjinInfo = wonjinPartner ? ZODIAC_INFO[wonjinPartner] : null;
 
   // 연도별 띠 궁합 계산
   const makeYearRow = (year: number, labelPrefix: string) => {
@@ -204,9 +203,6 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
 
   // 4기둥 지지 조합 까치 설명
   const pillarTip = (() => {
-    const names = pillarBranches.map((b) => (ZODIAC_INFO[b]?.kor ?? b) + "띠");
-    const animalList = names.join("·");
-
     const counts: Record<string, number> = {};
     pillarBranches.forEach((b) => { counts[b] = (counts[b] ?? 0) + 1; });
 
@@ -232,9 +228,9 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
     }
 
     if (notes.length === 0) {
-      return `${namePrefix}의 4기둥에는 ${animalList}가 있어요. 특별한 충·합 없이 각자의 영역에서 고르게 에너지를 발휘하는 안정적인 구성입니다.`;
+      return `${namePrefix}의 사주지지는 특별한 충·합 없이 각자의 영역에서 고르게 에너지를 발휘하는 안정적인 구성입니다.`;
     }
-    return `${namePrefix}의 4기둥에는 ${animalList}가 있어요. ${notes.join(" ")} 있어 사주 안에서 독특한 에너지 흐름이 만들어집니다.`;
+    return `${namePrefix}의 사주지지는 ${notes.join(" ")} 있어 사주 안에서 독특한 에너지 흐름이 만들어집니다.`;
   })();
 
   // 가장 가까운 좋은 해 (올해·내년 제외, 삼합 > 육합 순)
@@ -279,6 +275,17 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
               </div>
             </div>
           </div>
+          <img
+            src={`/kkachi/zodiac_${zodiac.kor}.png`}
+            alt={`${zodiac.kor}띠`}
+            className="w-2/3 mx-auto block mt-3 rounded-3xl"
+            style={{
+              mixBlendMode: "multiply",
+              maskImage: "radial-gradient(ellipse 85% 80% at 50% 45%, black 55%, transparent 100%)",
+              WebkitMaskImage: "radial-gradient(ellipse 85% 80% at 50% 45%, black 55%, transparent 100%)",
+            }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
         </div>
       </div>
 
@@ -289,8 +296,8 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
             십이지 충합(十二支 衝合)
           </h3>
           <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-            {zodiac.kor}띠({yearBranch})를 기준으로 12띠 전체와의 충·합 관계를 분류한 것입니다.
-            실제 궁합은 일주(日柱) 포함 전체 사주로 판단하므로 참고 지표로 활용하세요.
+            년주인 {zodiac.kor}띠({yearBranch}) 기준 충·합 분류입니다.
+            실제 궁합은 일주(日柱) 포함 전체 사주로 판단하므로 참고 지표로만 활용하세요!
           </p>
         </div>
         <div className="divider" />
@@ -356,7 +363,7 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
         <div className="slide-card__header">
           <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">사주지지(四柱地支)</h3>
           <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-            태어난 해·달·날·시 각각의 띠가 <strong className="text-[var(--color-ink-muted)]">삶의 다른 영역에서 어떻게 나타나는지</strong> 보여줍니다.
+            사주의 네 기둥 각각에는 지지(地支), 즉 띠가 하나씩 있습니다. 이 띠는 삶의 각 영역에 숨어 있는 나의 본모습입니다.
           </p>
         </div>
         <div className="divider" />
@@ -389,55 +396,58 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
               );
             })}
           </div>
+          <KkachiTip label="사주지지 각 자리의 의미">
+            년주(年柱)는 사회·대외 이미지, 월주(月柱)는 부모·환경, 일주(日柱)는 나 자신, 시주(時柱)는 자녀·말년을 나타냅니다.
+          </KkachiTip>
           <KkachiTip>{pillarTip}</KkachiTip>
         </div>
       </div>
 
-      {/* 올해 띠 궁합 */}
+      {/* 연도별 띠 궁합 */}
       <div className="slide-card">
         <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">올해 띠 궁합</h3>
+          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">연도별 띠 궁합</h3>
         </div>
         <div className="divider" />
-        <div className="slide-card__body space-y-2">
-          {[thisYear, nextYear].map((row) => (
-            <div key={row.year} className="rounded-lg px-3 py-2.5 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-xs font-semibold text-[var(--color-ink-muted)]">{row.labelPrefix} {row.year}년</span>
-                <span className="text-sm">{row.info?.emoji}</span>
-                <span className="text-xs text-[var(--color-ink-faint)]">{row.branch}年 {row.info?.kor}띠</span>
-                <span
-                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto"
-                  style={{
-                    color: RELATION_STYLE[row.relation].color,
-                    backgroundColor: RELATION_STYLE[row.relation].bg,
-                    border: `1px solid ${RELATION_STYLE[row.relation].border}`,
-                  }}
-                >
-                  {RELATION_STYLE[row.relation].label}
-                </span>
+        <div className="slide-card__body space-y-3">
+          {!showYearGungham ? (
+            <button
+              onClick={() => setShowYearGungham(true)}
+              className="btn-shimmer w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:opacity-70"
+            >
+              🐾 연도별 띠 궁합 확인하기
+            </button>
+          ) : (
+            <>
+              <div className={`grid gap-2 ${nearestGoodYear ? "grid-cols-3" : "grid-cols-2"}`}>
+                {[thisYear, nextYear, ...(nearestGoodYear ? [{ ...nearestGoodYear, labelPrefix: "가까운 좋은 해" }] : [])].map((row) => {
+                  const isGood = row.relation === "삼합" || row.relation === "육합";
+                  const style = RELATION_STYLE[row.relation];
+                  return (
+                    <div
+                      key={row.year}
+                      className="flex flex-col items-center gap-1.5 rounded-xl p-3 border text-center"
+                      style={{
+                        borderColor: isGood ? style.border : "var(--color-border-light)",
+                        backgroundColor: isGood ? style.bg : "var(--color-surface)",
+                      }}
+                    >
+                      <span className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{row.labelPrefix}</span>
+                      <span className="text-[10px] text-[var(--color-ink-faint)]">{row.year}년</span>
+                      <span className="text-2xl">{row.info?.emoji}</span>
+                      <span className="text-xs font-semibold text-[var(--color-ink)]">{row.info?.kor}띠</span>
+                      <span
+                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                        style={{ color: style.color, backgroundColor: style.bg, border: `1px solid ${style.border}` }}
+                      >
+                        {style.label}
+                      </span>
+                      <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug mt-0.5">{row.desc}</p>
+                    </div>
+                  );
+                })}
               </div>
-              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">{row.desc}</p>
-            </div>
-          ))}
-          {nearestGoodYear && (
-            <div className="rounded-lg px-3 py-2.5 border" style={{ backgroundColor: RELATION_STYLE[nearestGoodYear.relation].bg, borderColor: RELATION_STYLE[nearestGoodYear.relation].border }}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-xs font-semibold" style={{ color: RELATION_STYLE[nearestGoodYear.relation].color }}>가장 가까운 좋은 해</span>
-                <span className="text-xs text-[var(--color-ink-faint)] ml-auto">{nearestGoodYear.year}년 {nearestGoodYear.info?.emoji} {nearestGoodYear.info?.kor}띠</span>
-                <span
-                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{
-                    color: RELATION_STYLE[nearestGoodYear.relation].color,
-                    backgroundColor: "white",
-                    border: `1px solid ${RELATION_STYLE[nearestGoodYear.relation].border}`,
-                  }}
-                >
-                  {RELATION_STYLE[nearestGoodYear.relation].label}
-                </span>
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: RELATION_STYLE[nearestGoodYear.relation].color }}>{nearestGoodYear.desc}</p>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -446,13 +456,6 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
       {hasSamhapInPillars && mySamhap && (
         <KkachiTip>
           {namePrefix}의 사주 4기둥 안에 {mySamhap[2]} 삼합 중 한 글자가 들어 있어요! 삼합은 에너지가 한 방향으로 강하게 모이는 조합입니다. {mySamhap[1]}의 기운이 사주 내부에서 응집되어 {mySamhap[1] === "水" ? "지혜·유연함" : mySamhap[1] === "木" ? "성장·추진력" : mySamhap[1] === "火" ? "열정·표현력" : "결실·안정감"}이 타고난 강점으로 작동합니다.
-        </KkachiTip>
-      )}
-
-      {/* 원진 KkachiTip */}
-      {wonjinPartner && wonjinInfo && (
-        <KkachiTip>
-          {zodiac.kor}띠와 {wonjinInfo.kor}띠({wonjinPartner})는 원진(怨嗔) 관계예요. 서로 미묘하게 불편함을 느끼거나 오해가 쌓이기 쉬운 조합입니다. 하지만 원진은 "영원히 안 맞는다"는 뜻이 아니라, 서로의 다름을 인정하고 배려하는 노력이 필요하다는 신호예요. 가까이 지낼수록 솔직한 소통이 중요합니다.
         </KkachiTip>
       )}
     </div>
