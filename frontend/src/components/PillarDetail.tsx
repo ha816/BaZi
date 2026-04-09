@@ -8,6 +8,7 @@ interface Props {
   dayStem: string;
   basic?: boolean;
   pillarSummary?: string;
+  highlightBranches?: boolean;
 }
 
 const PILLAR_LABELS = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"];
@@ -33,7 +34,7 @@ function getCharElement(char: string, isStem: boolean): string {
   return (isStem ? STEM_ELEMENT : BRANCH_ELEMENT)[char] ?? "";
 }
 
-export default function PillarDetail({ pillars, dayStem, basic = false, pillarSummary }: Props) {
+export default function PillarDetail({ pillars, dayStem, basic = false, pillarSummary, highlightBranches = false }: Props) {
   return (
     <div>
       {pillarSummary && (
@@ -50,16 +51,10 @@ export default function PillarDetail({ pillars, dayStem, basic = false, pillarSu
           const branchEl = getCharElement(branch, false);
           const stemInfo = stemEl ? getElementInfo(stemEl) : null;
           const branchInfo = branchEl ? getElementInfo(branchEl) : null;
-          const isMe = i === 2;
-
           return (
             <div
               key={i}
-              className={`rounded-xl text-center border transition-shadow ${
-                isMe
-                  ? "border-[var(--color-gold)] bg-[var(--color-gold-faint)] shadow-md"
-                  : "border-[var(--color-border-light)] bg-[var(--color-card)]"
-              }`}
+              className="rounded-xl text-center border transition-shadow border-[var(--color-border-light)] bg-[var(--color-card)]"
             >
               <div className="px-3 py-3 border-b border-[var(--color-border-light)]">
                 <div className="text-sm font-medium text-[var(--color-ink)]">
@@ -88,16 +83,17 @@ export default function PillarDetail({ pillars, dayStem, basic = false, pillarSu
                     {stemInfo.korean}({stemInfo.label})
                   </div>
                 )}
-                {isMe && (
-                  <div className="text-[11px] text-[var(--color-gold)] font-medium mt-1.5">
-                    나를 나타내는 글자
-                  </div>
-                )}
               </div>
 
               <div className="mx-4 h-px bg-[var(--color-border-light)]" />
 
-              <div className="px-3 py-4">
+              <div
+                className={`px-3 py-4 rounded-b-xl ${
+                  highlightBranches
+                    ? "bg-[var(--color-gold-faint)]"
+                    : ""
+                }`}
+              >
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">
                   땅
                 </div>

@@ -1,5 +1,6 @@
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
 import KkachiTip from "@/components/KkachiTip";
+import PillarDetail from "@/components/PillarDetail";
 
 const ZODIAC_INFO: Record<string, {
   kor: string;
@@ -182,19 +183,68 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
   const wonjinPartner = wonjinPair ? (wonjinPair[0] === yearBranch ? wonjinPair[1] : wonjinPair[0]) : null;
   const wonjinInfo = wonjinPartner ? ZODIAC_INFO[wonjinPartner] : null;
 
-  // 올해 세운 지지와의 관계
-  const seunBranch = getYearBranch(postnatal.year);
-  const seunRelation = getRelation(yearBranch, seunBranch);
-  const seunInfo = ZODIAC_INFO[seunBranch];
-
-  const seunRelationText: Record<string, string> = {
-    "나": `올해(${seunBranch}年)는 본명년(本命年)입니다. 12년마다 돌아오는 변화의 해로, 새로운 시작을 준비하되 무리한 모험보다 내실 다지기가 유리합니다.`,
-    "삼합": `올해(${seunBranch}年)는 나의 년주와 삼합(三合)이 맞아요. 강한 기운이 합쳐지는 해로, 중요한 도전과 확장에 좋은 타이밍입니다.`,
-    "육합": `올해(${seunBranch}年)는 나의 년주와 육합(六合) 관계예요. 협력과 관계 확장에 유리한 한 해가 될 가능성이 높습니다.`,
-    "충": `올해(${seunBranch}年)는 나의 년주와 충(衝)이 발생해요. 예상치 못한 변화와 이동이 많을 수 있으니 유연하게 대처하세요.`,
-    "원진": `올해(${seunBranch}年)는 원진(怨嗔) 관계예요. 대인관계에서 미묘한 갈등이나 오해가 생기기 쉬운 시기입니다.`,
-    "보통": `올해(${seunBranch}年)와는 특별한 충·합이 없어요. 큰 기복 없이 꾸준히 나아가기 좋은 한 해입니다.`,
+  // 연도별 띠 궁합 계산
+  const makeYearRow = (year: number, labelPrefix: string) => {
+    const branch = getYearBranch(year);
+    const info = ZODIAC_INFO[branch];
+    const relation = getRelation(yearBranch, branch);
+    const descMap: Record<RelationType, string> = {
+      "나":   `본명년(本命年) — 12년마다 돌아오는 변화의 해. 내실 다지기에 집중하세요.`,
+      "삼합": `삼합(三合) — 강한 기운이 합쳐지는 해. 도전과 확장에 좋은 타이밍입니다.`,
+      "육합": `육합(六合) — 협력과 관계 확장에 유리한 해입니다.`,
+      "충":   `충(衝) — 예상치 못한 변화와 이동이 많을 수 있으니 유연하게 대처하세요.`,
+      "원진": `원진(怨嗔) — 대인관계에서 미묘한 갈등이나 오해가 생기기 쉬운 시기입니다.`,
+      "보통": `특별한 충·합이 없어요. 큰 기복 없이 꾸준히 나아가기 좋은 한 해입니다.`,
+    };
+    return { year, branch, info, relation, desc: descMap[relation], labelPrefix };
   };
+
+  const thisYear = makeYearRow(postnatal.year, "올해");
+  const nextYear = makeYearRow(postnatal.year + 1, "내년");
+
+  // 4기둥 지지 조합 까치 설명
+  const pillarTip = (() => {
+    const names = pillarBranches.map((b) => (ZODIAC_INFO[b]?.kor ?? b) + "띠");
+    const animalList = names.join("·");
+
+    const counts: Record<string, number> = {};
+    pillarBranches.forEach((b) => { counts[b] = (counts[b] ?? 0) + 1; });
+
+    const notes: string[] = [];
+    Object.entries(counts).forEach(([b, cnt]) => {
+      if (cnt >= 2) notes.push(`${ZODIAC_INFO[b]?.kor}띠가 ${cnt}번 겹쳐 있고`);
+    });
+
+    const seenPairs = new Set<string>();
+    for (let a = 0; a < pillarBranches.length; a++) {
+      for (let b = a + 1; b < pillarBranches.length; b++) {
+        if (pillarBranches[a] === pillarBranches[b]) continue;
+        const key = [pillarBranches[a], pillarBranches[b]].sort().join("-");
+        if (seenPairs.has(key)) continue;
+        seenPairs.add(key);
+        const r = getRelation(pillarBranches[a], pillarBranches[b]);
+        const na = ZODIAC_INFO[pillarBranches[a]]?.kor ?? pillarBranches[a];
+        const nb = ZODIAC_INFO[pillarBranches[b]]?.kor ?? pillarBranches[b];
+        if (r === "삼합") notes.push(`${na}띠·${nb}띠가 삼합으로 에너지가 강하게 모이고`);
+        else if (r === "육합") notes.push(`${na}띠·${nb}띠가 육합으로 잘 어우러지고`);
+        else if (r === "충") notes.push(`${na}띠·${nb}띠가 충으로 긴장감이 있고`);
+      }
+    }
+
+    if (notes.length === 0) {
+      return `${namePrefix}의 4기둥에는 ${animalList}가 있어요. 특별한 충·합 없이 각자의 영역에서 고르게 에너지를 발휘하는 안정적인 구성입니다.`;
+    }
+    return `${namePrefix}의 4기둥에는 ${animalList}가 있어요. ${notes.join(" ")} 있어 사주 안에서 독특한 에너지 흐름이 만들어집니다.`;
+  })();
+
+  // 가장 가까운 좋은 해 (올해·내년 제외, 삼합 > 육합 순)
+  const nearestGoodYear = (() => {
+    for (let i = 2; i <= 13; i++) {
+      const r = makeYearRow(postnatal.year + i, "");
+      if (r.relation === "삼합" || r.relation === "육합") return r;
+    }
+    return null;
+  })();
 
   return (
     <div className="space-y-4">
@@ -203,15 +253,14 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
       <div className="slide-card">
         <div className="slide-card__header">
           <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">
-            {zodiac.emoji} {zodiac.kor}띠 — {yearBranch}年 심층 프로필
+            십이지신(十二支神)
           </h3>
           <p className="text-xs text-[var(--color-ink-faint)] mt-1">
-            년주(年柱) 지지를 기준으로 한 타고난 기질과 대외 이미지
+            쥐·소·호랑이·토끼·용·뱀·말·양·원숭이·닭·개·돼지 — 12가지 동물 신령으로 해를 나누고, 태어난 해의 지지(地支)가 곧 자신의 띠입니다.
           </p>
         </div>
         <div className="divider" />
-        <div className="slide-card__body space-y-4">
-
+        <div className="slide-card__body">
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-[var(--color-ivory-warm)] flex items-center justify-center text-3xl">
               {zodiac.emoji}
@@ -230,91 +279,6 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
               </div>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            <div className="rounded-lg px-3 py-2.5 bg-[#EEF4F0] border border-[#A8C9B5]">
-              <p className="text-[10px] font-semibold text-[#5B8C6A] mb-0.5">강점</p>
-              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">{zodiac.strength}</p>
-            </div>
-            <div className="rounded-lg px-3 py-2.5 bg-[#F6EFEC] border border-[#D4B0A0]">
-              <p className="text-[10px] font-semibold text-[#A07060] mb-0.5">주의할 점</p>
-              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">{zodiac.weakness}</p>
-            </div>
-          </div>
-
-          <div className="rounded-lg px-3 py-2.5 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-            <p className="text-[10px] font-semibold text-[var(--color-ink-faint)] mb-1">올해의 기운</p>
-            <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
-              {seunRelationText[seunRelation]}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-sm">{seunInfo?.emoji}</span>
-              <span className="text-xs text-[var(--color-ink-faint)]">
-                {postnatal.year}년 · {seunBranch}年 {seunInfo?.kor}띠
-              </span>
-              <span
-                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                style={{
-                  color: RELATION_STYLE[seunRelation].color,
-                  backgroundColor: RELATION_STYLE[seunRelation].bg,
-                  border: `1px solid ${RELATION_STYLE[seunRelation].border}`,
-                }}
-              >
-                {RELATION_STYLE[seunRelation].label}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 4기둥 띠 의미 */}
-      <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">사주 4기둥의 띠 에너지</h3>
-          <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-            년·월·일·시 각 기둥의 지지(땅의 기운)는
-            <strong className="text-[var(--color-ink-muted)]"> 인생의 각 영역에서 작동하는 서로 다른 나</strong>를 나타냅니다.
-          </p>
-        </div>
-        <div className="divider" />
-        <div className="slide-card__body space-y-2">
-          {pillarBranches.map((branch, i) => {
-            const info = ZODIAC_INFO[branch];
-            const role = PILLAR_ROLES[i];
-            if (!info || !role) return null;
-            const isYear = i === 0;
-            return (
-              <div
-                key={i}
-                className="rounded-lg p-3 border flex items-start gap-3"
-                style={isYear
-                  ? { backgroundColor: "#F5F0E7", borderColor: "#D9C49A" }
-                  : { backgroundColor: "var(--color-ivory)", borderColor: "var(--color-border-light)" }
-                }
-              >
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-white border border-[var(--color-border-light)]">
-                  {info.emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-xs font-semibold text-[var(--color-ink)]">{role.label}</span>
-                    <span className="text-[10px] text-[var(--color-ink-faint)]">→ {role.role}</span>
-                    {isYear && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-gold-faint)] text-[var(--color-gold)] border border-[var(--color-gold-light)]">
-                        기준
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="font-heading text-base font-bold text-[var(--color-ink)]">{branch}</span>
-                    <span className="text-sm text-[var(--color-ink-muted)]">{info.kor}띠</span>
-                    <span className="text-xs text-[var(--color-ink-faint)]">— {info.keyword}</span>
-                  </div>
-                  <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{role.desc}</p>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
 
@@ -322,16 +286,16 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
       <div className="slide-card">
         <div className="slide-card__header">
           <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">
-            {zodiac.kor}띠와 12띠 궁합 등급
+            십이지 충합(十二支 衝合)
           </h3>
           <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-            년주(年柱) 지지 기준으로 12띠 전체와의 관계를 분류한 것입니다.
+            {zodiac.kor}띠({yearBranch})를 기준으로 12띠 전체와의 충·합 관계를 분류한 것입니다.
             실제 궁합은 일주(日柱) 포함 전체 사주로 판단하므로 참고 지표로 활용하세요.
           </p>
         </div>
         <div className="divider" />
         <div className="slide-card__body">
-          <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="grid grid-cols-4 gap-2 mb-4">
             {relations.map(({ branch, info, relation }) => {
               const style = RELATION_STYLE[relation];
               if (!info) return null;
@@ -384,6 +348,97 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
               })}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 사주지지(四柱地支) */}
+      <div className="slide-card">
+        <div className="slide-card__header">
+          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">사주지지(四柱地支)</h3>
+          <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
+            태어난 해·달·날·시 각각의 띠가 <strong className="text-[var(--color-ink-muted)]">삶의 다른 영역에서 어떻게 나타나는지</strong> 보여줍니다.
+          </p>
+        </div>
+        <div className="divider" />
+        <div className="slide-card__body space-y-3">
+          <PillarDetail pillars={natal.pillars} dayStem={natal.day_stem} highlightBranches={true} />
+          <div className="grid grid-cols-4 gap-2">
+            {pillarBranches.map((branch, i) => {
+              const info = ZODIAC_INFO[branch];
+              const role = PILLAR_ROLES[i];
+              if (!info || !role) return null;
+              const isYear = i === 0;
+              return (
+                <div
+                  key={i}
+                  className="rounded-lg p-2.5 border text-center"
+                  style={isYear
+                    ? { backgroundColor: "#F5F0E7", borderColor: "#D9C49A" }
+                    : { backgroundColor: "var(--color-ivory)", borderColor: "var(--color-border-light)" }
+                  }
+                >
+                  <span className="text-xl block mb-1">{info.emoji}</span>
+                  <div className="font-heading text-sm font-bold text-[var(--color-ink)] mb-0.5">{branch}</div>
+                  <div className="text-[10px] text-[var(--color-ink-muted)] mb-1">{info.kor}띠</div>
+                  <div className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{role.label}</div>
+                  <div className="text-[10px] text-[var(--color-ink-faint)] leading-snug mt-0.5">{role.role}</div>
+                  {isYear && (
+                    <span className="inline-block text-[10px] font-semibold px-1 py-0.5 rounded-full bg-[var(--color-gold-faint)] text-[var(--color-gold)] border border-[var(--color-gold-light)] mt-1">기준</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <KkachiTip>{pillarTip}</KkachiTip>
+        </div>
+      </div>
+
+      {/* 올해 띠 궁합 */}
+      <div className="slide-card">
+        <div className="slide-card__header">
+          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">올해 띠 궁합</h3>
+        </div>
+        <div className="divider" />
+        <div className="slide-card__body space-y-2">
+          {[thisYear, nextYear].map((row) => (
+            <div key={row.year} className="rounded-lg px-3 py-2.5 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-semibold text-[var(--color-ink-muted)]">{row.labelPrefix} {row.year}년</span>
+                <span className="text-sm">{row.info?.emoji}</span>
+                <span className="text-xs text-[var(--color-ink-faint)]">{row.branch}年 {row.info?.kor}띠</span>
+                <span
+                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto"
+                  style={{
+                    color: RELATION_STYLE[row.relation].color,
+                    backgroundColor: RELATION_STYLE[row.relation].bg,
+                    border: `1px solid ${RELATION_STYLE[row.relation].border}`,
+                  }}
+                >
+                  {RELATION_STYLE[row.relation].label}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">{row.desc}</p>
+            </div>
+          ))}
+          {nearestGoodYear && (
+            <div className="rounded-lg px-3 py-2.5 border" style={{ backgroundColor: RELATION_STYLE[nearestGoodYear.relation].bg, borderColor: RELATION_STYLE[nearestGoodYear.relation].border }}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-xs font-semibold" style={{ color: RELATION_STYLE[nearestGoodYear.relation].color }}>가장 가까운 좋은 해</span>
+                <span className="text-xs text-[var(--color-ink-faint)] ml-auto">{nearestGoodYear.year}년 {nearestGoodYear.info?.emoji} {nearestGoodYear.info?.kor}띠</span>
+                <span
+                  className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{
+                    color: RELATION_STYLE[nearestGoodYear.relation].color,
+                    backgroundColor: "white",
+                    border: `1px solid ${RELATION_STYLE[nearestGoodYear.relation].border}`,
+                  }}
+                >
+                  {RELATION_STYLE[nearestGoodYear.relation].label}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: RELATION_STYLE[nearestGoodYear.relation].color }}>{nearestGoodYear.desc}</p>
+            </div>
+          )}
         </div>
       </div>
 

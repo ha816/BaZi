@@ -305,24 +305,18 @@ body {
 
 /* Feature tab bar — 심층분석 기능 탭 */
 .feature-tabbar {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-}
-
-.feature-tabbar::-webkit-scrollbar {
-  display: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding-bottom: 8px;
 }
 
 .feature-tab {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 4px;
   border-radius: 20px;
   border: 1px solid var(--color-border-light);
   background: var(--color-card);
