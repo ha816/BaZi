@@ -306,7 +306,7 @@ body {
 /* Feature tab bar — 심층분석 기능 탭 */
 .feature-tabbar {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 6px;
   padding-bottom: 8px;
 }

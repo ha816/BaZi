@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import type { AnalysisResult } from "@/types/analysis";
 import NatalTab from "./tabs/NatalTab";
 import PersonalityTab from "./tabs/PersonalityTab";
-import FortuneTab from "./tabs/FortuneTab";
 import DaeunTab from "./tabs/DaeunTab";
 import RelationshipTab from "./tabs/RelationshipTab";
 import AdviceTab from "./tabs/AdviceTab";
@@ -16,7 +15,6 @@ const FEATURE_TABS = [
   { id: "natal",        emoji: "🌱", label: "사주팔자" },
   { id: "ki",           emoji: "✨", label: "기운" },
   { id: "zodiac",       emoji: "🐾", label: "십이지신" },
-  { id: "fortune",      emoji: "⭐", label: "올해운세" },
   { id: "daeun",        emoji: "🌊", label: "대운흐름" },
   { id: "relationship", emoji: "🤝", label: "인간관계" },
   { id: "advice",       emoji: "💬", label: "종합조언" },
@@ -121,8 +119,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
       <div>
         {active === "natal"        && <NatalTab        {...tabProps} />}
         {active === "ki"           && <PersonalityTab  {...tabProps} />}
-        {active === "fortune"      && <FortuneTab      {...tabProps} />}
-        {active === "daeun"        && <DaeunTab        {...tabProps} />}
+{active === "daeun"        && <DaeunTab        {...tabProps} />}
         {active === "relationship" && <RelationshipTab {...tabProps} />}
         {active === "advice"       && <AdviceTab       {...tabProps} />}
         {active === "zodiac"       && <ZodiacTab       {...tabProps} />}
