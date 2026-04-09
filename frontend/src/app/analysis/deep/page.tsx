@@ -46,14 +46,14 @@ export default function DeepAnalysisPage() {
 
     const raw = sessionStorage.getItem("kkachi_analysis_input");
     if (!raw) {
-      router.replace("/analysis");
+      setError("분석 데이터가 없습니다. 사주 입력 화면에서 다시 시도해주세요.");
       return;
     }
     let input;
     try {
       input = JSON.parse(raw);
     } catch {
-      router.replace("/analysis");
+      setError("분석 데이터가 손상되었습니다. 사주 입력 화면에서 다시 시도해주세요.");
       return;
     }
     analyzeChart(input)

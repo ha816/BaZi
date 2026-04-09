@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loadTossPayments, ANONYMOUS, type TossPaymentsWidgets } from "@tosspayments/tosspayments-sdk";
 
 const CLIENT_KEY = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
-const DEV_BYPASS = !CLIENT_KEY;
+const DEV_BYPASS = true; // TODO: !CLIENT_KEY 로 변경 (토스 키 설정 후)
 const MEMBER_ID_KEY = "kkachi_member_id";
 
 function CheckoutContent() {
@@ -39,7 +39,7 @@ function CheckoutContent() {
         daily_fortune: "/analysis",
         compatibility: "/compatibility",
       };
-      router.replace(redirectMap[featureType] ?? "/");
+      window.location.href = redirectMap[featureType] ?? "/";
       return;
     }
     if (!widgetsRef.current) return;
