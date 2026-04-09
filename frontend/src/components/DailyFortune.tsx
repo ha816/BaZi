@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { DailyFortune } from "@/types/analysis";
+import type { DailyFortune, HourlyWeather } from "@/types/analysis";
 
 function useStreak(todayDate: string): number {
   const [streak, setStreak] = useState(0);
@@ -49,6 +49,83 @@ const LEVEL_BAR: Record<string, string> = {
 const WEATHER_ICON: Record<string, string> = {
   火: "☀️", 土: "🌥️", 金: "☁️", 水: "🌧️", 木: "🌬️",
 };
+
+const ELEMENT_COLOR: Record<string, { bar: string; text: string; bg: string }> = {
+  木: { bar: "bg-green-400",  text: "text-green-700",  bg: "bg-green-50" },
+  火: { bar: "bg-orange-400", text: "text-orange-700", bg: "bg-orange-50" },
+  土: { bar: "bg-amber-400",  text: "text-amber-700",  bg: "bg-amber-50" },
+  金: { bar: "bg-slate-400",  text: "text-slate-600",  bg: "bg-slate-50" },
+  水: { bar: "bg-blue-400",   text: "text-blue-700",   bg: "bg-blue-50" },
+};
+
+// 오행 상생 관계: key가 value를 生함
+const GENERATES: Record<string, string> = {
+  木: "火", 火: "土", 土: "金", 金: "水", 水: "木",
+};
+
+function getHourlyRelation(hourElement: string, yongshin: string): "match" | "generates" | "neutral" {
+  if (hourElement === yongshin) return "match";
+  if (GENERATES[hourElement] === yongshin) return "generates";
+  return "neutral";
+}
+
+function getHourlyScore(hourElement: string, yongshin: string): number {
+  const rel = getHourlyRelation(hourElement, yongshin);
+  if (rel === "match") return 100;
+  if (rel === "generates") return 70;
+  return 40;
+}
+
+function HourlyFortuneBar({ data, yongshin }: { data: HourlyWeather[]; yongshin: string }) {
+  if (!data || data.length === 0) return null;
+
+  const maxScore = Math.max(...data.map((h) => getHourlyScore(h.element, yongshin)));
+
+  return (
+    <div className="space-y-2 border-t border-[var(--color-border-light)] pt-3">
+      <p className="text-xs font-medium text-[var(--color-ink-light)]">이 시간대가 좋아요</p>
+      <div className="space-y-1.5">
+        {data.map((h) => {
+          const rel = getHourlyRelation(h.element, yongshin);
+          const score = getHourlyScore(h.element, yongshin);
+          const colors = ELEMENT_COLOR[h.element] ?? ELEMENT_COLOR["土"];
+          const isHighlight = score === maxScore && rel !== "neutral";
+
+          return (
+            <div
+              key={h.hour}
+              className={`flex items-center gap-2 rounded-lg px-2 py-1 ${isHighlight ? colors.bg : ""}`}
+            >
+              <span className="w-8 flex-shrink-0 text-xs font-mono text-[var(--color-ink-faint)]">{h.hour}</span>
+              <span className={`w-5 flex-shrink-0 text-center text-xs font-medium ${colors.text}`}>
+                {h.element}
+              </span>
+              <div className="flex-1 h-1.5 bg-[var(--color-ivory-warm)] rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${colors.bar}`}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+              <span className="w-14 flex-shrink-0 text-right">
+                {rel === "match" ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                    최고
+                  </span>
+                ) : rel === "generates" ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 font-medium">
+                    좋음
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-[var(--color-ink-faint)]">보통</span>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const TOTAL_LEVEL_META: Record<string, { badge: string; icon: string }> = {
   "좋은 날":         { badge: "bg-emerald-100 text-emerald-800", icon: "🌟" },
@@ -137,6 +214,11 @@ function DetailView({ data }: { data: DailyFortune }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* 시간별 운세 인디케이터 */}
+      {data.yongshin && data.weather?.hours && data.weather.hours.length > 0 && (
+        <HourlyFortuneBar data={data.weather.hours} yongshin={data.yongshin} />
       )}
     </div>
   );

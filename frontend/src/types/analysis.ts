@@ -208,4 +208,5 @@ export interface DailyFortune {
   tips: string[];
   weather: DailyWeather | null;
   solar_term?: string;
+  yongshin?: string;
 }

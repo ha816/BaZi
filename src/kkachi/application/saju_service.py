@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
@@ -8,20 +10,24 @@ from kkachi.application.interpreter.relationship import RelationshipInterpreter
 from kkachi.application.interpreter.samjae import SamjaeInterpreter
 from kkachi.application.interpreter.seun import SeunInterpreter
 from kkachi.application.interpreter.yongshin import YongshinInterpreter
+from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
 from kkachi.application.util.util import year_to_ganji
 from kkachi.domain.ganji import Branch
-from kkachi.domain.interpretation import Interpretation, NatalResult, PostnatalResult
+from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
+
+_log = logging.getLogger(__name__)
 
 
 class SajuService(InterpreterPort):
     """사주 분석 서비스 — Port를 주입받아 전체 분석 파이프라인을 수행한다."""
 
-    def __init__(self, natal_port: NatalPort, postnatal_port: PostnatalPort):
+    def __init__(self, natal_port: NatalPort, postnatal_port: PostnatalPort, llm_port: LlmPort | None = None):
         self.natal_port = natal_port
         self.postnatal_port = postnatal_port
+        self._llm_port = llm_port
 
     _SAMHAP_GROUPS: list[tuple[frozenset, str]] = [
         (frozenset({Branch.寅, Branch.午, Branch.戌}), "火"),
@@ -98,8 +104,10 @@ class SajuService(InterpreterPort):
             element_balance=ElementBalanceInterpreter()(natal),
         )
 
-    def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo) -> PostnatalResult:
+    async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> PostnatalResult:
         current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
+        rule_advice = AdviceInterpreter()(natal, postnatal)
+        advice = await self._enrich_advice(rule_advice, natal, postnatal, name)
         return PostnatalResult(
             year=postnatal.year,
             seun_ganji=year_to_ganji(postnatal.year),
@@ -131,12 +139,41 @@ class SajuService(InterpreterPort):
             annual_fortune=SeunInterpreter()(natal, postnatal),
             samjae_fortune=SamjaeInterpreter()(natal, postnatal),
             major_fortune=DaeunInterpreter()(postnatal),
-            relationships=RelationshipInterpreter()(postnatal),
-            advice=AdviceInterpreter()(natal, postnatal),
+            relationships=RelationshipInterpreter()(natal, postnatal),
+            advice=advice,
         )
 
-    def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo) -> Interpretation:
+    async def _enrich_advice(
+        self,
+        rule_advice: list[InterpretBlock],
+        natal: NatalInfo,
+        postnatal: PostnatalInfo,
+        name: str,
+    ) -> list[InterpretBlock]:
+        if not self._llm_port or not self._llm_port.available:
+            return rule_advice
+        try:
+            daeun_stem = postnatal.current_daeun.ganji[0] if postnatal.current_daeun else ""
+            clash_labels = [f"{c.get('stem_or_branch', '')}" for c in postnatal.seun_clashes]
+            llm_text = await self._llm_port.get_advice({
+                "name": name,
+                "yongshin": natal.yongshin.name,
+                "yongshin_meaning": natal.yongshin.meaning,
+                "strength_label": natal.strength_label,
+                "element_stats": {o.name: c for o, c in natal.element_stats.items()},
+                "year": postnatal.year,
+                "yongshin_in_seun": postnatal.yongshin_in_seun,
+                "seun_clashes": clash_labels or None,
+                "daeun_stem": daeun_stem,
+            })
+            if llm_text:
+                return [InterpretBlock(description=llm_text)] + rule_advice[1:]
+        except Exception:
+            _log.exception("LLM advice enrichment failed — falling back to rule engine")
+        return rule_advice
+
+    async def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> Interpretation:
         return Interpretation(
             natal=self.interpret_natal(natal),
-            postnatal=self.interpret_postnatal(natal, postnatal),
+            postnatal=await self.interpret_postnatal(natal, postnatal, name),
         )

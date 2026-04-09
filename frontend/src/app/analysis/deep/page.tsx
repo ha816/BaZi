@@ -13,15 +13,29 @@ export default function DeepAnalysisPage() {
   const router = useRouter();
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [name, setName] = useState("");
+  const [memberId, setMemberId] = useState<string | undefined>();
+  const [profileId, setProfileId] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const memberId = localStorage.getItem(MEMBER_ID_KEY);
-    if (!memberId) {
+    const mid = localStorage.getItem(MEMBER_ID_KEY) ?? undefined;
+    if (!mid) {
       router.replace("/join");
       return;
     }
+    setMemberId(mid);
     setName(sessionStorage.getItem("kkachi_analysis_name") ?? "");
+
+    const profileRaw = sessionStorage.getItem("kkachi_profile_input");
+    if (profileRaw) {
+      try {
+        const parsed = JSON.parse(profileRaw);
+        if (parsed.profileId) setProfileId(parsed.profileId);
+      } catch {
+        // profileId 없이 진행
+      }
+    }
+
     const raw = sessionStorage.getItem("kkachi_analysis_input");
     if (!raw) {
       router.replace("/analysis");
@@ -60,7 +74,12 @@ export default function DeepAnalysisPage() {
           <p className="text-sm text-[var(--color-ink-muted)]">올해의 운세, 인생 흐름, 종합 조언을 확인하세요.</p>
         </header>
         <Suspense fallback={<LoadingSpinner />}>
-          <ResultSlides data={result} name={name} />
+          <ResultSlides
+            data={result}
+            name={name}
+            memberId={memberId}
+            profileId={profileId}
+          />
         </Suspense>
       </div>
     </main>

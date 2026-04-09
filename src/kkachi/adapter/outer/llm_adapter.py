@@ -1,74 +1,46 @@
-import json
-from json import JSONDecodeError
+import os
 
-from langchain.agents import AgentType, initialize_agent
-from langchain_openai import ChatOpenAI
+from openai import AsyncOpenAI
 
-from langchain.tools import Tool
-
-from application.port.llm_port import LlmPort
-from domain.prompt import ChatPromptProvider, RecRestaurantPromptParams
+from kkachi.application.port.llm_port import LlmPort
 
 
 class LlmAdapter(LlmPort):
 
     def __init__(self):
-        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1)
+        api_key = os.getenv("OPENAI_API_KEY")
+        self._client = AsyncOpenAI(api_key=api_key) if api_key else None
 
-    async def rec_restaurant(self, params: RecRestaurantPromptParams) -> list[dict]:
-        prompt = ChatPromptProvider.rec_restaurants()
-        messages = prompt.format_prompt(**params).to_messages()
-        response = await self.llm.ainvoke(messages)
-        content = response.content
-        try:
-            result = json.loads(content)
-        except JSONDecodeError as e:
-            print(f"JSON Decoding Error: {e} {content}")
-            return []
+    @property
+    def available(self) -> bool:
+        return self._client is not None
 
-        return result
+    async def get_advice(self, params: dict) -> str:
+        if not self._client:
+            return ""
 
+        clashes = params.get("seun_clashes") or "없음"
+        daeun_stem = params.get("daeun_stem", "")
+        daeun_info = f" 현재 대운 천간은 {daeun_stem}입니다." if daeun_stem else ""
 
-# class AiAgentAdapter(LlmPort):
-#     """
-#     조금 머나먼 일인듯... 나중에 실제 프로프팅으로 해결할 일이 있으면 사용하는것으로...
-#     """
-#
-#     def __init__(self):
-#         """
-#         https://developers.google.com/maps/documentation/places/web-service/search?hl=ko
-#         nearbysearch 주변 검색
-#         :param api_key: 구글맵 Open API 키
-#         """
-#         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
-#
-#         def simple_search_tool(query):
-#             return f"Simulated search results for: {query}"
-#
-#         self.tools = [
-#             Tool(
-#                 name="Simple Search",
-#                 func=simple_search_tool,
-#                 description="Useful for searching information."
-#             )
-#         ]
-#
-#         self.rec_restaurant_template = ChatPromptTemplate([
-#             ("system", """
-#             You are an expert restaurant recommendation agent.
-#             Provide {top_k} top recommendations in the restaurants based on the following conditions.
-#             For each recommendation:
-#                 - Provide a name
-#                 - Give a brief explanation why it matches the condition
-#                 - Include a relevance score from 1-5
-#             """
-#              ),
-#             ("user", """
-#              ### restaurants: {restaurants}
-#              ### conditions: {conditions}
-#              """
-#              )])
-#
-#         self.agent = initialize_agent(self.tools, self.llm,
-#                                       agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-#                                       verbose=True)
+        prompt = f"""당신은 한국 사주명리 전문가입니다.
+아래 분석 데이터를 바탕으로, {params.get('name', '이 분')}에게 {params['year']}년 종합 조언을 써주세요.
+친근하고 따뜻하게, 구체적 행동 조언을 포함해서 3문단으로.
+
+- 용신(用神): {params['yongshin']} ({params.get('yongshin_meaning', '')})
+- 사주 특성: {params['strength_label']}
+- 올해 용신 에너지: {'있음' if params.get('yongshin_in_seun') else '약함'}
+- 주의할 충(衝): {clashes}{daeun_info}
+
+규칙:
+1. "사주에 따르면" 같은 표현 금지
+2. 300자 이내
+3. 존댓말 사용"""
+
+        resp = await self._client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=400,
+            temperature=0.7,
+        )
+        return resp.choices[0].message.content.strip()

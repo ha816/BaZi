@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
@@ -13,7 +14,7 @@ _service = SajuService(natal_port=_natal, postnatal_port=_postnatal)
 def _make_result(year: int = 2026) -> Interpretation:
     user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
     natal, postnatal = _service.analyze(user, year)
-    return _service.interpret(natal, postnatal)
+    return asyncio.run(_service.interpret(natal, postnatal))
 
 
 def _make_natal_result() -> NatalResult:
@@ -25,7 +26,7 @@ def _make_natal_result() -> NatalResult:
 def _make_postnatal_result(year: int = 2026) -> PostnatalResult:
     user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
     natal, postnatal = _service.analyze(user, year)
-    return _service.interpret_postnatal(natal, postnatal)
+    return asyncio.run(_service.interpret_postnatal(natal, postnatal))
 
 
 def _block_text(blocks: list[InterpretBlock]) -> str:
@@ -121,3 +122,17 @@ def test_narrative_style_personality():
     text = _block_text(result.personality)
     metaphors = ["나무", "태양", "대지", "서리", "바다"]
     assert any(m in text for m in metaphors)
+
+
+def test_annual_fortune_has_multiple_blocks():
+    """SeunInterpreter가 2개 이상의 블록을 생성하는지 검증."""
+    result = _make_postnatal_result()
+    assert len(result.annual_fortune) >= 2
+
+
+def test_relationships_always_has_content():
+    """충·합 여부와 무관하게 relationships에 내용이 있어야 함."""
+    result = _make_postnatal_result()
+    assert len(result.relationships) > 0
+    text = _block_text(result.relationships)
+    assert len(text) > 20

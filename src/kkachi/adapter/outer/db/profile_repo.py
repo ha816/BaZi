@@ -4,8 +4,9 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from kkachi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, FortuneModel, ProfileModel
+from kkachi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, FortuneModel, InterpretFeedbackModel, ProfileModel
 from kkachi.application.port.compatibility_port import CompatibilityPort
+from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.profile_port import ProfilePort
@@ -172,3 +173,14 @@ class CompatibilityRepo(CompatibilityPort):
             )
             c = result.scalar_one_or_none()
             return _to_compatibility(c) if c else None
+
+
+class FeedbackRepo(FeedbackPort):
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
+        self._sf = session_factory
+
+    async def save(self, profile_id: UUID, tab_id: str, rating: int) -> None:
+        async with self._sf() as session:
+            f = InterpretFeedbackModel(profile_id=profile_id, tab_id=tab_id, rating=rating)
+            session.add(f)
+            await session.commit()

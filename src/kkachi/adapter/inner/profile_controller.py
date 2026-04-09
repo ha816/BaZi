@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from kkachi.application.fortune_service import FortuneService
+from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
 from kkachi.container import Container
 from kkachi.domain.user import Gender
@@ -117,3 +118,20 @@ async def get_forecast(
         return await svc.get_forecast(profile_id, days=min(days, 14))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+class FeedbackRequest(BaseModel):
+    tab_id: str
+    rating: int
+
+
+@profile_router.post("/{profile_id}/feedback")
+@inject
+async def post_feedback(
+    member_id: UUID,
+    profile_id: UUID,
+    req: FeedbackRequest,
+    repo: FeedbackPort = Depends(Provide[Container.feedback_repo]),
+) -> dict:
+    await repo.save(profile_id, req.tab_id, req.rating)
+    return {"success": True}

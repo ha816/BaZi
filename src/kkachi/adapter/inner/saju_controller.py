@@ -27,6 +27,7 @@ class AnalysisRequest(BaseModel):
     analysis_year: int = 2026
     city: str = "Seoul"
     longitude: float | None = None
+    name: str = ""
 
 
 def _make_user(req: BasicRequest | AnalysisRequest) -> User:
@@ -80,7 +81,7 @@ async def interpret(
     try:
         user = _make_user(req)
         natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
-        result = saju_svc.interpret(natal_info, postnatal_info)
+        result = await saju_svc.interpret(natal_info, postnatal_info, name=req.name)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
     return asdict(result)

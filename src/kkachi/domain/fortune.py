@@ -12,8 +12,9 @@ class Fortune:
     domain_scores: dict # {재물/연애/직업/건강: {score, level, reason}}
     description: str    # 2~3문장 요약
     tips: list[str]     # 짧은 조언 1~3개
-    weather: dict | None = None   # {temperature, element, condition}
+    weather: dict | None = None   # {temperature, element, condition, hours: [...]}
     solar_term: str | None = None  # 절기명 예) "입춘(立春)"
+    yongshin: str | None = None   # 용신 오행 이름 예) "水"
 
 
 @dataclass

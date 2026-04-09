@@ -136,3 +136,15 @@ export async function analyzeCompatibility(
   }
   return res.json();
 }
+
+export async function postFeedback(
+  memberId: string,
+  profileId: string,
+  tabId: string,
+  rating: number
+): Promise<void> {
+  await request<{ success: boolean }>(
+    `/members/${memberId}/profiles/${profileId}/feedback`,
+    { method: "POST", body: JSON.stringify({ tab_id: tabId, rating }) }
+  );
+}

@@ -1,7 +1,13 @@
 from abc import ABC, abstractmethod
 
+
 class LlmPort(ABC):
 
+    @property
     @abstractmethod
-    async def get_saju(self, params: dict) -> dict:
+    def available(self) -> bool:
+        pass
+
+    @abstractmethod
+    async def get_advice(self, params: dict) -> str:
         pass

@@ -185,6 +185,7 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
         tips=tips,
         weather=weather,
         solar_term=solar_term_name,
+        yongshin=natal.yongshin.name,
     )
 
 

@@ -2,7 +2,8 @@ from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from kkachi.adapter.outer.db.member_repo import MemberRepo
-from kkachi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FortuneRepo, ProfileRepo
+from kkachi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FeedbackRepo, FortuneRepo, ProfileRepo
+from kkachi.adapter.outer.llm_adapter import LlmAdapter
 from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
 from kkachi.adapter.outer.weather_adapter import WeatherAdapter
 from kkachi.application.compatibility_service import CompatibilityService
@@ -32,14 +33,17 @@ class Container(containers.DeclarativeContainer):
     member_repo = providers.Singleton(MemberRepo, session_factory=session_factory)
     profile_repo = providers.Singleton(ProfileRepo, session_factory=session_factory)
     analysis_repo = providers.Singleton(AnalysisRepo, session_factory=session_factory)
+    feedback_repo = providers.Singleton(FeedbackRepo, session_factory=session_factory)
 
     # Saju (기존)
     natal_adapter = providers.Singleton(NatalAdapter)
     postnatal_adapter = providers.Singleton(PostnatalAdapter)
+    llm_adapter = providers.Singleton(LlmAdapter)
     saju_service = providers.Singleton(
         SajuService,
         natal_port=natal_adapter,
         postnatal_port=postnatal_adapter,
+        llm_port=llm_adapter,
     )
 
     # 신규
