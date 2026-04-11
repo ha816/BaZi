@@ -4,6 +4,19 @@ import PillarDetail from "@/components/PillarDetail";
 import SectionHeader from "@/components/SectionHeader";
 import KkachiTip from "@/components/KkachiTip";
 
+const SIPSIN_ARROW: Record<string, { label: string; dir: "to-me" | "from-me" | "same"; color: string }> = {
+  "比肩": { label: "같은 기운", dir: "same",    color: "#78716C" },
+  "劫財": { label: "같은 기운", dir: "same",    color: "#78716C" },
+  "食神": { label: "내가 낳음", dir: "from-me", color: "#1B6B3A" },
+  "傷官": { label: "내가 낳음", dir: "from-me", color: "#1B6B3A" },
+  "偏財": { label: "내가 꺾음", dir: "from-me", color: "#B02020" },
+  "正財": { label: "내가 꺾음", dir: "from-me", color: "#B02020" },
+  "偏官": { label: "나를 꺾음", dir: "to-me",   color: "#B02020" },
+  "正官": { label: "나를 꺾음", dir: "to-me",   color: "#B02020" },
+  "偏印": { label: "나를 키움", dir: "to-me",   color: "#1B6B3A" },
+  "正印": { label: "나를 키움", dir: "to-me",   color: "#1B6B3A" },
+};
+
 interface Props {
   natal: NatalResult;
   name: string;
@@ -167,9 +180,9 @@ export default function NatalTab({ natal, name }: Props) {
 
             <div className="grid grid-cols-2 gap-2 mb-4">
               {Object.entries(
-                natal.sipsin.reduce<Record<string, { sipsin_name: string; chars: string[]; count: number }>>(
+                natal.sipsin.reduce<Record<string, { sipsin_name: string; chars: string[]; element: string; count: number }>>(
                   (acc, s) => {
-                    if (!acc[s.sipsin_name]) acc[s.sipsin_name] = { sipsin_name: s.sipsin_name, chars: [], count: 0 };
+                    if (!acc[s.sipsin_name]) acc[s.sipsin_name] = { sipsin_name: s.sipsin_name, chars: [], element: s.element, count: 0 };
                     acc[s.sipsin_name].chars.push(s.char);
                     acc[s.sipsin_name].count++;
                     return acc;
@@ -177,6 +190,13 @@ export default function NatalTab({ natal, name }: Props) {
                 )
               ).map(([sipsinName, group]) => {
                 const info = SIPSIN_INFO[sipsinName];
+                const arrow = SIPSIN_ARROW[sipsinName];
+                const meEl = getElementInfo(natal.my_element.name);
+                const targetEl = getElementInfo(group.element);
+                const leftInfo  = arrow?.dir === "to-me" ? targetEl : meEl;
+                const rightInfo = arrow?.dir === "to-me" ? meEl     : targetEl;
+                const leftLabel = arrow?.dir === "to-me" ? group.element : natal.my_element.name;
+                const rightLabel= arrow?.dir === "to-me" ? natal.my_element.name : group.element;
                 return (
                   <div key={sipsinName} className="rounded-lg p-3 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
                     <div className="flex items-start justify-between mb-1.5">
@@ -197,6 +217,22 @@ export default function NatalTab({ natal, name }: Props) {
                         <span key={i} className="font-heading text-sm font-bold text-[var(--color-ink-muted)]">{ch}</span>
                       ))}
                     </div>
+                    {/* 미니 관계 다이어그램 */}
+                    {arrow && (
+                      <div className="flex items-center gap-1 mt-2 pt-2 border-t border-[var(--color-border-light)]">
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: leftInfo.bgColor, color: leftInfo.color }}>
+                          {leftLabel}
+                        </span>
+                        <span className="text-[9px] font-semibold flex-1 text-center" style={{ color: arrow.color }}>
+                          {arrow.label} →
+                        </span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                          style={{ backgroundColor: rightInfo.bgColor, color: rightInfo.color }}>
+                          {rightLabel}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

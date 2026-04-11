@@ -2,6 +2,7 @@ export interface SipsinInfo {
   char: string;
   sipsin_name: string;
   domain: string;
+  element: string;
 }
 
 export interface SibiUnseongInfo {
@@ -49,9 +50,16 @@ export interface DomainScore {
   reason: string;
 }
 
+export interface PillarElementInfo {
+  stem_element: string;
+  branch_element: string;
+}
+
 export interface NatalResult {
   pillars: string[];
   day_stem: string;
+  day_stem_yin_yang: string;
+  pillar_elements: PillarElementInfo[];
   element_stats: Record<string, number>;
   strength_value: number;
   strength_label: string;
@@ -81,6 +89,8 @@ export interface PostnatalResult {
   daeun_combines: CombineInfo[];
   domain_scores: Record<string, DomainScore>;
   samjae: { type: string; year_branch: string; birth_branch: string } | null;
+  nearest_yongshin_year: number | null;
+  year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string }>;
   yongshin: InterpretBlock[];
   fortune_by_domain: InterpretBlock[];
   annual_fortune: InterpretBlock[];

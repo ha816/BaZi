@@ -58,16 +58,22 @@ export default function DomainBarChart({ scores }: Props) {
                   {LEVEL_LABEL[info.level]}
                 </span>
               </div>
-              <div className="flex gap-1 mb-2.5">
-                {Array.from({ length: 3 }, (_, j) => (
-                  <span
-                    key={j}
-                    className="text-xs"
-                    style={{ color: j < info.score ? colors.color : "var(--color-border)" }}
-                  >●</span>
-                ))}
+              <div className="mb-2.5">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex-1 h-1.5 rounded-full bg-[var(--color-border-light)] overflow-hidden mr-2">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${Math.round(info.score / 4 * 100)}%`, backgroundColor: colors.color }}
+                    />
+                  </div>
+                  <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: colors.color }}>
+                    {Math.round(info.score / 4 * 100)}%
+                  </span>
+                </div>
               </div>
-              <p className="text-xs text-[var(--color-ink-faint)] leading-relaxed">{info.reason}</p>
+              <p className="text-xs text-[var(--color-ink-faint)] leading-relaxed">
+                <span className="font-medium text-[var(--color-ink-muted)]">근거 </span>{info.reason}
+              </p>
             </div>
           );
         })}

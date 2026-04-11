@@ -147,9 +147,6 @@ const RELATION_STYLE: Record<RelationType, { label: string; color: string; bg: s
   "충":   { label: "충(衝)",     color: "#B82020", bg: "#FBCFC8", border: "#E07070" },
 };
 
-function getYearBranch(year: number): string {
-  return BRANCHES[(year - 4 + 1200) % 12];
-}
 
 interface Props {
   natal: NatalResult;
@@ -182,24 +179,13 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
   const hasSamhapInPillars = pillarBranches.some((b) => samhapPartners.includes(b));
 
 
-  // 연도별 띠 궁합 계산
-  const makeYearRow = (year: number, labelPrefix: string) => {
-    const branch = getYearBranch(year);
-    const info = ZODIAC_INFO[branch];
-    const relation = getRelation(yearBranch, branch);
-    const descMap: Record<RelationType, string> = {
-      "나":   `본명년(本命年) — 12년마다 돌아오는 변화의 해. 내실 다지기에 집중하세요.`,
-      "삼합": `삼합(三合) — 강한 기운이 합쳐지는 해. 도전과 확장에 좋은 타이밍입니다.`,
-      "육합": `육합(六合) — 협력과 관계 확장에 유리한 해입니다.`,
-      "충":   `충(衝) — 예상치 못한 변화와 이동이 많을 수 있으니 유연하게 대처하세요.`,
-      "원진": `원진(怨嗔) — 대인관계에서 미묘한 갈등이나 오해가 생기기 쉬운 시기입니다.`,
-      "보통": `특별한 충·합이 없어요. 큰 기복 없이 꾸준히 나아가기 좋은 한 해입니다.`,
-    };
-    return { year, branch, info, relation, desc: descMap[relation], labelPrefix };
-  };
-
-  const thisYear = makeYearRow(postnatal.year, "올해");
-  const nextYear = makeYearRow(postnatal.year + 1, "내년");
+  // 연도별 띠 궁합 — 백엔드 데이터 사용
+  const YEAR_LABELS = ["올해", "내년", "가까운 좋은 해"];
+  const yearGunghamRows = postnatal.year_zodiac_relations.map((r, idx) => ({
+    ...r,
+    info: ZODIAC_INFO[r.branch],
+    labelPrefix: YEAR_LABELS[idx] ?? "",
+  }));
 
   // 4기둥 지지 조합 까치 설명
   const pillarTip = (() => {
@@ -233,14 +219,7 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
     return `${namePrefix}의 사주지지는 ${notes.join(" ")} 있어 사주 안에서 독특한 에너지 흐름이 만들어집니다.`;
   })();
 
-  // 가장 가까운 좋은 해 (올해·내년 제외, 삼합 > 육합 순)
-  const nearestGoodYear = (() => {
-    for (let i = 2; i <= 13; i++) {
-      const r = makeYearRow(postnatal.year + i, "");
-      if (r.relation === "삼합" || r.relation === "육합") return r;
-    }
-    return null;
-  })();
+  const nearestGoodYear = yearGunghamRows.length > 2 ? yearGunghamRows[2] : null;
 
   return (
     <div className="space-y-4">
@@ -420,9 +399,9 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
           ) : (
             <>
               <div className={`grid gap-2 ${nearestGoodYear ? "grid-cols-3" : "grid-cols-2"}`}>
-                {[thisYear, nextYear, ...(nearestGoodYear ? [{ ...nearestGoodYear, labelPrefix: "가까운 좋은 해" }] : [])].map((row) => {
+                {yearGunghamRows.map((row) => {
                   const isGood = row.relation === "삼합" || row.relation === "육합";
-                  const style = RELATION_STYLE[row.relation];
+                  const style = RELATION_STYLE[row.relation as RelationType] ?? RELATION_STYLE["보통"];
                   return (
                     <div
                       key={row.year}

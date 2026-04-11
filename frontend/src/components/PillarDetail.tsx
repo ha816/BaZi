@@ -2,13 +2,16 @@
 
 import { getElementInfo } from "@/lib/elementColors";
 import TermBadge from "./TermBadge";
+import type { PillarElementInfo } from "@/types/analysis";
 
 interface Props {
   pillars: string[];
   dayStem: string;
+  pillarElements?: PillarElementInfo[];
   basic?: boolean;
   pillarSummary?: string;
   highlightBranches?: boolean;
+  highlightDayStem?: boolean;
 }
 
 const PILLAR_LABELS = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"];
@@ -17,24 +20,16 @@ const PILLAR_TERMS = ["년주", "월주", "일주", "시주"];
 const PILLAR_TERMS_HAN = ["年柱", "月柱", "日柱", "時柱"];
 
 const STEM_ELEMENT: Record<string, string> = {
-  갑: "木", 을: "木", 병: "火", 정: "火", 무: "土",
-  기: "土", 경: "金", 신: "金", 임: "水", 계: "水",
   甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土",
   己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水",
 };
 
 const BRANCH_ELEMENT: Record<string, string> = {
-  자: "水", 축: "土", 인: "木", 묘: "木", 진: "土", 사: "火",
-  오: "火", 미: "土", 신: "金", 유: "金", 술: "土", 해: "水",
   子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
   午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
 };
 
-function getCharElement(char: string, isStem: boolean): string {
-  return (isStem ? STEM_ELEMENT : BRANCH_ELEMENT)[char] ?? "";
-}
-
-export default function PillarDetail({ pillars, dayStem, basic = false, pillarSummary, highlightBranches = false }: Props) {
+export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false }: Props) {
   return (
     <div>
       {pillarSummary && (
@@ -47,16 +42,21 @@ export default function PillarDetail({ pillars, dayStem, basic = false, pillarSu
         {pillars.map((pillar, i) => {
           const stem = pillar[0];
           const branch = pillar[1];
-          const stemEl = getCharElement(stem, true);
-          const branchEl = getCharElement(branch, false);
+          const stemEl = pillarElements?.[i]?.stem_element ?? STEM_ELEMENT[stem] ?? "";
+          const branchEl = pillarElements?.[i]?.branch_element ?? BRANCH_ELEMENT[branch] ?? "";
           const stemInfo = stemEl ? getElementInfo(stemEl) : null;
           const branchInfo = branchEl ? getElementInfo(branchEl) : null;
+          const isDayPillar = highlightDayStem && i === 2;
           return (
             <div
               key={i}
-              className="rounded-xl text-center border transition-shadow border-[var(--color-border-light)] bg-[var(--color-card)]"
+              className="rounded-xl text-center border transition-shadow"
+              style={isDayPillar
+                ? { borderColor: "var(--color-gold)", backgroundColor: "var(--color-gold-faint)" }
+                : { borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }
+              }
             >
-              <div className="px-3 py-3 border-b border-[var(--color-border-light)]">
+              <div className="px-3 py-3 border-b" style={{ borderColor: isDayPillar ? "var(--color-gold)" : "var(--color-border-light)" }}>
                 <div className="text-sm font-medium text-[var(--color-ink)]">
                   {PILLAR_LABELS[i]}
                 </div>
@@ -66,6 +66,9 @@ export default function PillarDetail({ pillars, dayStem, basic = false, pillarSu
                     : <>{PILLAR_SUB[i]} <span className="opacity-60">(<TermBadge term={PILLAR_TERMS[i]} />)</span></>
                   }
                 </div>
+                {isDayPillar && (
+                  <div className="text-[10px] font-semibold mt-0.5" style={{ color: "var(--color-gold)" }}>기준 일간</div>
+                )}
               </div>
 
               <div className="px-3 py-4">

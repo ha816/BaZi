@@ -36,6 +36,12 @@ class NatalResult:
     sibi_unseong: list[dict[str, str]] = field(default_factory=list)
     sinsal: list[dict[str, str]] = field(default_factory=list)
 
+    # 일간 음양
+    day_stem_yin_yang: str = ""
+
+    # 팔자 각 글자 오행 (년/월/일/시 순)
+    pillar_elements: list[dict] = field(default_factory=list)
+
     # 팔자 요약
     pillar_summary: str = ""
 
@@ -70,6 +76,12 @@ class PostnatalResult:
     # 영역별 점수·삼재
     domain_scores: dict[str, dict] = field(default_factory=dict)
     samjae: dict | None = None
+
+    # 가장 가까운 용신의 해
+    nearest_yongshin_year: int | None = None
+
+    # 연도별 띠 관계 (올해·내년·가까운 좋은 해)
+    year_zodiac_relations: list[dict] = field(default_factory=list)
 
     # 텍스트 해석
     yongshin: list[InterpretBlock] = field(default_factory=list)

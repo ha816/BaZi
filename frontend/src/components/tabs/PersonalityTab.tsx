@@ -5,9 +5,13 @@ import { getElementInfo } from "@/lib/elementColors";
 import SectionHeader from "@/components/SectionHeader";
 import KkachiTip from "@/components/KkachiTip";
 
-const YANG_STEMS = new Set(["甲", "丙", "戊", "庚", "壬"]);
 const STRENGTH_MAX = 8;
 const ELEMENT_ORDER = ["木", "火", "土", "金", "水"] as const;
+
+const PILLAR_LABELS_SHORT = ["年", "月", "日", "時"];
+const PILLAR_LABELS_KO = ["해", "달", "날", "시"];
+const STEM_ORDER = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+const BRANCH_ORDER = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
 
 const STEM_ELEMENT: Record<string, string> = {
   甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土",
@@ -17,10 +21,6 @@ const BRANCH_ELEMENT: Record<string, string> = {
   子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
   午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
 };
-const PILLAR_LABELS_SHORT = ["年", "月", "日", "時"];
-const PILLAR_LABELS_KO = ["해", "달", "날", "시"];
-const STEM_ORDER = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
-const BRANCH_ORDER = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
 
 const STEM_READING: Record<string, string> = {
   甲: "갑", 乙: "을", 丙: "병", 丁: "정", 戊: "무",
@@ -68,7 +68,7 @@ export default function PersonalityTab({ natal, postnatal }: Props) {
   const [showYongshin, setShowYongshin] = useState(false);
   const meInfo = getElementInfo(natal.my_element.name);
   const yongshinInfo = getElementInfo(natal.yongshin_info.name);
-  const dayStemYang = YANG_STEMS.has(natal.day_stem);
+  const dayStemYinYang = natal.day_stem_yin_yang;
   const stemProfile = STEM_PROFILE[natal.day_stem] ?? STEM_PROFILE["甲"];
   const strengthDesc = STRENGTH_DESC[natal.strength_label] ?? STRENGTH_DESC["중화(中和)"];
   const strengthPct = Math.min(100, Math.max(0, 50 + (natal.strength_value / STRENGTH_MAX) * 50));
@@ -91,10 +91,8 @@ export default function PersonalityTab({ natal, postnatal }: Props) {
       matchesYongshin: stemEl === natal.yongshin_info.name || branchEl === natal.yongshin_info.name };
   };
 
-  let nearestYongshinOffset: number | null = null;
-  for (let i = 2; i <= 15; i++) {
-    if (makeYear(i).matchesYongshin) { nearestYongshinOffset = i; break; }
-  }
+  const nearestYongshinYear = postnatal.nearest_yongshin_year;
+  const nearestYongshinOffset = nearestYongshinYear != null ? nearestYongshinYear - postnatal.year : null;
 
   const yearItems = [
     { ...makeYear(0), label: "올해" },
@@ -129,7 +127,7 @@ export default function PersonalityTab({ natal, postnatal }: Props) {
                   {stemProfile.nickname}
                 </span>
                 <span className="text-xs text-[var(--color-ink-faint)]">
-                  {dayStemYang ? "양(陽)" : "음(陰)"}
+                  {dayStemYinYang}
                 </span>
               </div>
               <p className="text-sm text-[var(--color-ink-muted)] mt-0.5 leading-relaxed">
@@ -167,8 +165,9 @@ export default function PersonalityTab({ natal, postnatal }: Props) {
             {natal.pillars.map((pillar, i) => {
               const stemChar = pillar[0] ?? "";
               const branchChar = pillar[1] ?? "";
-              const stemInfo = getElementInfo(STEM_ELEMENT[stemChar] ?? "");
-              const branchInfo = getElementInfo(BRANCH_ELEMENT[branchChar] ?? "");
+              const pe = natal.pillar_elements?.[i];
+              const stemInfo = getElementInfo(pe?.stem_element ?? "");
+              const branchInfo = getElementInfo(pe?.branch_element ?? "");
               const isMe = i === 2;
               return (
                 <div key={i} className="flex flex-col items-center gap-1">
@@ -180,14 +179,14 @@ export default function PersonalityTab({ natal, postnatal }: Props) {
                     style={{ backgroundColor: stemInfo.bgColor, borderColor: stemInfo.borderColor }}
                   >
                     <span className="font-heading text-base font-bold leading-none" style={{ color: stemInfo.color }}>{stemChar}</span>
-                    <span className="text-[9px] font-medium leading-none mt-0.5" style={{ color: stemInfo.color }}>{STEM_ELEMENT[stemChar]}</span>
+                    <span className="text-[9px] font-medium leading-none mt-0.5" style={{ color: stemInfo.color }}>{pe?.stem_element}</span>
                   </div>
                   <div
                     className="w-full h-10 rounded-lg flex flex-col items-center justify-center gap-0 border"
                     style={{ backgroundColor: branchInfo.bgColor, borderColor: branchInfo.borderColor }}
                   >
                     <span className="font-heading text-base font-bold leading-none" style={{ color: branchInfo.color }}>{branchChar}</span>
-                    <span className="text-[9px] font-medium leading-none mt-0.5" style={{ color: branchInfo.color }}>{BRANCH_ELEMENT[branchChar]}</span>
+                    <span className="text-[9px] font-medium leading-none mt-0.5" style={{ color: branchInfo.color }}>{pe?.branch_element}</span>
                   </div>
                 </div>
               );
