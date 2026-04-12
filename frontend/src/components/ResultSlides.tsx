@@ -17,10 +17,10 @@ const FEATURE_TABS = [
   { id: "natal",   emoji: "🌱", label: "사주팔자" },
   { id: "ki",      emoji: "✨", label: "기운" },
   { id: "zodiac",  emoji: "🐾", label: "십이지신" },
+  { id: "samjae",  emoji: "⚡", label: "삼재" },
   { id: "daeun",   emoji: "🌊", label: "대운" },
   { id: "seun",    emoji: "☀️", label: "세운" },
   { id: "fortune", emoji: "🍀", label: "운세" },
-  { id: "samjae",  emoji: "⚡", label: "삼재" },
   { id: "advice",  emoji: "💬", label: "종합조언" },
 ] as const;
 
