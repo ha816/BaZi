@@ -210,20 +210,20 @@ export default function FortuneTab({ natal, postnatal }: Props) {
         </div>
         <div className="divider" />
         <div className="slide-card__body">
-          {(() => {
-            const entries = Object.entries(postnatal.domain_scores);
-            if (entries.length === 0) return null;
-            const best = entries.reduce((a, b) => b[1].score > a[1].score ? b : a);
-            const worst = entries.reduce((a, b) => b[1].score < a[1].score ? b : a);
-            if (best[0] === worst[0]) return null;
-            return (
-              <KkachiTip>
-                올해 가장 좋은 영역은 <strong>{best[0]}</strong>이에요. <strong>{worst[0]}</strong>은 상대적으로 아쉬우니 조심하세요.
-              </KkachiTip>
-            );
-          })()}
           <DomainBarChart scores={postnatal.domain_scores} />
           <div className="mt-5 pt-5 border-t border-[var(--color-border-light)] space-y-1">
+            {(() => {
+              const entries = Object.entries(postnatal.domain_scores);
+              if (entries.length === 0) return null;
+              const best = entries.reduce((a, b) => b[1].score > a[1].score ? b : a);
+              const worst = entries.reduce((a, b) => b[1].score < a[1].score ? b : a);
+              if (best[0] === worst[0]) return null;
+              return (
+                <KkachiTip>
+                  올해 가장 좋은 영역은 <strong>{best[0]}</strong>이에요. <strong>{worst[0]}</strong>은 상대적으로 아쉬우니 조심하세요.
+                </KkachiTip>
+              );
+            })()}
             {postnatal.fortune_by_domain.map((block, i) => (
               <div key={i}>
                 {block.description && (

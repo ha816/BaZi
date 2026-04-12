@@ -11,6 +11,7 @@ import FortuneTab from "./tabs/FortuneTab";
 import SamjaeTab from "./tabs/SamjaeTab";
 import AdviceTab from "./tabs/AdviceTab";
 import ZodiacTab from "./tabs/ZodiacTab";
+import FengShuiTab from "./tabs/FengShuiTab";
 import { postFeedback } from "@/lib/api";
 
 const FEATURE_TABS = [
@@ -21,7 +22,8 @@ const FEATURE_TABS = [
   { id: "daeun",   emoji: "🌊", label: "대운" },
   { id: "seun",    emoji: "☀️", label: "세운" },
   { id: "fortune", emoji: "🍀", label: "운세" },
-  { id: "advice",  emoji: "💬", label: "종합조언" },
+  { id: "fengshui", emoji: "🧭", label: "풍수" },
+  { id: "advice",   emoji: "💬", label: "종합조언" },
 ] as const;
 
 type FeatureId = typeof FEATURE_TABS[number]["id"];
@@ -127,8 +129,9 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
         {active === "daeun"   && <DaeunTab       {...tabProps} />}
         {active === "seun"    && <SeunTab        {...tabProps} />}
         {active === "fortune" && <FortuneTab     {...tabProps} />}
-        {active === "samjae"  && <SamjaeTab      {...tabProps} />}
-        {active === "advice"  && <AdviceTab      {...tabProps} />}
+        {active === "samjae"   && <SamjaeTab      {...tabProps} />}
+        {active === "advice"   && <AdviceTab      {...tabProps} />}
+        {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 
         <FeedbackBar
           key={feedbackKey}

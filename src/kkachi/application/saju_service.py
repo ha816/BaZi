@@ -4,6 +4,7 @@ import logging
 
 from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
+from kkachi.application.interpreter.fengshui import FengShuiInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
 from kkachi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
 from kkachi.application.interpreter.relationship import RelationshipInterpreter
@@ -165,7 +166,7 @@ class SajuService(InterpreterPort):
             summary += " 다섯 기운이 모두 있어 균형 잡힌 구성이에요."
         return summary
 
-    def interpret_natal(self, natal: NatalInfo) -> NatalResult:
+    def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True) -> NatalResult:
         day_stem = natal.saju.stem_of_day_pillar
         pillar_elements = [
             {"stem_element": sb.stem.element.name, "branch_element": sb.branch.element.name}
@@ -187,6 +188,7 @@ class SajuService(InterpreterPort):
             pillar_summary=self._build_pillar_summary(natal),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),
+            feng_shui=FengShuiInterpreter()(natal, birth_year, is_male),
         )
 
     async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> PostnatalResult:
@@ -268,8 +270,12 @@ class SajuService(InterpreterPort):
             _log.exception("LLM advice enrichment failed — falling back to rule engine")
         return rule_advice
 
-    async def interpret(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> Interpretation:
+    async def interpret(
+        self, natal: NatalInfo, postnatal: PostnatalInfo, user: User | None = None, name: str = ""
+    ) -> Interpretation:
+        birth_year = user.birth_dt.year if user else 0
+        is_male = user.gender.is_male if user else True
         return Interpretation(
-            natal=self.interpret_natal(natal),
+            natal=self.interpret_natal(natal, birth_year=birth_year, is_male=is_male),
             postnatal=await self.interpret_postnatal(natal, postnatal, name),
         )

@@ -48,6 +48,7 @@ class NatalResult:
     # 텍스트 해석
     personality: list[InterpretBlock] = field(default_factory=list)
     element_balance: list[InterpretBlock] = field(default_factory=list)
+    feng_shui: list[InterpretBlock] = field(default_factory=list)
 
 
 @dataclass

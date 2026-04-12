@@ -81,7 +81,7 @@ async def interpret(
     try:
         user = _make_user(req)
         natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
-        result = await saju_svc.interpret(natal_info, postnatal_info, name=req.name)
+        result = await saju_svc.interpret(natal_info, postnatal_info, user=user, name=req.name)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
     return asdict(result)

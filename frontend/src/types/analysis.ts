@@ -71,6 +71,7 @@ export interface NatalResult {
   pillar_summary: string;
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];
+  feng_shui: InterpretBlock[];
 }
 
 export interface PostnatalResult {
