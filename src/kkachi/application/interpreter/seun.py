@@ -1,4 +1,4 @@
-from kkachi.domain.ganji import Branch, Stem
+from kkachi.domain.ganji import Stem
 from kkachi.domain.interpretation import InterpretBlock
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
@@ -26,80 +26,51 @@ class SeunInterpreter:
         branch_char, branch_sipsin = postnatal.seun_branch
 
         seun_stem = Stem.from_char(stem_char)
-        seun_branch = Branch.from_char(branch_char)
         yongshin = natal.yongshin
-
         stem_keyword = STEM_KEYWORD.get(stem_char, "변화")
 
+        # ① 올해 기운 요약
         lines.append(
-            f"{year}년 하늘 기운({stem_char})은 {stem_sipsin.domain} 방면에 변화를 가져옵니다. "
-            f"{stem_keyword}의 기운이 강하게 작용하는 해입니다."
-        )
-        lines.append(
-            f"{year}년 땅 기운({branch_char})은 {branch_sipsin.domain} 방면의 환경을 만듭니다."
+            f"올해({year}년)는 {stem_char}·{branch_char}의 해예요. "
+            f"{stem_keyword}의 에너지가 {stem_sipsin.domain}과 {branch_sipsin.domain} 방면을 감싸고 있어요."
         )
 
+        # ② 올해 기운과 용신의 관계
         seun_elem = seun_stem.element
         yongshin_label = f"{yongshin.name}({yongshin.meaning})"
         seun_elem_label = f"{seun_elem.name}({seun_elem.meaning})"
         if seun_elem == yongshin:
             lines.append(
-                f"올해 들어오는 {seun_elem_label} 기운이 당신에게 가장 필요한 용신(用神)과 정확히 일치합니다. "
-                f"에너지 흐름이 당신 편인 해로, 계획했던 일을 밀고 나갈 최적의 타이밍입니다."
+                f"올해 들어오는 {seun_elem_label} 기운이 당신에게 가장 필요한 용신과 딱 맞아떨어져요. "
+                f"흐름이 완전히 내 편인 해예요. 미뤄뒀던 계획을 밀어붙이기에 지금이 최적의 타이밍입니다."
             )
         elif seun_elem.generates == yongshin:
             lines.append(
-                f"올해 {seun_elem_label} 기운이 용신인 {yongshin_label} 기운을 생해줍니다. "
-                f"직접적인 힘은 아니지만 좋은 에너지가 쌓이는 흐름이어서, 꾸준히 노력하면 하반기로 갈수록 성과가 드러납니다."
+                f"올해 {seun_elem_label} 기운이 당신의 용신인 {yongshin_label}을 슬며시 밀어주고 있어요. "
+                f"드라마틱하진 않지만, 꾸준히 쌓으면 하반기로 갈수록 그 성과가 서서히 드러날 거예요."
             )
         elif seun_elem.overcomes == yongshin:
             lines.append(
-                f"올해 {seun_elem_label} 기운이 용신인 {yongshin_label} 기운을 억제합니다. "
-                f"에너지 흐름이 다소 거스르는 해이므로, 큰 결정보다는 내실을 다지고 방어적으로 운영하는 것이 유리합니다."
+                f"올해 {seun_elem_label} 기운이 당신에게 필요한 {yongshin_label}을 억누르고 있어요. "
+                f"흐름이 다소 거스르는 해이니, 무리한 확장보다는 내실을 다지는 쪽이 훨씬 현명합니다."
             )
 
-        if postnatal.seun_clashes:
-            for clash in postnatal.seun_clashes:
-                pillar = clash.get('pillar', '')
-                meaning = PILLAR_MEANING.get(pillar, pillar)
-                lines.append(
-                    f"올해 세운이 {meaning} 영역과 충(衝)을 이룹니다. "
-                    f"이 영역에서 예상치 못한 변동이나 이별, 갈등이 발생할 수 있으니 미리 대비하세요."
-                )
-
-        if postnatal.seun_combines:
-            for combine in postnatal.seun_combines:
-                pillar = combine.get('pillar', '')
-                meaning = PILLAR_MEANING.get(pillar, pillar)
-                lines.append(
-                    f"올해 세운이 {meaning} 영역과 합(合)을 이룹니다. "
-                    f"이 영역에서 좋은 인연이 맺어지거나 뜻밖의 기회가 열릴 수 있습니다."
-                )
-
+        # ③ 대운·세운 방향 일치 여부
         if postnatal.current_daeun:
             daeun_ganji = postnatal.current_daeun.ganji
-            daeun_stem_char = daeun_ganji[0]
-            daeun_stem = Stem.from_char(daeun_stem_char)
+            daeun_stem = Stem.from_char(daeun_ganji[0])
             daeun_elem = daeun_stem.element
 
             if seun_elem.generates == daeun_elem or seun_elem == daeun_elem:
                 lines.append(
-                    f"대운({daeun_ganji})과 세운({stem_char}{branch_char})이 서로 에너지를 보완하고 있습니다. "
-                    f"큰 흐름과 올해 운이 같은 방향을 가리키니, 장기 계획을 실행하기에 좋은 해입니다."
+                    f"대운({daeun_ganji})과 올해 기운({stem_char}{branch_char})이 같은 방향을 가리키고 있어요. "
+                    f"큰 흐름과 당장의 현실이 잘 맞아 돌아가니, 오래 생각해왔던 계획을 실행에 옮기기에 좋은 때입니다."
                 )
             elif seun_elem.overcomes == daeun_elem or daeun_elem.overcomes == seun_elem:
                 lines.append(
-                    f"대운({daeun_ganji})과 세운({stem_char}{branch_char})의 기운이 서로 맞서고 있습니다. "
-                    f"큰 흐름과 올해 기운이 다른 방향을 가리킬 수 있어 내면의 혼란이나 결정 지연이 생길 수 있습니다. "
-                    f"한 가지에 집중하는 전략이 필요합니다."
+                    f"대운({daeun_ganji})과 올해 기운({stem_char}{branch_char})이 서로 다른 방향을 가리키고 있어요. "
+                    f"큰 흐름과 당장의 현실이 엇갈릴 수 있는 시기예요. "
+                    f"이럴 때일수록 여러 곳에 힘을 분산하기보다 한 가지에 집중하는 것이 훨씬 힘이 됩니다."
                 )
 
         return [InterpretBlock(description=l) for l in lines]
-
-
-PILLAR_MEANING: dict[str, str] = {
-    "년주": "조상·사회적 환경",
-    "월주": "부모·직장·사회활동",
-    "일주": "본인·배우자",
-    "시주": "자녀·말년·미래",
-}
