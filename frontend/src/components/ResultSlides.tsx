@@ -6,18 +6,22 @@ import type { AnalysisResult } from "@/types/analysis";
 import NatalTab from "./tabs/NatalTab";
 import PersonalityTab from "./tabs/PersonalityTab";
 import DaeunTab from "./tabs/DaeunTab";
-import RelationshipTab from "./tabs/RelationshipTab";
+import SeunTab from "./tabs/SeunTab";
+import FortuneTab from "./tabs/FortuneTab";
+import SamjaeTab from "./tabs/SamjaeTab";
 import AdviceTab from "./tabs/AdviceTab";
 import ZodiacTab from "./tabs/ZodiacTab";
 import { postFeedback } from "@/lib/api";
 
 const FEATURE_TABS = [
-  { id: "natal",        emoji: "🌱", label: "사주팔자" },
-  { id: "ki",           emoji: "✨", label: "기운" },
-  { id: "zodiac",       emoji: "🐾", label: "십이지신" },
-  { id: "daeun",        emoji: "🌊", label: "대운·세운" },
-  { id: "relationship", emoji: "🤝", label: "인간관계" },
-  { id: "advice",       emoji: "💬", label: "종합조언" },
+  { id: "natal",   emoji: "🌱", label: "사주팔자" },
+  { id: "ki",      emoji: "✨", label: "기운" },
+  { id: "zodiac",  emoji: "🐾", label: "십이지신" },
+  { id: "daeun",   emoji: "🌊", label: "대운" },
+  { id: "seun",    emoji: "☀️", label: "세운" },
+  { id: "fortune", emoji: "🍀", label: "운세" },
+  { id: "samjae",  emoji: "⚡", label: "삼재" },
+  { id: "advice",  emoji: "💬", label: "종합조언" },
 ] as const;
 
 type FeatureId = typeof FEATURE_TABS[number]["id"];
@@ -117,12 +121,14 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
       </div>
 
       <div>
-        {active === "natal"        && <NatalTab        {...tabProps} />}
-        {active === "ki"           && <PersonalityTab  {...tabProps} />}
-{active === "daeun"        && <DaeunTab        {...tabProps} />}
-        {active === "relationship" && <RelationshipTab {...tabProps} />}
-        {active === "advice"       && <AdviceTab       {...tabProps} />}
-        {active === "zodiac"       && <ZodiacTab       {...tabProps} />}
+        {active === "natal"   && <NatalTab       {...tabProps} />}
+        {active === "ki"      && <PersonalityTab {...tabProps} />}
+        {active === "zodiac"  && <ZodiacTab      {...tabProps} />}
+        {active === "daeun"   && <DaeunTab       {...tabProps} />}
+        {active === "seun"    && <SeunTab        {...tabProps} />}
+        {active === "fortune" && <FortuneTab     {...tabProps} />}
+        {active === "samjae"  && <SamjaeTab      {...tabProps} />}
+        {active === "advice"  && <AdviceTab      {...tabProps} />}
 
         <FeedbackBar
           key={feedbackKey}

@@ -7,6 +7,7 @@ import type {
   DailyFortune,
   DailyWeather,
   Member,
+  PalmistryResult,
   Profile,
   ProfileCreateInput,
 } from "@/types/analysis";
@@ -38,6 +39,20 @@ export async function analyzeChart(
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text);
+  }
+  return res.json();
+}
+
+export async function analyzePalmistry(file: File): Promise<PalmistryResult> {
+  const formData = new FormData();
+  formData.append("image", file);
+  const res = await fetch(`${API_URL}/palmistry/analyze`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.detail ?? "분석 중 오류가 발생했습니다.");
   }
   return res.json();
 }

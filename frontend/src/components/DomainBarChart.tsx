@@ -39,41 +39,41 @@ export default function DomainBarChart({ scores }: Props) {
       <p className="text-sm text-[var(--color-ink-light)] leading-relaxed mb-4">
         {buildDomainNarrative(scores)}
       </p>
-      <div className="grid grid-cols-2 gap-2.5">
-        {entries.map(([name, info], i) => {
+      <div className="grid grid-cols-2 gap-2">
+        {entries.map(([name, info]) => {
           const colors = LEVEL_COLORS[info.level] ?? LEVEL_COLORS.low;
-          const isLast = entries.length % 2 === 1 && i === entries.length - 1;
+          const isLow = info.level === "low";
           return (
             <div
               key={name}
-              className={`rounded-xl p-4 border ${isLast ? "col-span-2" : ""}`}
-              style={{ backgroundColor: colors.bgColor, borderColor: colors.borderColor }}
+              className="rounded-lg p-3 border"
+              style={{
+                backgroundColor: colors.bgColor,
+                borderColor: colors.borderColor,
+                opacity: isLow ? 0.5 : 1,
+              }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold" style={{ color: colors.color }}>{name}</span>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-bold" style={{ color: colors.color }}>{name}</span>
                 <span
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
                   style={{ color: colors.color, backgroundColor: colors.borderColor + "80" }}
                 >
                   {LEVEL_LABEL[info.level]}
                 </span>
               </div>
-              <div className="mb-2.5">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex-1 h-1.5 rounded-full bg-[var(--color-border-light)] overflow-hidden mr-2">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${Math.round(info.score / 4 * 100)}%`, backgroundColor: colors.color }}
-                    />
-                  </div>
-                  <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: colors.color }}>
-                    {Math.round(info.score / 4 * 100)}%
-                  </span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="flex-1 h-1 rounded-full bg-[var(--color-border-light)] overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${Math.round(info.score / 4 * 100)}%`, backgroundColor: colors.color }}
+                  />
                 </div>
+                <span className="text-[10px] font-semibold flex-shrink-0" style={{ color: colors.color }}>
+                  {Math.round(info.score / 4 * 100)}%
+                </span>
               </div>
-              <p className="text-xs text-[var(--color-ink-faint)] leading-relaxed">
-                <span className="font-medium text-[var(--color-ink-muted)]">근거 </span>{info.reason}
-              </p>
+              <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed">{info.reason}</p>
             </div>
           );
         })}

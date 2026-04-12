@@ -139,6 +139,21 @@ export interface CompatibilityDomainScore {
   reason: string;
 }
 
+export interface PalmLineScores {
+  heart: number;
+  head: number;
+  life: number;
+}
+
+export interface PalmistryResult {
+  hand_element: string;
+  hand_type_korean: string;
+  finger_ratio: number;
+  aspect_ratio: number;
+  line_scores: PalmLineScores;
+  blocks: InterpretBlock[];
+}
+
 export interface CompatibilityResult {
   total_score: number;
   label: string;
