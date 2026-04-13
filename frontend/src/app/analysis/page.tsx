@@ -105,22 +105,33 @@ export default function AnalysisPage() {
           <p className="text-sm text-[var(--color-ink-muted)]">타고난 사주와 올해의 운세를 풀어드립니다.</p>
         </header>
 
-        {/* 탭 (프로필 있을 때) */}
-        {profiles.length > 0 && (
-          <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)] w-fit">
-            {(["profile", "direct"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${
-                  mode === m
-                    ? "bg-white text-[var(--color-ink)] shadow-sm"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                }`}
-              >
-                {m === "profile" ? "저장된 프로필" : "직접 입력"}
-              </button>
-            ))}
+        {/* 탭 */}
+        <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)]">
+          {(["profile", "direct"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                mode === m
+                  ? "bg-white text-[var(--color-ink)] shadow-sm"
+                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              }`}
+            >
+              {m === "profile" ? "저장된 프로필 불러오기" : "프로필 직접 입력하기"}
+            </button>
+          ))}
+        </div>
+
+        {/* 프로필 없음 안내 */}
+        {mode === "profile" && profiles.length === 0 && (
+          <div className="text-center py-10 text-sm text-[var(--color-ink-faint)] space-y-3">
+            <p>{memberId ? "저장된 프로필이 없습니다." : "로그인 후 저장된 프로필을 불러올 수 있습니다."}</p>
+            <a
+              href={memberId ? "/profile" : "/join"}
+              className="inline-block text-sm text-[var(--color-gold)] hover:opacity-70 transition-opacity"
+            >
+              {memberId ? "프로필 추가하기 →" : "로그인하기 →"}
+            </a>
           </div>
         )}
 

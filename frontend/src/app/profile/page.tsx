@@ -202,25 +202,50 @@ function ProfileCard({
     return (
       <form
         onSubmit={handleEditSubmit}
-        className="border border-[var(--color-gold-light)] rounded-xl p-5 space-y-4 bg-[var(--color-ivory-warm)]"
+        className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-gold-light)] shadow-sm p-7 space-y-7"
       >
         <p className="text-sm font-medium text-[var(--color-ink)]">
-          내 프로필 수정
-          <span className="ml-2 text-xs text-[var(--color-gold)] font-normal">나</span>
+          프로필 수정
+          {profile.is_self && <span className="ml-2 text-xs text-[var(--color-gold)] font-normal">나</span>}
         </p>
-        <div className="grid grid-cols-3 gap-3">
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">이름</span>
+
+        {/* Row 1: 이름 + 성별 */}
+        <div className="flex gap-4">
+          <label className="flex-1 space-y-2">
+            <span className="text-sm font-medium text-[var(--color-ink-light)]">이름</span>
             <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
               required className={inputClass} />
           </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">생년월일</span>
+          <div className="space-y-2 w-36">
+            <span className="text-sm font-medium text-[var(--color-ink-light)]">성별</span>
+            <div className="flex gap-2 h-[50px]">
+              {(["male", "female"] as const).map((g) => (
+                <button key={g} type="button" onClick={() => setEditGender(g)}
+                  className={`flex-1 rounded-lg text-sm font-medium transition-all ${
+                    g === "male"
+                      ? editGender === "male"
+                        ? "bg-blue-100 text-blue-600 border border-blue-300"
+                        : "bg-[var(--color-ivory)] text-[var(--color-ink-faint)] border border-[var(--color-border)]"
+                      : editGender === "female"
+                        ? "bg-pink-100 text-pink-500 border border-pink-300"
+                        : "bg-[var(--color-ivory)] text-[var(--color-ink-faint)] border border-[var(--color-border)]"
+                  }`}>
+                  {g === "male" ? "남" : "여"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: 생년월일 + 태어난 시간 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-[var(--color-ink-light)]">생년월일</span>
             <input type="date" value={editBirthDate} onChange={(e) => setEditBirthDate(e.target.value)}
               className={inputClass} min="1920-01-01" max="2025-12-31" />
           </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">태어난 시간</span>
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-[var(--color-ink-light)]">태어난 시간</span>
             <select value={editHour} onChange={(e) => setEditHour(e.target.value)}
               className={`${inputClass} appearance-none`}>
               {HOUR_OPTIONS.map((opt) => (
@@ -229,29 +254,15 @@ function ProfileCard({
             </select>
           </label>
         </div>
-        <div className="space-y-1.5">
-          <span className="text-xs font-medium text-[var(--color-ink-light)]">성별</span>
-          <div className="flex gap-3">
-            {(["male", "female"] as const).map((g) => (
-              <button key={g} type="button" onClick={() => setEditGender(g)}
-                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
-                  editGender === g
-                    ? "bg-[var(--color-ink)] text-[var(--color-ivory)]"
-                    : "bg-white text-[var(--color-ink-muted)] border border-[var(--color-border)]"
-                }`}>
-                {g === "male" ? "남성" : "여성"}
-              </button>
-            ))}
-          </div>
-        </div>
+
         {editError && <p className="text-sm text-[var(--color-fire)]">{editError}</p>}
         <div className="flex gap-3">
           <button type="button" onClick={() => setEditing(false)}
-            className="flex-1 py-3 rounded-lg text-sm border border-[var(--color-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-ink-faint)] transition-colors">
+            className="flex-1 py-4 rounded-lg text-base border border-[var(--color-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-ink-faint)] transition-colors">
             취소
           </button>
           <button type="submit" disabled={editLoading}
-            className="flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 text-sm font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors">
+            className="flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
             {editLoading ? "저장 중..." : "저장하기"}
           </button>
         </div>
