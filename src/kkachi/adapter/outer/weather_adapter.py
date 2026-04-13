@@ -60,9 +60,15 @@ _SHOW_HOURS = {0, 3, 6, 9, 12, 15, 18, 21}
 
 
 class WeatherAdapter(WeatherPort):
-    async def get_forecast(self, city: str, days: int = 7) -> list[dict] | None:
-        """도시명으로 days일치 날씨 반환. 실패 시 None."""
-        lat, lon = await _resolve_latlon(city)
+    async def get_forecast(
+        self, city: str, days: int = 7,
+        lat: float | None = None, lon: float | None = None,
+    ) -> list[dict] | None:
+        """도시명 또는 좌표로 days일치 날씨 반환. 실패 시 None."""
+        if lat is not None and lon is not None:
+            pass  # 좌표 직접 사용
+        else:
+            lat, lon = await _resolve_latlon(city)
         params = {
             "latitude": lat,
             "longitude": lon,
@@ -117,6 +123,8 @@ class WeatherAdapter(WeatherPort):
             result.append({
                 "date": date_str,
                 "temperature": round(temp, 1),
+                "temp_max": round(t_max[i], 1) if i < len(t_max) else round(temp, 1),
+                "temp_min": round(t_min[i], 1) if i < len(t_min) else round(temp, 1),
                 "weather_code": code,
                 "element": element.name,
                 "condition": f"{label} {temp:.0f}°C",

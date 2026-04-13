@@ -10,6 +10,7 @@ from kkachi.adapter.inner.palmistry_controller import palmistry_router
 from kkachi.adapter.inner.payment_controller import payment_router
 from kkachi.adapter.inner.profile_controller import profile_router
 from kkachi.adapter.inner.saju_controller import saju_router
+from kkachi.adapter.inner.weather_controller import weather_router
 from kkachi.container import Container
 
 
@@ -28,7 +29,7 @@ app = FastAPI(title="사주팔자 분석 API", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -38,3 +39,4 @@ app.include_router(profile_router)
 app.include_router(compatibility_router)
 app.include_router(payment_router)
 app.include_router(palmistry_router)
+app.include_router(weather_router)

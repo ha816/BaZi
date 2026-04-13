@@ -31,6 +31,11 @@ const IconHand = () => (
     <path d="M6 13c0 3.5 2 6 6 6s6-2.5 6-6v-2h-1" />
   </svg>
 );
+const IconCloud = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 10a6 6 0 00-11.9-1A4 4 0 104 17h14a3 3 0 000-6z" />
+  </svg>
+);
 const IconPerson = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="8" r="4" />
@@ -43,6 +48,7 @@ const TABS_LOGGED_IN = [
   { href: "/analysis", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
   { href: "/palmistry", label: "손금", icon: <IconHand /> },
+  { href: "/weather", label: "날씨", icon: <IconCloud /> },
   { href: "/my", label: "계정", icon: <IconPerson /> },
 ];
 
@@ -51,6 +57,7 @@ const TABS_GUEST = [
   { href: "/analysis", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
   { href: "/palmistry", label: "손금", icon: <IconHand /> },
+  { href: "/weather", label: "날씨", icon: <IconCloud /> },
   { href: "/join", label: "로그인", icon: <IconPerson /> },
 ];
 
