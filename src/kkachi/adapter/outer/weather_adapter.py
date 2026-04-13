@@ -115,7 +115,9 @@ class WeatherAdapter(WeatherPort):
 
         result = []
         for i, date_str in enumerate(dates):
-            temp = (t_max[i] + t_min[i]) / 2 if i < len(t_max) and i < len(t_min) else 15.0
+            mx = t_max[i] if i < len(t_max) and t_max[i] is not None else None
+            mn = t_min[i] if i < len(t_min) and t_min[i] is not None else None
+            temp = (mx + mn) / 2 if mx is not None and mn is not None else (mx or mn or 15.0)
             day_raw_codes = raw_codes_by_date.get(date_str)
             code = Counter(day_raw_codes).most_common(1)[0][0] if day_raw_codes else (int(codes[i]) if i < len(codes) else 0)
             element = WMO_OHENG.get(code, Oheng.土)
@@ -123,8 +125,8 @@ class WeatherAdapter(WeatherPort):
             result.append({
                 "date": date_str,
                 "temperature": round(temp, 1),
-                "temp_max": round(t_max[i], 1) if i < len(t_max) else round(temp, 1),
-                "temp_min": round(t_min[i], 1) if i < len(t_min) else round(temp, 1),
+                "temp_max": round(mx, 1) if mx is not None else None,
+                "temp_min": round(mn, 1) if mn is not None else None,
                 "weather_code": code,
                 "element": element.name,
                 "condition": f"{label} {temp:.0f}°C",

@@ -33,10 +33,8 @@ const ELEMENT_META: Record<string, { label: string; color: string; bg: string; e
 
 function dayLabel(dateStr: string, idx: number): string {
   if (idx === 0) return "오늘";
-  if (idx === 1) return "내일";
-  if (idx === 2) return "모레";
   const d = new Date(dateStr);
-  return ["일", "월", "화", "수", "목", "금", "토"][d.getDay()] + "요일";
+  return ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
 }
 
 function formatDate(dateStr: string): string {
@@ -75,7 +73,7 @@ export default function WeatherPage() {
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ days: "10" });
+    const params = new URLSearchParams({ days: "14" });
     if (coords) {
       params.set("lat", String(coords.lat));
       params.set("lon", String(coords.lon));
@@ -110,28 +108,28 @@ export default function WeatherPage() {
           const tm = meta(today.element);
           const conditionText = today.condition.replace(/\s*\d+\.?\d*°C$/, "");
           return (
-            <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm py-8 px-6 flex flex-col items-center gap-2 text-center">
-              {displayCity && (
-                <p className="text-sm text-[var(--color-ink-muted)]">{displayCity}</p>
-              )}
-              <div className="text-6xl mt-1">{tm.emoji}</div>
-              <div className="text-7xl font-thin text-[var(--color-ink)] leading-none mt-1">
-                {Math.round(today.temperature)}°
+            <div className="flex gap-3">
+              <div className="flex-1 rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm py-8 px-4 flex flex-col items-center gap-2 text-center">
+                <div className="text-6xl mt-1">{tm.emoji}</div>
+                <div className="text-7xl font-thin text-[var(--color-ink)] leading-none mt-1">
+                  {Math.round(today.temperature)}°
+                </div>
+                <p className="text-sm text-[var(--color-ink-muted)] mt-1">{conditionText}</p>
+                <p className="text-sm text-[var(--color-ink-faint)]">
+                  최저 {today.temp_min != null ? Math.round(today.temp_min) : "--"}° · 최고 {today.temp_max != null ? Math.round(today.temp_max) : "--"}°
+                </p>
               </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`text-base font-semibold ${tm.color}`}>{tm.label}</span>
-                <span className="text-sm text-[var(--color-ink-muted)]">{conditionText}</span>
+              <div className={`rounded-2xl border shadow-sm px-5 flex flex-col items-center justify-center gap-1 ${tm.bg}`}>
+                <span className={`text-5xl font-bold ${tm.color}`}>{today.element}</span>
+                <span className={`text-xs font-semibold ${tm.color} opacity-80`}>{tm.label}</span>
               </div>
-              <p className="text-sm text-[var(--color-ink-faint)]">
-                최저 {Math.round(today.temp_min)}° · 최고 {Math.round(today.temp_max)}°
-              </p>
             </div>
           );
         })()}
 
         {/* 시간대별 가로 슬라이드 */}
         {!loading && days.length > 0 && (() => {
-          type WeatherSlot = { type: "weather"; label: string; sublabel?: string; hour: HourWeather };
+          type WeatherSlot = { type: "weather"; dayLabel: string | null; timeLabel: string; hour: HourWeather };
           const slots: WeatherSlot[] = [];
           const nowHour = new Date().getHours();
           let lastAmPm: "am" | "pm" | null = null;
@@ -140,18 +138,20 @@ export default function WeatherPage() {
           const pushHour = (h: HourWeather) => {
             const hr = parseInt(h.hour);
             const amPm = hr < 12 ? "am" : "pm";
-            let prefix = nextPrefix;
+            const dayLbl = nextPrefix ?? null;
             nextPrefix = null;
+            let timeLabel: string;
             if (amPm !== lastAmPm) {
-              const amPmLabel = amPm === "am" ? "오전" : "오후";
-              prefix = prefix ? `${prefix} ${amPmLabel}` : amPmLabel;
+              timeLabel = `${amPm === "am" ? "오전" : "오후"} ${h.hour}`;
               lastAmPm = amPm;
+            } else {
+              timeLabel = h.hour;
             }
-            const label = prefix ? `${prefix} ${h.hour}` : h.hour;
-            slots.push({ type: "weather", label, hour: h });
+            slots.push({ type: "weather", dayLabel: dayLbl, timeLabel, hour: h });
           };
 
           // 오늘 — 현재 시각 이후
+          nextPrefix = "오늘";
           days[0].hours.filter((h) => parseInt(h.hour) >= nowHour).forEach(pushHour);
 
           // 내일
@@ -167,6 +167,13 @@ export default function WeatherPage() {
             lastAmPm = null;
             days[2].hours.forEach(pushHour);
           }
+
+          // 사흘
+          if (days[3]) {
+            nextPrefix = "사흘";
+            lastAmPm = null;
+            days[3].hours.forEach(pushHour);
+          }
           return (
             <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-3">
               <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-3">시간별 예보</p>
@@ -174,7 +181,12 @@ export default function WeatherPage() {
                 <div className="flex gap-1 w-max">
                   {slots.map((s, i) => (
                     <div key={i} className="flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[56px]">
-                      <span className="text-[11px] text-[var(--color-ink-faint)] whitespace-nowrap">{s.label}</span>
+                      <div className="h-8 flex flex-col items-center justify-end gap-0.5">
+                        {s.dayLabel && (
+                          <span className="text-[10px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap leading-none">{s.dayLabel}</span>
+                        )}
+                        <span className="text-[11px] text-[var(--color-ink-faint)] whitespace-nowrap leading-none">{s.timeLabel}</span>
+                      </div>
                       <span className="text-2xl">{meta(s.hour.element).emoji}</span>
                       <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(s.hour.temperature)}°</span>
                     </div>
@@ -189,7 +201,7 @@ export default function WeatherPage() {
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-1">
             <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-3">일별 예보</p>
             <div className="divide-y divide-[var(--color-border-light)]">
-              {days.map((day, idx) => {
+              {days.slice(0, 10).map((day, idx) => {
                 const m = meta(day.element);
                 const conditionText = day.condition.replace(/\s*\d+\.?\d*°C$/, "");
                 return (
@@ -200,14 +212,14 @@ export default function WeatherPage() {
                     </div>
                     <span className="text-2xl">{m.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <span className={`text-xs font-medium ${m.color}`}>{m.label}</span>
-                      <span className="text-xs text-[var(--color-ink-muted)] ml-1.5">{conditionText}</span>
+                      <span className="text-xs text-[var(--color-ink-muted)]">{conditionText}</span>
+                      <span className="text-xs text-[var(--color-ink-faint)] ml-1.5">
+                        <span className="text-[10px]">최저 </span>{day.temp_min != null ? Math.round(day.temp_min) : "--"}°
+                        <span className="mx-0.5 text-[var(--color-border)]">·</span>
+                        <span className="text-[10px]">최고 </span>{day.temp_max != null ? Math.round(day.temp_max) : "--"}°
+                      </span>
                     </div>
-                    <div className="text-right text-sm">
-                      <span className="text-[var(--color-ink-muted)]">{Math.round(day.temp_min)}°</span>
-                      <span className="mx-1 text-[var(--color-border)]">·</span>
-                      <span className="font-semibold text-[var(--color-ink)]">{Math.round(day.temp_max)}°</span>
-                    </div>
+                    <span className={`text-xs font-semibold ${m.color} w-10 text-right shrink-0`}>{m.label}</span>
                   </div>
                 );
               })}
