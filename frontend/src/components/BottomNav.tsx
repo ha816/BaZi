@@ -36,6 +36,12 @@ const IconCloud = () => (
     <path d="M18 10a6 6 0 00-11.9-1A4 4 0 104 17h14a3 3 0 000-6z" />
   </svg>
 );
+const IconSun = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+  </svg>
+);
 const IconPerson = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="8" r="4" />
@@ -49,6 +55,7 @@ const TABS_LOGGED_IN = [
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
   { href: "/palmistry", label: "손금", icon: <IconHand /> },
   { href: "/weather", label: "날씨", icon: <IconCloud /> },
+  { href: "/fortune", label: "오늘운세", icon: <IconSun /> },
   { href: "/my", label: "계정", icon: <IconPerson /> },
 ];
 
@@ -58,6 +65,7 @@ const TABS_GUEST = [
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
   { href: "/palmistry", label: "손금", icon: <IconHand /> },
   { href: "/weather", label: "날씨", icon: <IconCloud /> },
+  { href: "/fortune", label: "오늘운세", icon: <IconSun /> },
   { href: "/join", label: "로그인", icon: <IconPerson /> },
 ];
 
@@ -91,8 +99,8 @@ export default function BottomNav() {
               isActive ? "text-[var(--color-gold)]" : "text-[var(--color-ink-faint)]"
             }`}
           >
-            {tab.icon}
-            <span className="text-[10px] font-medium">{tab.label}</span>
+            <span className="[&_svg]:w-5 [&_svg]:h-5">{tab.icon}</span>
+            <span className="text-[9px] font-medium">{tab.label}</span>
           </Link>
         );
       })}

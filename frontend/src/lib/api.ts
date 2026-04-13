@@ -137,8 +137,9 @@ export async function getDailyFortune(memberId: string, profileId: string): Prom
   return request<DailyFortune>(`/members/${memberId}/profiles/${profileId}/daily`);
 }
 
-export async function getWeather(city: string): Promise<{ city: string; days: DailyWeather[] }> {
-  return request<{ city: string; days: DailyWeather[] }>(`/weather?city=${encodeURIComponent(city)}`);
+export async function getWeather(city: string): Promise<DailyWeather[]> {
+  const data = await request<DailyWeather[] | { days: DailyWeather[] }>(`/weather?city=${encodeURIComponent(city)}&days=3`);
+  return Array.isArray(data) ? data : (data.days ?? []);
 }
 
 export async function getForecast(memberId: string, profileId: string, days = 7): Promise<DailyFortune[]> {

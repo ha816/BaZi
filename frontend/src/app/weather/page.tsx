@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { detectLocation } from "@/lib/location";
+import { listProfiles, getDailyFortune } from "@/lib/api";
+import KkachiTip from "@/components/KkachiTip";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -22,6 +24,14 @@ interface DayWeather {
   condition: string;
   hours: HourWeather[];
 }
+
+const ELEMENT_TIP: Record<string, string> = {
+  火: "오늘은 ☀️ 火 기운이 가득한 날이에요. 태양처럼 강렬한 에너지가 넘치니 새로운 도전이나 적극적인 행동을 취하기에 딱 좋은 날입니다. 열정을 쏟을 일이 있다면 오늘 움직여 보세요!",
+  水: "오늘은 🌧️ 水 기운이 흐르는 날이에요. 물처럼 유연하게 변화에 적응하는 힘이 강해집니다. 깊이 생각하고 내면을 들여다보기 좋은 날이니, 무리하게 밀어붙이기보다 흐름에 맡겨보세요.",
+  木: "오늘은 💨 木 기운이 퍼지는 날이에요. 바람처럼 확산되는 성장의 기운이 가득합니다. 창의적인 아이디어를 펼치거나 새로운 시작을 선언하기에 좋은 날이에요.",
+  金: "오늘은 ☁️ 金 기운이 감도는 날이에요. 수렴하고 정리하는 힘이 강해집니다. 미뤄뒀던 마무리 작업이나 중요한 결단을 내리기에 좋은 날이에요. 단단하게 다잡아 보세요.",
+  土: "오늘은 🌤️ 土 기운이 감싸는 날이에요. 안정적이고 균형 잡힌 에너지가 흐릅니다. 무리하게 앞서가기보다 기반을 다지고 꾸준히 쌓아가는 하루로 만들어 보세요.",
+};
 
 const ELEMENT_META: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
   火: { label: "화(火)", color: "text-orange-500", bg: "bg-orange-50 border-orange-200", emoji: "☀️" },
@@ -48,6 +58,22 @@ export default function WeatherPage() {
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [days, setDays] = useState<DayWeather[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [yongshin, setYongshin] = useState<string | null>(null);
+
+  useEffect(() => {
+    const memberId = localStorage.getItem("kkachi_member_id");
+    if (!memberId) return;
+    setLoggedIn(true);
+    listProfiles(memberId)
+      .then((profiles) => {
+        const self = profiles.find((p) => p.is_self) ?? profiles[0];
+        if (!self) return;
+        return getDailyFortune(memberId, self.id);
+      })
+      .then((f) => { if (f?.yongshin) setYongshin(f.yongshin); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && "geolocation" in navigator) {
@@ -127,6 +153,11 @@ export default function WeatherPage() {
           );
         })()}
 
+        {/* 오행 기운 KkachiTip — 로그인 시만 표시 */}
+        {!loading && loggedIn && days.length > 0 && (
+          <KkachiTip text={ELEMENT_TIP[days[0].element] ?? ELEMENT_TIP["土"]} />
+        )}
+
         {/* 시간대별 가로 슬라이드 */}
         {!loading && days.length > 0 && (() => {
           type WeatherSlot = { type: "weather"; dayLabel: string | null; timeLabel: string; hour: HourWeather };
@@ -179,23 +210,35 @@ export default function WeatherPage() {
               <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-3">시간별 예보</p>
               <div className="overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
                 <div className="flex gap-1 w-max">
-                  {slots.map((s, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[56px]">
-                      <div className="h-8 flex flex-col items-center justify-end gap-0.5">
-                        {s.dayLabel && (
-                          <span className="text-[10px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap leading-none">{s.dayLabel}</span>
-                        )}
-                        <span className="text-[11px] text-[var(--color-ink-faint)] whitespace-nowrap leading-none">{s.timeLabel}</span>
+                  {slots.map((s, i) => {
+                    const el = s.hour.element;
+                    const GENERATES: Record<string, string> = { 木:"火", 火:"土", 土:"金", 金:"水", 水:"木" };
+                    const rel = yongshin
+                      ? el === yongshin ? "match" : GENERATES[el] === yongshin ? "generates" : "neutral"
+                      : "neutral";
+                    const highlight = rel === "match" ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl" : rel === "generates" ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl" : "";
+                    return (
+                      <div key={i} className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[56px] ${highlight}`}>
+                        <div className="h-8 flex flex-col items-center justify-end gap-0.5">
+                          {s.dayLabel && (
+                            <span className="text-[10px] font-semibold text-[var(--color-gold-light)] whitespace-nowrap leading-none">{s.dayLabel}</span>
+                          )}
+                          <span className="text-[11px] text-[var(--color-ink-faint)] whitespace-nowrap leading-none">{s.timeLabel}</span>
+                        </div>
+                        <span className="text-2xl">{meta(el).emoji}</span>
+                        <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(s.hour.temperature)}°</span>
+                        {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
+                        {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋아요</span>}
                       </div>
-                      <span className="text-2xl">{meta(s.hour.element).emoji}</span>
-                      <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(s.hour.temperature)}°</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
           );
         })()}
+
+        {/* TODO: 광고 영역 — 시간별 예보 하단 */}
 
         {!loading && days.length > 0 && (
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-1">

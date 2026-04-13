@@ -65,6 +65,9 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
             </div>
           )}
           <div className="flex gap-4 pt-1">
+            <Link href="/fortune" className="text-xs text-[var(--color-gold)] font-medium hover:opacity-80 transition-opacity">
+              오늘운세 자세히 →
+            </Link>
             <Link href={`/analysis?profileId=${profile.id}`} className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
               사주 분석 →
             </Link>
@@ -128,32 +131,32 @@ function HourlyRow({ h }: { h: HourlyWeather }) {
 
 // ── 날씨 포스트 ────────────────────────────────────────────────────────────
 function WeatherPost({ city }: { city: string }) {
-  const [data, setData] = useState<{ city: string; days: DailyWeather[] } | null>(null);
+  const [days, setDays] = useState<DailyWeather[] | null>(null);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
 
   useEffect(() => {
-    getWeather(city).then(setData).catch(() => {});
+    getWeather(city).then(setDays).catch(() => {});
   }, [city]);
 
-  const todayMeta = data ? (ELEMENT_META[data.days[0].element] ?? ELEMENT_META["土"]) : null;
+  const todayMeta = days?.length ? (ELEMENT_META[days[0].element] ?? ELEMENT_META["土"]) : null;
 
   return (
     <FeedPost
       name="날씨 기운"
-      handle={data ? data.city : city}
+      handle={city}
       avatarChar="기"
       avatarClass="bg-gradient-to-br from-sky-400 to-blue-500"
       caption={null}
     >
       <div className={`${todayMeta?.bg ?? "bg-[var(--color-ivory-warm)]"} px-4 py-5`}>
-        {!data ? (
+        {!days ? (
           <div className="flex justify-center py-2">
             <div className="w-6 h-6 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
           </div>
         ) : (
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-3 gap-2">
-              {data.days.map((day, i) => {
+              {days.map((day, i) => {
                 const m = ELEMENT_META[day.element] ?? ELEMENT_META["土"];
                 const isOpen = openIdx === i;
                 return (
@@ -176,10 +179,10 @@ function WeatherPost({ city }: { city: string }) {
                 );
               })}
             </div>
-            {openIdx !== null && data.days[openIdx].hours?.length ? (
+            {openIdx !== null && days[openIdx].hours?.length ? (
               <div className="bg-white/70 rounded-xl px-3 py-2">
                 <p className="text-[10px] text-[var(--color-ink-faint)] mb-1 font-medium">{DAY_LABELS[openIdx]} 시간별 예보</p>
-                {data.days[openIdx].hours!.map((h) => (
+                {days[openIdx].hours!.map((h) => (
                   <HourlyRow key={h.hour} h={h} />
                 ))}
               </div>
