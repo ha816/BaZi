@@ -5,7 +5,7 @@
 | 경로 | 역할 |
 |------|------|
 | `/weather` | 날씨 기운 페이지 |
-| `GET /weather?city=Seoul&days=7` | 날씨 + 오행 데이터 반환 (로그인 불필요) |
+| `GET /weather?city=Seoul&days=14` | 날씨 + 오행 데이터 반환 (로그인 불필요) |
 
 ---
 
@@ -14,33 +14,49 @@
 우선순위: GPS → ipapi.co → "Seoul" 기본값
 
 1. `navigator.geolocation.getCurrentPosition()` 호출 (timeout 5초)
-   - **성공** → lat/lon 확보 → `GET /weather?lat=...&lon=...&days=7` 호출, "현재 위치" 표시
-   - **실패/거부** → `ipapi.co`로 도시명 감지 → `GET /weather?city={city}&days=7` 호출
+   - **성공** → lat/lon 확보 → `GET /weather?lat=...&lon=...&days=14` 호출
+   - **실패/거부** → `ipapi.co`로 도시명 감지 → `GET /weather?city={city}&days=14` 호출
    - **ipapi.co도 실패** → "Seoul" 기본값으로 요청
-2. 오늘 기준 7일치 날씨 카드 표시
+2. 오늘 기준 날씨 카드 표시
 
 ---
 
-## 시나리오 2 — 날씨 카드 표시
+## 시나리오 2 — 히어로 섹션
 
-각 날짜 카드에 표시되는 정보:
+두 카드를 가로로 나란히 표시:
 
-| 항목 | 내용 |
+| 카드 | 내용 |
 |------|------|
-| 날짜 라벨 | 오늘 / 내일 / 모레 / N요일 |
-| 날짜 | MM/DD |
-| 오행 이모지 | ☀️火 · 🌤️土 · ☁️金 · 🌧️水 · 💨木 |
-| 오행 레이블 | 화(火) / 토(土) / 금(金) / 수(水) / 목(木) |
-| 날씨 설명 | 맑음 · 구름많음 · 흐림 · 비 · 눈 등 |
-| 기온 | 일평균 °C |
+| 날씨 카드 (flex-1) | 이모지 · 현재 기온(7xl) · 날씨 설명 · 최저/최고 |
+| 오행 카드 | 오행 한자 크게(5xl) · 레이블(화(火) 등) · 오행 배경색 |
 
 ---
 
-## 시나리오 3 — 시간대별 상세 펼침
+## 시나리오 3 — 시간별 예보 (가로 슬라이드)
 
-1. 카드 우측 ▼ 클릭 → 3시간 단위 시간대 펼침 (00/03/06/09/12/15/18/21시)
-2. 각 시간대: 시각 · 오행 이모지 · 오행 레이블 · 기온
-3. 다시 클릭하면 접힘 (하나만 열림)
+범위: **오늘(현재 시각 이후) + 내일 + 모레 + 사흘** (4일치)
+
+- 3시간 단위 슬롯: 00/03/06/09/12/15/18/21시
+- 레이블 구조 (2행):
+  - **위 행**: 날 레이블 (오늘/내일/모레/사흘) — 날이 바뀔 때만 표시, 골드 색상
+  - **아래 행**: 오전/오후 + 시각 (예: `오전 00시`, `오후 12시`, `15시`)
+  - 오전↔오후 전환 시 아래 행에 `오전`/`오후` 자동 삽입
+- `h-8 justify-end` 컨테이너로 슬롯 높이 고정 → 이모지·기온 정렬 일정
+
+---
+
+## 시나리오 4 — 일별 예보 (세로 리스트)
+
+범위: **10일치**
+
+각 행 구성 (좌→우):
+
+| 영역 | 내용 |
+|------|------|
+| 날짜 (w-14) | 오늘 / 화·수·목 등 요일(한 글자) + MM/DD |
+| 이모지 | 오행 이모지 |
+| 날씨 설명 (flex-1) | 맑음/흐림 등 + `최저 N°·최고 N°` |
+| 오행 레이블 (우측 고정) | 화(火)·수(水) 등 오행 색상 |
 
 ---
 
@@ -59,19 +75,34 @@
 ## 데이터 흐름
 
 ```
-GET /weather?city=Seoul&days=7
-  → WeatherAdapter.get_forecast(city, days)
-      → Open-Meteo Geocoding API → lat/lon (프로세스 내 캐시)
-      → Open-Meteo Forecast API → daily + hourly 데이터
-      → WMO 코드 → 오행 변환
-  → [{date, temperature, element, condition, hours: [...]}]
+GET /weather?city=Seoul&days=14
+  → weather_controller.get_weather(city, days=min(days,14), lat, lon)
+      → WeatherAdapter.get_forecast()
+          → Open-Meteo Geocoding API → lat/lon (프로세스 내 캐시)  ← lat/lon 직접 제공 시 생략
+          → Open-Meteo Forecast API
+              daily: weather_code, temperature_2m_max, temperature_2m_min
+              hourly: temperature_2m, weather_code  (3시간 단위 필터링)
+          → WMO 코드 → 오행 변환, None 값 방어 처리
+  → [{date, temperature, temp_max, temp_min, weather_code, element, condition, hours:[...]}]
 ```
+
+---
+
+## 구현 이력
+
+| 날짜 | 변경 내용 |
+|------|----------|
+| 2026-04-13 | 최초 구현: GPS/ipapi.co 위치 감지, 히어로·시간별·일별 예보, 오행 매핑 |
+| 2026-04-13 | saju_controller 구형 `/weather` 엔드포인트 제거 (weather_controller와 충돌) |
+| 2026-04-13 | 시간별 예보 사흘까지 확장, 날 레이블 위 행 분리, 오전/오후 시간에 직접 결합 |
+| 2026-04-13 | 일별 예보 10일치·요일 표기·오행 우측 배치·최저최고 날씨 옆 표시 |
+| 2026-04-13 | 히어로 오행 전용 카드 분리(나란히), 현재 위치 표시 제거 |
+| 2026-04-13 | weather_adapter None 값 방어 처리, API days=14 상향 |
 
 ---
 
 ## 미결 사항 / 개선 검토
 
-- [ ] 도시 직접 변경 UI (현재 IP 자동 감지만)
-- [ ] 오행별 운세 한 줄 코멘트 추가 ("火 기운이 강한 날 — 적극적으로 움직이기 좋은 날")
+- [ ] 도시 직접 변경 UI (현재 IP/GPS 자동 감지만)
+- [ ] 오행별 운세 한 줄 코멘트 ("火 기운이 강한 날 — 적극적으로 움직이기 좋은 날")
 - [ ] 로그인 시 내 용신과 오늘 날씨 오행 매칭 여부 표시
-- [ ] 오행 컬러 테마로 카드 배경 강조 (현재 연한 배경만)
