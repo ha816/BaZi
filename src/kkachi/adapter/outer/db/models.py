@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -30,6 +30,7 @@ class ProfileModel(Base):
     gender: Mapped[str] = mapped_column(String(10), nullable=False)
     birth_dt: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False, default="Seoul")
+    is_self: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     member: Mapped["MemberModel"] = relationship(back_populates="profiles")

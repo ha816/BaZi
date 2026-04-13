@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Profile, ProfileCreateInput } from "@/types/analysis";
-import { listProfiles, createProfile, deleteProfile } from "@/lib/api";
+import type { Profile, ProfileCreateInput, ProfileUpdateInput } from "@/types/analysis";
+import { listProfiles, createProfile, updateProfile, deleteProfile } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 
 const MEMBER_ID_KEY = "kkachi_member_id";
+const MAX_PROFILES = 10;
 
 const HOUR_OPTIONS = [
   { value: "", label: "모르겠어요", time: "12:00" },
@@ -27,6 +28,16 @@ const HOUR_OPTIONS = [
 
 const inputClass =
   "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
+
+function _hourFromDatetime(birth_dt: string): string {
+  const hour = new Date(birth_dt).getHours();
+  const opt = HOUR_OPTIONS.find((h) => h.value !== "" && parseInt(h.value) === hour);
+  return opt?.value ?? "";
+}
+
+function _dateFromDatetime(birth_dt: string): string {
+  return birth_dt.slice(0, 10);
+}
 
 function ProfileForm({
   memberId,
@@ -134,13 +145,25 @@ function ProfileCard({
   profile,
   memberId,
   onDelete,
+  onUpdate,
 }: {
   profile: Profile;
   memberId: string;
   onDelete: (id: string) => void;
+  onUpdate: (updated: Profile) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  // Edit state
+  const [editName, setEditName] = useState(profile.name);
+  const [editBirthDate, setEditBirthDate] = useState(_dateFromDatetime(profile.birth_dt));
+  const [editHour, setEditHour] = useState(_hourFromDatetime(profile.birth_dt));
+  const [editGender, setEditGender] = useState<"male" | "female">(profile.gender);
+  const [editCity, setEditCity] = useState(profile.city);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -153,31 +176,127 @@ function ProfileCard({
     }
   };
 
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditLoading(true);
+    setEditError(null);
+    try {
+      const hourOpt = HOUR_OPTIONS.find((h) => h.value === editHour);
+      const data: ProfileUpdateInput = {
+        name: editName.trim(),
+        gender: editGender,
+        birth_dt: `${editBirthDate}T${hourOpt?.time ?? "12:00"}:00`,
+        city: editCity,
+      };
+      const updated = await updateProfile(memberId, profile.id, data);
+      onUpdate(updated);
+      setEditing(false);
+    } catch {
+      setEditError("수정에 실패했습니다.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  if (editing) {
+    return (
+      <form
+        onSubmit={handleEditSubmit}
+        className="border border-[var(--color-gold-light)] rounded-xl p-5 space-y-4 bg-[var(--color-ivory-warm)]"
+      >
+        <p className="text-sm font-medium text-[var(--color-ink)]">
+          내 프로필 수정
+          <span className="ml-2 text-xs text-[var(--color-gold)] font-normal">나</span>
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-[var(--color-ink-light)]">이름</span>
+            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
+              required className={inputClass} />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-[var(--color-ink-light)]">생년월일</span>
+            <input type="date" value={editBirthDate} onChange={(e) => setEditBirthDate(e.target.value)}
+              className={inputClass} min="1920-01-01" max="2025-12-31" />
+          </label>
+          <label className="space-y-1.5">
+            <span className="text-xs font-medium text-[var(--color-ink-light)]">태어난 시간</span>
+            <select value={editHour} onChange={(e) => setEditHour(e.target.value)}
+              className={`${inputClass} appearance-none`}>
+              {HOUR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="space-y-1.5">
+          <span className="text-xs font-medium text-[var(--color-ink-light)]">성별</span>
+          <div className="flex gap-3">
+            {(["male", "female"] as const).map((g) => (
+              <button key={g} type="button" onClick={() => setEditGender(g)}
+                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
+                  editGender === g
+                    ? "bg-[var(--color-ink)] text-[var(--color-ivory)]"
+                    : "bg-white text-[var(--color-ink-muted)] border border-[var(--color-border)]"
+                }`}>
+                {g === "male" ? "남성" : "여성"}
+              </button>
+            ))}
+          </div>
+        </div>
+        {editError && <p className="text-sm text-[var(--color-fire)]">{editError}</p>}
+        <div className="flex gap-3">
+          <button type="button" onClick={() => setEditing(false)}
+            className="flex-1 py-3 rounded-lg text-sm border border-[var(--color-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-ink-faint)] transition-colors">
+            취소
+          </button>
+          <button type="submit" disabled={editLoading}
+            className="flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 text-sm font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors">
+            {editLoading ? "저장 중..." : "저장하기"}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between p-4 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)]">
       <div className="space-y-0.5">
-        <p className="text-base font-medium text-[var(--color-ink)]">{profile.name}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-base font-medium text-[var(--color-ink)]">{profile.name}</p>
+          {profile.is_self && (
+            <span className="text-xs text-[var(--color-gold)] border border-[var(--color-gold-light)] rounded-full px-2 py-0.5">나</span>
+          )}
+        </div>
         <p className="text-sm text-[var(--color-ink-faint)]">
           {new Date(profile.birth_dt).getFullYear()}년생 · {profile.gender === "male" ? "남성" : "여성"} · {profile.city}
         </p>
       </div>
       <div className="flex items-center gap-2">
-        {confirming ? (
-          <>
-            <button onClick={() => setConfirming(false)}
-              className="text-xs text-[var(--color-ink-faint)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]">
-              취소
-            </button>
-            <button onClick={handleDelete} disabled={deleting}
-              className="text-xs text-white px-3 py-1.5 rounded-lg bg-[var(--color-fire)] hover:opacity-80 transition-opacity">
-              {deleting ? "삭제 중" : "삭제 확인"}
-            </button>
-          </>
-        ) : (
-          <button onClick={() => setConfirming(true)}
-            className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-fire)] transition-colors px-2 py-1">
-            삭제
+        {!confirming && (
+          <button onClick={() => setEditing(true)}
+            className="text-xs text-[var(--color-gold)] hover:opacity-70 transition-opacity px-2 py-1">
+            수정
           </button>
+        )}
+        {!profile.is_self && (
+          confirming ? (
+            <>
+              <button onClick={() => setConfirming(false)}
+                className="text-xs text-[var(--color-ink-faint)] px-3 py-1.5 rounded-lg border border-[var(--color-border)]">
+                취소
+              </button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="text-xs text-white px-3 py-1.5 rounded-lg bg-[var(--color-fire)] hover:opacity-80 transition-opacity">
+                {deleting ? "삭제 중" : "삭제 확인"}
+              </button>
+            </>
+          ) : (
+            <button onClick={() => setConfirming(true)}
+              className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-fire)] transition-colors px-2 py-1">
+              삭제
+            </button>
+          )
         )}
       </div>
     </div>
@@ -213,6 +332,8 @@ export default function ProfilePage() {
     );
   }
 
+  const canAddMore = profiles.length < MAX_PROFILES;
+
   return (
     <main className="min-h-screen py-10 md:py-16 px-4">
       <div className="max-w-2xl mx-auto space-y-8">
@@ -222,8 +343,7 @@ export default function ProfilePage() {
           </Link>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">프로필</p>
-              <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)] mt-1">프로필 관리</h1>
+              <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">프로필 관리</h1>
             </div>
             <Link href="/my" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
               계정 설정 →
@@ -236,14 +356,17 @@ export default function ProfilePage() {
             <h2 className="font-heading text-lg font-semibold text-[var(--color-ink)]">
               저장된 프로필
               {profiles.length > 0 && (
-                <span className="ml-2 text-sm font-normal text-[var(--color-ink-faint)]">{profiles.length}개</span>
+                <span className="ml-2 text-sm font-normal text-[var(--color-ink-faint)]">{profiles.length} / {MAX_PROFILES}</span>
               )}
             </h2>
-            {!showForm && (
+            {!showForm && canAddMore && (
               <button onClick={() => setShowForm(true)}
                 className="text-sm text-[var(--color-gold)] hover:text-[var(--color-gold-light)] transition-colors font-medium">
                 + 프로필 추가
               </button>
+            )}
+            {!showForm && !canAddMore && (
+              <span className="text-xs text-[var(--color-ink-faint)]">최대 {MAX_PROFILES}개</span>
             )}
           </div>
 
@@ -270,6 +393,7 @@ export default function ProfilePage() {
                 profile={p}
                 memberId={memberId!}
                 onDelete={(id) => setProfiles((prev) => prev.filter((x) => x.id !== id))}
+                onUpdate={(updated) => setProfiles((prev) => prev.map((x) => x.id === updated.id ? updated : x))}
               />
             ))}
           </div>

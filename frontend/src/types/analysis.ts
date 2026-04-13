@@ -192,10 +192,19 @@ export interface Profile {
   gender: "male" | "female";
   birth_dt: string;
   city: string;
+  is_self: boolean;
   created_at: string;
 }
 
 export interface ProfileCreateInput {
+  name: string;
+  gender: "male" | "female";
+  birth_dt: string;
+  city: string;
+  is_self?: boolean;
+}
+
+export interface ProfileUpdateInput {
   name: string;
   gender: "male" | "female";
   birth_dt: string;

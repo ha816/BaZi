@@ -317,7 +317,6 @@ export default function Home() {
         {/* 상단 헤더 */}
         <header className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-[var(--color-border-light)]">
           <div>
-            <p className="text-[10px] tracking-[0.3em] text-[var(--color-gold)]">사주까치</p>
             <p className="font-heading text-lg font-bold text-[var(--color-ink)]">{dateLabel}</p>
           </div>
         </header>

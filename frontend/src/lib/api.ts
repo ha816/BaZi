@@ -10,6 +10,7 @@ import type {
   PalmistryResult,
   Profile,
   ProfileCreateInput,
+  ProfileUpdateInput,
 } from "@/types/analysis";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -92,6 +93,13 @@ export async function listProfiles(memberId: string): Promise<Profile[]> {
 export async function createProfile(memberId: string, data: ProfileCreateInput): Promise<Profile> {
   return request<Profile>(`/members/${memberId}/profiles`, {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateProfile(memberId: string, profileId: string, data: ProfileUpdateInput): Promise<Profile> {
+  return request<Profile>(`/members/${memberId}/profiles/${profileId}`, {
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }

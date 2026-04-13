@@ -74,7 +74,7 @@ export default function CompatibilityResult({ data, name1, name2 }: Props) {
     <div className="space-y-6">
       {/* 종합 점수 카드 */}
       <div className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9">
-        <p className="text-xs tracking-[0.3em] text-[var(--color-gold)] mb-4">合宮 결과</p>
+
 
         <div className="flex flex-col md:flex-row items-center gap-8">
           {/* 점수 링 */}

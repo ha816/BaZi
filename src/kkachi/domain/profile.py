@@ -18,6 +18,7 @@ class Profile:
     birth_dt: datetime
     city: str
     created_at: datetime
+    is_self: bool = False
 
 
 @dataclass

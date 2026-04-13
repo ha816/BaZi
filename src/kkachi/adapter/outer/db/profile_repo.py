@@ -25,6 +25,7 @@ def _to_profile(m: ProfileModel) -> Profile:
         birth_dt=m.birth_dt,
         city=m.city,
         created_at=m.created_at,
+        is_self=m.is_self,
     )
 
 
@@ -36,9 +37,9 @@ class ProfileRepo(ProfilePort):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
         self._sf = session_factory
 
-    async def create(self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str) -> Profile:
+    async def create(self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str, is_self: bool = False) -> Profile:
         async with self._sf() as session:
-            p = ProfileModel(member_id=member_id, name=name, gender=gender.value, birth_dt=birth_dt, city=city)
+            p = ProfileModel(member_id=member_id, name=name, gender=gender.value, birth_dt=birth_dt, city=city, is_self=is_self)
             session.add(p)
             await session.commit()
             await session.refresh(p)
@@ -62,6 +63,19 @@ class ProfileRepo(ProfilePort):
             if p:
                 await session.delete(p)
                 await session.commit()
+
+    async def update(self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str) -> Profile:
+        async with self._sf() as session:
+            p = await session.get(ProfileModel, profile_id)
+            if p is None:
+                raise ValueError(f"Profile {profile_id} not found")
+            p.name = name
+            p.gender = gender.value
+            p.birth_dt = birth_dt
+            p.city = city
+            await session.commit()
+            await session.refresh(p)
+            return _to_profile(p)
 
 
 class AnalysisRepo(AnalysisPort):

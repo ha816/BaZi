@@ -20,6 +20,14 @@ class ProfileCreateRequest(BaseModel):
     gender: Gender
     birth_dt: datetime
     city: str = "Seoul"
+    is_self: bool = False
+
+
+class ProfileUpdateRequest(BaseModel):
+    name: str
+    gender: Gender
+    birth_dt: datetime
+    city: str
 
 
 class ProfileResponse(BaseModel):
@@ -29,6 +37,7 @@ class ProfileResponse(BaseModel):
     gender: Gender
     birth_dt: datetime
     city: str
+    is_self: bool
     created_at: datetime
 
 
@@ -43,7 +52,10 @@ async def create_profile(
     req: ProfileCreateRequest,
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> ProfileResponse:
-    profile = await svc.create_profile(member_id, req.name, req.gender, req.birth_dt, req.city)
+    try:
+        profile = await svc.create_profile(member_id, req.name, req.gender, req.birth_dt, req.city, is_self=req.is_self)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return ProfileResponse(**vars(profile))
 
 
@@ -70,6 +82,21 @@ async def get_profile(
     return ProfileResponse(**vars(profile))
 
 
+@profile_router.patch("/{profile_id}", response_model=ProfileResponse)
+@inject
+async def update_profile(
+    member_id: UUID,
+    profile_id: UUID,
+    req: ProfileUpdateRequest,
+    svc: ProfileService = Depends(Provide[Container.profile_service]),
+) -> ProfileResponse:
+    try:
+        profile = await svc.update_profile(profile_id, req.name, req.gender, req.birth_dt, req.city)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return ProfileResponse(**vars(profile))
+
+
 @profile_router.delete("/{profile_id}", status_code=204)
 @inject
 async def delete_profile(
@@ -77,6 +104,9 @@ async def delete_profile(
     profile_id: UUID,
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> None:
+    profile = await svc.get_profile(profile_id)
+    if profile and profile.is_self:
+        raise HTTPException(status_code=409, detail="자기 자신 프로필은 삭제할 수 없습니다.")
     await svc.delete_profile(profile_id)
 
 

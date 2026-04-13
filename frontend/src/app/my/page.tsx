@@ -64,23 +64,20 @@ export default function MyPage() {
           <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
             ← 홈으로
           </Link>
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-xs tracking-[0.3em] text-[var(--color-gold)]">내 계정</p>
-              <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)] mt-1">계정 설정</h1>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors"
-            >
-              로그아웃
-            </button>
-          </div>
+          <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">계정 설정</h1>
         </header>
 
         {/* 계정 정보 */}
         <section className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 space-y-4">
-          <h2 className="font-heading text-lg font-semibold text-[var(--color-ink)]">계정 정보</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-heading text-lg font-semibold text-[var(--color-ink)]">계정 정보</h2>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors"
+            >
+              ⏻ 로그아웃
+            </button>
+          </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-3 border-b border-[var(--color-border-light)]">
               <span className="text-sm text-[var(--color-ink-faint)]">이름</span>

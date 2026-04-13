@@ -25,9 +25,12 @@ class ProfileService:
         self._payment_port = payment_port
 
     async def create_profile(
-        self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str
+        self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str, is_self: bool = False
     ) -> Profile:
-        return await self.profile_port.create(member_id, name, gender, birth_dt, city)
+        existing = await self.profile_port.list_by_member(member_id)
+        if len(existing) >= 10:
+            raise ValueError("프로필은 최대 10개까지 저장할 수 있습니다.")
+        return await self.profile_port.create(member_id, name, gender, birth_dt, city, is_self=is_self)
 
     async def get_profile(self, profile_id: UUID) -> Profile | None:
         return await self.profile_port.get(profile_id)
@@ -37,6 +40,11 @@ class ProfileService:
 
     async def delete_profile(self, profile_id: UUID) -> None:
         await self.profile_port.delete(profile_id)
+
+    async def update_profile(
+        self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str
+    ) -> Profile:
+        return await self.profile_port.update(profile_id, name, gender, birth_dt, city)
 
     async def list_analyses(self, profile_id: UUID) -> list[Analysis]:
         return await self.analysis_port.list_by_profile(profile_id)
