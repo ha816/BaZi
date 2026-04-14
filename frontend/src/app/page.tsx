@@ -7,14 +7,9 @@ import { getForecast, getWeather, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import DailyFortunePanel from "@/components/DailyFortune";
 import FeedPost from "@/components/FeedPost";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
-
-const LEVEL_META: Record<string, { color: string; icon: string }> = {
-  "좋은 날":         { color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: "🌟" },
-  "평범한 날":       { color: "text-amber-700 bg-amber-50 border-amber-200",       icon: "☁️" },
-  "주의가 필요한 날": { color: "text-rose-700 bg-rose-50 border-rose-200",          icon: "⚠️" },
-};
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { MEMBER_ID_KEY } from "@/lib/constants";
+import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
 
 // ── 운세 포스트 (로그인, 프로필별) ─────────────────────────────────────────
 function FortunePost({ profile, memberId }: { profile: Profile; memberId: string }) {
@@ -29,7 +24,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
   }, [memberId, profile.id]);
 
   const today = forecast?.[0];
-  const meta = today ? LEVEL_META[today.level] ?? LEVEL_META["평범한 날"] : null;
+  const meta = today ? FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"] : null;
 
   return (
     <FeedPost
@@ -81,7 +76,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       {/* 컨텐츠: 오늘 일진 */}
       <div className="px-4 py-6 bg-[var(--color-ivory-warm)] flex items-center gap-5">
         {loading ? (
-          <div className="w-6 h-6 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
+          <LoadingSpinner />
         ) : today ? (
           <>
             <span className="font-heading text-6xl font-bold text-[var(--color-ink)]">{today.day_pillar}</span>
@@ -104,15 +99,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
     </FeedPost>
   );
 }
-
-// ── 오행 날씨 메타 ──────────────────────────────────────────────────────────
-const ELEMENT_META: Record<string, { emoji: string; label: string; meaning: string; bg: string; color: string }> = {
-  "火": { emoji: "☀️", label: "화(火)", meaning: "활발한 기운이 가득한 날이에요", bg: "bg-gradient-to-br from-orange-50 to-red-50",   color: "text-red-500" },
-  "水": { emoji: "🌧️", label: "수(水)", meaning: "내면을 돌아보기 좋은 날이에요",  bg: "bg-gradient-to-br from-blue-50 to-sky-50",    color: "text-blue-500" },
-  "木": { emoji: "💨", label: "목(木)", meaning: "새로운 시작과 성장의 기운이에요",  bg: "bg-gradient-to-br from-green-50 to-emerald-50", color: "text-emerald-600" },
-  "金": { emoji: "☁️", label: "금(金)", meaning: "정리하고 결단하기 좋은 날이에요",  bg: "bg-gradient-to-br from-slate-50 to-gray-100",  color: "text-slate-500" },
-  "土": { emoji: "⛅", label: "토(土)", meaning: "안정과 균형을 찾는 날이에요",      bg: "bg-gradient-to-br from-amber-50 to-yellow-50", color: "text-amber-600" },
-};
 
 const DAY_LABELS = ["오늘", "내일", "모레"];
 
@@ -151,7 +137,7 @@ function WeatherPost({ city }: { city: string }) {
       <div className={`${todayMeta?.bg ?? "bg-[var(--color-ivory-warm)]"} px-4 py-5`}>
         {!days ? (
           <div className="flex justify-center py-2">
-            <div className="w-6 h-6 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
+            <LoadingSpinner />
           </div>
         ) : (
           <div className="flex flex-col gap-2">

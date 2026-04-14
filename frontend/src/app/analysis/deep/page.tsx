@@ -6,8 +6,7 @@ import type { AnalysisResult } from "@/types/analysis";
 import { analyzeChart } from "@/lib/api";
 import ResultSlides from "@/components/ResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
+import { MEMBER_ID_KEY } from "@/lib/constants";
 
 export default function DeepAnalysisPage() {
   const router = useRouter();

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { listProfiles, getDailyFortune } from "@/lib/api";
 import type { DailyFortune, Profile } from "@/types/analysis";
 import KkachiTip from "@/components/KkachiTip";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import ScoreBar from "@/components/ScoreBar";
+import { MEMBER_ID_KEY } from "@/lib/constants";
 
 const LEVEL_META: Record<string, { label: string; color: string; bg: string }> = {
   최고: { label: "최고", color: "text-orange-500", bg: "bg-orange-50 border-orange-200" },
@@ -23,17 +24,6 @@ const DOMAIN_LABELS: Record<string, string> = {
   애정운: "애정",
   학업운: "학업",
 };
-
-function ScoreBar({ score }: { score: number }) {
-  return (
-    <div className="flex-1 h-1.5 rounded-full bg-[var(--color-border-light)] overflow-hidden">
-      <div
-        className="h-full rounded-full bg-[var(--color-gold)]"
-        style={{ width: `${score}%` }}
-      />
-    </div>
-  );
-}
 
 export default function FortunePage() {
   const [memberId, setMemberId] = useState<string | null>(null);
@@ -66,11 +56,7 @@ export default function FortunePage() {
           <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">오늘의 운세</h1>
         </header>
 
-        {loading && (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
-          </div>
-        )}
+        {loading && <LoadingSpinner />}
 
         {/* 비로그인 */}
         {!loading && !memberId && (
@@ -110,7 +96,7 @@ export default function FortunePage() {
 
             {/* KkachiTip — 오늘 총평 */}
             {fortune.description && (
-              <KkachiTip text={fortune.description} />
+              <KkachiTip>{fortune.description}</KkachiTip>
             )}
 
             {/* TODO: 광고 영역 — 영역별 운세 상단 */}
@@ -143,7 +129,7 @@ export default function FortunePage() {
 
             {/* KkachiTip — 조언 목록 */}
             {fortune.tips?.length > 0 && (
-              <KkachiTip text={fortune.tips.join("\n")} />
+              <KkachiTip>{fortune.tips.join("\n")}</KkachiTip>
             )}
           </>
         )}

@@ -13,170 +13,8 @@ import {
 import { detectLocation } from "@/lib/location";
 import CompatibilityResultView from "@/components/CompatibilityResult";
 import LoadingSpinner from "@/components/LoadingSpinner";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
-
-const HOUR_OPTIONS = [
-  { value: "", label: "모르겠어요", time: "12:00" },
-  { value: "23", label: "자시 (子) 23~01시", time: "23:00" },
-  { value: "01", label: "축시 (丑) 01~03시", time: "01:00" },
-  { value: "03", label: "인시 (寅) 03~05시", time: "03:00" },
-  { value: "05", label: "묘시 (卯) 05~07시", time: "05:00" },
-  { value: "07", label: "진시 (辰) 07~09시", time: "07:00" },
-  { value: "09", label: "사시 (巳) 09~11시", time: "09:00" },
-  { value: "11", label: "오시 (午) 11~13시", time: "11:00" },
-  { value: "13", label: "미시 (未) 13~15시", time: "13:00" },
-  { value: "15", label: "신시 (申) 15~17시", time: "15:00" },
-  { value: "17", label: "유시 (酉) 17~19시", time: "17:00" },
-  { value: "19", label: "술시 (戌) 19~21시", time: "19:00" },
-  { value: "21", label: "해시 (亥) 21~23시", time: "21:00" },
-];
-
-interface ManualState {
-  name: string;
-  birthDate: string;
-  selectedHour: string;
-  gender: "male" | "female";
-  city: string;
-}
-
-interface PersonState {
-  mode: "manual" | "profile";
-  manual: ManualState;
-  profileId: string;
-}
-
-function PersonCard({
-  label,
-  state,
-  profiles,
-  onChange,
-  inputClass,
-}: {
-  label: string;
-  state: PersonState;
-  profiles: Profile[];
-  onChange: (patch: Partial<PersonState>) => void;
-  inputClass: string;
-}) {
-  const { mode, manual, profileId } = state;
-
-  return (
-    <div className="flex-1 bg-[var(--color-ivory-warm)] rounded-xl p-5 space-y-4 border border-[var(--color-border-light)]">
-      <div className="flex items-center justify-between">
-        <p className="text-xs tracking-[0.25em] text-[var(--color-gold)]">{label}</p>
-        {/* 모드 토글 — 저장된 프로필이 있을 때만 */}
-        {profiles.length > 0 && (
-          <div className="flex gap-0.5 p-0.5 bg-[var(--color-parchment)] rounded-lg">
-            {(["profile", "manual"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => onChange({ mode: m })}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                  mode === m
-                    ? "bg-white text-[var(--color-ink)] shadow-sm"
-                    : "text-[var(--color-ink-faint)]"
-                }`}
-              >
-                {m === "profile" ? "프로필" : "직접"}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 프로필 선택 모드 */}
-      {mode === "profile" && profiles.length > 0 && (
-        <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-[var(--color-ink-light)]">저장된 프로필</span>
-          <select
-            value={profileId}
-            onChange={(e) => onChange({ profileId: e.target.value })}
-            className={`${inputClass} appearance-none`}
-          >
-            <option value="">선택하세요</option>
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {p.gender === "male" ? "남" : "여"})
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-
-      {/* 직접 입력 모드 */}
-      {mode === "manual" && (
-        <>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">이름</span>
-            <input
-              type="text"
-              value={manual.name}
-              onChange={(e) => onChange({ manual: { ...manual, name: e.target.value } })}
-              placeholder="홍길동"
-              className={inputClass}
-            />
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">생년월일</span>
-            <input
-              type="date"
-              value={manual.birthDate}
-              onChange={(e) => onChange({ manual: { ...manual, birthDate: e.target.value } })}
-              className={inputClass}
-              min="1920-01-01"
-              max="2025-12-31"
-            />
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">태어난 시간</span>
-            <select
-              value={manual.selectedHour}
-              onChange={(e) => onChange({ manual: { ...manual, selectedHour: e.target.value } })}
-              className={`${inputClass} appearance-none`}
-            >
-              {HOUR_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">도시</span>
-            <input
-              type="text"
-              value={manual.city}
-              onChange={(e) => onChange({ manual: { ...manual, city: e.target.value } })}
-              placeholder="Seoul"
-              className={inputClass}
-            />
-          </label>
-          <div className="space-y-1.5">
-            <span className="text-xs font-medium text-[var(--color-ink-light)]">성별</span>
-            <div className="flex gap-2">
-              {(["male", "female"] as const).map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => onChange({ manual: { ...manual, gender: g } })}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    manual.gender === g
-                      ? "bg-[var(--color-ink)] text-[var(--color-ivory)]"
-                      : "bg-white text-[var(--color-ink-muted)] border border-[var(--color-border)]"
-                  }`}
-                >
-                  {g === "male" ? "남성" : "여성"}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-const DEFAULT_MANUAL: ManualState = { name: "", birthDate: "1990-01-01", selectedHour: "", gender: "male", city: "Seoul" };
+import PersonCard, { type PersonState, DEFAULT_MANUAL } from "@/components/PersonCard";
+import { MEMBER_ID_KEY, HOUR_OPTIONS } from "@/lib/constants";
 
 export default function CompatibilityPage() {
   const router = useRouter();
@@ -276,9 +114,6 @@ export default function CompatibilityPage() {
     }
   };
 
-  const inputClass =
-    "w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
-
   return (
     <main className="min-h-screen py-10 md:py-16 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -302,17 +137,17 @@ export default function CompatibilityPage() {
         >
           <div className="flex flex-col md:flex-row gap-4">
             <PersonCard label="첫 번째 분" state={person1} profiles={profiles}
-              onChange={(patch) => setPerson1((s) => ({ ...s, ...patch }))} inputClass={inputClass} />
+              onChange={(patch) => setPerson1((s) => ({ ...s, ...patch }))} />
             <div className="flex items-center justify-center flex-shrink-0 text-2xl text-[var(--color-gold-light)]">♥</div>
             <PersonCard label="두 번째 분" state={person2} profiles={profiles}
-              onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} inputClass={inputClass} />
+              onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
           </div>
 
           <div className="flex items-end gap-4">
             <label className="flex-1 space-y-1.5">
               <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
               <input type="number" value={year} onChange={(e) => setYear(+e.target.value)}
-                className={inputClass} min={1920} max={2100} />
+                className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors" min={1920} max={2100} />
             </label>
             <button type="submit" disabled={loading}
               className="flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-2.5 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">

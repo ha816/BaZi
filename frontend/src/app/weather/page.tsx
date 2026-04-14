@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { detectLocation } from "@/lib/location";
 import { listProfiles, getDailyFortune } from "@/lib/api";
 import KkachiTip from "@/components/KkachiTip";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { MEMBER_ID_KEY } from "@/lib/constants";
+import { ELEMENT_META } from "@/lib/elementColors";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -33,13 +36,6 @@ const ELEMENT_TIP: Record<string, string> = {
   土: "오늘은 🌤️ 土 기운이 감싸는 날이에요. 안정적이고 균형 잡힌 에너지가 흐릅니다. 무리하게 앞서가기보다 기반을 다지고 꾸준히 쌓아가는 하루로 만들어 보세요.",
 };
 
-const ELEMENT_META: Record<string, { label: string; color: string; bg: string; emoji: string }> = {
-  火: { label: "화(火)", color: "text-orange-500", bg: "bg-orange-50 border-orange-200", emoji: "☀️" },
-  水: { label: "수(水)", color: "text-blue-500", bg: "bg-blue-50 border-blue-200", emoji: "🌧️" },
-  木: { label: "목(木)", color: "text-green-600", bg: "bg-green-50 border-green-200", emoji: "💨" },
-  金: { label: "금(金)", color: "text-gray-500", bg: "bg-gray-50 border-gray-200", emoji: "☁️" },
-  土: { label: "토(土)", color: "text-yellow-600", bg: "bg-yellow-50 border-yellow-200", emoji: "🌤️" },
-};
 
 function dayLabel(dateStr: string, idx: number): string {
   if (idx === 0) return "오늘";
@@ -62,7 +58,7 @@ export default function WeatherPage() {
   const [yongshin, setYongshin] = useState<string | null>(null);
 
   useEffect(() => {
-    const memberId = localStorage.getItem("kkachi_member_id");
+    const memberId = localStorage.getItem(MEMBER_ID_KEY);
     if (!memberId) return;
     setLoggedIn(true);
     listProfiles(memberId)
@@ -123,11 +119,7 @@ export default function WeatherPage() {
           <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">날씨 기운</h1>
         </header>
 
-        {loading && (
-          <div className="flex justify-center py-16">
-            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
-          </div>
-        )}
+        {loading && <LoadingSpinner />}
 
         {!loading && days.length > 0 && (() => {
           const today = days[0];
@@ -155,7 +147,7 @@ export default function WeatherPage() {
 
         {/* 오행 기운 KkachiTip — 로그인 시만 표시 */}
         {!loading && loggedIn && days.length > 0 && (
-          <KkachiTip text={ELEMENT_TIP[days[0].element] ?? ELEMENT_TIP["土"]} />
+          <KkachiTip>{ELEMENT_TIP[days[0].element] ?? ELEMENT_TIP["土"]}</KkachiTip>
         )}
 
         {/* 시간대별 가로 슬라이드 */}

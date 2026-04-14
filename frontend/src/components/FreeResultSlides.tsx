@@ -8,9 +8,7 @@ import ElementRadar from "./ElementRadar";
 import SectionHeader from "./SectionHeader";
 import ShareCard from "./ShareCard";
 import { preparePayment } from "@/lib/api";
-
-
-const MEMBER_ID_KEY = "kkachi_member_id";
+import { MEMBER_ID_KEY } from "@/lib/constants";
 
 function ShareButtons({ data }: { data: BasicResult }) {
   const [copied, setCopied] = useState(false);

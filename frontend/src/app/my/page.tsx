@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Member } from "@/types/analysis";
 import { getMember, deleteMember } from "@/lib/api";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { MEMBER_ID_KEY } from "@/lib/constants";
 
 export default function MyPage() {
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function MyPage() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-gold-light)] border-t-transparent animate-spin" />
+        <LoadingSpinner />
       </main>
     );
   }

@@ -6,6 +6,7 @@ import { analyzePalmistry } from "@/lib/api";
 import { getElementInfo } from "@/lib/elementColors";
 import InterpretSection from "@/components/InterpretSection";
 import KkachiTip from "@/components/KkachiTip";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 type Stage = "idle" | "preview" | "loading" | "result" | "error";
 
@@ -179,7 +180,7 @@ export default function PalmistryPage() {
         {stage === "loading" && (
           <div className="slide-card">
             <div className="slide-card__body flex flex-col items-center gap-4 py-8">
-              <div className="w-10 h-10 rounded-full border-4 border-[var(--color-gold)] border-t-transparent animate-spin" />
+              <LoadingSpinner />
               <p className="text-sm text-[var(--color-ink-muted)]">손 형태를 분석하는 중...</p>
             </div>
           </div>

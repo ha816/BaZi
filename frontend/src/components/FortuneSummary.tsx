@@ -3,21 +3,10 @@
 import type { AnalysisResult } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import TermBadge from "./TermBadge";
+import ScoreBar from "./ScoreBar";
 
 interface Props {
   data: AnalysisResult;
-}
-
-function ScoreBar({ score, color }: { score: number; color: string }) {
-  const pct = Math.min((score / 10) * 100, 100);
-  return (
-    <div className="w-full bg-[var(--color-parchment)] rounded-full h-2">
-      <div
-        className="h-2 rounded-full transition-all duration-700 ease-out"
-        style={{ width: `${pct}%`, backgroundColor: color }}
-      />
-    </div>
-  );
 }
 
 function getElementPersonality(name: string): string {
@@ -174,7 +163,7 @@ export default function FortuneSummary({ data }: Props) {
                   <span className="text-sm font-medium text-[var(--color-ink)]">{name}</span>
                   <span className="text-xs font-semibold" style={{ color }}>{info.score}점</span>
                 </div>
-                <ScoreBar score={info.score} color={color} />
+                <ScoreBar score={info.score} color={color} max={10} />
               </div>
             );
           })}

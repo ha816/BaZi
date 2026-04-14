@@ -7,11 +7,7 @@ import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import FreeResultSlides from "@/components/FreeResultSlides";
 import LoadingSpinner from "@/components/LoadingSpinner";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
-
-const inputClass =
-  "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
+import { MEMBER_ID_KEY, INPUT_CLASS } from "@/lib/constants";
 
 export default function AnalysisPage() {
   const [result, setResult] = useState<BasicResult | null>(null);
@@ -147,7 +143,7 @@ export default function AnalysisPage() {
                 <select
                   value={selectedProfileId}
                   onChange={(e) => setSelectedProfileId(e.target.value)}
-                  className={`${inputClass} appearance-none`}
+                  className={`${INPUT_CLASS} appearance-none`}
                 >
                   {profiles.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -162,7 +158,7 @@ export default function AnalysisPage() {
                   type="number"
                   value={profileYear}
                   onChange={(e) => setProfileYear(+e.target.value)}
-                  className={inputClass}
+                  className={INPUT_CLASS}
                   min={1920}
                   max={2100}
                 />

@@ -6,27 +6,7 @@ import { useRouter } from "next/navigation";
 import type { ProfileCreateInput } from "@/types/analysis";
 import { createOrGetMember, listProfiles, createProfile } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
-
-const MEMBER_ID_KEY = "kkachi_member_id";
-
-const HOUR_OPTIONS = [
-  { value: "", label: "모르겠어요", time: "12:00" },
-  { value: "23", label: "자시 (子) 23~01시", time: "23:00" },
-  { value: "01", label: "축시 (丑) 01~03시", time: "01:00" },
-  { value: "03", label: "인시 (寅) 03~05시", time: "03:00" },
-  { value: "05", label: "묘시 (卯) 05~07시", time: "05:00" },
-  { value: "07", label: "진시 (辰) 07~09시", time: "07:00" },
-  { value: "09", label: "사시 (巳) 09~11시", time: "09:00" },
-  { value: "11", label: "오시 (午) 11~13시", time: "11:00" },
-  { value: "13", label: "미시 (未) 13~15시", time: "13:00" },
-  { value: "15", label: "신시 (申) 15~17시", time: "15:00" },
-  { value: "17", label: "유시 (酉) 17~19시", time: "17:00" },
-  { value: "19", label: "술시 (戌) 19~21시", time: "19:00" },
-  { value: "21", label: "해시 (亥) 21~23시", time: "21:00" },
-];
-
-const inputClass =
-  "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
+import { MEMBER_ID_KEY, HOUR_OPTIONS, INPUT_CLASS } from "@/lib/constants";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -123,7 +103,7 @@ export default function JoinPage() {
                   onChange={(e) => setProfileName(e.target.value)}
                   placeholder="홍길동"
                   required
-                  className={inputClass}
+                  className={INPUT_CLASS}
                 />
               </label>
               <label className="space-y-1.5">
@@ -132,7 +112,7 @@ export default function JoinPage() {
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
-                  className={inputClass}
+                  className={INPUT_CLASS}
                   min="1920-01-01"
                   max="2025-12-31"
                 />
@@ -142,7 +122,7 @@ export default function JoinPage() {
                 <select
                   value={selectedHour}
                   onChange={(e) => setSelectedHour(e.target.value)}
-                  className={`${inputClass} appearance-none`}
+                  className={`${INPUT_CLASS} appearance-none`}
                 >
                   {HOUR_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -156,7 +136,7 @@ export default function JoinPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="Seoul"
-                  className={inputClass}
+                  className={INPUT_CLASS}
                 />
               </label>
             </div>
@@ -224,7 +204,7 @@ export default function JoinPage() {
               onChange={(e) => setName(e.target.value)}
               placeholder="홍길동"
               required
-              className={inputClass}
+              className={INPUT_CLASS}
             />
           </label>
           <label className="block space-y-2">
@@ -235,7 +215,7 @@ export default function JoinPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="hong@example.com"
               required
-              className={inputClass}
+              className={INPUT_CLASS}
             />
           </label>
 

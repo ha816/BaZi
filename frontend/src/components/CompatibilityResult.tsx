@@ -1,6 +1,7 @@
 "use client";
 
 import type { CompatibilityResult } from "@/types/analysis";
+import ScoreBar from "./ScoreBar";
 
 interface Props {
   data: CompatibilityResult;
@@ -14,25 +15,6 @@ const DOMAIN_ICONS: Record<string, string> = {
   재물: "💰",
   직업: "🤝",
 };
-
-function ScoreBar({ score }: { score: number }) {
-  return (
-    <div className="w-full h-2 rounded-full bg-[var(--color-parchment)] overflow-hidden">
-      <div
-        className="h-full rounded-full transition-all duration-700"
-        style={{
-          width: `${score}%`,
-          background:
-            score >= 70
-              ? "linear-gradient(90deg, var(--color-gold-light), var(--color-gold))"
-              : score >= 45
-              ? "linear-gradient(90deg, var(--color-earth), var(--color-gold-light))"
-              : "linear-gradient(90deg, var(--color-water), var(--color-metal))",
-        }}
-      />
-    </div>
-  );
-}
 
 function ScoreRing({ score }: { score: number }) {
   const r = 52;

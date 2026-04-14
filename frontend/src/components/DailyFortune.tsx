@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { DailyFortune, HourlyWeather } from "@/types/analysis";
+import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 
 function useStreak(todayDate: string): number {
   const [streak, setStreak] = useState(0);
@@ -127,11 +128,6 @@ function HourlyFortuneBar({ data, yongshin }: { data: HourlyWeather[]; yongshin:
   );
 }
 
-const TOTAL_LEVEL_META: Record<string, { badge: string; icon: string }> = {
-  "좋은 날":         { badge: "bg-emerald-100 text-emerald-800", icon: "🌟" },
-  "평범한 날":       { badge: "bg-amber-100 text-amber-800",    icon: "☁️" },
-  "주의가 필요한 날": { badge: "bg-rose-100 text-rose-800",      icon: "⚠️" },
-};
 
 const DAY_LABELS = ["오늘", "내일", "모레", "글피"];
 
@@ -145,7 +141,7 @@ function getDowLabel(dateStr: string) {
 
 // ── 단일 날 상세 뷰 ────────────────────────────────────────────────────────
 function DetailView({ data }: { data: DailyFortune }) {
-  const meta = TOTAL_LEVEL_META[data.level] ?? TOTAL_LEVEL_META["평범한 날"];
+  const meta = FORECAST_LEVEL_META[data.level] ?? FORECAST_LEVEL_META["평범한 날"];
 
   return (
     <div className="space-y-4">
@@ -229,7 +225,7 @@ function WeeklyView({ forecast }: { forecast: DailyFortune[] }) {
   return (
     <div className="space-y-2">
       {forecast.map((day, i) => {
-        const meta = TOTAL_LEVEL_META[day.level] ?? TOTAL_LEVEL_META["평범한 날"];
+        const meta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
         return (
           <div key={day.date} className="flex items-center gap-3">
             {/* 날짜 */}
