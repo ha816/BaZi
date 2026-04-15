@@ -2,6 +2,7 @@ from dataclasses import asdict
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
+from lunardate import LunarDate
 from sajupy import calculate_saju as _sajupy_calculate
 
 from kkachi.application.port.fortune_port import FortunePort
@@ -46,6 +47,12 @@ SOLAR_TERMS: dict[tuple[int, int], tuple[str, Oheng, str]] = {
 
 def _get_solar_term(today: date) -> tuple[str, Oheng, str] | None:
     return SOLAR_TERMS.get((today.month, today.day))
+
+
+def _is_son_eomneun_nal(today: date) -> bool:
+    """음력 날짜 끝자리가 9 또는 0인 날 (손없는 날)."""
+    lunar_day = LunarDate.fromSolarDate(today.year, today.month, today.day).day
+    return lunar_day % 10 in (9, 0)
 
 
 GOOD_SIPSIN = {Sipsin.食神, Sipsin.正財, Sipsin.正官, Sipsin.正印}
@@ -174,6 +181,8 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
         solar_term_name = name
         tips = [f"오늘은 {name}입니다. {st_tip}", *tips][:3]
 
+    son_nal = _is_son_eomneun_nal(today)
+
     return Fortune(
         date=today.isoformat(),
         day_pillar=str(day_sb),
@@ -186,6 +195,7 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
         weather=weather,
         solar_term=solar_term_name,
         yongshin=natal.yongshin.name,
+        son_eomneun_nal=son_nal,
     )
 
 

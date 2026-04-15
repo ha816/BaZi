@@ -16,6 +16,7 @@ dependencies = [
     "openai>=2.31.0",
     "mediapipe>=0.10.33",
     "python-multipart>=0.0.26",
+    "lunardate>=0.2.2",
 ]
 
 [build-system]

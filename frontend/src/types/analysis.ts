@@ -244,4 +244,5 @@ export interface DailyFortune {
   weather: DailyWeather | null;
   solar_term?: string;
   yongshin?: string;
+  son_eomneun_nal?: boolean;
 }

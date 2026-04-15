@@ -19,7 +19,7 @@ docker compose -f docker/docker-compose.yml up -d
 uv run alembic upgrade head
 
 # 백엔드
-uv run uvicorn bazi.fastapi:app --reload --port 8000
+uv run uvicorn kkachi.fastapi:app --reload --port 8000
 
 # 프론트엔드
 cd frontend && npm run dev

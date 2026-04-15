@@ -162,6 +162,11 @@ function DetailView({ data }: { data: DailyFortune }) {
               {WEATHER_ICON[data.weather.element] ?? "🌤️"} {data.weather.condition}
             </span>
           )}
+          {data.son_eomneun_nal && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 border border-violet-200 flex items-center gap-1">
+              🪄 손없는 날
+            </span>
+          )}
         </div>
         <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${meta.badge}`}>
           {meta.icon} {data.level}
@@ -250,6 +255,12 @@ function WeeklyView({ forecast }: { forecast: DailyFortune[] }) {
             <span className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${meta.badge}`}>
               {meta.icon}
             </span>
+            {/* 손없는 날 */}
+            {day.son_eomneun_nal && (
+              <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-violet-50 text-violet-600 border border-violet-200">
+                🪄
+              </span>
+            )}
           </div>
         );
       })}
