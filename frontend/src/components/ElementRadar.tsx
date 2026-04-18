@@ -7,7 +7,7 @@ interface Props {
   showNarrative?: boolean;
 }
 
-function buildElementNarrative(stats: Record<string, number>): string {
+export function buildElementNarrative(stats: Record<string, number>): string {
   const entries = Object.entries(stats);
   const total = entries.reduce((sum, [, v]) => sum + v, 0);
   const sorted = [...entries].sort((a, b) => b[1] - a[1]);

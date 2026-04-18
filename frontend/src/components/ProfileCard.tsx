@@ -7,8 +7,18 @@ import { HOUR_OPTIONS, INPUT_CLASS } from "@/lib/constants";
 
 function _hourFromDatetime(birth_dt: string): string {
   const hour = new Date(birth_dt).getHours();
-  const opt = HOUR_OPTIONS.find((h) => h.value !== "" && parseInt(h.value) === hour);
-  return opt?.value ?? "";
+  if (hour === 23 || hour === 0) return "23";
+  if (hour <= 2) return "01";
+  if (hour <= 4) return "03";
+  if (hour <= 6) return "05";
+  if (hour <= 8) return "07";
+  if (hour <= 10) return "09";
+  if (hour <= 12) return "11";
+  if (hour <= 14) return "13";
+  if (hour <= 16) return "15";
+  if (hour <= 18) return "17";
+  if (hour <= 20) return "19";
+  return "21";
 }
 
 function _dateFromDatetime(birth_dt: string): string {

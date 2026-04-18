@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { BasicResult } from "@/types/analysis";
 import PillarDetail from "./PillarDetail";
-import ElementRadar from "./ElementRadar";
+import ElementRadar, { buildElementNarrative } from "./ElementRadar";
+import KkachiTip from "./KkachiTip";
 import SectionHeader from "./SectionHeader";
 import ShareCard from "./ShareCard";
 import { preparePayment } from "@/lib/api";
@@ -91,28 +92,63 @@ function ShareButtons({ data }: { data: BasicResult }) {
   );
 }
 
-const ZODIAC: Record<string, { kor: string; emoji: string; keywords: string[] }> = {
-  "子": { kor: "쥐", emoji: "🐭", keywords: ["영민함", "민첩함", "사교성"] },
-  "丑": { kor: "소", emoji: "🐂", keywords: ["성실함", "인내", "신뢰"] },
-  "寅": { kor: "호랑이", emoji: "🐯", keywords: ["용기", "리더십", "열정"] },
-  "卯": { kor: "토끼", emoji: "🐰", keywords: ["온화함", "직관", "예술성"] },
-  "辰": { kor: "용", emoji: "🐲", keywords: ["카리스마", "야망", "창의"] },
-  "巳": { kor: "뱀", emoji: "🐍", keywords: ["지혜", "신중함", "통찰"] },
-  "午": { kor: "말", emoji: "🐴", keywords: ["자유", "활동성", "독립"] },
-  "未": { kor: "양", emoji: "🐑", keywords: ["평화", "온순", "예술감"] },
-  "申": { kor: "원숭이", emoji: "🐒", keywords: ["기지", "유머", "적응력"] },
-  "酉": { kor: "닭", emoji: "🐓", keywords: ["꼼꼼함", "성실", "완벽주의"] },
-  "戌": { kor: "개", emoji: "🐕", keywords: ["충직함", "의리", "정직"] },
-  "亥": { kor: "돼지", emoji: "🐗", keywords: ["복", "너그러움", "성실"] },
-};
-
 
 interface Props {
   data: BasicResult;
 }
 
+function ConceptBox({ storageKey, label, children }: { storageKey: string; label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved === "closed") setOpen(false);
+  }, [storageKey]);
+
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    localStorage.setItem(storageKey, next ? "open" : "closed");
+  };
+
+  return (
+    <div className="rounded-xl bg-[var(--color-ivory-warm)] border border-[var(--color-border-light)] overflow-hidden">
+      <button
+        type="button"
+        onClick={toggle}
+        className="w-full flex items-center justify-between px-4 py-3 text-left"
+      >
+        <p className="text-xs font-semibold text-[var(--color-ink-light)] tracking-wide">{label}</p>
+        <span className="text-[var(--color-ink-faint)] text-xs ml-2">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="px-4 pb-3">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function buildPersonalizedTeaser(data: BasicResult): string {
+  const dayPillar = data.pillars[2] ?? "";
+  const elementMeaning = data.my_element.meaning;
+  const elementName = data.my_element.name;
+  const relation = data.zodiac_relation;
+
+  let tone: string;
+  if (relation.includes("합") || relation.includes("생")) {
+    tone = "순조로운 흐름이 기대되는 해예요";
+  } else if (relation.includes("충")) {
+    tone = "긴장과 변화가 많은 해예요";
+  } else {
+    tone = "신중하게 방향을 잡아야 하는 해예요";
+  }
+
+  return `${elementMeaning}(${elementName}) 기운의 ${dayPillar} 일주에게, 올해는 ${data.year_branch}의 기운이 들어와 ${relation} 관계가 만들어져요. ${tone}.`;
+}
+
 export default function FreeResultSlides({ data }: Props) {
-  const zodiac = ZODIAC[data.year_branch];
   const router = useRouter();
 
   const handleDeepAnalysis = async () => {
@@ -141,10 +177,15 @@ export default function FreeResultSlides({ data }: Props) {
       <div className="space-y-4">
         <div className="slide-card">
           <div className="slide-card__header">
-            <SectionHeader emoji="🌱" title="타고난 사주팔자(四柱八字)" free noMargin />
+            <SectionHeader emoji="🌱" title="사주팔자(四柱八字)" free noMargin />
           </div>
           <div className="divider" />
-          <div className="slide-card__body">
+          <div className="slide-card__body space-y-5">
+            <ConceptBox storageKey="kkachi_concept_saju" label="사주팔자란?">
+              <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
+                태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 표현한 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자를 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>라 부릅니다. 각 글자는 木·火·土·金·水 다섯 오행으로 이루어져 있으며, 이 조합이 타고난 기질·적성·인연의 흐름을 담고 있습니다.
+              </p>
+            </ConceptBox>
             <PillarDetail
               pillars={data.pillars}
               dayStem={data.day_stem}
@@ -155,55 +196,65 @@ export default function FreeResultSlides({ data }: Props) {
         <div className="slide-card">
           <div className="slide-card__header">
             <div className="flex items-center gap-2">
-              <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행(五行) 분포</h3>
+              <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행(五行)</h3>
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">무료</span>
             </div>
           </div>
           <div className="divider" />
-          <div className="slide-card__body">
-            <ElementRadar stats={data.element_stats} />
+          <div className="slide-card__body space-y-5">
+            <ConceptBox storageKey="kkachi_concept_oheng" label="오행이란?">
+              <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
+                만물을 이루는 다섯 가지 기운 — <strong className="text-[var(--color-ink)]">木(나무)·火(불)·土(흙)·金(쇠)·水(물)</strong>. 사주 여덟 글자 각각은 이 오행 중 하나에 속하며, 어떤 기운이 많고 적은지에 따라 성격·체질·적성이 달라집니다.
+              </p>
+            </ConceptBox>
+            <ElementRadar stats={data.element_stats} showNarrative={false} />
+            {(() => {
+              const maxVal = Math.max(...Object.values(data.element_stats));
+              const tops = Object.entries(data.element_stats).filter(([, v]) => v === maxVal).map(([k]) => k);
+              return tops.length === 1 ? (
+                <img src={`/oheng/oheng_${tops[0]}.png`} alt={tops[0]} className="w-full rounded-xl object-cover" style={{ height: 275 }} />
+              ) : (
+                <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${tops.length}, 1fr)` }}>
+                  {tops.map((el) => (
+                    <img key={el} src={`/oheng/oheng_${el}.png`} alt={el} className="w-full rounded-lg object-cover" style={{ height: 275 }} />
+                  ))}
+                </div>
+              );
+            })()}
+            <KkachiTip>{buildElementNarrative(data.element_stats)}</KkachiTip>
           </div>
         </div>
       </div>
 
-      {/* ── 섹션 2: 12지신 — 기본 정보 무료, zodiac_relation부터 블러 시작 */}
-      {zodiac && (
-        <div className="slide-card overflow-hidden">
-          <div className="slide-card__header">
-            <SectionHeader emoji="" title="나의 띠 · 십이지신(十二支神)" free noMargin />
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body">
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-[var(--color-ivory-warm)] flex items-center justify-center text-4xl">
-                {zodiac.emoji}
-              </div>
-              <div>
-                <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{zodiac.kor}띠</p>
-                <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">{data.year_branch}年 생</p>
-                <div className="flex gap-1.5 mt-2 flex-wrap">
-                  {zodiac.keywords.map((kw) => (
-                    <span key={kw} className="text-xs bg-[var(--color-ivory)] border border-[var(--color-border-light)] rounded-full px-2.5 py-0.5 text-[var(--color-ink-muted)]">
-                      {kw}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
 
-            {/* zodiac_relation 부터 블러 — 이야기가 끊기는 지점 */}
-            <div className="relative mt-4 pt-4 border-t border-[var(--color-border-light)]">
-              <p className="text-sm text-[var(--color-ink-light)] leading-relaxed blur-sm select-none pointer-events-none opacity-80 line-clamp-3">
-                {data.zodiac_relation}
-              </p>
-              <div
-                className="absolute inset-0"
-                style={{ background: "linear-gradient(to bottom, transparent 10%, var(--color-card) 70%)" }}
-              />
+      {/* ── 개인화 티저 */}
+      <div className="slide-card border border-[var(--color-gold)]">
+        <div className="slide-card__body space-y-3">
+          <p className="text-[10px] font-semibold text-[var(--color-gold)] tracking-widest uppercase">심층분석 미리보기</p>
+          {/* 까치 말풍선 */}
+          <div className="flex items-start gap-3">
+            <img
+              src="/kkachi/normal_kkachi_00.png"
+              alt="까치"
+              className="w-14 h-14 rounded-full object-cover flex-shrink-0 border-2 border-[var(--color-gold)]"
+              style={{ objectPosition: "50% 55%" }}
+            />
+            <div className="flex-1 bg-[var(--color-ivory-warm)] rounded-2xl rounded-tl-none px-4 py-3 relative">
+              <p className="text-[10px] font-semibold text-[var(--color-ink-faint)] mb-1">까치의 한마디</p>
+              <p className="text-sm text-[var(--color-ink)] leading-relaxed">{buildPersonalizedTeaser(data)}</p>
             </div>
+          </div>
+          {/* 블러 힌트 */}
+          <div className="relative overflow-hidden rounded-xl bg-[var(--color-ivory)] px-4 py-3">
+            <div className="space-y-1.5 blur-sm select-none opacity-60">
+              <p className="text-sm text-[var(--color-ink-light)]">• 재물·건강·대인·직장 영역별 운세 점수와 그 근거</p>
+              <p className="text-sm text-[var(--color-ink-light)]">• 현재 내가 어느 대운(大運) 시기에 있는지</p>
+              <p className="text-sm text-[var(--color-ink-light)]">• 올해 집중할 달, 조심할 달 월별 가이드</p>
+            </div>
+            <div className="absolute inset-0 rounded-xl" style={{ background: "linear-gradient(to bottom, transparent 10%, var(--color-ivory) 85%)" }} />
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── 심층분석 CTA — 60% 지점 */}
       <div className="relative">

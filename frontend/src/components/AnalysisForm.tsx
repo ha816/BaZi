@@ -13,18 +13,18 @@ interface Props {
 
 const HOUR_OPTIONS = [
   { value: "", label: "모르겠어요", time: "12:00" },
-  { value: "23", label: "자시 (子) 23:00 ~ 01:00", time: "23:00" },
-  { value: "01", label: "축시 (丑) 01:00 ~ 03:00", time: "01:00" },
-  { value: "03", label: "인시 (寅) 03:00 ~ 05:00", time: "03:00" },
-  { value: "05", label: "묘시 (卯) 05:00 ~ 07:00", time: "05:00" },
-  { value: "07", label: "진시 (辰) 07:00 ~ 09:00", time: "07:00" },
-  { value: "09", label: "사시 (巳) 09:00 ~ 11:00", time: "09:00" },
-  { value: "11", label: "오시 (午) 11:00 ~ 13:00", time: "11:00" },
-  { value: "13", label: "미시 (未) 13:00 ~ 15:00", time: "13:00" },
-  { value: "15", label: "신시 (申) 15:00 ~ 17:00", time: "15:00" },
-  { value: "17", label: "유시 (酉) 17:00 ~ 19:00", time: "17:00" },
-  { value: "19", label: "술시 (戌) 19:00 ~ 21:00", time: "19:00" },
-  { value: "21", label: "해시 (亥) 21:00 ~ 23:00", time: "21:00" },
+  { value: "23", label: "자시 (子) 23:00 ~ 01:00", time: "00:00" },
+  { value: "01", label: "축시 (丑) 01:00 ~ 03:00", time: "02:00" },
+  { value: "03", label: "인시 (寅) 03:00 ~ 05:00", time: "04:00" },
+  { value: "05", label: "묘시 (卯) 05:00 ~ 07:00", time: "06:00" },
+  { value: "07", label: "진시 (辰) 07:00 ~ 09:00", time: "08:00" },
+  { value: "09", label: "사시 (巳) 09:00 ~ 11:00", time: "10:00" },
+  { value: "11", label: "오시 (午) 11:00 ~ 13:00", time: "12:00" },
+  { value: "13", label: "미시 (未) 13:00 ~ 15:00", time: "14:00" },
+  { value: "15", label: "신시 (申) 15:00 ~ 17:00", time: "16:00" },
+  { value: "17", label: "유시 (酉) 17:00 ~ 19:00", time: "18:00" },
+  { value: "19", label: "술시 (戌) 19:00 ~ 21:00", time: "20:00" },
+  { value: "21", label: "해시 (亥) 21:00 ~ 23:00", time: "22:00" },
 ];
 
 export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, defaultLongitude }: Props) {

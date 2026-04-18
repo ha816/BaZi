@@ -50,7 +50,7 @@ const IconPerson = () => (
 
 const TABS_LOGGED_IN = [
   { href: "/", label: "홈", icon: <IconHome /> },
-  { href: "/analysis", label: "분석", icon: <IconStar /> },
+  { href: "/analysis/free", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
   { href: "/palmistry", label: "손금", icon: <IconHand /> },
   { href: "/weather", label: "날씨", icon: <IconCloud /> },
@@ -60,7 +60,7 @@ const TABS_LOGGED_IN = [
 
 const TABS_GUEST = [
   { href: "/", label: "홈", icon: <IconHome /> },
-  { href: "/analysis", label: "분석", icon: <IconStar /> },
+  { href: "/analysis/free", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
   { href: "/palmistry", label: "손금", icon: <IconHand /> },
   { href: "/weather", label: "날씨", icon: <IconCloud /> },

@@ -6,7 +6,7 @@ import { confirmPayment } from "@/lib/api";
 
 const REDIRECT_MAP: Record<string, string> = {
   deep_analysis: "/analysis/deep",
-  daily_fortune: "/analysis",
+  daily_fortune: "/analysis/free",
   compatibility: "/compatibility",
 };
 

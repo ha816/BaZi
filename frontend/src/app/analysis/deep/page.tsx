@@ -26,7 +26,7 @@ export default function DeepAnalysisPage() {
 
     const credit = sessionStorage.getItem("kkachi_credit_deep_analysis");
     if (!credit) {
-      router.replace("/analysis");
+      router.replace("/analysis/free");
       return;
     }
     sessionStorage.removeItem("kkachi_credit_deep_analysis");

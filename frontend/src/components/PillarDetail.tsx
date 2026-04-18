@@ -29,6 +29,16 @@ const BRANCH_ELEMENT: Record<string, string> = {
   午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
 };
 
+const STEM_KOR: Record<string, string> = {
+  甲: "갑", 乙: "을", 丙: "병", 丁: "정", 戊: "무",
+  己: "기", 庚: "경", 辛: "신", 壬: "임", 癸: "계",
+};
+
+const BRANCH_KOR: Record<string, string> = {
+  子: "자", 丑: "축", 寅: "인", 卯: "묘", 辰: "진", 巳: "사",
+  午: "오", 未: "미", 申: "신", 酉: "유", 戌: "술", 亥: "해",
+};
+
 export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false }: Props) {
   return (
     <div>
@@ -76,10 +86,10 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                   하늘
                 </div>
                 <div
-                  className="font-heading text-3xl md:text-4xl font-bold"
+                  className="font-heading text-2xl md:text-3xl font-bold"
                   style={{ color: stemInfo?.color ?? "var(--color-ink)" }}
                 >
-                  {stem}
+                  {STEM_KOR[stem]}({stem})
                 </div>
                 {stemInfo && (
                   <div className="text-xs mt-1" style={{ color: stemInfo.color }}>
@@ -101,10 +111,10 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                   땅
                 </div>
                 <div
-                  className="font-heading text-3xl md:text-4xl font-bold"
+                  className="font-heading text-2xl md:text-3xl font-bold"
                   style={{ color: branchInfo?.color ?? "var(--color-ink)" }}
                 >
-                  {branch}
+                  {BRANCH_KOR[branch]}({branch})
                 </div>
                 {branchInfo && (
                   <div className="text-xs mt-1" style={{ color: branchInfo.color }}>

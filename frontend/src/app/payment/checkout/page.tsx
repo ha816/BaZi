@@ -36,7 +36,7 @@ function CheckoutContent() {
       sessionStorage.setItem(`kkachi_credit_${featureType}`, "1");
       const redirectMap: Record<string, string> = {
         deep_analysis: "/analysis/deep",
-        daily_fortune: "/analysis",
+        daily_fortune: "/analysis/free",
         compatibility: "/compatibility",
       };
       window.location.href = redirectMap[featureType] ?? "/";
