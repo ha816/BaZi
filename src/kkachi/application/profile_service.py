@@ -6,7 +6,6 @@ from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.saju_service import SajuService
-from kkachi.domain.payment import PaymentRequiredError
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender, User
 
@@ -53,11 +52,6 @@ class ProfileService:
         cached = await self.analysis_port.get(profile_id, year)
         if cached:
             return cached.result
-
-        if self._payment_port and member_id:
-            credit = await self._payment_port.pop_credit(member_id, "deep_analysis")
-            if credit is None:
-                raise PaymentRequiredError("심층분석 크레딧이 없습니다.")
 
         profile = await self.profile_port.get(profile_id)
         if profile is None:

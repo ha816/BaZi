@@ -9,7 +9,6 @@ from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
 from kkachi.container import Container
-from kkachi.domain.payment import PaymentRequiredError
 from kkachi.domain.user import Gender
 
 profile_router = APIRouter(prefix="/members/{member_id}/profiles", tags=["profiles"])
@@ -120,8 +119,6 @@ async def analyze_profile(
 ) -> dict:
     try:
         return await svc.analyze_profile(profile_id, req.year, member_id=member_id)
-    except PaymentRequiredError:
-        raise HTTPException(status_code=402, detail="결제가 필요합니다.")
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 

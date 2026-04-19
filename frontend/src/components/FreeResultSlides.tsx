@@ -97,12 +97,12 @@ interface Props {
   data: BasicResult;
 }
 
-function ConceptBox({ storageKey, label, children }: { storageKey: string; label: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+function ConceptBox({ storageKey, children }: { storageKey: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(storageKey);
-    if (saved === "closed") setOpen(false);
+    if (saved === "open") setOpen(true);
   }, [storageKey]);
 
   const toggle = () => {
@@ -112,20 +112,11 @@ function ConceptBox({ storageKey, label, children }: { storageKey: string; label
   };
 
   return (
-    <div className="rounded-xl bg-[var(--color-ivory-warm)] border border-[var(--color-border-light)] overflow-hidden">
-      <button
-        type="button"
-        onClick={toggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
-      >
-        <p className="text-xs font-semibold text-[var(--color-ink-light)] tracking-wide">{label}</p>
-        <span className="text-[var(--color-ink-faint)] text-xs ml-2">{open ? "▲" : "▼"}</span>
+    <div>
+      <button type="button" onClick={toggle} className="flex items-center gap-1 text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors">
+        자세히 <span>{open ? "▲" : "▼"}</span>
       </button>
-      {open && (
-        <div className="px-4 pb-3">
-          {children}
-        </div>
-      )}
+      {open && <div className="mt-2 text-xs text-[var(--color-ink-muted)] leading-relaxed bg-[var(--color-ivory-warm)] rounded-lg px-3 py-2">{children}</div>}
     </div>
   );
 }
@@ -181,7 +172,7 @@ export default function FreeResultSlides({ data }: Props) {
           </div>
           <div className="divider" />
           <div className="slide-card__body space-y-5">
-            <ConceptBox storageKey="kkachi_concept_saju" label="사주팔자란?">
+            <ConceptBox storageKey="kkachi_concept_saju">
               <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
                 태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 표현한 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자를 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>라 부릅니다. 각 글자는 木·火·土·金·水 다섯 오행으로 이루어져 있으며, 이 조합이 타고난 기질·적성·인연의 흐름을 담고 있습니다.
               </p>
@@ -202,7 +193,7 @@ export default function FreeResultSlides({ data }: Props) {
           </div>
           <div className="divider" />
           <div className="slide-card__body space-y-5">
-            <ConceptBox storageKey="kkachi_concept_oheng" label="오행이란?">
+            <ConceptBox storageKey="kkachi_concept_oheng">
               <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">
                 만물을 이루는 다섯 가지 기운 — <strong className="text-[var(--color-ink)]">木(나무)·火(불)·土(흙)·金(쇠)·水(물)</strong>. 사주 여덟 글자 각각은 이 오행 중 하나에 속하며, 어떤 기운이 많고 적은지에 따라 성격·체질·적성이 달라집니다.
               </p>

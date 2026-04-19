@@ -1,8 +1,13 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import type { NatalResult, SipsinInfo, SibiUnseongInfo, SinsalInfo } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import PillarDetail from "@/components/PillarDetail";
 import SectionHeader from "@/components/SectionHeader";
 import KkachiTip from "@/components/KkachiTip";
+import ElementRadar from "@/components/ElementRadar";
+
 
 const SIPSIN_ARROW: Record<string, { label: string; dir: "to-me" | "from-me" | "same"; color: string }> = {
   "比肩": { label: "같은 기운", dir: "same",    color: "#78716C" },
@@ -121,6 +126,183 @@ function buildSinsalNarrative(sinsal: SinsalInfo[], name: string): string {
   return `${p} 사주에 ${names}이 있어요. 이 특별한 기운을 잘 활용하면 타고난 캐릭터성을 살릴 수 있어요.`;
 }
 
+const OHAENG_IDX: Record<string, number> = { '木':0, '火':1, '土':2, '金':3, '水':4 };
+const OHAENG_KOR = ['나무','불','흙','쇠','물'];
+const OHAENG_COLORS = ['#1B6B3A','#B02020','#8A4F00','#3D3D3D','#0F4F8A'];
+const OHAENG_BGS = ['#C8E6D4','#F8CCC8','#F5DCAA','#E0E0E0','#C4DDF5'];
+const OHAENG_BORDERS = ['#6DB890','#E07070','#D4A060','#A0A0A0','#6AAAD8'];
+const SAENG_PAIRS: [number,number][] = [[0,1],[1,2],[2,3],[3,4],[4,0]];
+const GEUK_PAIRS: [number,number][] = [[0,2],[1,3],[2,4],[3,0],[4,1]];
+
+function OhaengCountDiagram({ stats }: { stats: Record<string, number> }) {
+  const CX = 100, CY = 88, PR = 66, NR = 20;
+  function pentaPos(i: number): [number, number] {
+    const a = (-90 + i * 72) * Math.PI / 180;
+    return [CX + PR * Math.cos(a), CY + PR * Math.sin(a)];
+  }
+  function arrowSeg(i1: number, i2: number) {
+    const [x1,y1] = pentaPos(i1), [x2,y2] = pentaPos(i2);
+    const dx = x2-x1, dy = y2-y1, l = Math.sqrt(dx*dx+dy*dy);
+    const ux = dx/l, uy = dy/l;
+    return { x1: x1+NR*ux, y1: y1+NR*uy, x2: x2-(NR+4)*ux, y2: y2-(NR+4)*uy };
+  }
+  const maxCount = Math.max(1, ...Object.values(stats));
+  return (
+    <div className="rounded-lg bg-[var(--color-ivory)] border border-[var(--color-border-light)] p-3 space-y-2">
+      <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">오행 관계도</p>
+      <svg viewBox="0 0 200 182" className="w-2/3 mx-auto block">
+        <defs>
+          <marker id="oc-saeng" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5 z" fill="#1B6B3A" opacity="0.4" />
+          </marker>
+          <marker id="oc-geuk" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+            <path d="M0,0 L0,5 L5,2.5 z" fill="#C0392B" opacity="0.3" />
+          </marker>
+        </defs>
+        {SAENG_PAIRS.map(([a,b]) => {
+          const s = arrowSeg(a,b);
+          return <line key={`s${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+            stroke="#1B6B3A" strokeWidth={1} strokeOpacity={0.2} markerEnd="url(#oc-saeng)" />;
+        })}
+        {GEUK_PAIRS.map(([a,b]) => {
+          const s = arrowSeg(a,b);
+          return <line key={`g${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+            stroke="#C0392B" strokeWidth={1} strokeOpacity={0.15} strokeDasharray="4,3" markerEnd="url(#oc-geuk)" />;
+        })}
+        {(['木','火','土','金','水'] as const).map((elem, i) => {
+          const [x,y] = pentaPos(i);
+          const count = stats[elem] ?? 0;
+          const active = count > 0;
+          const ratio = active ? count / maxCount : 0;
+          const strokeW = active ? 1.5 + 2.5 * ratio : 1;
+          return (
+            <g key={elem}>
+              <circle cx={x} cy={y} r={NR}
+                fill={active ? OHAENG_BGS[i] : '#F5F2EC'}
+                stroke={OHAENG_BORDERS[i]}
+                strokeWidth={strokeW}
+                opacity={active ? 0.55 + 0.45 * ratio : 0.25} />
+              <text x={x} y={y-4} textAnchor="middle" dominantBaseline="middle"
+                fontSize={14} fontWeight={active ? 700 : 400}
+                fill={OHAENG_COLORS[i]} opacity={active ? 1 : 0.3}
+                style={{ fontFamily: "serif" }}>
+                {elem}
+              </text>
+              <text x={x} y={y+7} textAnchor="middle" dominantBaseline="middle"
+                fontSize={8} fill={OHAENG_COLORS[i]} opacity={active ? 0.85 : 0.25}>
+                {OHAENG_KOR[i]}
+              </text>
+              {active && (
+                <text x={x} y={y+NR+10} textAnchor="middle"
+                  fontSize={9} fontWeight={700} fill={OHAENG_COLORS[i]}>
+                  {count}개
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+      <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <svg width="20" height="8"><line x1="0" y1="4" x2="14" y2="4" stroke="#1B6B3A" strokeWidth="1.5" markerEnd="url(#oc-saeng)" /></svg>
+          <span className="text-[9px] text-[#1B6B3A] font-medium">도움(生)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <svg width="20" height="8"><line x1="0" y1="4" x2="14" y2="4" stroke="#C0392B" strokeWidth="1" strokeDasharray="3,2" markerEnd="url(#oc-geuk)" /></svg>
+          <span className="text-[9px] text-[#C0392B] font-medium">억제(克)</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const PILLAR_SHORT = ["년주", "월주", "일주", "시주"];
+
+const ELEMENT_TIP: Record<string, { strength: string; caution: string; advice: string }> = {
+  木: { strength: "진취적인 추진력과 창의성",  caution: "성급함과 지속력 부족",       advice: "꾸준히 뿌리를 내리는 과정을 즐긴다면 큰 성장을 이룰 수 있어요." },
+  火: { strength: "열정과 뛰어난 표현력",      caution: "감정 기복과 충동적인 결정",   advice: "열정을 유지하면서도 차분히 결과를 살피는 습관을 들이면 더욱 빛납니다." },
+  土: { strength: "신중함과 책임감",           caution: "보수성과 변화에 대한 저항",   advice: "자신의 안정감을 바탕으로 타인을 배려하는 마음을 더한다면 더욱 발전할 수 있어요." },
+  金: { strength: "결단력과 원칙에 대한 의지", caution: "지나친 고집과 냉정함",        advice: "원칙을 지키면서도 유연하게 소통한다면 주변의 신뢰를 더욱 얻게 됩니다." },
+  水: { strength: "뛰어난 지혜와 유연한 적응력", caution: "우유부단함과 과도한 걱정", advice: "깊은 통찰력을 믿고 흐름에 몸을 맡기면 자연스럽게 길이 열려요." },
+};
+
+function buildOhaengTip(natal: NatalResult, name: string): string {
+  const elem = natal.my_element.name;
+  const meaning = natal.my_element.meaning;
+  const tip = ELEMENT_TIP[elem];
+  if (!tip) return "";
+  const p = name ? `${name}님은 ` : "";
+  return `${p}${meaning}(${elem}) 기운으로서 ${tip.strength}을 잘 발휘하시되, ${tip.caution}에 주의하세요. ${tip.advice}`;
+}
+
+const STEM_KOR: Record<string, string> = {
+  甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
+  己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
+};
+
+const STRENGTH_DESC: Record<string, string> = {
+  신강: "타고난 에너지가 강하고 자기 주도적인 성향이에요.",
+  신약: "주변 환경의 영향을 잘 받고 협력에서 힘을 발휘해요.",
+  중화: "기운이 고르게 균형 잡혀 안정적인 사주예요.",
+};
+
+function buildPillarTip(natal: NatalResult, name: string): string {
+  const p = name ? `${name}님을 ` : "이 사주를 ";
+  const kor = STEM_KOR[natal.day_stem] ?? natal.day_stem;
+  const personal = `${p}나타내는 글자는 ${kor}(${natal.day_stem})이에요.`;
+  const concept = "태어난 날(日柱)의 천간(天干)이 자신을 나타냅니다.";
+  const strengthDesc = STRENGTH_DESC[natal.strength_label] ?? "";
+  return [personal, concept, strengthDesc].filter(Boolean).join(" ");
+}
+
+function OhaengSourceBreakdown({ pillars, pillarElements, stats }: {
+  pillars: string[];
+  pillarElements: { stem_element: string; branch_element: string }[];
+  stats: Record<string, number>;
+}) {
+  const ELEMS = ['木', '火', '土', '金', '水'];
+  const sources: Record<string, { char: string; pillar: string; type: string }[]> = {};
+  ELEMS.forEach((e) => (sources[e] = []));
+  pillars.forEach((pillar, i) => {
+    const stem = pillar[0], branch = pillar[1];
+    const stemEl = pillarElements[i]?.stem_element;
+    const branchEl = pillarElements[i]?.branch_element;
+    if (stemEl) sources[stemEl].push({ char: stem, pillar: PILLAR_SHORT[i], type: "천간" });
+    if (branchEl) sources[branchEl].push({ char: branch, pillar: PILLAR_SHORT[i], type: "지지" });
+  });
+  const maxCount = Math.max(1, ...Object.values(stats));
+  return (
+    <div className="space-y-2">
+      {ELEMS.map((elem, i) => {
+        const count = stats[elem] ?? 0;
+        const active = count > 0;
+        const pct = (count / maxCount) * 100;
+        return (
+          <div key={elem} className={`space-y-1 ${active ? "" : "opacity-30"}`}>
+            <div className="flex items-center gap-2">
+              <span className="font-heading text-sm font-bold w-5 shrink-0" style={{ color: OHAENG_COLORS[i] }}>{elem}</span>
+              <div className="flex-1 h-2 rounded-full bg-[var(--color-border-light)] overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: OHAENG_COLORS[i] }} />
+              </div>
+              <span className="text-[10px] font-semibold w-6 text-right" style={{ color: OHAENG_COLORS[i] }}>{count}</span>
+            </div>
+            {active && (
+              <div className="flex flex-wrap gap-1 pl-7">
+                {sources[elem].map((s, j) => (
+                  <span key={j} className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                    style={{ backgroundColor: OHAENG_BGS[i], color: OHAENG_COLORS[i], border: `1px solid ${OHAENG_BORDERS[i]}` }}>
+                    {s.char} {s.pillar} {s.type}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
   { needs: ["문창귀인", "장성살"],    message: "똑똑한 리더 탄생! 지략과 카리스마를 모두 갖춘 당신은 조직의 핵심이 될 상이네요!" },
   { needs: ["도화살", "역마살"],      message: "카리스마 넘치는 글로벌 스타! 어딜 가도 주목받고, 낯선 곳에서 오히려 더 빛나는 타입이에요." },
@@ -131,25 +313,150 @@ const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
 
 export default function NatalTab({ natal, name }: Props) {
   const meInfo = getElementInfo(natal.my_element.name);
+  const [sajuOpen, setSajuOpen] = useState(false);
+  const [ohengOpen, setOhengOpen] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("kkachi_concept_saju") === "open") setSajuOpen(true);
+    if (localStorage.getItem("kkachi_concept_oheng") === "open") setOhengOpen(true);
+  }, []);
+
+  const toggleSaju = () => { const next = !sajuOpen; setSajuOpen(next); localStorage.setItem("kkachi_concept_saju", next ? "open" : "closed"); };
+  const toggleOheng = () => { const next = !ohengOpen; setOhengOpen(next); localStorage.setItem("kkachi_concept_oheng", next ? "open" : "closed"); };
 
   return (
     <div className="space-y-4">
-      {/* 팔자 그리드 */}
+      {/* 사주팔자 + 오행 */}
       <div className="slide-card">
         <div className="slide-card__header">
-          <SectionHeader emoji="🌱" title="나의 사주팔자(四柱八字)" noMargin />
+          <div className="flex items-center gap-2">
+            <SectionHeader title="사주팔자(四柱八字)" noMargin />
+            <button type="button" onClick={toggleSaju} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
+              설명 <span>{sajuOpen ? "▲" : "▼"}</span>
+            </button>
+          </div>
+          {sajuOpen && (
+            <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
+              태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 표현한 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자를 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>라 부릅니다.
+            </p>
+          )}
         </div>
         <div className="divider" />
-        <div className="slide-card__body">
+        <div className="slide-card__body space-y-4">
           <PillarDetail
             pillars={natal.pillars}
             dayStem={natal.day_stem}
-            pillarSummary={natal.pillar_summary ? `${name ? `${name}님의 ` : ""}${natal.pillar_summary}` : ""}
-            jizanGan={natal.jizan_gan}
-            gongmang={natal.gongmang}
+            basic
           />
+          <KkachiTip>{buildPillarTip(natal, name)}</KkachiTip>
+        </div>
+        <div className="divider" />
+        <div className="slide-card__header">
+          <div className="flex items-center gap-2">
+            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행(五行)</h3>
+            <button type="button" onClick={toggleOheng} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
+              설명 <span>{ohengOpen ? "▲" : "▼"}</span>
+            </button>
+          </div>
+          {ohengOpen && (
+            <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
+              만물을 이루는 다섯 가지 기운 — <strong className="text-[var(--color-ink)]">木(나무)·火(불)·土(흙)·金(쇠)·水(물)</strong>. 사주 여덟 글자 각각은 이 오행 중 하나에 속하며, 어떤 기운이 많고 적은지에 따라 성격·체질·적성이 달라집니다.
+            </p>
+          )}
+        </div>
+        <div className="divider" />
+        <div className="slide-card__body space-y-5">
+          <OhaengSourceBreakdown pillars={natal.pillars} pillarElements={natal.pillar_elements} stats={natal.element_stats} />
+          <OhaengCountDiagram stats={natal.element_stats} />
+          <KkachiTip>{buildOhaengTip(natal, name)}</KkachiTip>
+          {(() => {
+            const maxVal = Math.max(...Object.values(natal.element_stats));
+            const tops = Object.entries(natal.element_stats).filter(([, v]) => v === maxVal).map(([k]) => k);
+            return tops.length === 1 ? (
+              <img src={`/oheng/oheng_${tops[0]}.png`} alt={tops[0]} className="w-full rounded-xl object-cover" style={{ height: 275 }} />
+            ) : (
+              <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${tops.length}, 1fr)` }}>
+                {tops.map((el) => (
+                  <img key={el} src={`/oheng/oheng_${el}.png`} alt={el} className="w-full rounded-lg object-cover" style={{ height: 275 }} />
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </div>
+
+      {/* 지장간 */}
+      {natal.jizan_gan?.some((jg) => jg.length > 0) && (
+        <div className="slide-card">
+          <div className="slide-card__header">
+            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">지장간(地藏干)</h3>
+            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
+              각 지지(땅 글자) 안에 숨어있는 천간들. 사주의 <strong className="text-[var(--color-ink-muted)]">잠재된 기운과 속마음</strong>을 나타냅니다.
+            </p>
+          </div>
+          <div className="divider" />
+          <div className="slide-card__body">
+            <div className="grid grid-cols-4 gap-2">
+              {[3, 2, 1, 0].map((origI) => {
+                const PILLAR_LABELS_SHORT = ["年柱", "月柱", "日柱", "時柱"];
+                const jg = natal.jizan_gan[origI] ?? [];
+                const SIPSIN_KOR: Record<string, string> = {
+                  比肩: "비견", 劫財: "겁재", 食神: "식신", 傷官: "상관",
+                  偏財: "편재", 正財: "정재", 偏官: "편관", 正官: "정관",
+                  偏印: "편인", 正印: "정인",
+                };
+                return (
+                  <div key={origI} className="rounded-xl border text-center px-2 py-3 space-y-1.5" style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
+                    <div className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{PILLAR_LABELS_SHORT[origI]}</div>
+                    {jg.length > 0 ? jg.map((item, i) => (
+                      <div key={i} className="text-xs text-[var(--color-ink)]">
+                        {item.stem}
+                        <span className="text-[10px] text-[var(--color-ink-faint)] ml-0.5">
+                          {SIPSIN_KOR[item.sipsin_name] ?? item.sipsin_name}
+                        </span>
+                      </div>
+                    )) : <div className="text-xs text-[var(--color-ink-faint)]">—</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 공망 */}
+      {natal.gongmang?.some(Boolean) && (
+        <div className="slide-card">
+          <div className="slide-card__header">
+            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">공망(空亡)</h3>
+          </div>
+          <div className="divider" />
+          <div className="slide-card__body space-y-3">
+            <p className="text-xs text-[var(--color-ink-faint)] leading-relaxed">
+              60갑자 순(旬)에서 짝이 없는 지지. 해당 기둥의 기운이 약해지지만, <strong className="text-[var(--color-ink-muted)]">집착을 내려놓을수록 오히려 잘 풀리는 기운</strong>으로 봅니다.
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {[3, 2, 1, 0].map((origI) => {
+                const PILLAR_LABELS_SHORT = ["年柱", "月柱", "日柱", "時柱"];
+                const isGongmang = natal.gongmang[origI];
+                return (
+                  <div key={origI} className="rounded-xl border text-center px-2 py-3"
+                    style={isGongmang
+                      ? { borderColor: "var(--color-ink-faint)", backgroundColor: "var(--color-ivory-warm)" }
+                      : { borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)", opacity: 0.4 }
+                    }
+                  >
+                    <div className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{PILLAR_LABELS_SHORT[origI]}</div>
+                    <div className="text-sm font-bold mt-1" style={{ color: isGongmang ? "var(--color-ink)" : "var(--color-ink-faint)" }}>
+                      {isGongmang ? "空亡" : "—"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 십신 */}
       {natal.sipsin.length > 0 && (
@@ -347,46 +654,40 @@ export default function NatalTab({ natal, name }: Props) {
         </div>
       )}
 
-      {/* 십이신살 */}
-      {natal.sibi_sinsal && natal.sibi_sinsal.some(Boolean) && (
+      {/* 신살 */}
+      {(natal.sibi_sinsal?.some(Boolean) || natal.sinsal.length > 0) && (
         <div className="slide-card">
           <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">십이신살(十二神殺)</h3>
+            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">신살(神殺)</h3>
             <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-              년지(年支) 기준으로 사주 각 기둥의 지지에 배당되는 12가지 기운.
-              <strong className="text-[var(--color-ink-muted)]"> 겁살·재살·망신살은 흉성, 장성·역마·화개는 운동성이 강한 길성</strong>으로 풀이합니다.
+              사주 각 기둥에 배당되는 기운. 현대에는
+              <strong className="text-[var(--color-ink-muted)]"> 개인의 독특한 역량과 특성</strong>으로 풀이합니다.
             </p>
           </div>
           <div className="divider" />
-          <div className="slide-card__body">
-            <div className="grid grid-cols-4 gap-2">
-              {["년주", "월주", "일주", "시주"].map((label, i) => {
-                const name_s = natal.sibi_sinsal[i] || "";
-                return (
-                  <div key={i} className="rounded-xl border text-center px-2 py-3" style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
-                    <div className="text-[10px] text-[var(--color-ink-faint)] mb-1">{label}</div>
-                    <div className="text-sm font-semibold text-[var(--color-ink)]">{name_s || "—"}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+          <div className="slide-card__body space-y-4">
 
-      {/* 기타신살 */}
-      {natal.sinsal.length > 0 && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">기타신살(其他神殺)</h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-              과거에는 '살(殺)'이라는 글자 때문에 무섭게 풀이하기도 했지만, 현대에는
-              <strong className="text-[var(--color-ink-muted)]"> 개인의 독특한 역량이나 유통기한이 있는 기술</strong>로 풀이하면 훨씬 흥미롭습니다.
-            </p>
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body space-y-3">
-            {(() => {
+            {/* 십이신살 — 기둥별 */}
+            {natal.sibi_sinsal?.some(Boolean) && (
+              <div>
+                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] mb-2">십이신살(十二神殺) — 일지 기준 기둥별 배당</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {[3, 2, 1, 0].map((origI) => {
+                    const PILLAR_LABELS_SHORT = ["年柱", "月柱", "日柱", "時柱"];
+                    const sinsalName = natal.sibi_sinsal[origI] || "";
+                    return (
+                      <div key={origI} className="rounded-xl border text-center px-2 py-3" style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
+                        <div className="text-[10px] text-[var(--color-ink-faint)] mb-1">{PILLAR_LABELS_SHORT[origI]}</div>
+                        <div className="text-sm font-semibold text-[var(--color-ink)]">{sinsalName || "—"}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 특수신살 — 카드 */}
+            {natal.sinsal.length > 0 && (() => {
               const myMap = natal.sinsal.reduce<Record<string, string[]>>((acc, s) => {
                 if (!acc[s.sinsal_korean]) acc[s.sinsal_korean] = [];
                 acc[s.sinsal_korean].push(s.branch);
@@ -395,18 +696,16 @@ export default function NatalTab({ natal, name }: Props) {
               const mySet = new Set(Object.keys(myMap));
               const activeCombo = SINSAL_COMBOS.find((c) => c.needs.every((n) => mySet.has(n)));
               const hasBaekho = mySet.has("백호살");
-
               return (
                 <>
+                  {natal.sibi_sinsal?.some(Boolean) && (
+                    <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">특수신살</p>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     {SINSAL_ORDER.filter((n) => !!myMap[n]).map((sinsalName) => {
                       const info = SINSAL_INFO[sinsalName];
                       return (
-                        <div
-                          key={sinsalName}
-                          className="rounded-xl p-3 border overflow-hidden"
-                          style={{ backgroundColor: info.bg, borderColor: info.border }}
-                        >
+                        <div key={sinsalName} className="rounded-xl p-3 border overflow-hidden" style={{ backgroundColor: info.bg, borderColor: info.border }}>
                           <p className="font-heading text-sm font-bold text-[var(--color-ink)]">
                             {sinsalName}
                             <span className="text-[10px] font-normal text-[var(--color-ink-faint)] ml-1">{info.hanja}</span>
@@ -422,23 +721,17 @@ export default function NatalTab({ natal, name }: Props) {
                       );
                     })}
                   </div>
-
                   {hasBaekho && (
                     <KkachiTip>
                       백호살은 무서운 게 아니에요! 에너지가 워낙 강해서 생기는 일들이니, 이 힘을 전문적인 업무나 강한 집중력이 필요한 곳에 쏟아보세요. 외과의사, 운동선수, 소방관처럼 강도 높은 환경에서 오히려 두각을 나타내는 기운이에요.
                     </KkachiTip>
                   )}
-
-                  {activeCombo && (
-                    <KkachiTip>{activeCombo.message}</KkachiTip>
-                  )}
-
-                  {!hasBaekho && !activeCombo && (
-                    <KkachiTip>{buildSinsalNarrative(natal.sinsal, name)}</KkachiTip>
-                  )}
+                  {activeCombo && <KkachiTip>{activeCombo.message}</KkachiTip>}
+                  {!hasBaekho && !activeCombo && <KkachiTip>{buildSinsalNarrative(natal.sinsal, name)}</KkachiTip>}
                 </>
               );
             })()}
+
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 interface Props {
-  emoji: string;
+  emoji?: string;
   title: string;
   free?: boolean;
   noMargin?: boolean;

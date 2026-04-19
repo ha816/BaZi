@@ -120,7 +120,7 @@ export default function FortunePage() {
                 <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">내 사주 구조와 오늘 일진의 관계를 심층 분석으로 확인해보세요</p>
               </div>
               <Link
-                href="/analysis/free"
+                href="/analysis"
                 className="shrink-0 px-4 py-2 rounded-full bg-[var(--color-gold)] text-white text-xs font-semibold whitespace-nowrap"
               >
                 사주 분석하기

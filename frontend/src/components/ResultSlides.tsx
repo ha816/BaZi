@@ -15,7 +15,7 @@ import FengShuiTab from "./tabs/FengShuiTab";
 import { postFeedback } from "@/lib/api";
 
 const FEATURE_TABS = [
-  { id: "natal",   emoji: "🌱", label: "사주팔자" },
+  { id: "natal",   emoji: "🌱", label: "만세력" },
   { id: "ki",      emoji: "✨", label: "기운" },
   { id: "zodiac",  emoji: "🐾", label: "십이지신" },
   { id: "samjae",  emoji: "⚡", label: "삼재" },

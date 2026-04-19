@@ -57,14 +57,15 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
       )}
 
       <div className="grid grid-cols-4 gap-3 md:gap-4">
-        {pillars.map((pillar, i) => {
+        {[3, 2, 1, 0].map((origI, i) => {
+          const pillar = pillars[origI] ?? "";
           const stem = pillar[0];
           const branch = pillar[1];
-          const stemEl = pillarElements?.[i]?.stem_element ?? STEM_ELEMENT[stem] ?? "";
-          const branchEl = pillarElements?.[i]?.branch_element ?? BRANCH_ELEMENT[branch] ?? "";
+          const stemEl = pillarElements?.[origI]?.stem_element ?? STEM_ELEMENT[stem] ?? "";
+          const branchEl = pillarElements?.[origI]?.branch_element ?? BRANCH_ELEMENT[branch] ?? "";
           const stemInfo = stemEl ? getElementInfo(stemEl) : null;
           const branchInfo = branchEl ? getElementInfo(branchEl) : null;
-          const isDayPillar = highlightDayStem && i === 2;
+          const isDayPillar = highlightDayStem && origI === 2;
           return (
             <div
               key={i}
@@ -75,26 +76,29 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
               }
             >
               <div className="px-3 py-3 border-b" style={{ borderColor: isDayPillar ? "var(--color-gold)" : "var(--color-border-light)" }}>
-                <div className="text-sm font-medium text-[var(--color-ink)]">
-                  {PILLAR_LABELS[i]}
-                </div>
-                <div className="text-xs text-[var(--color-ink-faint)]">
-                  {basic
-                    ? PILLAR_TERMS_HAN[i]
-                    : <>{PILLAR_SUB[i]} <span className="opacity-60">(<TermBadge term={PILLAR_TERMS[i]} />)</span></>
-                  }
-                </div>
+                {basic ? (
+                  <div className="text-sm font-medium text-[var(--color-ink)]">
+                    {PILLAR_LABELS[origI]}<span className="text-xs font-normal text-[var(--color-ink-faint)] ml-0.5">({PILLAR_TERMS_HAN[origI]})</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-sm font-medium text-[var(--color-ink)]">{PILLAR_LABELS[origI]}</div>
+                    <div className="text-xs text-[var(--color-ink-faint)]">
+                      {PILLAR_SUB[origI]} <span className="opacity-60">(<TermBadge term={PILLAR_TERMS[origI]} />)</span>
+                    </div>
+                  </>
+                )}
                 {isDayPillar && (
                   <div className="text-[10px] font-semibold mt-0.5" style={{ color: "var(--color-gold)" }}>기준 일간</div>
                 )}
-                {gongmang?.[i] && (
+                {gongmang?.[origI] && (
                   <div className="inline-block text-[9px] font-medium px-1.5 py-0.5 rounded mt-1" style={{ background: "var(--color-border-light)", color: "var(--color-ink-faint)" }}>空亡</div>
                 )}
               </div>
 
               <div className="px-3 py-4">
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">
-                  하늘
+                  천간(天干)
                 </div>
                 <div
                   className="font-heading text-2xl md:text-3xl font-bold"
@@ -119,7 +123,7 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                 }`}
               >
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">
-                  땅
+                  지지(地支)
                 </div>
                 <div
                   className="font-heading text-2xl md:text-3xl font-bold"
@@ -132,11 +136,11 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                     {branchInfo.korean}({branchInfo.label})
                   </div>
                 )}
-                {jizanGan?.[i] && jizanGan[i].length > 0 && (
+                {jizanGan?.[origI] && jizanGan[origI].length > 0 && (
                   <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--color-border-light)" }}>
                     <div className="text-[9px] text-[var(--color-ink-faint)] mb-1">지장간</div>
                     <div className="flex flex-col gap-0.5">
-                      {jizanGan[i].map((jg, ji) => (
+                      {jizanGan[origI].map((jg, ji) => (
                         <div key={ji} className="text-[10px] text-[var(--color-ink-muted)]">
                           {jg.stem} <span className="opacity-70">{SIPSIN_KOR[jg.sipsin_name] ?? jg.sipsin_name}</span>
                         </div>

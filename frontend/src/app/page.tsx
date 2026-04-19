@@ -63,7 +63,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
             <Link href="/fortune" className="text-xs text-[var(--color-gold)] font-medium hover:opacity-80 transition-opacity">
               오늘운세 자세히 →
             </Link>
-            <Link href={`/analysis/free?profileId=${profile.id}`} className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
+            <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
               사주 분석 →
             </Link>
             <Link href="/compatibility" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
@@ -212,7 +212,7 @@ function VideoPost({ loggedIn }: { loggedIn: boolean }) {
       actions={
         !loggedIn ? (
           <div className="flex gap-2">
-            <Link href="/analysis/free" className="flex-1 text-center py-2.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors">
+            <Link href="/analysis" className="flex-1 text-center py-2.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors">
               내 사주 보기
             </Link>
             <Link href="/join" className="flex-1 text-center py-2.5 border border-[var(--color-gold)] text-[var(--color-gold)] rounded-lg text-sm font-semibold hover:bg-[var(--color-gold)] hover:text-white transition-colors">
