@@ -255,7 +255,7 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
             </div>
           </div>
           <img
-            src={`/kkachi/zodiac_${zodiac.kor}.png`}
+            src={`/kkachi/zodiac/zodiac_${zodiac.kor}.png`}
             alt={`${zodiac.kor}띠`}
             className="w-2/3 mx-auto block mt-3 rounded-3xl"
             style={{

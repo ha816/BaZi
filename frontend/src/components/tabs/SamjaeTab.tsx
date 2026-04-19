@@ -139,7 +139,7 @@ export default function SamjaeTab({ natal, postnatal }: Props) {
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-center">
-                    <Image src="/kkachi/samjae.png" alt="삼재" width={240} height={240} className="object-contain w-1/2" />
+                    <Image src="/kkachi/samjae/samjae.png" alt="삼재" width={240} height={240} className="object-contain w-1/2" />
                   </div>
                   <KkachiTip>
                     삼재는 반드시 나쁜 것만은 아니에요. 이 시기에 내실을 다지고 무리한 확장을 자제하면, 삼재가 끝난 후 더 큰 도약의 발판이 되기도 해요.
@@ -185,7 +185,7 @@ export default function SamjaeTab({ natal, postnatal }: Props) {
                 </div>
               </div>
               <div className="flex justify-center">
-                <Image src="/kkachi/no_samjae.png" alt="삼재 없음" width={240} height={240} className="object-contain w-1/2" />
+                <Image src="/kkachi/samjae/no_samjae.png" alt="삼재 없음" width={240} height={240} className="object-contain w-1/2" />
               </div>
               <KkachiTip>
                 올해는 삼재에 해당하지 않아요. 큰 재난이나 액운 없이 안정적으로 지낼 수 있어요.

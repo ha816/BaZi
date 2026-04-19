@@ -49,8 +49,8 @@ const OHENG_PERSONALITY: Record<string, { keywords: string[]; excess: string; la
 };
 
 const STRENGTH_IMG: Record<string, string> = {
-  "신강(身強)": "/kkachi/신강.png",
-  "신약(身弱)": "/kkachi/신약.png",
+  "신강(身強)": "/kkachi/strength/신강.png",
+  "신약(身弱)": "/kkachi/strength/신약.png",
 };
 
 const STRENGTH_DESC: Record<string, { icon: string; desc: string }> = {

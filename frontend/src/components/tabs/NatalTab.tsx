@@ -9,18 +9,6 @@ import KkachiTip from "@/components/KkachiTip";
 import ElementRadar from "@/components/ElementRadar";
 
 
-const SIPSIN_ARROW: Record<string, { label: string; dir: "to-me" | "from-me" | "same"; color: string }> = {
-  "比肩": { label: "같은 기운", dir: "same",    color: "#78716C" },
-  "劫財": { label: "같은 기운", dir: "same",    color: "#78716C" },
-  "食神": { label: "내가 낳음", dir: "from-me", color: "#1B6B3A" },
-  "傷官": { label: "내가 낳음", dir: "from-me", color: "#1B6B3A" },
-  "偏財": { label: "내가 꺾음", dir: "from-me", color: "#B02020" },
-  "正財": { label: "내가 꺾음", dir: "from-me", color: "#B02020" },
-  "偏官": { label: "나를 꺾음", dir: "to-me",   color: "#B02020" },
-  "正官": { label: "나를 꺾음", dir: "to-me",   color: "#B02020" },
-  "偏印": { label: "나를 키움", dir: "to-me",   color: "#1B6B3A" },
-  "正印": { label: "나를 키움", dir: "to-me",   color: "#1B6B3A" },
-};
 
 interface Props {
   natal: NatalResult;
@@ -255,9 +243,9 @@ function buildPillarTip(natal: NatalResult, name: string): string {
   return [personal, concept, strengthDesc].filter(Boolean).join(" ");
 }
 
-function OhaengSourceBreakdown({ pillars, pillarElements, stats }: {
+function OhaengSourceBreakdown({ pillars, pillarElements = [], stats }: {
   pillars: string[];
-  pillarElements: { stem_element: string; branch_element: string }[];
+  pillarElements?: { stem_element: string; branch_element: string }[];
   stats: Record<string, number>;
 }) {
   const ELEMS = ['木', '火', '土', '金', '水'];
@@ -303,6 +291,14 @@ function OhaengSourceBreakdown({ pillars, pillarElements, stats }: {
   );
 }
 
+const SIPSIN_CATEGORIES: { label: string; hanja: string; keyword: string; members: string[] }[] = [
+  { label: "자아",  hanja: "自我", keyword: "주체성·경쟁력", members: ["比肩", "劫財"] },
+  { label: "출력",  hanja: "出力", keyword: "표현력·창의성", members: ["食神", "傷官"] },
+  { label: "재물",  hanja: "財物", keyword: "경제 활동",     members: ["偏財", "正財"] },
+  { label: "권위",  hanja: "權威", keyword: "책임감·명예",   members: ["偏官", "正官"] },
+  { label: "입력",  hanja: "入力", keyword: "수용성·학문",   members: ["偏印", "正印"] },
+];
+
 const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
   { needs: ["문창귀인", "장성살"],    message: "똑똑한 리더 탄생! 지략과 카리스마를 모두 갖춘 당신은 조직의 핵심이 될 상이네요!" },
   { needs: ["도화살", "역마살"],      message: "카리스마 넘치는 글로벌 스타! 어딜 가도 주목받고, 낯선 곳에서 오히려 더 빛나는 타입이에요." },
@@ -315,14 +311,17 @@ export default function NatalTab({ natal, name }: Props) {
   const meInfo = getElementInfo(natal.my_element.name);
   const [sajuOpen, setSajuOpen] = useState(false);
   const [ohengOpen, setOhengOpen] = useState(false);
+  const [sipsinOpen, setSipsinOpen] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("kkachi_concept_saju") === "open") setSajuOpen(true);
     if (localStorage.getItem("kkachi_concept_oheng") === "open") setOhengOpen(true);
+    if (localStorage.getItem("kkachi_concept_sipsin") === "open") setSipsinOpen(true);
   }, []);
 
   const toggleSaju = () => { const next = !sajuOpen; setSajuOpen(next); localStorage.setItem("kkachi_concept_saju", next ? "open" : "closed"); };
   const toggleOheng = () => { const next = !ohengOpen; setOhengOpen(next); localStorage.setItem("kkachi_concept_oheng", next ? "open" : "closed"); };
+  const toggleSipsin = () => { const next = !sipsinOpen; setSipsinOpen(next); localStorage.setItem("kkachi_concept_sipsin", next ? "open" : "closed"); };
 
   return (
     <div className="space-y-4">
@@ -384,6 +383,100 @@ export default function NatalTab({ natal, name }: Props) {
           })()}
         </div>
       </div>
+
+      {/* 십신 */}
+      {natal.sipsin.length > 0 && (
+        <div className="slide-card">
+          <div className="slide-card__header">
+            <div className="flex items-center gap-2">
+              <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">십신(十神)</h3>
+              <button type="button" onClick={toggleSipsin} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
+                설명 <span>{sipsinOpen ? "▲" : "▼"}</span>
+              </button>
+            </div>
+            {sipsinOpen && (
+              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
+                나를 뜻하는 일간(日干)의 <strong className="text-[var(--color-ink)]">{STEM_KOR[natal.day_stem] ?? natal.day_stem}({natal.day_stem})</strong>과 나머지 7글자가 어떤 관계인지 10가지로 분류한 체계예요.
+                재산을 대하는 방식, 권위에 반응하는 방식, 남을 돕고 싶은 성향 등 <strong className="text-[var(--color-ink)]">나만의 사회적 패턴</strong>을 보여줍니다.
+              </p>
+            )}
+          </div>
+          <div className="divider" />
+          <div className="slide-card__body">
+            {/* 일간 배너 */}
+            <div className="flex items-center gap-2.5 mb-4 px-3 py-2 rounded-lg border"
+              style={{ backgroundColor: meInfo.bgColor, borderColor: meInfo.borderColor }}>
+              <div className="flex flex-col items-center justify-center w-12 h-8 rounded-lg flex-shrink-0 px-1"
+                style={{ backgroundColor: meInfo.bgColor, border: `1.5px solid ${meInfo.borderColor}` }}>
+                <span className="font-heading text-xs font-bold leading-none" style={{ color: meInfo.color }}>
+                  {STEM_KOR[natal.day_stem] ?? natal.day_stem}({natal.day_stem})
+                </span>
+              </div>
+              <p className="text-xs font-semibold" style={{ color: meInfo.color }}>
+                나를 나타내는 글자 — {meInfo.korean}({meInfo.label})
+              </p>
+            </div>
+            {(() => {
+              const grouped = natal.sipsin.reduce<Record<string, { sipsin_name: string; chars: string[]; element: string; count: number }>>(
+                (acc, s) => {
+                  if (!acc[s.sipsin_name]) acc[s.sipsin_name] = { sipsin_name: s.sipsin_name, chars: [], element: s.element, count: 0 };
+                  acc[s.sipsin_name].chars.push(s.char);
+                  acc[s.sipsin_name].count++;
+                  return acc;
+                }, {}
+              );
+              return (
+                <div className="space-y-4 mb-4">
+                  {SIPSIN_CATEGORIES.map((cat) => {
+                    const presentMembers = cat.members.filter((m) => !!grouped[m]);
+                    if (presentMembers.length === 0) return null;
+                    return (
+                      <div key={cat.label}>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className="text-xs font-bold text-[var(--color-ink)]">{cat.label}({cat.hanja})</span>
+                          <span className="text-[10px] text-[var(--color-ink-faint)]">— {cat.keyword}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {presentMembers.map((sipsinName) => {
+                            const group = grouped[sipsinName];
+                            const info = SIPSIN_INFO[sipsinName];
+                            return (
+                              <div key={sipsinName} className="rounded-lg bg-[var(--color-ivory)] border border-[var(--color-border-light)] overflow-hidden flex flex-col">
+                                <img
+                                  src={`/kkachi/sipsin/sipsin_${info?.korean ?? sipsinName}.png`}
+                                  alt={info?.korean ?? sipsinName}
+                                  className="w-full object-cover"
+                                  style={{ height: 160 }}
+                                  onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+                                />
+                                <div className="p-2.5 flex-1">
+                                  <div className="flex items-start justify-between mb-1">
+                                    <div className="font-heading text-sm font-bold text-[var(--color-ink)]">
+                                      {info?.korean ?? sipsinName}({sipsinName})
+                                    </div>
+                                    {group.count > 1 && (
+                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-gold-faint)] text-[var(--color-gold)] border border-[var(--color-gold-light)] flex-shrink-0 ml-1">
+                                        ×{group.count}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] font-medium text-[var(--color-gold)] mb-1">{info?.tagline}</p>
+                                  <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{info?.desc}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+            <KkachiTip>{buildSipsinNarrative(natal.sipsin, name)}</KkachiTip>
+          </div>
+        </div>
+      )}
 
       {/* 지장간 */}
       {natal.jizan_gan?.some((jg) => jg.length > 0) && (
@@ -458,99 +551,6 @@ export default function NatalTab({ natal, name }: Props) {
         </div>
       )}
 
-      {/* 십신 */}
-      {natal.sipsin.length > 0 && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">십신(十神) 구성</h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-              일간(나)과 나머지 7글자의 관계를 10가지로 분류한 것으로,
-              <strong className="text-[var(--color-ink-muted)]"> 내가 가진 사회적 무기와 인간관계의 양상</strong>을 나타냅니다.
-            </p>
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body">
-            {/* 일간 기준 배너 */}
-            <div className="flex items-center gap-2.5 mb-4 px-3 py-2 rounded-lg border"
-              style={{ backgroundColor: meInfo.bgColor, borderColor: meInfo.borderColor }}>
-              <div className="flex flex-col items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
-                style={{ backgroundColor: meInfo.bgColor, border: `1.5px solid ${meInfo.borderColor}` }}>
-                <span className="font-heading text-base font-bold leading-none" style={{ color: meInfo.color }}>
-                  {natal.day_stem}
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] text-[var(--color-ink-faint)]">십신의 기준 · 일간(日干)</span>
-                <p className="text-xs font-semibold" style={{ color: meInfo.color }}>
-                  나를 나타내는 글자 — {meInfo.korean}({meInfo.label})
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {Object.entries(
-                natal.sipsin.reduce<Record<string, { sipsin_name: string; chars: string[]; element: string; count: number }>>(
-                  (acc, s) => {
-                    if (!acc[s.sipsin_name]) acc[s.sipsin_name] = { sipsin_name: s.sipsin_name, chars: [], element: s.element, count: 0 };
-                    acc[s.sipsin_name].chars.push(s.char);
-                    acc[s.sipsin_name].count++;
-                    return acc;
-                  }, {}
-                )
-              ).map(([sipsinName, group]) => {
-                const info = SIPSIN_INFO[sipsinName];
-                const arrow = SIPSIN_ARROW[sipsinName];
-                const meEl = getElementInfo(natal.my_element.name);
-                const targetEl = getElementInfo(group.element);
-                const leftInfo  = arrow?.dir === "to-me" ? targetEl : meEl;
-                const rightInfo = arrow?.dir === "to-me" ? meEl     : targetEl;
-                const leftLabel = arrow?.dir === "to-me" ? group.element : natal.my_element.name;
-                const rightLabel= arrow?.dir === "to-me" ? natal.my_element.name : group.element;
-                return (
-                  <div key={sipsinName} className="rounded-lg p-3 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-                    <div className="flex items-start justify-between mb-1.5">
-                      <div className="font-heading text-base font-bold text-[var(--color-ink)]">
-                        {info?.korean ?? sipsinName}
-                        <span className="text-xs font-normal text-[var(--color-ink-faint)] ml-1">({sipsinName})</span>
-                      </div>
-                      {group.count > 1 && (
-                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-gold-faint)] text-[var(--color-gold)] border border-[var(--color-gold-light)] flex-shrink-0">
-                          ×{group.count}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[10px] font-medium text-[var(--color-gold)] mb-1">{info?.tagline}</p>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{info?.desc}</p>
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {group.chars.map((ch, i) => (
-                        <span key={i} className="font-heading text-sm font-bold text-[var(--color-ink-muted)]">{ch}</span>
-                      ))}
-                    </div>
-                    {/* 미니 관계 다이어그램 */}
-                    {arrow && (
-                      <div className="flex items-center gap-1 mt-2 pt-2 border-t border-[var(--color-border-light)]">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                          style={{ backgroundColor: leftInfo.bgColor, color: leftInfo.color }}>
-                          {leftLabel}
-                        </span>
-                        <span className="text-[9px] font-semibold flex-1 text-center" style={{ color: arrow.color }}>
-                          {arrow.label} →
-                        </span>
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                          style={{ backgroundColor: rightInfo.bgColor, color: rightInfo.color }}>
-                          {rightLabel}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            <KkachiTip>{buildSipsinNarrative(natal.sipsin, name)}</KkachiTip>
-          </div>
-        </div>
-      )}
-
       {/* 십이운성 */}
       {natal.sibi_unseong.length > 0 && (
         <div className="slide-card">
@@ -566,10 +566,10 @@ export default function NatalTab({ natal, name }: Props) {
             {/* 일간 기준 배너 */}
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border"
               style={{ backgroundColor: meInfo.bgColor, borderColor: meInfo.borderColor }}>
-              <div className="flex flex-col items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
+              <div className="flex flex-col items-center justify-center w-12 h-8 rounded-lg flex-shrink-0 px-1"
                 style={{ backgroundColor: meInfo.bgColor, border: `1.5px solid ${meInfo.borderColor}` }}>
-                <span className="font-heading text-base font-bold leading-none" style={{ color: meInfo.color }}>
-                  {natal.day_stem}
+                <span className="font-heading text-xs font-bold leading-none" style={{ color: meInfo.color }}>
+                  {STEM_KOR[natal.day_stem] ?? natal.day_stem}({natal.day_stem})
                 </span>
               </div>
               <div>
@@ -712,7 +712,7 @@ export default function NatalTab({ natal, name }: Props) {
                           </p>
                           <p className="text-xs text-[var(--color-ink-faint)] leading-snug mt-1">{info.tagline} — {info.desc}</p>
                           <img
-                            src={`/kkachi/sinsal_${sinsalName}.png`}
+                            src={`/kkachi/sinsal/sinsal_${sinsalName}.png`}
                             alt={sinsalName}
                             className="w-full rounded-lg object-cover mt-2"
                             onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
