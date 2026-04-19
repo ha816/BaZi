@@ -55,6 +55,11 @@ export interface PillarElementInfo {
   branch_element: string;
 }
 
+export interface JizanGanItem {
+  stem: string;
+  sipsin_name: string;
+}
+
 export interface NatalResult {
   pillars: string[];
   day_stem: string;
@@ -68,6 +73,9 @@ export interface NatalResult {
   sipsin: SipsinInfo[];
   sibi_unseong: SibiUnseongInfo[];
   sinsal: SinsalInfo[];
+  jizan_gan: JizanGanItem[][];
+  sibi_sinsal: string[];
+  gongmang: boolean[];
   pillar_summary: string;
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];

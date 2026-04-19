@@ -185,6 +185,12 @@ class SajuService(InterpreterPort):
             sipsin=[{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
             sibi_unseong=[{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
             sinsal=[{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
+            jizan_gan=[
+                [{"stem": ch, "sipsin_name": s.name} for ch, s in pillar_jg]
+                for pillar_jg in natal.jizan_gan
+            ],
+            sibi_sinsal=natal.sibi_sinsal,
+            gongmang=natal.gongmang,
             pillar_summary=self._build_pillar_summary(natal),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),

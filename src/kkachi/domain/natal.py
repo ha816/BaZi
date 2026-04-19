@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from kkachi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
+from kkachi.domain.ganji import Branch, Gongmang, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
 
 
 class Jeol(Enum):
@@ -186,6 +186,9 @@ class NatalInfo:
     sibi_unseong: list[tuple[str, SibiUnseong]]
     sinsal: list[tuple[Branch, Sinsal]]
     personality: str
+    jizan_gan: list[list[tuple[str, Sipsin]]] = field(default_factory=list)
+    sibi_sinsal: list[str] = field(default_factory=list)
+    gongmang: list[bool] = field(default_factory=list)
 
     @property
     def strength_label(self) -> str:

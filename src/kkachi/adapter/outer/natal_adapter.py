@@ -3,12 +3,40 @@ from datetime import datetime
 
 from sajupy import SajuCalculator, calculate_saju as _sajupy_calculate
 
-from kkachi.domain.ganji import Branch, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
+from kkachi.domain.ganji import Branch, Gongmang, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
 from kkachi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Samjae, Saju, Sinsal
 from kkachi.domain.user import User
 from kkachi.application.interpreter.fortune import DOMAIN_MAP
 from kkachi.application.port.saju_port import NatalPort, PostnatalPort
 from kkachi.application.util.util import parse_term_time, year_to_ganji
+
+
+_SIBI_SINSAL_MAP: list[tuple[frozenset[Branch], dict[Branch, str]]] = [
+    (frozenset({Branch.申, Branch.子, Branch.辰}), {
+        Branch.巳: "겁살", Branch.午: "재살", Branch.未: "천살",
+        Branch.申: "지살", Branch.酉: "년살", Branch.戌: "월살",
+        Branch.亥: "망신살", Branch.子: "장성살", Branch.丑: "반안살",
+        Branch.寅: "역마살", Branch.卯: "육해살", Branch.辰: "화개살",
+    }),
+    (frozenset({Branch.亥, Branch.卯, Branch.未}), {
+        Branch.申: "겁살", Branch.酉: "재살", Branch.戌: "천살",
+        Branch.亥: "지살", Branch.子: "년살", Branch.丑: "월살",
+        Branch.寅: "망신살", Branch.卯: "장성살", Branch.辰: "반안살",
+        Branch.巳: "역마살", Branch.午: "육해살", Branch.未: "화개살",
+    }),
+    (frozenset({Branch.寅, Branch.午, Branch.戌}), {
+        Branch.亥: "겁살", Branch.子: "재살", Branch.丑: "천살",
+        Branch.寅: "지살", Branch.卯: "년살", Branch.辰: "월살",
+        Branch.巳: "망신살", Branch.午: "장성살", Branch.未: "반안살",
+        Branch.申: "역마살", Branch.酉: "육해살", Branch.戌: "화개살",
+    }),
+    (frozenset({Branch.巳, Branch.酉, Branch.丑}), {
+        Branch.寅: "겁살", Branch.卯: "재살", Branch.辰: "천살",
+        Branch.巳: "지살", Branch.午: "년살", Branch.未: "월살",
+        Branch.申: "망신살", Branch.酉: "장성살", Branch.戌: "반안살",
+        Branch.亥: "역마살", Branch.子: "육해살", Branch.丑: "화개살",
+    }),
+]
 
 
 class NatalAdapter(NatalPort):
@@ -26,6 +54,9 @@ class NatalAdapter(NatalPort):
         strength = self._get_strength(stats, me)
         yongshin = self._get_yongshin(me, strength)
 
+        day_branch = self.saju[Pillar.日柱].branch
+        gongmang_set = Gongmang.from_day_pillar(self.day_stem, day_branch)
+
         return NatalInfo(
             saju=self.saju,
             my_main_element=me,
@@ -36,6 +67,9 @@ class NatalAdapter(NatalPort):
             sibi_unseong=self._get_sibi_unseong(),
             sinsal=self._get_sinsal(),
             personality=me.personality,
+            jizan_gan=self._get_jizan_gan(),
+            sibi_sinsal=self._get_sibi_sinsal(),
+            gongmang=[sb.branch in gongmang_set for sb in self.saju.pillars.values()],
         )
 
     def _get_oheng(self) -> dict[Oheng, int]:
@@ -72,6 +106,19 @@ class NatalAdapter(NatalPort):
             (_LABELS[pillar], SibiUnseong.of(stem, sb.branch))
             for pillar, sb in self.saju.pillars.items()
         ]
+
+    def _get_jizan_gan(self) -> list[list[tuple[str, Sipsin]]]:
+        return [
+            [(s.name, Sipsin.of(self.day_stem, s)) for s in sb.branch.jizan_gan]
+            for sb in self.saju.pillars.values()
+        ]
+
+    def _get_sibi_sinsal(self) -> list[str]:
+        day_branch = self.saju[Pillar.日柱].branch
+        for group, mapping in _SIBI_SINSAL_MAP:
+            if day_branch in group:
+                return [mapping.get(sb.branch, "") for sb in self.saju.pillars.values()]
+        return [""] * 4
 
     def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:
         day_branch = self.saju[Pillar.日柱].branch

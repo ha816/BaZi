@@ -2,7 +2,13 @@
 
 import { getElementInfo } from "@/lib/elementColors";
 import TermBadge from "./TermBadge";
-import type { PillarElementInfo } from "@/types/analysis";
+import type { JizanGanItem, PillarElementInfo } from "@/types/analysis";
+
+const SIPSIN_KOR: Record<string, string> = {
+  比肩: "비견", 劫財: "겁재", 食神: "식신", 傷官: "상관",
+  偏財: "편재", 正財: "정재", 偏官: "편관", 正官: "정관",
+  偏印: "편인", 正印: "정인",
+};
 
 interface Props {
   pillars: string[];
@@ -12,6 +18,8 @@ interface Props {
   pillarSummary?: string;
   highlightBranches?: boolean;
   highlightDayStem?: boolean;
+  jizanGan?: JizanGanItem[][];
+  gongmang?: boolean[];
 }
 
 const PILLAR_LABELS = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"];
@@ -39,7 +47,7 @@ const BRANCH_KOR: Record<string, string> = {
   午: "오", 未: "미", 申: "신", 酉: "유", 戌: "술", 亥: "해",
 };
 
-export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false }: Props) {
+export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false, jizanGan, gongmang }: Props) {
   return (
     <div>
       {pillarSummary && (
@@ -78,6 +86,9 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                 </div>
                 {isDayPillar && (
                   <div className="text-[10px] font-semibold mt-0.5" style={{ color: "var(--color-gold)" }}>기준 일간</div>
+                )}
+                {gongmang?.[i] && (
+                  <div className="inline-block text-[9px] font-medium px-1.5 py-0.5 rounded mt-1" style={{ background: "var(--color-border-light)", color: "var(--color-ink-faint)" }}>空亡</div>
                 )}
               </div>
 
@@ -119,6 +130,18 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                 {branchInfo && (
                   <div className="text-xs mt-1" style={{ color: branchInfo.color }}>
                     {branchInfo.korean}({branchInfo.label})
+                  </div>
+                )}
+                {jizanGan?.[i] && jizanGan[i].length > 0 && (
+                  <div className="mt-2 pt-2 border-t" style={{ borderColor: "var(--color-border-light)" }}>
+                    <div className="text-[9px] text-[var(--color-ink-faint)] mb-1">지장간</div>
+                    <div className="flex flex-col gap-0.5">
+                      {jizanGan[i].map((jg, ji) => (
+                        <div key={ji} className="text-[10px] text-[var(--color-ink-muted)]">
+                          {jg.stem} <span className="opacity-70">{SIPSIN_KOR[jg.sipsin_name] ?? jg.sipsin_name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

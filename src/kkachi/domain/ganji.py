@@ -121,6 +121,11 @@ class Branch(Enum):
         """지지육합(地支六合): 나와 합이 되는 지지."""
         return BranchCombine.partner_of(self)
 
+    @property
+    def jizan_gan(self) -> list[Stem]:
+        """지장간(地藏干): 이 지지에 숨겨진 천간들."""
+        return _JIZAN_GAN[self]
+
 
 class StemCombine(Enum):
     """천간합(天干合) - 두 천간이 만나 합이 되는 5쌍.
@@ -244,6 +249,55 @@ class BranchClash(Enum):
             if pair.second == branch:
                 return pair.first
         raise ValueError(f"No clash partner for {branch}")
+
+
+_JIZAN_GAN: dict["Branch", list[Stem]] = {}
+
+
+def _build_jizan_gan() -> None:
+    B, S = Branch, Stem
+    _JIZAN_GAN.update({
+        B.子: [S.壬, S.癸],
+        B.丑: [S.己, S.癸, S.辛],
+        B.寅: [S.戊, S.丙, S.甲],
+        B.卯: [S.甲, S.乙],
+        B.辰: [S.乙, S.癸, S.戊],
+        B.巳: [S.戊, S.庚, S.丙],
+        B.午: [S.己, S.丁],
+        B.未: [S.丁, S.乙, S.己],
+        B.申: [S.戊, S.壬, S.庚],
+        B.酉: [S.庚, S.辛],
+        B.戌: [S.辛, S.丁, S.戊],
+        B.亥: [S.甲, S.壬],
+    })
+
+
+_build_jizan_gan()
+
+
+class Gongmang:
+    """공망(空亡) — 60갑자 순(旬)에서 짝이 없는 지지 2개.
+
+    일주(日柱)의 천간·지지로 해당 순(旬)을 구한 뒤 공망 지지 쌍을 반환한다.
+    """
+
+    _MAP: list[tuple["Branch", "Branch"]] = [
+        (Branch.戌, Branch.亥),
+        (Branch.申, Branch.酉),
+        (Branch.午, Branch.未),
+        (Branch.辰, Branch.巳),
+        (Branch.寅, Branch.卯),
+        (Branch.子, Branch.丑),
+    ]
+
+    @classmethod
+    def from_day_pillar(cls, stem: Stem, branch: Branch) -> frozenset[Branch]:
+        """일주로부터 공망 지지 쌍을 반환한다."""
+        s = stem.order
+        b = branch.order
+        idx = next(s + 10 * k for k in range(6) if (s + 10 * k) % 12 == b)
+        a, b_pair = cls._MAP[idx // 10]
+        return frozenset({a, b_pair})
 
 
 class Sipsin(Enum):

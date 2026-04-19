@@ -36,6 +36,11 @@ class NatalResult:
     sibi_unseong: list[dict[str, str]] = field(default_factory=list)
     sinsal: list[dict[str, str]] = field(default_factory=list)
 
+    # 지장간·십이신살·공망
+    jizan_gan: list[list[dict[str, str]]] = field(default_factory=list)
+    sibi_sinsal: list[str] = field(default_factory=list)
+    gongmang: list[bool] = field(default_factory=list)
+
     # 일간 음양
     day_stem_yin_yang: str = ""
 

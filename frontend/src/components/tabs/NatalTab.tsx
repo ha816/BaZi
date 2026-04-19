@@ -145,6 +145,8 @@ export default function NatalTab({ natal, name }: Props) {
             pillars={natal.pillars}
             dayStem={natal.day_stem}
             pillarSummary={natal.pillar_summary ? `${name ? `${name}님의 ` : ""}${natal.pillar_summary}` : ""}
+            jizanGan={natal.jizan_gan}
+            gongmang={natal.gongmang}
           />
         </div>
       </div>
@@ -345,11 +347,38 @@ export default function NatalTab({ natal, name }: Props) {
         </div>
       )}
 
-      {/* 신살 */}
+      {/* 십이신살 */}
+      {natal.sibi_sinsal && natal.sibi_sinsal.some(Boolean) && (
+        <div className="slide-card">
+          <div className="slide-card__header">
+            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">십이신살(十二神殺)</h3>
+            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
+              년지(年支) 기준으로 사주 각 기둥의 지지에 배당되는 12가지 기운.
+              <strong className="text-[var(--color-ink-muted)]"> 겁살·재살·망신살은 흉성, 장성·역마·화개는 운동성이 강한 길성</strong>으로 풀이합니다.
+            </p>
+          </div>
+          <div className="divider" />
+          <div className="slide-card__body">
+            <div className="grid grid-cols-4 gap-2">
+              {["년주", "월주", "일주", "시주"].map((label, i) => {
+                const name_s = natal.sibi_sinsal[i] || "";
+                return (
+                  <div key={i} className="rounded-xl border text-center px-2 py-3" style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
+                    <div className="text-[10px] text-[var(--color-ink-faint)] mb-1">{label}</div>
+                    <div className="text-sm font-semibold text-[var(--color-ink)]">{name_s || "—"}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 기타신살 */}
       {natal.sinsal.length > 0 && (
         <div className="slide-card">
           <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">신살(神殺)</h3>
+            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">기타신살(其他神殺)</h3>
             <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
               과거에는 '살(殺)'이라는 글자 때문에 무섭게 풀이하기도 했지만, 현대에는
               <strong className="text-[var(--color-ink-muted)]"> 개인의 독특한 역량이나 유통기한이 있는 기술</strong>로 풀이하면 훨씬 흥미롭습니다.
