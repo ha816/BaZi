@@ -58,13 +58,11 @@ function StickySajuBar({ natal }: { natal: NatalResult }) {
 }
 
 const FEATURE_TABS = [
-  { id: "natal",   emoji: "🌱", label: "만세력" },
-  { id: "ki",      emoji: "✨", label: "기운" },
-  { id: "zodiac",  emoji: "🐾", label: "십이지신" },
-  { id: "samjae",  emoji: "⚡", label: "삼재" },
-  { id: "daeun",   emoji: "🌊", label: "대운" },
-  { id: "seun",    emoji: "☀️", label: "세운" },
-  { id: "fortune", emoji: "🍀", label: "운세" },
+  { id: "natal",    emoji: "🌱", label: "만세력" },
+  { id: "ki",       emoji: "✨", label: "기운" },
+  { id: "daeun",    emoji: "🌊", label: "대운&세운" },
+  { id: "samjae",   emoji: "⚡", label: "삼재" },
+  { id: "zodiac",   emoji: "🐾", label: "십이지신" },
   { id: "fengshui", emoji: "🧭", label: "풍수" },
   { id: "advice",   emoji: "💬", label: "종합조언" },
 ] as const;
@@ -172,9 +170,13 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
         {active === "natal"   && <NatalTab       {...tabProps} />}
         {active === "ki"      && <PersonalityTab {...tabProps} />}
         {active === "zodiac"  && <ZodiacTab      {...tabProps} />}
-        {active === "daeun"   && <DaeunTab       {...tabProps} />}
-        {active === "seun"    && <SeunTab        {...tabProps} />}
-        {active === "fortune" && <FortuneTab     {...tabProps} />}
+        {active === "daeun"   && (
+          <div className="space-y-4">
+            <DaeunTab {...tabProps} />
+            <SeunTab {...tabProps} />
+            <FortuneTab {...tabProps} />
+          </div>
+        )}
         {active === "samjae"   && <SamjaeTab      {...tabProps} />}
         {active === "advice"   && <AdviceTab      {...tabProps} />}
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
