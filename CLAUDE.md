@@ -319,14 +319,14 @@ erDiagram
 ### 비로그인 결과 공개 정책
 - `/analysis`: `POST /saju/basic`으로 팔자·오행분포·십이지신(十二支神) 무료 공개
 - 블러 CTA → "심층분석 시작하기" → `/analysis/deep`
-- `/analysis/deep`: `localStorage["bazi_member_id"]` 없으면 `/join` redirect, `sessionStorage["bazi_analysis_input"]` 없으면 `/analysis` redirect
+- `/analysis/deep`: `localStorage["kkachi_member_id"]` 없으면 `/join` redirect, `sessionStorage["kkachi_analysis_input"]` 없으면 `/analysis` redirect
 
 ### 입력 흐름
 - `AnalysisForm`: 이름+성별 | 생년월일+경도(자동) | "정밀 설정" collapsible(분석연도)
 - 프로필 저장 버튼 → 이름 입력 시 활성화 → 저장 후 "분석 시작" 활성화
 - `longitude`는 IP 위치 감지로 자동 주입, UI에 노출하지 않음 (`User.longitude` → sajupy 직접 전달, Nominatim 우회)
 
-- `localStorage["bazi_member_id"]`로 로그인 상태 유지
+- `localStorage["kkachi_member_id"]`로 로그인 상태 유지
 - 페이지 진입 시 `ipapi.co`로 IP 위치 자동 감지 → longitude + city 자동 입력
 
 ## 오늘의 운세 설계

@@ -58,6 +58,8 @@ export interface PillarElementInfo {
 export interface JizanGanItem {
   stem: string;
   sipsin_name: string;
+  weight: number;
+  role: string;
 }
 
 export interface NatalResult {

@@ -31,25 +31,25 @@ const SIPSIN_INFO: Record<string, { korean: string; tagline: string; desc: strin
 
 /* ── 십이운성 정보 ── */
 const UNSEONG_PHASE: Record<string, { label: string; color: string; bg: string }> = {
-  성장기: { label: "🌱 성장기", color: "#5B8C6A", bg: "#EEF4F0" },
-  번영기: { label: "👑 번영기", color: "#B8945A", bg: "#F5F0E7" },
-  수렴기: { label: "🌙 수렴기", color: "#4A7BA5", bg: "#ECF1F6" },
-  태동기: { label: "🔄 태동기", color: "#7E7E8A", bg: "#F0F0F2" },
+  성장기: { label: "🌱 성장기(봄·새싹)", color: "#5B8C6A", bg: "#EEF4F0" },
+  번영기: { label: "👑 번영기(여름·만개)", color: "#B8945A", bg: "#F5F0E7" },
+  수렴기: { label: "🌙 수렴기(가을·낙엽)", color: "#4A7BA5", bg: "#ECF1F6" },
+  태동기: { label: "🔄 태동기(겨울·씨앗)", color: "#7E7E8A", bg: "#F0F0F2" },
 };
 
 const UNSEONG_INFO: Record<string, { korean: string; phase: string; tagline: string; desc: string }> = {
-  "長生": { korean: "장생", phase: "성장기", tagline: "갓 태어난 아기",      desc: "새로운 시작, 주변의 도움과 사랑을 받는 기운" },
-  "沐浴": { korean: "목욕", phase: "성장기", tagline: "화려한 아이",          desc: "호기심 왕성, 주목받고 싶어 하는 에너지" },
-  "冠帶": { korean: "관대", phase: "성장기", tagline: "질풍노도의 청년",      desc: "의욕이 앞서고 추진력이 폭발하는 시기" },
-  "建祿": { korean: "건록", phase: "번영기", tagline: "자립하는 성인",        desc: "스스로의 힘으로 안정적인 기반을 닦는 탄탄한 기운" },
-  "帝旺": { korean: "제왕", phase: "번영기", tagline: "인생의 황금기",        desc: "에너지의 정점, 최고의 권위와 지배력을 발휘" },
-  "衰":   { korean: "쇠",   phase: "번영기", tagline: "노련한 원로",          desc: "힘은 지났지만 경험과 지혜로 여유롭게 조율" },
-  "病":   { korean: "병",   phase: "수렴기", tagline: "감수성 깊은 노인",     desc: "활동력은 줄지만 감수성과 동정심이 깊어지는 단계" },
-  "死":   { korean: "사",   phase: "수렴기", tagline: "고요한 멈춤",          desc: "겉의 움직임은 없으나 내면의 집중력이 극대화" },
-  "墓":   { korean: "묘",   phase: "수렴기", tagline: "에너지의 저장소",      desc: "내실을 다지고 절약하며 미래를 준비하는 시기" },
-  "絕":   { korean: "절",   phase: "태동기", tagline: "완전한 끊어짐",        desc: "과거 정리 후 새로운 반전을 꿈꾸는 드라마틱한 지점" },
-  "胎":   { korean: "태",   phase: "태동기", tagline: "수정란의 가능성",      desc: "새 생명이 잉태된 상태, 무한한 가능성의 시작" },
-  "養":   { korean: "양",   phase: "태동기", tagline: "태아의 평온한 기다림", desc: "안전하게 보호받으며 세상 밖으로 나갈 준비" },
+  "長生": { korean: "장생", phase: "성장기", tagline: "새로 시작되는 기운",     desc: "새로운 시작, 주변의 도움과 사랑을 받는 기운" },
+  "沐浴": { korean: "목욕", phase: "성장기", tagline: "들떠 있는 호기심",       desc: "호기심 왕성, 주목받고 싶어 하는 에너지" },
+  "冠帶": { korean: "관대", phase: "성장기", tagline: "추진력이 폭발하는 단계", desc: "의욕이 앞서고 추진력이 폭발하는 시기" },
+  "建祿": { korean: "건록", phase: "번영기", tagline: "스스로 자립하는 기운",   desc: "스스로의 힘으로 안정적인 기반을 닦는 탄탄한 기운" },
+  "帝旺": { korean: "제왕", phase: "번영기", tagline: "에너지 절정",            desc: "에너지의 정점, 최고의 권위와 지배력을 발휘" },
+  "衰":   { korean: "쇠",   phase: "번영기", tagline: "노련하게 조율하는 단계", desc: "힘은 지났지만 경험과 지혜로 여유롭게 조율" },
+  "病":   { korean: "병",   phase: "수렴기", tagline: "감수성이 깊어지는 단계", desc: "활동력은 줄지만 감수성과 동정심이 깊어지는 단계" },
+  "死":   { korean: "사",   phase: "수렴기", tagline: "고요한 멈춤",            desc: "겉의 움직임은 없으나 내면의 집중력이 극대화" },
+  "墓":   { korean: "묘",   phase: "수렴기", tagline: "내공의 저장",            desc: "내실을 다지고 절약하며 미래를 준비하는 시기" },
+  "絕":   { korean: "절",   phase: "태동기", tagline: "끊고 새로 시작하는 전환", desc: "과거 정리 후 새로운 반전을 꿈꾸는 드라마틱한 지점" },
+  "胎":   { korean: "태",   phase: "태동기", tagline: "씨앗이 잉태되는 단계",   desc: "새 생명이 잉태된 상태, 무한한 가능성의 시작" },
+  "養":   { korean: "양",   phase: "태동기", tagline: "보호받으며 자라는 단계", desc: "안전하게 보호받으며 세상 밖으로 나갈 준비" },
 };
 
 function buildSipsinNarrative(sipsin: SipsinInfo[], name: string): string {
@@ -77,22 +77,334 @@ function buildSipsinNarrative(sipsin: SipsinInfo[], name: string): string {
 const STRONG_UNSEONG = new Set(["建祿", "帝旺", "冠帶", "長生"]);
 const WEAK_UNSEONG = new Set(["病", "死", "絕"]);
 
-function buildUnseongSummary(sibiUnseong: SibiUnseongInfo[], name: string): string {
-  const strongCount = sibiUnseong.filter((u) => STRONG_UNSEONG.has(u.unseong_name)).length;
-  const weakCount = sibiUnseong.filter((u) => WEAK_UNSEONG.has(u.unseong_name)).length;
-  const p = name ? `${name}님은 ` : "";
-  if (strongCount >= 3) return `${p}전반적으로 에너지가 충만한 사주예요. 타고난 실력을 마음껏 발휘할 수 있는 상태입니다.`;
-  if (strongCount >= 2) return `${p}대체로 안정적인 에너지 흐름이에요. 꾸준히 성장하면서 성과를 낼 수 있는 타입입니다.`;
-  if (weakCount >= 2) return `${p}에너지가 다소 약한 편이에요. 무리하기보다 전략적으로 움직이며 에너지를 아끼는 게 좋아요.`;
-  return `${p}에너지 흐름에 굴곡이 있는 편이에요. 시기에 따라 컨디션 차이가 클 수 있으니 몸 관리에 신경 쓰면 좋겠어요.`;
+const PILLAR_ERA: Record<string, { era: string; realm: string }> = {
+  "년주": { era: "초년", realm: "조상·뿌리·환경" },
+  "월주": { era: "청년기", realm: "사회·직장" },
+  "일주": { era: "장년기", realm: "자기 본성·배우자" },
+  "시주": { era: "말년", realm: "자녀·결실" },
+};
+
+const UNSEONG_VERB: Record<string, string> = {
+  "長生": "갓 시작되는",
+  "沐浴": "들떠 있는",
+  "冠帶": "의욕이 폭발하는",
+  "建祿": "단단히 자립하는",
+  "帝旺": "절정을 찍는",
+  "衰":   "노련하게 조율하는",
+  "病":   "감수성이 깊어지는",
+  "死":   "고요히 멈추는",
+  "墓":   "내공을 쌓는",
+  "絕":   "완전히 끊고 새로 시작하는",
+  "胎":   "씨앗을 품는",
+  "養":   "보호받으며 자라는",
+};
+
+function buildUnseongStory(sibiUnseong: SibiUnseongInfo[], name: string): React.ReactNode {
+  const order = ["년주", "월주", "일주", "시주"];
+  type Seg = { pillar: string; era: string; realm: string; kor: string; hanja: string; verb: string };
+  const segments: Seg[] = [];
+  for (const pillar of order) {
+    const u = sibiUnseong.find((s) => s.pillar === pillar);
+    if (!u) continue;
+    const era = PILLAR_ERA[pillar];
+    const info = UNSEONG_INFO[u.unseong_name];
+    segments.push({
+      pillar,
+      era: era?.era ?? pillar,
+      realm: era?.realm ?? "",
+      kor: info?.korean ?? u.unseong_name,
+      hanja: u.unseong_name,
+      verb: UNSEONG_VERB[u.unseong_name] ?? "",
+    });
+  }
+  if (segments.length === 0) return null;
+
+  // 연속 같은 운성 묶기
+  type Group = { eras: string[]; pillars: string[]; realms: string[]; kor: string; hanja: string; verb: string };
+  const groups: Group[] = [];
+  for (const seg of segments) {
+    const last = groups[groups.length - 1];
+    if (last && last.hanja === seg.hanja) {
+      last.eras.push(seg.era);
+      last.pillars.push(seg.pillar);
+      last.realms.push(seg.realm);
+    } else {
+      groups.push({
+        eras: [seg.era], pillars: [seg.pillar], realms: [seg.realm],
+        kor: seg.kor, hanja: seg.hanja, verb: seg.verb,
+      });
+    }
+  }
+
+  const prefix = name ? `${name}님의 ` : "당신의 ";
+
+  return (
+    <span>
+      {prefix}인생 흐름을 까치가 풀어볼게요.{" "}
+      {groups.map((g, i) => {
+        const isFirst = i === 0;
+        const isLast = i === groups.length - 1 && groups.length > 1;
+        const linker = isFirst ? "" : isLast ? " 그러다 " : " 이어서 ";
+        const eraText = g.eras.join("·") + `(${g.pillars.join("·")})`;
+        const realmText = [...new Set(g.realms.flatMap((r) => r.split("·")))].join("·");
+        const groupedAdj = g.eras.length > 1 ? "는 모두" : "은";
+        return (
+          <span key={i}>
+            {linker}<strong className="text-[var(--color-ink)]">{eraText}</strong>{groupedAdj} {g.kor}({g.hanja}) — <em className="not-italic" style={{ color: "var(--color-gold)" }}>{g.verb} 시기</em>예요. {realmText && <>이 시기엔 <strong className="text-[var(--color-ink)]">{realmText}</strong> 영역에서 그 기운이 가장 진하게 작동해요.</>}
+          </span>
+        );
+      })}
+    </span>
+  );
 }
 
-function buildUnseongDetail(sibiUnseong: SibiUnseongInfo[]): string {
-  const detail = sibiUnseong
-    .map((u) => `${u.pillar}와는 ${UNSEONG_INFO[u.unseong_name]?.korean ?? u.unseong_name}`)
-    .join(", ");
-  return `${detail}에 해당해요.`;
+function getEnergyPattern(sibiUnseong: SibiUnseongInfo[]) {
+  const strong = sibiUnseong.filter((u) => STRONG_UNSEONG.has(u.unseong_name)).length;
+  const weak = sibiUnseong.filter((u) => WEAK_UNSEONG.has(u.unseong_name)).length;
+  const mid = sibiUnseong.length - strong - weak;
+
+  if (strong >= 3) return {
+    image: "/kkachi/sibi_unseong/strong.png", title: "활동력 충만형", strong, mid, weak,
+    desc: "활동력이 끊이지 않는 사주예요. 타고난 실력을 마음껏 발휘할 수 있고, 큰일에도 흔들리지 않는 추진력이 있는 타입입니다.",
+  };
+  if (weak >= 3) return {
+    image: "/kkachi/sibi_unseong/deep.png", title: "깊이 승부형", strong, mid, weak,
+    desc: "에너지를 안으로 모으는 인생이에요. 활동보다 사색·전문성·감수성으로 승부하는, 깊이 있는 타입이에요.",
+  };
+  if (strong > weak) return {
+    image: "/kkachi/sibi_unseong/active.png", title: "활동력 우세형", strong, mid, weak,
+    desc: "강한 시기가 더 많은 안정적인 흐름이에요. 꾸준히 성장하면서 성과를 쌓을 수 있는 타입입니다.",
+  };
+  if (weak > strong) return {
+    image: "/kkachi/sibi_unseong/latebloomer.png", title: "후반에 빛나는 늦깎이형", strong, mid, weak,
+    desc: "약한 시기가 깊이로 변하는 인생이에요. 의지로 밀어붙이기보단 환경·사람을 잘 활용해 후반전을 진짜로 만드는 타입이에요.",
+  };
+  return {
+    image: "/kkachi/sibi_unseong/wave.png", title: "굴곡 있는 흐름형", strong, mid, weak,
+    desc: "강함과 약함이 교차하며, 시기에 따라 컨디션 차이가 큰 타입이에요. 자기 사이클을 잘 읽으면 강할 때 밀어붙이고 약할 때 충전하기 좋아요.",
+  };
 }
+
+function EnergyPatternCard({ sibiUnseong }: { sibiUnseong: SibiUnseongInfo[] }) {
+  const { image, title, strong, mid, weak } = getEnergyPattern(sibiUnseong);
+  const stats: { label: string; hanja: string; count: number }[] = [
+    { label: "강", hanja: "强", count: strong },
+    { label: "평", hanja: "平", count: mid },
+    { label: "약", hanja: "弱", count: weak },
+  ];
+
+  return (
+    <div className="rounded-xl border border-[var(--color-border-light)] p-4 space-y-2"
+      style={{ backgroundColor: "var(--color-card)" }}>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">인생 에너지 패턴</p>
+        <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-ink-muted)]">
+          {stats.map(({ label, hanja, count }, i) => (
+            <span key={label} className="flex items-center gap-0.5">
+              {i > 0 && <span className="text-[var(--color-ink-faint)]">·</span>}
+              <span>{label}({hanja})</span>
+              <strong className="text-[var(--color-ink)]">{count}</strong>
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <img src={image} alt={title}
+          className="w-2/3 aspect-[3/2] rounded-2xl object-cover"
+          style={{ backgroundColor: "var(--color-ivory)" }} />
+        <p className="text-base font-bold text-[var(--color-ink)] text-center">{title}</p>
+      </div>
+    </div>
+  );
+}
+
+function LifeEnergyTable({ sibiUnseong, pillars }: { sibiUnseong: SibiUnseongInfo[]; pillars: string[] }) {
+  const PILLAR_ORDER: { key: string; label: string; idx: number }[] = [
+    { key: "시주", label: "시주(時柱)", idx: 3 },
+    { key: "일주", label: "일주(日柱)", idx: 2 },
+    { key: "월주", label: "월주(月柱)", idx: 1 },
+    { key: "년주", label: "년주(年柱)", idx: 0 },
+  ];
+
+  const cols = PILLAR_ORDER.map(({ key, label, idx }) => {
+    const u = sibiUnseong.find((s) => s.pillar === key);
+    const info = u ? UNSEONG_INFO[u.unseong_name] : null;
+    const phase = info ? UNSEONG_PHASE[info.phase] : null;
+    const pillar = pillars[idx] ?? "";
+    const stem = pillar[0] ?? "";
+    const branch = pillar[1] ?? "";
+    return {
+      key, label, isDay: key === "일주", u, info, phase,
+      stem, branch,
+      stemKor: STEM_KOR[stem] ?? "",
+      branchKor: BRANCH_KOR[branch] ?? "",
+    };
+  });
+
+  return (
+    <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
+      <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
+        <colgroup>
+          <col style={{ width: "72px" }} />
+          <col />
+          <col />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr style={{ backgroundColor: "var(--color-ivory)" }}>
+            <th className="text-[10px] font-medium text-[var(--color-ink-faint)] py-1.5 px-2"></th>
+            {cols.map(({ key, label, isDay }) => (
+              <th key={key} className="text-[10px] font-semibold py-1.5 px-2"
+                style={{
+                  color: isDay ? "var(--color-gold)" : "var(--color-ink-muted)",
+                  backgroundColor: isDay ? "var(--color-gold-faint)" : undefined,
+                }}>
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-1.5 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">천간(天干)</td>
+            {cols.map(({ key, stem, stemKor }) => (
+              <td key={key} className="py-1.5 px-2">
+                <span className="font-heading text-sm font-bold leading-tight text-[var(--color-ink)]">
+                  {stem ? `${stemKor}(${stem})` : "—"}
+                </span>
+              </td>
+            ))}
+          </tr>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-1.5 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">지지(地支)</td>
+            {cols.map(({ key, branch, branchKor }) => (
+              <td key={key} className="py-1.5 px-2">
+                <span className="font-heading text-sm font-bold leading-tight text-[var(--color-ink)]">
+                  {branch ? `${branchKor}(${branch})` : "—"}
+                </span>
+              </td>
+            ))}
+          </tr>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-2 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">운성(運星)</td>
+            {cols.map(({ key, u, info, phase }) => (
+              <td key={key} className="py-2 px-2">
+                {u ? (
+                  <div className="font-heading text-sm font-bold leading-tight"
+                    style={{ color: phase?.color ?? "var(--color-ink)" }}>
+                    {info?.korean ?? u.unseong_name}({u.unseong_name})
+                  </div>
+                ) : <span className="text-xs text-[var(--color-ink-faint)]">—</span>}
+              </td>
+            ))}
+          </tr>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-2 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)] align-top">특징</td>
+            {cols.map(({ key, u, info, phase }) => (
+              <td key={key} className="py-2 px-2 align-top">
+                {u && info ? (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-medium leading-snug" style={{ color: phase?.color ?? "var(--color-ink-muted)" }}>
+                      {info.tagline}
+                    </div>
+                    <div className="text-[9px] text-[var(--color-ink-faint)] leading-snug">
+                      {info.desc}
+                    </div>
+                  </div>
+                ) : <span className="text-xs text-[var(--color-ink-faint)]">—</span>}
+              </td>
+            ))}
+          </tr>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-2 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">에너지</td>
+            {cols.map(({ key, u }) => {
+              if (!u) return <td key={key} className="py-2 px-2"><span className="text-xs text-[var(--color-ink-faint)]">—</span></td>;
+              const isStrong = STRONG_UNSEONG.has(u.unseong_name);
+              const isWeak = WEAK_UNSEONG.has(u.unseong_name);
+              const label = isStrong ? "강(强)" : isWeak ? "약(弱)" : "평(平)";
+              return (
+                <td key={key} className="py-2 px-2">
+                  <span className="text-xs font-bold text-[var(--color-ink)]">{label}</span>
+                </td>
+              );
+            })}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ── 십이신살(十二神殺) ── */
+function buildSibiSinsalStory(sibiSinsal: string[], name: string): React.ReactNode {
+  const order: { idx: number; label: string; era: string; realm: string }[] = [
+    { idx: 0, label: "년주", era: "초년",   realm: "조상·뿌리·환경" },
+    { idx: 1, label: "월주", era: "청년기", realm: "사회·직장" },
+    { idx: 2, label: "일주", era: "장년기", realm: "자기 본성·배우자" },
+    { idx: 3, label: "시주", era: "말년",   realm: "자녀·결실" },
+  ];
+
+  type Seg = { label: string; era: string; realm: string; sName: string; hanja: string; meaning: string };
+  const segments: Seg[] = [];
+  for (const { idx, label, era, realm } of order) {
+    const sName = sibiSinsal[idx];
+    if (!sName) continue;
+    const info = SIBI_SINSAL_INFO[sName];
+    segments.push({ label, era, realm, sName, hanja: info?.hanja ?? "", meaning: info?.meaning ?? "" });
+  }
+  if (segments.length === 0) return null;
+
+  type Group = { eras: string[]; labels: string[]; realms: string[]; sName: string; hanja: string; meaning: string };
+  const groups: Group[] = [];
+  for (const seg of segments) {
+    const last = groups[groups.length - 1];
+    if (last && last.sName === seg.sName) {
+      last.eras.push(seg.era); last.labels.push(seg.label); last.realms.push(seg.realm);
+    } else {
+      groups.push({
+        eras: [seg.era], labels: [seg.label], realms: [seg.realm],
+        sName: seg.sName, hanja: seg.hanja, meaning: seg.meaning,
+      });
+    }
+  }
+
+  const prefix = name ? `${name}님의 ` : "당신의 ";
+
+  return (
+    <span>
+      {prefix}십이신살 흐름은 이래요.{" "}
+      {groups.map((g, i) => {
+        const isFirst = i === 0;
+        const isLast = i === groups.length - 1 && groups.length > 1;
+        const linker = isFirst ? "" : isLast ? " 그러다 " : " 이어서 ";
+        const eraText = g.eras.join("·") + `(${g.labels.join("·")})`;
+        const realmText = [...new Set(g.realms.flatMap((r) => r.split("·")))].join("·");
+        const groupedAdj = g.eras.length > 1 ? "는 둘 다" : "은";
+        return (
+          <span key={i}>
+            {linker}<strong className="text-[var(--color-ink)]">{eraText}</strong>{groupedAdj} {g.sName}{g.hanja && `(${g.hanja})`} — <em className="not-italic" style={{ color: "var(--color-gold)" }}>{g.meaning}</em>의 기운이에요. {realmText && <>이 시기 <strong className="text-[var(--color-ink)]">{realmText}</strong> 영역에서 그 결이 드러납니다.</>}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+const SIBI_SINSAL_INFO: Record<string, { hanja: string; meaning: string }> = {
+  "겁살":   { hanja: "劫殺",   meaning: "빼앗김·사고·도난 주의" },
+  "재살":   { hanja: "災殺",   meaning: "재앙·갈등의 기운" },
+  "천살":   { hanja: "天殺",   meaning: "하늘이 내리는 변고" },
+  "지살":   { hanja: "地殺",   meaning: "이동·변동·출장" },
+  "년살":   { hanja: "年殺",   meaning: "매력·인기·도화" },
+  "월살":   { hanja: "月殺",   meaning: "어두운 그림자·우울" },
+  "망신살": { hanja: "亡身殺", meaning: "체면 손상·구설" },
+  "장성살": { hanja: "將星殺", meaning: "리더십·권위·결단력" },
+  "반안살": { hanja: "攀鞍殺", meaning: "출세·승진·명예" },
+  "역마살": { hanja: "驛馬殺", meaning: "이동·변화·해외" },
+  "육해살": { hanja: "六害殺", meaning: "방해·갈등·장애물" },
+  "화개살": { hanja: "華蓋殺", meaning: "예술·학문·고독" },
+};
 
 /* ── 신살 ── */
 const SINSAL_INFO: Record<string, { hanja: string; tagline: string; desc: string; color: string; bg: string; border: string }> = {
@@ -103,9 +415,11 @@ const SINSAL_INFO: Record<string, { hanja: string; tagline: string; desc: string
   "문창귀인": { hanja: "文昌貴人", tagline: "문서와 학문의 별",     color: "#4A7BA5", bg: "#ECF1F6", border: "#9BB8D0", desc: "시험·자격증·학업 운이 강하고 문서 처리 능력이 뛰어납니다. 지식으로 인정받고 전문성을 쌓아나가는 기운." },
   "장성살":   { hanja: "將星殺",   tagline: "대장군의 기개",        color: "#8B6A3E", bg: "#F5EFE5", border: "#C9A96E", desc: "대중을 압도하는 카리스마와 결단력. 리더십이 강하고 큰일을 도모할 때 발휘되는 강력한 에너지." },
   "백호살":   { hanja: "白虎殺",   tagline: "백호의 폭발적 집중력", color: "#C75B52", bg: "#F7EDEC", border: "#E0A8A3", desc: "에너지가 워낙 강해서 사고나 급변을 주의해야 하지만, 전문직에서 폭발적인 집중력으로 남들이 못 하는 일을 해냅니다." },
+  "천덕귀인": { hanja: "天德貴人", tagline: "하늘이 덮어주는 복",   color: "#C9A554", bg: "#F7F2E5", border: "#DDC785", desc: "큰 위기에서도 다치지 않고 빠져나가는 보호의 기운. 길게 보면 복이 깃들어 자연스럽게 잘 풀리는 사주예요." },
+  "월덕귀인": { hanja: "月德貴人", tagline: "조용히 흐르는 평안",   color: "#6B9A8B", bg: "#EFF4F2", border: "#B5CFC5", desc: "갈등을 피하고 평화롭게 풀리는 운. 충돌보다 조율로 일이 풀리는, 인간관계가 부드러운 타입이에요." },
 };
 
-const SINSAL_ORDER = ["도화살", "역마살", "화개살", "천을귀인", "문창귀인", "장성살", "백호살"];
+const SINSAL_ORDER = ["도화살", "역마살", "화개살", "천을귀인", "문창귀인", "장성살", "백호살", "천덕귀인", "월덕귀인"];
 
 function buildSinsalNarrative(sinsal: SinsalInfo[], name: string): string {
   const p = name ? `${name}님` : "이 사주";
@@ -228,6 +542,17 @@ const STEM_KOR: Record<string, string> = {
   己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
 };
 
+const ROLE_HANJA: Record<string, string> = {
+  "여기": "餘氣",
+  "중기": "中氣",
+  "본기": "本氣",
+};
+
+const BRANCH_KOR: Record<string, string> = {
+  子:"자", 丑:"축", 寅:"인", 卯:"묘", 辰:"진", 巳:"사",
+  午:"오", 未:"미", 申:"신", 酉:"유", 戌:"술", 亥:"해",
+};
+
 const STRENGTH_DESC: Record<string, string> = {
   신강: "타고난 에너지가 강하고 자기 주도적인 성향이에요.",
   신약: "주변 환경의 영향을 잘 받고 협력에서 힘을 발휘해요.",
@@ -298,6 +623,26 @@ const SIPSIN_CATEGORIES: { label: string; hanja: string; keyword: string; member
   { label: "권위",  hanja: "權威", keyword: "책임감·명예",   members: ["偏官", "正官"] },
   { label: "입력",  hanja: "入力", keyword: "수용성·학문",   members: ["偏印", "正印"] },
 ];
+
+function CollapsibleSectionHeader({ title, children }: { title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="slide-card__header">
+      <div className="flex items-center gap-2">
+        <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">{title}</h3>
+        <button type="button" onClick={() => setOpen(!open)}
+          className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
+          설명 <span>{open ? "▲" : "▼"}</span>
+        </button>
+      </div>
+      {open && (
+        <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
+          {children}
+        </p>
+      )}
+    </div>
+  );
+}
 
 const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
   { needs: ["문창귀인", "장성살"],    message: "똑똑한 리더 탄생! 지략과 카리스마를 모두 갖춘 당신은 조직의 핵심이 될 상이네요!" },
@@ -403,19 +748,6 @@ export default function NatalTab({ natal, name }: Props) {
           </div>
           <div className="divider" />
           <div className="slide-card__body">
-            {/* 일간 배너 */}
-            <div className="flex items-center gap-2.5 mb-4 px-3 py-2 rounded-lg border"
-              style={{ backgroundColor: meInfo.bgColor, borderColor: meInfo.borderColor }}>
-              <div className="flex flex-col items-center justify-center w-12 h-8 rounded-lg flex-shrink-0 px-1"
-                style={{ backgroundColor: meInfo.bgColor, border: `1.5px solid ${meInfo.borderColor}` }}>
-                <span className="font-heading text-xs font-bold leading-none" style={{ color: meInfo.color }}>
-                  {STEM_KOR[natal.day_stem] ?? natal.day_stem}({natal.day_stem})
-                </span>
-              </div>
-              <p className="text-xs font-semibold" style={{ color: meInfo.color }}>
-                나를 나타내는 글자 — {meInfo.korean}({meInfo.label})
-              </p>
-            </div>
             {(() => {
               const grouped = natal.sipsin.reduce<Record<string, { sipsin_name: string; chars: string[]; element: string; count: number }>>(
                 (acc, s) => {
@@ -481,38 +813,142 @@ export default function NatalTab({ natal, name }: Props) {
       {/* 지장간 */}
       {natal.jizan_gan?.some((jg) => jg.length > 0) && (
         <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">지장간(地藏干)</h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-              각 지지(땅 글자) 안에 숨어있는 천간들. 사주의 <strong className="text-[var(--color-ink-muted)]">잠재된 기운과 속마음</strong>을 나타냅니다.
-            </p>
-          </div>
+          <CollapsibleSectionHeader title="지장간(地藏干)">
+            사주의 아래 글자(지지)는 한 달짜리 시간이에요. 그 안에서 여러 천간이 시간대별로 돌아가며 작동하는 게 지장간(地藏干, 땅에 감춰진 천간)이에요. 겉엔 잘 안 보여도 결정적인 순간 작동하는 <strong className="text-[var(--color-ink)]">잠재된 기운과 속마음</strong>을 보여줍니다. 본기·중기·여기 3단계로 비중이 다르며, 일지(日支) 본기는 <strong className="text-[var(--color-ink)]">자신의 진짜 욕구</strong>를 나타냅니다.
+          </CollapsibleSectionHeader>
           <div className="divider" />
-          <div className="slide-card__body">
-            <div className="grid grid-cols-4 gap-2">
-              {[3, 2, 1, 0].map((origI) => {
-                const PILLAR_LABELS_SHORT = ["年柱", "月柱", "日柱", "時柱"];
-                const jg = natal.jizan_gan[origI] ?? [];
-                const SIPSIN_KOR: Record<string, string> = {
-                  比肩: "비견", 劫財: "겁재", 食神: "식신", 傷官: "상관",
-                  偏財: "편재", 正財: "정재", 偏官: "편관", 正官: "정관",
-                  偏印: "편인", 正印: "정인",
-                };
-                return (
-                  <div key={origI} className="rounded-xl border text-center px-2 py-3 space-y-1.5" style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
-                    <div className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{PILLAR_LABELS_SHORT[origI]}</div>
-                    {jg.length > 0 ? jg.map((item, i) => (
-                      <div key={i} className="text-xs text-[var(--color-ink)]">
-                        {item.stem}
-                        <span className="text-[10px] text-[var(--color-ink-faint)] ml-0.5">
-                          {SIPSIN_KOR[item.sipsin_name] ?? item.sipsin_name}
-                        </span>
-                      </div>
-                    )) : <div className="text-xs text-[var(--color-ink-faint)]">—</div>}
+          <div className="slide-card__body space-y-4">
+            {(() => {
+              const heavenlyStems = natal.pillars.map((p) => p[0]);
+              const dayJg = natal.jizan_gan[2] ?? [];
+              const bonki = dayJg[dayJg.length - 1];
+              return (
+                <>
+                  {/* 기둥별 지장간 — 테이블 매트릭스 */}
+                  <div>
+                    <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
+                      <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
+                        <colgroup>
+                          <col style={{ width: "72px" }} />
+                          <col />
+                          <col />
+                          <col />
+                          <col />
+                        </colgroup>
+                        <thead>
+                          <tr style={{ backgroundColor: "var(--color-ivory)" }}>
+                            <th className="text-[10px] font-medium text-[var(--color-ink-faint)] py-1.5 px-2"></th>
+                            {[3, 2, 1, 0].map((origI) => {
+                              const PILLAR_LABELS_SHORT = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
+                              const isDayPillar = origI === 2;
+                              return (
+                                <th key={origI} className="text-[10px] font-semibold py-1.5 px-2"
+                                  style={{
+                                    color: isDayPillar ? "var(--color-gold)" : "var(--color-ink-muted)",
+                                    backgroundColor: isDayPillar ? "var(--color-gold-faint)" : undefined,
+                                  }}>
+                                  {PILLAR_LABELS_SHORT[origI]}
+                                </th>
+                              );
+                            })}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(["여기", "중기", "본기"] as const).map((role) => (
+                            <tr key={role} className="border-t border-[var(--color-border-light)]">
+                              <td className="text-[10px] py-2 px-2 whitespace-nowrap text-left"
+                                style={role === "본기"
+                                  ? { color: "var(--color-gold)", fontWeight: 700 }
+                                  : { color: "var(--color-ink-faint)" }}>
+                                {role}({ROLE_HANJA[role]})
+                              </td>
+                              {[3, 2, 1, 0].map((origI) => {
+                                const item = natal.jizan_gan[origI]?.find((it) => it.role === role);
+                                const isDayPillar = origI === 2;
+                                const isExposed = !!item && heavenlyStems.includes(item.stem);
+                                const isBonki = role === "본기";
+                                return (
+                                  <td key={origI} className="py-2 px-2"
+                                    style={{ backgroundColor: isDayPillar ? "var(--color-gold-faint)" : undefined }}>
+                                    {item ? (
+                                      <div className="space-y-0.5">
+                                        <div className={`font-heading leading-tight ${isBonki ? "text-base font-bold" : "text-xs"}`}
+                                          style={{ color: isExposed ? "var(--color-gold)" : (isBonki ? "var(--color-ink)" : "var(--color-ink-muted)") }}>
+                                          {item.stem}
+                                          {isExposed && (
+                                            <span className="inline-block rounded-full align-top ml-0.5"
+                                              style={{ width: 3, height: 3, backgroundColor: "currentColor" }} />
+                                          )}
+                                        </div>
+                                        <div className="text-[9px] text-[var(--color-ink-faint)] leading-tight">
+                                          {SIPSIN_INFO[item.sipsin_name]?.korean ?? item.sipsin_name} · {item.weight}%
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-[var(--color-ink-faint)]">—</span>
+                                    )}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-[10px] text-[var(--color-ink-faint)] mt-1.5 leading-relaxed">
+                      <span className="inline-block rounded-full align-middle"
+                        style={{ width: 4, height: 4, backgroundColor: "var(--color-gold)" }} /> 표시는 천간(天干)에 같은 글자가 드러난 투출(透干)
+                    </p>
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* 일지 본기 — 진짜 본심 */}
+                  {bonki && (() => {
+                    const info = SIPSIN_INFO[bonki.sipsin_name];
+                    const kor = info?.korean ?? bonki.sipsin_name;
+                    const stemKor = STEM_KOR[bonki.stem] ?? bonki.stem;
+                    const exposed = heavenlyStems.includes(bonki.stem);
+                    return (
+                      <div className="rounded-xl p-4 space-y-3"
+                        style={{ border: "1.5px solid var(--color-gold-light)", backgroundColor: "var(--color-gold-faint)" }}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base">💭</span>
+                          <span className="text-[11px] font-semibold text-[var(--color-gold)]">일지(日支) 본기 — 진짜 본심</span>
+                        </div>
+                        <div className="flex items-center gap-3.5">
+                          <div className="relative flex flex-col items-center justify-center w-16 h-16 rounded-xl flex-shrink-0"
+                            style={{ backgroundColor: "var(--color-card)", border: "1.5px solid var(--color-gold-light)" }}>
+                            <span className="font-heading text-2xl font-bold text-[var(--color-ink)] leading-none">{bonki.stem}</span>
+                            <span className="text-[10px] text-[var(--color-ink-faint)] mt-0.5">{stemKor}</span>
+                            {exposed && (
+                              <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                style={{ backgroundColor: "var(--color-gold)", color: "var(--color-ivory)" }}>
+                                透
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <p className="text-sm font-bold text-[var(--color-ink)]">
+                              {kor}<span className="text-[11px] font-normal text-[var(--color-ink-faint)] ml-1">({bonki.sipsin_name})</span>
+                            </p>
+                            {info && (
+                              <>
+                                <p className="text-xs font-medium text-[var(--color-gold)]">{info.tagline}</p>
+                                <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <KkachiTip>
+                          {exposed
+                            ? `천간(天干)에도 ${bonki.stem}이 투출(透出)되어 있어요. 본심이 자연스럽게 겉으로 표현되는, 속과 겉이 일치하는 솔직한 타입입니다.`
+                            : `천간에는 드러나지 않은 깊은 욕구예요. 평소엔 잘 보이지 않지만, 결정의 순간 강하게 작용하는 진짜 본심입니다.`}
+                        </KkachiTip>
+                      </div>
+                    );
+                  })()}
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -520,17 +956,15 @@ export default function NatalTab({ natal, name }: Props) {
       {/* 공망 */}
       {natal.gongmang?.some(Boolean) && (
         <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">공망(空亡)</h3>
-          </div>
+          <CollapsibleSectionHeader title="공망(空亡)">
+            60갑자(六十甲子) 순(旬)에서 짝이 없는 지지를 말해요. 해당 기둥의 기운이 비어 있어 약해지지만, <strong className="text-[var(--color-ink)]">집착을 내려놓을수록 오히려 잘 풀리는 기운</strong>으로 풀이합니다.
+            현대 명리에서는 공망이 있는 영역에서는 무리한 욕심보다 <strong className="text-[var(--color-ink)]">담담한 태도</strong>가 좋은 결과를 만듭니다.
+          </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-3">
-            <p className="text-xs text-[var(--color-ink-faint)] leading-relaxed">
-              60갑자 순(旬)에서 짝이 없는 지지. 해당 기둥의 기운이 약해지지만, <strong className="text-[var(--color-ink-muted)]">집착을 내려놓을수록 오히려 잘 풀리는 기운</strong>으로 봅니다.
-            </p>
             <div className="grid grid-cols-4 gap-2">
               {[3, 2, 1, 0].map((origI) => {
-                const PILLAR_LABELS_SHORT = ["年柱", "月柱", "日柱", "時柱"];
+                const PILLAR_LABELS_SHORT = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
                 const isGongmang = natal.gongmang[origI];
                 return (
                   <div key={origI} className="rounded-xl border text-center px-2 py-3"
@@ -554,102 +988,17 @@ export default function NatalTab({ natal, name }: Props) {
       {/* 십이운성 */}
       {natal.sibi_unseong.length > 0 && (
         <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">십이운성(十二運星)</h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-              사주팔자의 각 글자가 처한
-              <strong className="text-[var(--color-ink-muted)]"> 에너지의 강약과 생로병사의 흐름</strong>을 12단계로 표현한 개념입니다.
-            </p>
-          </div>
+          <CollapsibleSectionHeader title="십이운성(十二運星)">
+            인생의 <strong className="text-[var(--color-ink)]">생로병사 12단계 사이클</strong>이에요. 태어나(長生) → 절정(帝旺) → 쇠퇴 → 잠들었다(墓) → 다시 씨앗으로 돌아가는(胎) 흐름이죠.
+            사주 4기둥(년·월·일·시)이 각각 어떤 단계인지 보면, <strong className="text-[var(--color-ink)]">인생 시기별 컨디션과 에너지 흐름</strong>이 한눈에 보입니다.
+          </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
-            {/* 일간 기준 배너 */}
-            <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border"
-              style={{ backgroundColor: meInfo.bgColor, borderColor: meInfo.borderColor }}>
-              <div className="flex flex-col items-center justify-center w-12 h-8 rounded-lg flex-shrink-0 px-1"
-                style={{ backgroundColor: meInfo.bgColor, border: `1.5px solid ${meInfo.borderColor}` }}>
-                <span className="font-heading text-xs font-bold leading-none" style={{ color: meInfo.color }}>
-                  {STEM_KOR[natal.day_stem] ?? natal.day_stem}({natal.day_stem})
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] text-[var(--color-ink-faint)]">십이운성의 기준 · 일간(日干)</span>
-                <p className="text-xs font-semibold" style={{ color: meInfo.color }}>
-                  나를 나타내는 글자 — {meInfo.korean}({meInfo.label})
-                </p>
-              </div>
-            </div>
-
-            {(["성장기", "번영기", "수렴기", "태동기"] as const).map((phaseName) => {
-              const phase = UNSEONG_PHASE[phaseName];
-              // 이 단계의 모든 운성 (순서 유지)
-              const allInPhase = Object.entries(UNSEONG_INFO)
-                .filter(([, v]) => v.phase === phaseName)
-                .map(([key]) => key);
-              // 사용자 운성 집계
-              const myMap = natal.sibi_unseong.reduce<Record<string, string[]>>((acc, u) => {
-                if (!acc[u.unseong_name]) acc[u.unseong_name] = [];
-                acc[u.unseong_name].push(u.pillar);
-                return acc;
-              }, {});
-
-              return (
-                <div key={phaseName}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-4 h-px" style={{ backgroundColor: phase.color }} />
-                    <span className="text-xs font-semibold" style={{ color: phase.color }}>
-                      {phase.label}
-                    </span>
-                    <div className="flex-1 h-px" style={{ backgroundColor: phase.bg }} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {allInPhase.map((unseongName) => {
-                      const info = UNSEONG_INFO[unseongName];
-                      const myPillars = myMap[unseongName];
-                      const isMatch = !!myPillars;
-                      return (
-                        <div
-                          key={unseongName}
-                          className="rounded-lg p-2.5 border transition-opacity"
-                          style={isMatch
-                            ? { backgroundColor: phase.bg, borderColor: phase.color + "60" }
-                            : { backgroundColor: "var(--color-ivory)", borderColor: "var(--color-border-light)", opacity: 0.35 }
-                          }
-                        >
-                          {isMatch && (
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="flex gap-1 flex-wrap">
-                                {myPillars.map((p, i) => (
-                                  <span key={i} className="text-[10px] font-medium" style={{ color: phase.color }}>{p}</span>
-                                ))}
-                              </div>
-                              {myPillars.length > 1 && (
-                                <span className="text-[10px] font-bold px-1 py-0.5 rounded"
-                                  style={{ color: phase.color, backgroundColor: phase.color + "20" }}>
-                                  ×{myPillars.length}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          <div className="font-heading text-sm font-bold" style={{ color: isMatch ? "var(--color-ink)" : "var(--color-ink-faint)" }}>
-                            {info.korean}
-                            <span className="text-[10px] font-normal text-[var(--color-ink-faint)] ml-0.5">({unseongName})</span>
-                          </div>
-                          {isMatch && (
-                            <>
-                              <p className="text-[10px] font-medium mt-0.5" style={{ color: phase.color }}>{info.tagline}</p>
-                              <p className="text-[9px] text-[var(--color-ink-faint)] leading-snug mt-0.5">{info.desc}</p>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            <KkachiTip>{buildUnseongDetail(natal.sibi_unseong)}</KkachiTip>
-            <KkachiTip>{buildUnseongSummary(natal.sibi_unseong, name)}</KkachiTip>
+            {/* 기둥별 운성 표 */}
+            <LifeEnergyTable sibiUnseong={natal.sibi_unseong} pillars={natal.pillars} />
+            <KkachiTip>{buildUnseongStory(natal.sibi_unseong, name)}</KkachiTip>
+            <EnergyPatternCard sibiUnseong={natal.sibi_unseong} />
+            <KkachiTip>{getEnergyPattern(natal.sibi_unseong).desc}</KkachiTip>
           </div>
         </div>
       )}
@@ -657,32 +1006,41 @@ export default function NatalTab({ natal, name }: Props) {
       {/* 신살 */}
       {(natal.sibi_sinsal?.some(Boolean) || natal.sinsal.length > 0) && (
         <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">신살(神殺)</h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-              사주 각 기둥에 배당되는 기운. 현대에는
-              <strong className="text-[var(--color-ink-muted)]"> 개인의 독특한 역량과 특성</strong>으로 풀이합니다.
-            </p>
-          </div>
+          <CollapsibleSectionHeader title="신살(神殺)">
+            옛날엔 길흉을 가르는 길신(神)·흉살(殺)로 봤지만, 현대에는 <strong className="text-[var(--color-ink)]">개인의 독특한 역량과 캐릭터</strong>로 풀이합니다.
+          </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
 
             {/* 십이신살 — 기둥별 */}
             {natal.sibi_sinsal?.some(Boolean) && (
               <div>
-                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] mb-2">십이신살(十二神殺) — 일지 기준 기둥별 배당</p>
+                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] mb-2">십이신살(十二神殺)</p>
                 <div className="grid grid-cols-4 gap-2">
                   {[3, 2, 1, 0].map((origI) => {
-                    const PILLAR_LABELS_SHORT = ["年柱", "月柱", "日柱", "時柱"];
+                    const PILLAR_LABELS_SHORT = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
                     const sinsalName = natal.sibi_sinsal[origI] || "";
+                    const info = SIBI_SINSAL_INFO[sinsalName];
                     return (
-                      <div key={origI} className="rounded-xl border text-center px-2 py-3" style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
-                        <div className="text-[10px] text-[var(--color-ink-faint)] mb-1">{PILLAR_LABELS_SHORT[origI]}</div>
-                        <div className="text-sm font-semibold text-[var(--color-ink)]">{sinsalName || "—"}</div>
+                      <div key={origI} className="rounded-xl border text-center px-2 py-2 space-y-1"
+                        style={{ borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }}>
+                        <div className="text-[10px] text-[var(--color-ink-faint)]">{PILLAR_LABELS_SHORT[origI]}</div>
+                        {sinsalName ? (
+                          <>
+                            <div className="text-sm font-semibold text-[var(--color-ink)] leading-tight">
+                              {sinsalName}
+                              {info && <span className="text-[9px] font-normal text-[var(--color-ink-faint)] ml-0.5">({info.hanja})</span>}
+                            </div>
+                            {info && (
+                              <div className="text-[9px] text-[var(--color-ink-faint)] leading-snug">{info.meaning}</div>
+                            )}
+                          </>
+                        ) : <div className="text-sm font-semibold text-[var(--color-ink-faint)]">—</div>}
                       </div>
                     );
                   })}
                 </div>
+                <KkachiTip>{buildSibiSinsalStory(natal.sibi_sinsal, name)}</KkachiTip>
               </div>
             )}
 

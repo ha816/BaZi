@@ -37,7 +37,7 @@ class NatalResult:
     sinsal: list[dict[str, str]] = field(default_factory=list)
 
     # 지장간·십이신살·공망
-    jizan_gan: list[list[dict[str, str]]] = field(default_factory=list)
+    jizan_gan: list[list[dict[str, str | int]]] = field(default_factory=list)
     sibi_sinsal: list[str] = field(default_factory=list)
     gongmang: list[bool] = field(default_factory=list)
 

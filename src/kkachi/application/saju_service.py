@@ -186,7 +186,10 @@ class SajuService(InterpreterPort):
             sibi_unseong=[{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
             sinsal=[{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
             jizan_gan=[
-                [{"stem": ch, "sipsin_name": s.name} for ch, s in pillar_jg]
+                [
+                    {"stem": ch, "sipsin_name": s.name, "weight": w, "role": role}
+                    for ch, s, w, role in pillar_jg
+                ]
                 for pillar_jg in natal.jizan_gan
             ],
             sibi_sinsal=natal.sibi_sinsal,

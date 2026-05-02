@@ -107,9 +107,17 @@ class NatalAdapter(NatalPort):
             for pillar, sb in self.saju.pillars.items()
         ]
 
-    def _get_jizan_gan(self) -> list[list[tuple[str, Sipsin]]]:
+    def _get_jizan_gan(self) -> list[list[tuple[str, Sipsin, int, str]]]:
         return [
-            [(s.name, Sipsin.of(self.day_stem, s)) for s in sb.branch.jizan_gan]
+            [
+                (s.name, Sipsin.of(self.day_stem, s), w, role)
+                for s, w, role in zip(
+                    sb.branch.jizan_gan,
+                    sb.branch.jizan_gan_weights,
+                    sb.branch.jizan_gan_roles,
+                    strict=True,
+                )
+            ]
             for sb in self.saju.pillars.values()
         ]
 
@@ -122,11 +130,15 @@ class NatalAdapter(NatalPort):
 
     def _get_sinsal(self) -> list[tuple[Branch, Sinsal]]:
         day_branch = self.saju[Pillar.日柱].branch
+        month_branch = self.saju[Pillar.月柱].branch
         all_branches = [sb.branch for sb in self.saju.pillars.values()]
+        all_stems = [sb.stem for sb in self.saju.pillars.values()]
         return (
             Sinsal.get_samhap(day_branch, all_branches)
             + Sinsal.get_guiin(self.day_stem, all_branches)
             + Sinsal.get_baekho(day_branch, all_branches)
+            + Sinsal.get_woldeok(month_branch, all_stems)
+            + Sinsal.get_cheondeok(month_branch, all_stems, all_branches)
         )
 
 

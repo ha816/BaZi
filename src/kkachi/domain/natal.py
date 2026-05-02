@@ -70,6 +70,8 @@ class Sinsal(Enum):
     文昌貴人 = ("문창귀인", "학업·시험·자격증·문서운")
     白虎殺 = ("백호살", "사고·수술·혈광·급변")
     將星 = ("장성살", "리더십·권위·통솔력")
+    天德貴人 = ("천덕귀인", "하늘의 보호·재앙 면제·길게 깃든 복")
+    月德貴人 = ("월덕귀인", "조용한 평안·갈등 회피·조율 능력")
 
     def __init__(self, korean: str, meaning: str):
         self.korean = korean
@@ -145,6 +147,52 @@ class Sinsal(Enum):
             if b == trigger and b != day_branch
         ]
 
+    @classmethod
+    def _woldeok_map(cls) -> list:
+        """월덕귀인 매핑 (lazy 초기화). 월지 삼합국 → 길신 천간."""
+        if not hasattr(cls, '_WOLDEOK_MAP'):
+            cls._WOLDEOK_MAP = [
+                (frozenset({Branch.寅, Branch.午, Branch.戌}), Stem.丙),
+                (frozenset({Branch.申, Branch.子, Branch.辰}), Stem.壬),
+                (frozenset({Branch.亥, Branch.卯, Branch.未}), Stem.甲),
+                (frozenset({Branch.巳, Branch.酉, Branch.丑}), Stem.庚),
+            ]
+        return cls._WOLDEOK_MAP
+
+    @classmethod
+    def get_woldeok(cls, month_branch: Branch, all_stems: list["Stem"]) -> list[tuple[Branch, "Sinsal"]]:
+        """월덕귀인: 월지 삼합국에 따른 길신 천간이 사주 천간에 있으면."""
+        for branches, target_stem in cls._woldeok_map():
+            if month_branch in branches and target_stem in all_stems:
+                return [(month_branch, cls.月德貴人)]
+        return []
+
+    @classmethod
+    def _cheondeok_map(cls) -> dict:
+        """천덕귀인 매핑 (lazy 초기화). 월지 → 길신 글자(천간 또는 지지)."""
+        if not hasattr(cls, '_CHEONDEOK_MAP'):
+            cls._CHEONDEOK_MAP = {
+                Branch.寅: Stem.丁, Branch.卯: Branch.申, Branch.辰: Stem.壬,
+                Branch.巳: Stem.辛, Branch.午: Branch.亥, Branch.未: Stem.甲,
+                Branch.申: Stem.癸, Branch.酉: Branch.寅, Branch.戌: Stem.丙,
+                Branch.亥: Stem.乙, Branch.子: Branch.巳, Branch.丑: Stem.庚,
+            }
+        return cls._CHEONDEOK_MAP
+
+    @classmethod
+    def get_cheondeok(
+        cls, month_branch: Branch, all_stems: list["Stem"], all_branches: list[Branch]
+    ) -> list[tuple[Branch, "Sinsal"]]:
+        """천덕귀인: 월지에 따른 길신 글자가 사주 천간 또는 지지에 있으면."""
+        target = cls._cheondeok_map().get(month_branch)
+        if target is None:
+            return []
+        if isinstance(target, Stem) and target in all_stems:
+            return [(month_branch, cls.天德貴人)]
+        if isinstance(target, Branch) and target in all_branches:
+            return [(month_branch, cls.天德貴人)]
+        return []
+
 
 class Saju:
     """사주(四柱) - 네 기둥의 간지 조합. 순수 도메인 모델."""
@@ -186,7 +234,7 @@ class NatalInfo:
     sibi_unseong: list[tuple[str, SibiUnseong]]
     sinsal: list[tuple[Branch, Sinsal]]
     personality: str
-    jizan_gan: list[list[tuple[str, Sipsin]]] = field(default_factory=list)
+    jizan_gan: list[list[tuple[str, Sipsin, int, str]]] = field(default_factory=list)
     sibi_sinsal: list[str] = field(default_factory=list)
     gongmang: list[bool] = field(default_factory=list)
 

@@ -123,8 +123,19 @@ class Branch(Enum):
 
     @property
     def jizan_gan(self) -> list[Stem]:
-        """지장간(地藏干): 이 지지에 숨겨진 천간들."""
+        """지장간(地藏干): 이 지지에 숨겨진 천간들. 순서는 [여기→중기→본기]."""
         return _JIZAN_GAN[self]
+
+    @property
+    def jizan_gan_weights(self) -> list[int]:
+        """지장간 비중(%) — jizan_gan 의 각 천간에 대응. 합=100."""
+        return _JIZAN_GAN_WEIGHT[self]
+
+    @property
+    def jizan_gan_roles(self) -> list[str]:
+        """지장간 역할 라벨(여기/중기/본기) — jizan_gan 위치별로 매칭."""
+        n = len(_JIZAN_GAN[self])
+        return _JIZAN_ROLE_BY_LEN[n]
 
 
 class StemCombine(Enum):
@@ -252,23 +263,50 @@ class BranchClash(Enum):
 
 
 _JIZAN_GAN: dict["Branch", list[Stem]] = {}
+_JIZAN_GAN_WEIGHT: dict["Branch", list[int]] = {}
+_JIZAN_ROLE_BY_LEN: dict[int, list[str]] = {
+    1: ["본기"],
+    2: ["여기", "본기"],
+    3: ["여기", "중기", "본기"],
+}
 
 
 def _build_jizan_gan() -> None:
+    """지장간 데이터 초기화. 모든 지지에 대해 [여기 → 중기 → 본기] 순서로 정의한다."""
     B, S = Branch, Stem
     _JIZAN_GAN.update({
         B.子: [S.壬, S.癸],
-        B.丑: [S.己, S.癸, S.辛],
+        B.丑: [S.癸, S.辛, S.己],
         B.寅: [S.戊, S.丙, S.甲],
         B.卯: [S.甲, S.乙],
         B.辰: [S.乙, S.癸, S.戊],
         B.巳: [S.戊, S.庚, S.丙],
-        B.午: [S.己, S.丁],
+        B.午: [S.丙, S.己, S.丁],
         B.未: [S.丁, S.乙, S.己],
         B.申: [S.戊, S.壬, S.庚],
         B.酉: [S.庚, S.辛],
         B.戌: [S.辛, S.丁, S.戊],
         B.亥: [S.甲, S.壬],
+    })
+    # 전통 사령일수(司令日數) 기준 비율 — 자평진전(子平真詮)
+    # · 왕지(旺地) 子卯酉: 餘氣 10일 / 本氣 20일 → 33% / 67%
+    # · 왕지(旺地) 午:   餘氣 10일 / 中氣 9일 / 本氣 11일 → 33% / 30% / 37%
+    # · 생지(生地) 寅申巳: 7일 / 7일 / 16일 → 23% / 23% / 54%
+    # · 생지(生地) 亥(단순화 2글자): 5일 / 18일 → 22% / 78%
+    # · 고지(庫地) 辰戌丑未: 9일 / 3일 / 18일 → 30% / 10% / 60%
+    _JIZAN_GAN_WEIGHT.update({
+        B.子: [33, 67],
+        B.丑: [30, 10, 60],
+        B.寅: [23, 23, 54],
+        B.卯: [33, 67],
+        B.辰: [30, 10, 60],
+        B.巳: [23, 23, 54],
+        B.午: [33, 30, 37],
+        B.未: [30, 10, 60],
+        B.申: [23, 23, 54],
+        B.酉: [33, 67],
+        B.戌: [30, 10, 60],
+        B.亥: [22, 78],
     })
 
 

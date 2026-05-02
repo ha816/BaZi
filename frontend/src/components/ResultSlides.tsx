@@ -2,7 +2,8 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import type { AnalysisResult } from "@/types/analysis";
+import type { AnalysisResult, NatalResult } from "@/types/analysis";
+import { getElementInfo } from "@/lib/elementColors";
 import NatalTab from "./tabs/NatalTab";
 import PersonalityTab from "./tabs/PersonalityTab";
 import DaeunTab from "./tabs/DaeunTab";
@@ -13,6 +14,48 @@ import AdviceTab from "./tabs/AdviceTab";
 import ZodiacTab from "./tabs/ZodiacTab";
 import FengShuiTab from "./tabs/FengShuiTab";
 import { postFeedback } from "@/lib/api";
+
+const PILLAR_LABEL_KOR = ["년", "월", "일", "시"];
+
+function StickySajuBar({ natal }: { natal: NatalResult }) {
+  const meInfo = getElementInfo(natal.my_element.name);
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      className="w-full"
+      aria-label="페이지 맨 위로"
+    >
+      <div className="flex items-center justify-center gap-2.5 rounded-lg px-3 py-1.5 bg-[var(--color-card)] border border-[var(--color-border-light)]">
+        {[3, 2, 1, 0].map((i) => {
+          const pillar = natal.pillars[i] ?? "";
+          const isDay = i === 2;
+          return (
+            <div key={i} className="flex flex-col items-center">
+              <span className="text-[8px] font-semibold mb-0.5"
+                style={{ color: isDay ? meInfo.color : "var(--color-ink-faint)" }}>
+                {PILLAR_LABEL_KOR[i]}
+              </span>
+              <div className="flex flex-col items-center px-1.5 py-0.5 rounded"
+                style={isDay
+                  ? { backgroundColor: meInfo.bgColor, border: `1px solid ${meInfo.borderColor}` }
+                  : undefined}>
+                <span className="font-heading text-[13px] font-bold leading-none"
+                  style={{ color: isDay ? meInfo.color : "var(--color-ink-muted)" }}>
+                  {pillar[0] ?? ""}
+                </span>
+                <span className="font-heading text-[13px] leading-none mt-1"
+                  style={{ color: isDay ? meInfo.color : "var(--color-ink-muted)" }}>
+                  {pillar[1] ?? ""}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </button>
+  );
+}
 
 const FEATURE_TABS = [
   { id: "natal",   emoji: "🌱", label: "만세력" },
@@ -108,18 +151,21 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
 
   return (
     <div className="space-y-4">
-      <div className="feature-tabbar sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">
-        {FEATURE_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => handleTabChange(tab.id)}
-            className={`feature-tab ${active === tab.id ? "feature-tab--active" : ""}`}
-          >
-            <span>{tab.emoji}</span>
-            <span>{tab.label}</span>
-          </button>
-        ))}
+      <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2 space-y-1.5">
+        <StickySajuBar natal={natal} />
+        <div className="feature-tabbar">
+          {FEATURE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => handleTabChange(tab.id)}
+              className={`feature-tab ${active === tab.id ? "feature-tab--active" : ""}`}
+            >
+              <span>{tab.emoji}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div>
