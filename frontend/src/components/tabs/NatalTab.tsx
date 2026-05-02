@@ -5,8 +5,21 @@ import type { NatalResult, SipsinInfo, SibiUnseongInfo, SinsalInfo } from "@/typ
 import { getElementInfo } from "@/lib/elementColors";
 import PillarDetail from "@/components/PillarDetail";
 import SectionHeader from "@/components/SectionHeader";
+import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import KkachiTip from "@/components/KkachiTip";
-import ElementRadar from "@/components/ElementRadar";
+
+const STEM_PROFILE: Record<string, { nickname: string; tagline: string; keywords: string[]; hint: string }> = {
+  "甲": { nickname: "큰 나무",  tagline: "큰 나무 (大林木)",              keywords: ["도전", "리더십", "직진본능", "자존심"],   hint: "고집이 세 보일 수 있지만, 그 뚝심이 당신의 가장 큰 무기예요." },
+  "乙": { nickname: "화초",     tagline: "화초 · 덩굴 (花草木)",          keywords: ["유연함", "친화력", "적응력", "눈치"],      hint: "부드럽게 감아 올라가는 덩굴처럼 관계와 환경을 내 편으로 만드는 능력이 있어요." },
+  "丙": { nickname: "태양",     tagline: "태양 · 큰 불 (太陽火)",         keywords: ["열정", "존재감", "솔직함", "에너지"],     hint: "어딜 가도 존재감이 넘쳐요. 무대 위에 서면 더욱 빛나는 타입입니다." },
+  "丁": { nickname: "촛불",     tagline: "촛불 · 등불 (燈燭火)",          keywords: ["섬세함", "집중력", "감수성", "예리함"],   hint: "겉으론 조용해 보여도 속에 깊은 열정이 있어요. 집중할 때의 몰입력이 대단합니다." },
+  "戊": { nickname: "산",       tagline: "큰 산 · 성벽 (城牆土)",         keywords: ["포용력", "신뢰", "묵직함", "책임감"],     hint: "사람들이 본능적으로 기대고 싶어하는 타입이에요. 그 무게를 즐기세요." },
+  "己": { nickname: "논밭",     tagline: "논밭 · 기름진 흙 (田園土)",     keywords: ["세심함", "배려", "꼼꼼함", "현실감각"],   hint: "디테일에 강하고 사람을 잘 챙겨요. 그 섬세한 감각이 큰 자산입니다." },
+  "庚": { nickname: "검",       tagline: "큰 쇠 · 검 (劍戟金)",           keywords: ["결단력", "원칙", "추진력", "강직함"],     hint: "망설임 없는 결단력이 강점이에요. 때로는 부드러운 접근도 더 효과적일 수 있어요." },
+  "辛": { nickname: "보석",     tagline: "보석 · 세공된 금속 (珠寶金)",   keywords: ["완벽주의", "심미안", "자존감", "날카로움"], hint: "스스로의 기준이 높은 편이에요. 그 높은 기준이 당신을 특별하게 만들어줘요." },
+  "壬": { nickname: "바다",     tagline: "바다 · 강 (江河水)",            keywords: ["통찰력", "지략", "포용", "사유"],         hint: "큰 그림을 보는 전략적 사고가 뛰어나요. 흐름을 읽는 능력을 믿으세요." },
+  "癸": { nickname: "빗물",     tagline: "비 · 이슬 (雨露水)",            keywords: ["직관", "감성", "배려", "내면의 힘"],      hint: "겉으로 드러나지 않는 깊은 감수성과 직관이 있어요. 혼자만의 시간이 에너지를 충전해줘요." },
+};
 
 
 
@@ -448,7 +461,6 @@ function buildSinsalNarrative(sinsal: SinsalInfo[], name: string): string {
   return `${p} 사주에 ${names}이 있어요. 이 특별한 기운을 잘 활용하면 타고난 캐릭터성을 살릴 수 있어요.`;
 }
 
-const OHAENG_IDX: Record<string, number> = { '木':0, '火':1, '土':2, '金':3, '水':4 };
 const OHAENG_KOR = ['나무','불','흙','쇠','물'];
 const OHAENG_COLORS = ['#1B6B3A','#B02020','#8A4F00','#3D3D3D','#0F4F8A'];
 const OHAENG_BGS = ['#C8E6D4','#F8CCC8','#F5DCAA','#E0E0E0','#C4DDF5'];
@@ -649,26 +661,6 @@ const SIPSIN_CATEGORIES: { label: string; hanja: string; keyword: string; member
     description: "어머니·학문·도움·지식처럼 나를 길러주는 영역이에요. 강하면 배움과 인덕이 좋고, 약하면 스스로 길을 찾는 자수성가형이 됩니다." },
 ];
 
-function CollapsibleSectionHeader({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="slide-card__header">
-      <div className="flex items-center gap-2">
-        <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">{title}</h3>
-        <button type="button" onClick={() => setOpen(!open)}
-          className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
-          설명 <span>{open ? "▲" : "▼"}</span>
-        </button>
-      </div>
-      {open && (
-        <div className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2 space-y-2">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
   { needs: ["문창귀인", "장성살"],    message: "똑똑한 리더 탄생! 지략과 카리스마를 모두 갖춘 당신은 조직의 핵심이 될 상이네요!" },
   { needs: ["도화살", "역마살"],      message: "카리스마 넘치는 글로벌 스타! 어딜 가도 주목받고, 낯선 곳에서 오히려 더 빛나는 타입이에요." },
@@ -695,9 +687,9 @@ export default function NatalTab({ natal, name }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 사주팔자 + 오행 */}
+      {/* 사주팔자 + 일간 정체성 */}
       <div className="slide-card">
-        <div className="slide-card__header">
+        <div className="slide-card__header" style={sajuOpen ? { paddingBottom: 6 } : undefined}>
           <div className="flex items-center gap-2">
             <SectionHeader title="사주팔자(四柱八字)" noMargin />
             <button type="button" onClick={toggleSaju} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
@@ -706,51 +698,63 @@ export default function NatalTab({ natal, name }: Props) {
           </div>
           {sajuOpen && (
             <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
-              태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 표현한 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자를 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>라 부릅니다.
+              태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 표현한 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자를 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>예요. 그 중 태어난 날의 천간(日干)이 <strong className="text-[var(--color-ink)]">나 자신</strong>을 상징하며, 사주 전체가 이 일간을 중심으로 풀이됩니다.
             </p>
           )}
         </div>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            사주의 4기둥 8글자가 펼쳐지는 큰 지도예요. 위쪽 천간(天干)은 마음·뜻을, 아래쪽 지지(地支)는 환경·시간을 나타내요. 그 중 일주의 천간(日干)이 바로 나 자신입니다.
+          </KkachiTip>
+
           <PillarDetail
             pillars={natal.pillars}
             dayStem={natal.day_stem}
             basic
           />
-          <KkachiTip>{buildPillarTip(natal, name)}</KkachiTip>
-        </div>
-        <div className="divider" />
-        <div className="slide-card__header">
-          <div className="flex items-center gap-2">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">오행(五行)</h3>
-            <button type="button" onClick={toggleOheng} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
-              설명 <span>{ohengOpen ? "▲" : "▼"}</span>
-            </button>
-          </div>
-          {ohengOpen && (
-            <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
-              만물을 이루는 다섯 가지 기운 — <strong className="text-[var(--color-ink)]">木(나무)·火(불)·土(흙)·金(쇠)·水(물)</strong>. 사주 여덟 글자 각각은 이 오행 중 하나에 속하며, 어떤 기운이 많고 적은지에 따라 성격·체질·적성이 달라집니다.
-            </p>
-          )}
-        </div>
-        <div className="divider" />
-        <div className="slide-card__body space-y-5">
-          <OhaengSourceBreakdown pillars={natal.pillars} pillarElements={natal.pillar_elements} stats={natal.element_stats} />
-          <OhaengCountDiagram stats={natal.element_stats} />
-          <KkachiTip>{buildOhaengTip(natal, name)}</KkachiTip>
+
+          {/* 일간(日干) 정체성 */}
           {(() => {
-            const maxVal = Math.max(...Object.values(natal.element_stats));
-            const tops = Object.entries(natal.element_stats).filter(([, v]) => v === maxVal).map(([k]) => k);
-            return tops.length === 1 ? (
-              <img src={`/oheng/oheng_${tops[0]}.png`} alt={tops[0]} className="w-full rounded-xl object-cover" style={{ height: 275 }} />
-            ) : (
-              <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${tops.length}, 1fr)` }}>
-                {tops.map((el) => (
-                  <img key={el} src={`/oheng/oheng_${el}.png`} alt={el} className="w-full rounded-lg object-cover" style={{ height: 275 }} />
-                ))}
+            const stemProfile = STEM_PROFILE[natal.day_stem] ?? STEM_PROFILE["甲"];
+            const stemKor = STEM_KOR[natal.day_stem] ?? "";
+            return (
+              <div className="rounded-xl p-4 space-y-3 border border-[var(--color-border-light)]"
+                style={{ backgroundColor: "var(--color-card)" }}>
+                <p className="text-xs font-semibold text-[var(--color-ink-muted)] text-center">
+                  일간(日干) 심상(心象)
+                </p>
+                <img
+                  src={`/kkachi/sipgan/십간_${stemKor}.png`}
+                  alt=""
+                  className="w-4/5 mx-auto block aspect-[3/2] rounded-2xl object-cover"
+                  style={{ backgroundColor: "var(--color-card)" }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+                />
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <p className="font-heading font-bold leading-snug text-[var(--color-ink)]">
+                    <span className="text-3xl mr-1" style={{ color: meInfo.color }}>
+                      {stemKor || natal.day_stem}({natal.day_stem})
+                    </span>
+                    <span className="text-lg">- {stemProfile.tagline}</span>
+                  </p>
+                  <div className="flex flex-wrap gap-1 justify-center">
+                    {stemProfile.keywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="text-[10px] px-2 py-0.5 rounded-full border font-medium"
+                        style={{ color: meInfo.color, borderColor: meInfo.borderColor, backgroundColor: meInfo.bgColor }}
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             );
           })()}
+
+          <KkachiTip>{STEM_PROFILE[natal.day_stem]?.hint ?? ""}</KkachiTip>
         </div>
       </div>
 

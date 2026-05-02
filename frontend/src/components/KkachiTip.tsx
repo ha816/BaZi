@@ -5,7 +5,7 @@ interface Props {
 
 export default function KkachiTip({ children, label }: Props) {
   return (
-    <div className="flex items-start gap-2.5 pt-3 border-t border-[var(--color-border-light)]">
+    <div className="flex items-start gap-2.5">
       <img
         src="/kkachi/normal_kkachi_00.png"
         alt="까치"
