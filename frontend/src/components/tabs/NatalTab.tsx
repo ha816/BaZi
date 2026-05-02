@@ -52,25 +52,45 @@ const UNSEONG_INFO: Record<string, { korean: string; phase: string; tagline: str
   "養":   { korean: "양",   phase: "태동기", tagline: "보호받으며 자라는 단계", desc: "안전하게 보호받으며 세상 밖으로 나갈 준비" },
 };
 
-function buildSipsinNarrative(sipsin: SipsinInfo[], name: string): string {
-  if (sipsin.length === 0) return "";
-  const seen = new Set<string>();
-  const unique = sipsin.filter((s) => {
-    if (seen.has(s.sipsin_name)) return false;
-    seen.add(s.sipsin_name);
-    return true;
-  });
-  const list = unique
-    .map((s) => {
-      const info = SIPSIN_INFO[s.sipsin_name];
-      return info ? `${info.korean}(${info.tagline})` : s.sipsin_name;
-    })
-    .join(", ");
-  const prefix = name ? `${name}님` : "이 사주";
-  const top = unique[0];
-  const topInfo = SIPSIN_INFO[top.sipsin_name];
-  const detail = topInfo ? ` ${topInfo.desc}.` : "";
-  return `${prefix} 사주에는 ${list} 기운이 담겨 있어요.${detail}`;
+function buildSipsinStory(sipsin: SipsinInfo[], name: string): React.ReactNode {
+  if (sipsin.length === 0) return null;
+
+  const catCounts = SIPSIN_CATEGORIES.map((cat) => ({
+    cat,
+    count: sipsin.filter((s) => cat.members.includes(s.sipsin_name)).length,
+  }));
+  const sorted = [...catCounts].sort((a, b) => b.count - a.count);
+  const strong = sorted.filter((c) => c.count >= 2);
+  const missing = catCounts.filter((c) => c.count === 0);
+
+  const prefix = name ? `${name}님 사주는 ` : "이 사주는 ";
+  const firstKeyword = (k: string) => k.split(",")[0].trim();
+
+  let core: React.ReactNode;
+  if (strong.length >= 2) {
+    core = (
+      <>
+        <strong className="text-[var(--color-ink)]">{strong.map((s) => s.cat.label).join("·")}</strong>이(가) 두드러지는 사주예요. {strong.map((s) => firstKeyword(s.cat.keyword)).join("과 ")}이 동시에 살아 있어 자기 페이스로 영역을 끌어가는 흐름입니다.
+      </>
+    );
+  } else if (strong.length === 1) {
+    const s = strong[0];
+    core = (
+      <>
+        <strong className="text-[var(--color-ink)]">{s.cat.label}({s.cat.hanja})</strong>이 가장 두드러지는 사주예요. {firstKeyword(s.cat.keyword)} 영역에서 자기 색이 가장 잘 살아납니다.
+      </>
+    );
+  } else {
+    core = <>다섯 카테고리에 한 글자씩 골고루 들어 있는 균형형이에요. 어느 한쪽으로 치우치지 않고 다양한 영역을 두루 경험하는 흐름입니다.</>;
+  }
+
+  const missingPart = missing.length > 0 && missing.length < 5 ? (
+    <> 단, <strong className="text-[var(--color-ink)]">{missing.map((m) => m.cat.label).join("·")}</strong> 자리는 비어 있어, {missing.map((m) => firstKeyword(m.cat.keyword)).join("·")} 영역에선 환경·사람의 도움을 활용하면 좋아요.</>
+  ) : null;
+
+  return (
+    <span>{prefix}{core}{missingPart}</span>
+  );
 }
 
 /* ── 십이운성 ── */
@@ -616,12 +636,17 @@ function OhaengSourceBreakdown({ pillars, pillarElements = [], stats }: {
   );
 }
 
-const SIPSIN_CATEGORIES: { label: string; hanja: string; keyword: string; members: string[] }[] = [
-  { label: "자아",  hanja: "自我", keyword: "주체성·경쟁력", members: ["比肩", "劫財"] },
-  { label: "출력",  hanja: "出力", keyword: "표현력·창의성", members: ["食神", "傷官"] },
-  { label: "재물",  hanja: "財物", keyword: "경제 활동",     members: ["偏財", "正財"] },
-  { label: "권위",  hanja: "權威", keyword: "책임감·명예",   members: ["偏官", "正官"] },
-  { label: "입력",  hanja: "入力", keyword: "수용성·학문",   members: ["偏印", "正印"] },
+const SIPSIN_CATEGORIES: { label: string; hanja: string; keyword: string; members: string[]; color: string; bg: string; description: string }[] = [
+  { label: "자아", hanja: "自我", keyword: "주체성, 경쟁력", members: ["比肩", "劫財"], color: "#B8945A", bg: "#F5F0E7",
+    description: "나 자신·형제·동료·경쟁자처럼 나와 같은 결의 기운이에요. 강하면 자기 주관과 추진력이 살아나고, 약하면 주변 페이스에 끌려가기 쉬워 동료의 도움이 중요해집니다." },
+  { label: "출력", hanja: "出力", keyword: "표현력, 창의성", members: ["食神", "傷官"], color: "#5B8C6A", bg: "#EEF4F0",
+    description: "표현·창작·말·자녀처럼 내가 밖으로 만들어내는 영역이에요. 강하면 톡톡 튀는 표현력과 창의성이 살아나고, 약하면 속마음을 드러내지 못해 답답함이 쌓일 수 있어요." },
+  { label: "재물", hanja: "財物", keyword: "경제 활동",     members: ["偏財", "正財"], color: "#4A7BA5", bg: "#ECF1F6",
+    description: "돈·자산·소유처럼 내가 다스리는 자원이며, 남자에게는 배우자도 이 영역에 속해요. 강하면 경제 감각과 현실 추진력이 살아나고, 약하면 환경의 도움을 받는 흐름이 됩니다." },
+  { label: "권위", hanja: "權威", keyword: "책임감, 명예",   members: ["偏官", "正官"], color: "#7B68A0", bg: "#F2F0F7",
+    description: "직장·상사·법·규율처럼 나를 묶고 책임을 지우는 영역이며, 여자에게는 배우자도 여기 속해요. 강하면 책임감과 명예욕·리더십이 커지고, 약하면 조직에서 자기 자리를 만드는 데 시간이 걸리는 편입니다." },
+  { label: "입력", hanja: "入力", keyword: "수용성, 학문",   members: ["偏印", "正印"], color: "#B85A8A", bg: "#F7EBEF",
+    description: "어머니·학문·도움·지식처럼 나를 길러주는 영역이에요. 강하면 배움과 인덕이 좋고, 약하면 스스로 길을 찾는 자수성가형이 됩니다." },
 ];
 
 function CollapsibleSectionHeader({ title, children }: { title: string; children: React.ReactNode }) {
@@ -636,9 +661,9 @@ function CollapsibleSectionHeader({ title, children }: { title: string; children
         </button>
       </div>
       {open && (
-        <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
+        <div className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2 space-y-2">
           {children}
-        </p>
+        </div>
       )}
     </div>
   );
@@ -740,10 +765,36 @@ export default function NatalTab({ natal, name }: Props) {
               </button>
             </div>
             {sipsinOpen && (
-              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
-                나를 뜻하는 일간(日干)의 <strong className="text-[var(--color-ink)]">{STEM_KOR[natal.day_stem] ?? natal.day_stem}({natal.day_stem})</strong>과 나머지 7글자가 어떤 관계인지 10가지로 분류한 체계예요.
-                재산을 대하는 방식, 권위에 반응하는 방식, 남을 돕고 싶은 성향 등 <strong className="text-[var(--color-ink)]">나만의 사회적 패턴</strong>을 보여줍니다.
-              </p>
+              <div className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2 space-y-2">
+                <p>
+                  {(() => {
+                    const dayKor = STEM_KOR[natal.day_stem] ?? natal.day_stem;
+                    const last = dayKor[dayKor.length - 1].charCodeAt(0);
+                    const hasJongseong = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 !== 0;
+                    return (
+                      <>
+                        나를 뜻하는 일간(日干)의 <strong className="text-[var(--color-ink)]">{dayKor}({natal.day_stem})</strong>{hasJongseong ? "과" : "와"} 나머지 7글자가 어떤 관계인지 10가지로 분류한 체계예요. 재산·권위·관계를 대하는 방식 등 <strong className="text-[var(--color-ink)]">나만의 사회적 패턴</strong>을 보여줍니다.
+                      </>
+                    );
+                  })()}
+                </p>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">사회적 관계 오분류</p>
+                  <div className="space-y-2">
+                    {SIPSIN_CATEGORIES.map((cat) => (
+                      <div key={cat.label} className="rounded-md p-2.5"
+                        style={{ backgroundColor: cat.bg, border: `1px solid ${cat.color}40` }}>
+                        <div className="text-xs font-bold leading-tight mb-1" style={{ color: cat.color }}>
+                          {cat.label}({cat.hanja})
+                        </div>
+                        <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
+                          {cat.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
           <div className="divider" />
@@ -758,54 +809,57 @@ export default function NatalTab({ natal, name }: Props) {
                 }, {}
               );
               return (
-                <div className="space-y-4 mb-4">
-                  {SIPSIN_CATEGORIES.map((cat) => {
-                    const presentMembers = cat.members.filter((m) => !!grouped[m]);
-                    if (presentMembers.length === 0) return null;
+                <div className="mb-4">
+                  {(() => {
+                    const ordered: { sipsinName: string; cat: typeof SIPSIN_CATEGORIES[number] }[] = [];
+                    for (const cat of SIPSIN_CATEGORIES) {
+                      for (const m of cat.members) {
+                        if (grouped[m]) ordered.push({ sipsinName: m, cat });
+                      }
+                    }
                     return (
-                      <div key={cat.label}>
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span className="text-xs font-bold text-[var(--color-ink)]">{cat.label}({cat.hanja})</span>
-                          <span className="text-[10px] text-[var(--color-ink-faint)]">— {cat.keyword}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {presentMembers.map((sipsinName) => {
-                            const group = grouped[sipsinName];
-                            const info = SIPSIN_INFO[sipsinName];
-                            return (
-                              <div key={sipsinName} className="rounded-lg bg-[var(--color-ivory)] border border-[var(--color-border-light)] overflow-hidden flex flex-col">
-                                <img
-                                  src={`/kkachi/sipsin/sipsin_${info?.korean ?? sipsinName}.png`}
-                                  alt={info?.korean ?? sipsinName}
-                                  className="w-full object-cover"
-                                  style={{ height: 160 }}
-                                  onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
-                                />
-                                <div className="p-2.5 flex-1">
-                                  <div className="flex items-start justify-between mb-1">
-                                    <div className="font-heading text-sm font-bold text-[var(--color-ink)]">
-                                      {info?.korean ?? sipsinName}({sipsinName})
-                                    </div>
-                                    {group.count > 1 && (
-                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--color-gold-faint)] text-[var(--color-gold)] border border-[var(--color-gold-light)] flex-shrink-0 ml-1">
-                                        ×{group.count}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <p className="text-[10px] font-medium text-[var(--color-gold)] mb-1">{info?.tagline}</p>
-                                  <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{info?.desc}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {ordered.map(({ sipsinName, cat }) => {
+                          const group = grouped[sipsinName];
+                          const info = SIPSIN_INFO[sipsinName];
+                          return (
+                            <div key={sipsinName} className="rounded-lg overflow-hidden flex flex-col"
+                              style={{ backgroundColor: cat.bg, border: `1.5px solid ${cat.color}40` }}>
+                              <img
+                                src={`/kkachi/sipsin/sipsin_${info?.korean ?? sipsinName}.png`}
+                                alt={info?.korean ?? sipsinName}
+                                className="w-full object-cover"
+                                style={{ height: 160 }}
+                                onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+                              />
+                              <div className="p-2.5 flex-1">
+                                <div className="text-[9px] font-semibold mb-1" style={{ color: cat.color }}>
+                                  {cat.label}({cat.hanja}) - {cat.keyword}
                                 </div>
+                                <div className="flex items-start justify-between gap-1 mb-1">
+                                  <p className="font-heading text-sm font-bold leading-snug text-[var(--color-ink)]">
+                                    {info?.korean ?? sipsinName}({sipsinName})
+                                    {info?.tagline && <span className="ml-1">— {info.tagline}</span>}
+                                  </p>
+                                  {group.count > 1 && (
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0"
+                                      style={{ backgroundColor: cat.color + "20", color: cat.color, border: `1px solid ${cat.color}60` }}>
+                                      ×{group.count}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{info?.desc}</p>
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     );
-                  })}
+                  })()}
                 </div>
               );
             })()}
-            <KkachiTip>{buildSipsinNarrative(natal.sipsin, name)}</KkachiTip>
+            <KkachiTip>{buildSipsinStory(natal.sipsin, name)}</KkachiTip>
           </div>
         </div>
       )}
