@@ -171,11 +171,16 @@ body {
 /* Elegant divider */
 .divider {
   height: 1px;
+  background: var(--color-border);
+}
+
+.divider--fade {
+  height: 1px;
   background: linear-gradient(
     to right,
     transparent,
-    var(--color-border) 20%,
-    var(--color-border) 80%,
+    var(--color-border) 8%,
+    var(--color-border) 92%,
     transparent
   );
 }

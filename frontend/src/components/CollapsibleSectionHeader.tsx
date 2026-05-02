@@ -15,7 +15,7 @@ export default function CollapsibleSectionHeader({ title, children }: Props) {
         <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">{title}</h3>
         <button type="button" onClick={() => setOpen(!open)}
           className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
-          설명 <span>{open ? "▲" : "▼"}</span>
+          상세 설명 <span>{open ? "▲" : "▼"}</span>
         </button>
       </div>
       {open && (

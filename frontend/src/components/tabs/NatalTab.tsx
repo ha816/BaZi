@@ -169,11 +169,8 @@ function buildUnseongStory(sibiUnseong: SibiUnseongInfo[], name: string): React.
     }
   }
 
-  const prefix = name ? `${name}님의 ` : "당신의 ";
-
   return (
     <span>
-      {prefix}인생 흐름을 까치가 풀어볼게요.{" "}
       {groups.map((g, i) => {
         const isFirst = i === 0;
         const isLast = i === groups.length - 1 && groups.length > 1;
@@ -230,7 +227,7 @@ function EnergyPatternCard({ sibiUnseong }: { sibiUnseong: SibiUnseongInfo[] }) 
     <div className="rounded-xl border border-[var(--color-border-light)] p-4 space-y-2"
       style={{ backgroundColor: "var(--color-card)" }}>
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">인생 에너지 패턴</p>
+        <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">에너지 유형</p>
         <div className="flex items-center gap-1.5 text-[10px] text-[var(--color-ink-muted)]">
           {stats.map(({ label, hanja, count }, i) => (
             <span key={label} className="flex items-center gap-0.5">
@@ -674,6 +671,7 @@ export default function NatalTab({ natal, name }: Props) {
   const [sajuOpen, setSajuOpen] = useState(false);
   const [ohengOpen, setOhengOpen] = useState(false);
   const [sipsinOpen, setSipsinOpen] = useState(false);
+  const [bonkiOpen, setBonkiOpen] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("kkachi_concept_saju") === "open") setSajuOpen(true);
@@ -693,7 +691,7 @@ export default function NatalTab({ natal, name }: Props) {
           <div className="flex items-center gap-2">
             <SectionHeader title="사주팔자(四柱八字)" noMargin />
             <button type="button" onClick={toggleSaju} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
-              설명 <span>{sajuOpen ? "▲" : "▼"}</span>
+              상세 설명 <span>{sajuOpen ? "▲" : "▼"}</span>
             </button>
           </div>
           {sajuOpen && (
@@ -761,11 +759,11 @@ export default function NatalTab({ natal, name }: Props) {
       {/* 십신 */}
       {natal.sipsin.length > 0 && (
         <div className="slide-card">
-          <div className="slide-card__header">
+          <div className="slide-card__header" style={sipsinOpen ? { paddingBottom: 14 } : undefined}>
             <div className="flex items-center gap-2">
               <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">십신(十神)</h3>
               <button type="button" onClick={toggleSipsin} className="text-[10px] text-[var(--color-ink-faint)] hover:text-[var(--color-ink-muted)] transition-colors flex items-center gap-0.5">
-                설명 <span>{sipsinOpen ? "▲" : "▼"}</span>
+                상세 설명 <span>{sipsinOpen ? "▲" : "▼"}</span>
               </button>
             </div>
             {sipsinOpen && (
@@ -802,7 +800,19 @@ export default function NatalTab({ natal, name }: Props) {
             )}
           </div>
           <div className="divider" />
-          <div className="slide-card__body">
+          <div className="slide-card__body space-y-4">
+            <KkachiTip>
+              {(() => {
+                const dayKor = STEM_KOR[natal.day_stem] ?? natal.day_stem;
+                const last = dayKor[dayKor.length - 1].charCodeAt(0);
+                const hasJongseong = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 !== 0;
+                return (
+                  <>
+                    나의 일간인 <strong className="text-[var(--color-ink)]">{dayKor}({natal.day_stem})</strong>{hasJongseong ? "이" : "가"} 사주의 다른 글자와 맺는 <strong className="text-[var(--color-ink)]">10가지 관계</strong>를 자아·출력·재물·권위·입력 <strong className="text-[var(--color-ink)]">5가지</strong>로 묶어 나의 사회적 관계를 보여주는 체계예요.
+                  </>
+                );
+              })()}
+            </KkachiTip>
             {(() => {
               const grouped = natal.sipsin.reduce<Record<string, { sipsin_name: string; chars: string[]; element: string; count: number }>>(
                 (acc, s) => {
@@ -876,12 +886,70 @@ export default function NatalTab({ natal, name }: Props) {
           </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
+            <KkachiTip>
+              지장간을 보면 <strong className="text-[var(--color-ink)]">본심과 겉 모습</strong>이 같은지 다른지 파악해 볼 수 있어요. 지장간이 사주천간 중 하나라도 같다면 <strong className="text-[var(--color-ink)]">투출(透出)</strong>이라고 하고, <strong className="text-[var(--color-ink)]">속과 겉이 일치하는 상태</strong>를 뜻해요.
+            </KkachiTip>
             {(() => {
               const heavenlyStems = natal.pillars.map((p) => p[0]);
               const dayJg = natal.jizan_gan[2] ?? [];
               const bonki = dayJg[dayJg.length - 1];
-              return (
+              return !bonkiOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setBonkiOpen(true)}
+                  className="btn-shimmer w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:opacity-70"
+                >
+                  ✨ 나의 겉과 속 일치 파악하기
+                </button>
+              ) : (
                 <>
+                  {/* 일지 본기 — 진짜 본심 */}
+                  {bonki && (() => {
+                    const info = SIPSIN_INFO[bonki.sipsin_name];
+                    const kor = info?.korean ?? bonki.sipsin_name;
+                    const stemKor = STEM_KOR[bonki.stem] ?? bonki.stem;
+                    const exposed = heavenlyStems.includes(bonki.stem);
+                    return (
+                      <>
+                        <div className="rounded-xl p-4 space-y-3"
+                          style={{ border: "1.5px solid var(--color-gold-light)", backgroundColor: "var(--color-gold-faint)" }}>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-semibold text-[var(--color-gold)]">일지(日支) 본기</span>
+                          </div>
+                          <div className="flex items-center gap-3.5">
+                            <div className="relative flex flex-col items-center justify-center w-16 h-16 rounded-xl flex-shrink-0"
+                              style={{ backgroundColor: "var(--color-card)", border: "1.5px solid var(--color-gold-light)" }}>
+                              <span className="font-heading text-2xl font-bold text-[var(--color-ink)] leading-none">{bonki.stem}</span>
+                              <span className="text-[10px] text-[var(--color-ink-faint)] mt-0.5">{stemKor}</span>
+                              {exposed && (
+                                <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                                  style={{ backgroundColor: "var(--color-gold)", color: "var(--color-ivory)" }}>
+                                  透
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-0.5">
+                              <p className="text-sm font-bold text-[var(--color-ink)]">
+                                {kor}<span className="text-[11px] font-normal text-[var(--color-ink-faint)] ml-1">({bonki.sipsin_name})</span>
+                              </p>
+                              {info && (
+                                <>
+                                  <p className="text-xs font-medium text-[var(--color-gold)]">{info.tagline}</p>
+                                  <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <KkachiTip>
+                          {exposed
+                            ? `사주천간 중 ${stemKor}(${bonki.stem})와 일치하여 투출되어 있어요. 속과 겉이 일치하는 솔직한 타입입니다.`
+                            : `천간에는 드러나지 않은 깊은 욕구예요. 평소엔 잘 보이지 않지만, 결정의 순간 강하게 작용하는 진짜 본심입니다.`}
+                        </KkachiTip>
+                      </>
+                    );
+                  })()}
+
                   {/* 기둥별 지장간 — 테이블 매트릭스 */}
                   <div>
                     <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
@@ -955,55 +1023,9 @@ export default function NatalTab({ natal, name }: Props) {
                     </div>
                     <p className="text-[10px] text-[var(--color-ink-faint)] mt-1.5 leading-relaxed">
                       <span className="inline-block rounded-full align-middle"
-                        style={{ width: 4, height: 4, backgroundColor: "var(--color-gold)" }} /> 표시는 천간(天干)에 같은 글자가 드러난 투출(透干)
+                        style={{ width: 4, height: 4, backgroundColor: "var(--color-gold)" }} /> 표시는 지장간이 천간(天干)과 같은 <strong className="text-[var(--color-ink-muted)]">투출(透干)</strong>
                     </p>
                   </div>
-
-                  {/* 일지 본기 — 진짜 본심 */}
-                  {bonki && (() => {
-                    const info = SIPSIN_INFO[bonki.sipsin_name];
-                    const kor = info?.korean ?? bonki.sipsin_name;
-                    const stemKor = STEM_KOR[bonki.stem] ?? bonki.stem;
-                    const exposed = heavenlyStems.includes(bonki.stem);
-                    return (
-                      <div className="rounded-xl p-4 space-y-3"
-                        style={{ border: "1.5px solid var(--color-gold-light)", backgroundColor: "var(--color-gold-faint)" }}>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-base">💭</span>
-                          <span className="text-[11px] font-semibold text-[var(--color-gold)]">일지(日支) 본기 — 진짜 본심</span>
-                        </div>
-                        <div className="flex items-center gap-3.5">
-                          <div className="relative flex flex-col items-center justify-center w-16 h-16 rounded-xl flex-shrink-0"
-                            style={{ backgroundColor: "var(--color-card)", border: "1.5px solid var(--color-gold-light)" }}>
-                            <span className="font-heading text-2xl font-bold text-[var(--color-ink)] leading-none">{bonki.stem}</span>
-                            <span className="text-[10px] text-[var(--color-ink-faint)] mt-0.5">{stemKor}</span>
-                            {exposed && (
-                              <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                                style={{ backgroundColor: "var(--color-gold)", color: "var(--color-ivory)" }}>
-                                透
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0 space-y-0.5">
-                            <p className="text-sm font-bold text-[var(--color-ink)]">
-                              {kor}<span className="text-[11px] font-normal text-[var(--color-ink-faint)] ml-1">({bonki.sipsin_name})</span>
-                            </p>
-                            {info && (
-                              <>
-                                <p className="text-xs font-medium text-[var(--color-gold)]">{info.tagline}</p>
-                                <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <KkachiTip>
-                          {exposed
-                            ? `천간(天干)에도 ${bonki.stem}이 투출(透出)되어 있어요. 본심이 자연스럽게 겉으로 표현되는, 속과 겉이 일치하는 솔직한 타입입니다.`
-                            : `천간에는 드러나지 않은 깊은 욕구예요. 평소엔 잘 보이지 않지만, 결정의 순간 강하게 작용하는 진짜 본심입니다.`}
-                        </KkachiTip>
-                      </div>
-                    );
-                  })()}
                 </>
               );
             })()}
@@ -1020,6 +1042,9 @@ export default function NatalTab({ natal, name }: Props) {
           </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-3">
+            <KkachiTip>
+              60갑자에서 짝이 없는 지지가 <strong className="text-[var(--color-ink)]">공망(空亡)</strong>이에요. 그 영역의 기운이 비어 있어 약해 보이지만, <strong className="text-[var(--color-ink)]">집착을 내려놓을수록 잘 풀리는</strong> 자리입니다.
+            </KkachiTip>
             <div className="grid grid-cols-4 gap-2">
               {[3, 2, 1, 0].map((origI) => {
                 const PILLAR_LABELS_SHORT = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
@@ -1047,11 +1072,14 @@ export default function NatalTab({ natal, name }: Props) {
       {natal.sibi_unseong.length > 0 && (
         <div className="slide-card">
           <CollapsibleSectionHeader title="십이운성(十二運星)">
-            인생의 <strong className="text-[var(--color-ink)]">생로병사 12단계 사이클</strong>이에요. 태어나(長生) → 절정(帝旺) → 쇠퇴 → 잠들었다(墓) → 다시 씨앗으로 돌아가는(胎) 흐름이죠.
+            인생의 <strong className="text-[var(--color-ink)]">생로병사 12단계 사이클</strong>이에요. 탄생(長生) → 절정(帝旺) → 쇠퇴(衰) → 잠듬(墓) → 다시 씨앗으로 돌아가는(胎) 흐름이죠.
             사주 4기둥(년·월·일·시)이 각각 어떤 단계인지 보면, <strong className="text-[var(--color-ink)]">인생 시기별 컨디션과 에너지 흐름</strong>이 한눈에 보입니다.
           </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
+            <KkachiTip>
+              사주 4기둥의 십이운성을 보면, <strong className="text-[var(--color-ink)]">인생의 큰 시기별 특징과 에너지</strong>를 짐작해볼 수 있어요.
+            </KkachiTip>
             {/* 기둥별 운성 표 */}
             <LifeEnergyTable sibiUnseong={natal.sibi_unseong} pillars={natal.pillars} />
             <KkachiTip>{buildUnseongStory(natal.sibi_unseong, name)}</KkachiTip>
@@ -1069,6 +1097,9 @@ export default function NatalTab({ natal, name }: Props) {
           </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
+            <KkachiTip>
+              특정 글자 조합으로 만들어지는 <strong className="text-[var(--color-ink)]">사주의 에너지 마커</strong>예요. 옛날엔 길흉으로 봤지만 현대에는 <strong className="text-[var(--color-ink)]">개인의 캐릭터·역량</strong>으로 풀이합니다.
+            </KkachiTip>
 
             {/* 십이신살 — 기둥별 */}
             {natal.sibi_sinsal?.some(Boolean) && (
