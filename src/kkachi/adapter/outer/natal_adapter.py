@@ -178,7 +178,31 @@ class PostnatalAdapter(PostnatalPort):
             daeun_combines=self._get_combines(current_daeun.ganji) if current_daeun else [],
             domain_scores=self._get_domain_scores(seun_stem, seun_branch, current_daeun),
             samjae=self._get_samjae(),
+            upcoming_months=self._get_upcoming_months(),
         )
+
+    def _get_upcoming_months(self, count: int = 6) -> list[dict]:
+        """이번달 포함 count개월 ganji 정보 반환 (용신 매칭 표시 포함)."""
+        yongshin = self.natal.yongshin
+        anchor = max(datetime.now(), datetime(self.year, 1, 1))
+        results: list[dict] = []
+        for offset in range(count):
+            target_year = anchor.year + (anchor.month - 1 + offset) // 12
+            target_month = (anchor.month - 1 + offset) % 12 + 1
+            probe = datetime(target_year, target_month, 15, 12, 0)
+            saju = cal_saju(probe, city=self.user.city, longitude=self.user.longitude)
+            month_pillar = saju[Pillar.月柱]
+            stem_el = month_pillar.stem.element
+            branch_el = month_pillar.branch.element
+            results.append({
+                "year": target_year,
+                "month": target_month,
+                "ganji": str(month_pillar),
+                "stem_element": stem_el.name,
+                "branch_element": branch_el.name,
+                "matches_yongshin": yongshin in (stem_el, branch_el),
+            })
+        return results
 
     def _get_seun(self) -> tuple[tuple[str, Sipsin], tuple[str, Sipsin]]:
         g = self.seun_ganji

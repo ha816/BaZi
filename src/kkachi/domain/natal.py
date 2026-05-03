@@ -283,3 +283,6 @@ class PostnatalInfo:
 
     # 삼재
     samjae: dict | None = None
+
+    # 이번달 포함 6개월 ganji 정보 (용신 매칭 표시 포함)
+    upcoming_months: list[dict] = field(default_factory=list)

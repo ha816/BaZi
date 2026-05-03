@@ -1,3 +1,4 @@
+from kkachi.domain.interpretation import PostnatalResult
 from kkachi.domain.natal import NatalInfo
 
 
@@ -11,6 +12,11 @@ _STRENGTH_TIP: dict[str, str] = {
     "신강(身強)": "일간의 기운이 강한 편이에요. 에너지를 쏟을 방향을 잘 고르는 게 중요해요.",
     "신약(身弱)": "일간의 기운이 약한 편이에요. 나를 지지해주는 환경과 사람을 잘 고르면 훨씬 잘 발휘돼요.",
     "중화(中和)": "일간의 기운이 균형 잡힌 상태예요. 폭넓은 환경에서 두루 안정적인 성과를 낼 수 있는 타입입니다.",
+}
+
+_YONGSHIN_COLOR: dict[str, str] = {
+    "木": "초록·청록", "火": "빨강·주황", "土": "노랑·갈색",
+    "金": "흰색·은색", "水": "검정·남색",
 }
 
 _ELEMENT_TIP: dict[str, tuple[str, str, str]] = {
@@ -95,6 +101,47 @@ _UNSEONG_ENDINGS: list[str] = ["시기예요", "단계예요", "흐름이에요"
 _SINSAL_ENDINGS: list[str] = ["결이 짙어요", "기운이 강해요", "흐름이 두드러져요"]
 
 
+def build_yongshin_tip(natal: NatalInfo, postnatal_result: PostnatalResult | None = None) -> str:
+    """용신 까치 툴팁 — 정적 부분(일간·강약·색깔) + postnatal 있으면 시점 정보(이번달/올해 매칭, 가까운 용신 달·해)."""
+    day_stem = natal.saju.stem_of_day_pillar
+    ys = natal.yongshin
+    color = _YONGSHIN_COLOR.get(ys.name, "")
+
+    parts: list[str] = [
+        f"나의 기운({day_stem.korean}({day_stem.name}))은 "
+        f"{natal.strength_label}으로, {ys.meaning}({ys.name}) 기운이 가장 잘 도와줘요."
+    ]
+    if color:
+        parts.append(f"{color} 같은 색을 일상에 가까이 두면 그 결이 자연스럽게 들어와요.")
+
+    if postnatal_result is None:
+        return " ".join(parts)
+
+    months = postnatal_result.upcoming_months or []
+    current = months[0] if months else None
+    current_match = bool(current and current.get("matches_yongshin"))
+    upcoming_match = [m for m in months[1:] if m.get("matches_yongshin")]
+
+    if current_match and current is not None:
+        parts.append(
+            f"마침 **이번 달({current['month']}월)**이 용신 기운이 들어오는 시기라 흐름이 가벼워질 거예요."
+        )
+    elif postnatal_result.yongshin_in_seun:
+        parts.append(f"**올해({postnatal_result.year}년)**는 용신의 해라 큰 흐름이 좋아요.")
+
+    timing: list[str] = []
+    if upcoming_match:
+        m_strs = "·".join(f"{m['month']}월" for m in upcoming_match[:2])
+        prefix = "다음" if current_match else "가까운"
+        timing.append(f"{prefix} 용신의 달은 **{m_strs}**이에요.")
+    if postnatal_result.nearest_yongshin_year:
+        timing.append(f"가까운 용신의 해는 **{postnatal_result.nearest_yongshin_year}년**이에요.")
+    if timing:
+        parts.append(" ".join(timing))
+
+    return " ".join(parts)
+
+
 class NatalNarrativeInterpreter:
     """사주별 동적 풀이 텍스트 생성기 — 카드 인트로·스토리를 plain text로 합성."""
 
@@ -114,14 +161,7 @@ class NatalNarrativeInterpreter:
         return _STRENGTH_TIP.get(natal.strength_label, _STRENGTH_TIP["중화(中和)"])
 
     def _yongshin_tip(self, natal: NatalInfo, name: str) -> str:
-        day_stem = natal.saju.stem_of_day_pillar
-        my_el = natal.my_main_element
-        ys = natal.yongshin
-        return (
-            f"{my_el.meaning}({my_el.name}) 일간인 {day_stem.korean}({day_stem.name})는 "
-            f"{natal.strength_label}으로, {ys.meaning}({ys.name}) 기운이 가장 잘 도와줘요. "
-            f"위 색·방향·습관을 일상에 한 가지씩만 들여도 운의 결이 달라집니다."
-        )
+        return build_yongshin_tip(natal, postnatal_result=None)
 
     def _pillar_tip(self, natal: NatalInfo, name: str) -> str:
         day_stem = natal.saju.stem_of_day_pillar

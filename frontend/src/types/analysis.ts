@@ -121,6 +121,7 @@ export interface PostnatalResult {
   domain_scores: Record<string, DomainScore>;
   samjae: { type: string; year_branch: string; birth_branch: string } | null;
   nearest_yongshin_year: number | null;
+  upcoming_months: Array<{ year: number; month: number; ganji: string; stem_element: string; branch_element: string; matches_yongshin: boolean }>;
   year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string }>;
   yongshin: InterpretBlock[];
   fortune_by_domain: InterpretBlock[];

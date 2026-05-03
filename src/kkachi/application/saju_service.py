@@ -6,7 +6,7 @@ from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fengshui import FengShuiInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
-from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter
+from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
 from kkachi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
 from kkachi.application.interpreter.relationship import RelationshipInterpreter
 from kkachi.application.interpreter.samjae import SamjaeInterpreter
@@ -281,6 +281,7 @@ class SajuService(InterpreterPort):
             nearest_yongshin_year=self._find_nearest_yongshin_year(
                 postnatal.year, year_to_ganji(postnatal.year), natal.yongshin
             ),
+            upcoming_months=postnatal.upcoming_months,
             year_zodiac_relations=self._build_year_zodiac_relations(birth_branch_char, postnatal.year),
             yongshin=YongshinInterpreter()(natal, postnatal),
             fortune_by_domain=FortuneInterpreter()(postnatal),
@@ -325,7 +326,8 @@ class SajuService(InterpreterPort):
     ) -> Interpretation:
         birth_year = user.birth_dt.year if user else 0
         is_male = user.gender.is_male if user else True
-        return Interpretation(
-            natal=self.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name),
-            postnatal=await self.interpret_postnatal(natal, postnatal, name),
-        )
+        natal_result = self.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
+        postnatal_result = await self.interpret_postnatal(natal, postnatal, name)
+        # postnatal 시점 정보를 yongshin_tip에 합성 (이번달/올해 매칭, 가까운 용신 달·해)
+        natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
+        return Interpretation(natal=natal_result, postnatal=postnatal_result)

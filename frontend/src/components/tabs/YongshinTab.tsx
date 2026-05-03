@@ -23,6 +23,21 @@ const BRANCH_ELEMENT: Record<string, string> = {
   子:"水",丑:"土",寅:"木",卯:"木",辰:"土",巳:"火",午:"火",未:"土",申:"金",酉:"金",戌:"土",亥:"水",
 };
 
+const STEM_KOR: Record<string, string> = {
+  甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
+  己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
+};
+const BRANCH_KOR: Record<string, string> = {
+  子:"자", 丑:"축", 寅:"인", 卯:"묘", 辰:"진", 巳:"사",
+  午:"오", 未:"미", 申:"신", 酉:"유", 戌:"술", 亥:"해",
+};
+
+function ganjiKor(ganji: string): string {
+  const s = STEM_KOR[ganji[0]] ?? ganji[0];
+  const b = BRANCH_KOR[ganji[1]] ?? ganji[1];
+  return `${s}${b}(${ganji})`;
+}
+
 interface Props {
   natal: NatalResult;
   postnatal: PostnatalResult;
@@ -64,11 +79,11 @@ export default function YongshinTab({ natal, postnatal }: Props) {
   const nearestYongshinOffset = nearestYongshinYear != null ? nearestYongshinYear - postnatal.year : null;
 
   const yearItems = [
-    { ...makeYear(0), label: "올해" },
-    { ...makeYear(1), label: "내년" },
-    { ...makeYear(2), label: "내후년" },
+    makeYear(0),
+    makeYear(1),
+    makeYear(2),
     ...(nearestYongshinOffset !== null && nearestYongshinOffset > 2
-      ? [{ ...makeYear(nearestYongshinOffset), label: "가장 가까운 용신의 해" as string | null }]
+      ? [makeYear(nearestYongshinOffset)]
       : []),
   ];
 
@@ -86,7 +101,7 @@ export default function YongshinTab({ natal, postnatal }: Props) {
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            나의 일간 <strong className="text-[var(--color-ink)]">{natal.day_stem_korean}({natal.day_stem})</strong>가 사주 안에서 얼마나 단단히 서 있는지 점수로 보여드릴게요. 신강이면 자기 페이스로 밀고 가는 힘이, 신약이면 환경·사람과 함께 펼쳐지는 결이 두드러져요.
+            나의 타고난 기운(<strong className="text-[var(--color-ink)]">{natal.day_stem_korean}({natal.day_stem})</strong>)이 사주 안에서 얼마나 영향력 있는지 점수로 보여드릴게요. 신강이면 자기 페이스로 밀고 가는 힘이, 신약이면 환경·사람과 함께 펼쳐지는 결이 두드러져요.
           </KkachiTip>
           {!showStrength ? (
             <button
@@ -130,16 +145,16 @@ export default function YongshinTab({ natal, postnatal }: Props) {
         </div>
       </div>
 
-      {/* 용신·기신 */}
+      {/* 용신·기신 + 활용 가이드 */}
       <div className="slide-card">
         <CollapsibleSectionHeader title="용신·기신(用神·忌神)">
-          <strong className="text-[var(--color-ink)]">용신(用神)</strong>은 사주의 균형을 잡아주어 나에게 가장 이로운 오행이고, <strong className="text-[var(--color-ink)]">기신(忌神)</strong>은 그 균형을 흐트리는, 가능하면 피해야 할 오행이에요.
-          용신이 강한 해(年)나 환경에 들어가면 운이 잘 풀리고, 일상에서 색·방향·습관으로 용신을 가까이 두면 좋습니다.
+          <strong className="text-[var(--color-ink)]">용신(用神)</strong>은 사주 균형을 잡아주어 나에게 가장 이로운 오행, <strong className="text-[var(--color-ink)]">기신(忌神)</strong>은 그 균형을 흐트리는 피해야 할 오행이에요.
+          용신을 일상의 <strong className="text-[var(--color-ink)]">색·방향·직업·습관</strong>으로 끌어와 가까이 두면 운의 결이 부드러워지고, 기신은 같은 영역에서 가능한 줄이는 게 좋습니다.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            사주의 균형을 잡아주는 <strong className="text-[var(--color-ink)]">용신(用神)</strong>과 균형을 흐트리는 <strong className="text-[var(--color-ink)]">기신(忌神)</strong>은 5가지 오행 중 한 짝으로 정해져요. 용신이 강한 해·환경에 들어가면 운이 부드럽게 풀려요.
+            누구나 이상하게 잘 풀리는 시기와 왠지 꼬이는 시기가 있죠. 그 차이를 만드는 기운이 <strong className="text-[var(--color-ink)]">용신(用神)</strong>과 <strong className="text-[var(--color-ink)]">기신(忌神)</strong>이에요 — 용신을 가까이 두면 흐름이 부드러워지고, 기신과는 거리를 두면 한결 가벼워져요.
           </KkachiTip>
           {!showYongshin ? (
             <button
@@ -156,7 +171,7 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                   className="animate-glow-pulse rounded-2xl p-4 flex flex-col items-center gap-1.5"
                   style={{ backgroundColor: yongshinInfo.bgColor, border: `2px solid ${yongshinInfo.borderColor}`, "--glow-color": yongshinInfo.borderColor } as React.CSSProperties}
                 >
-                  <span className="text-[10px] font-semibold" style={{ color: yongshinInfo.color }}>✨ 용신(用神)</span>
+                  <span className="text-[10px] font-semibold" style={{ color: yongshinInfo.color }}>용신(用神)</span>
                   <span className="font-heading text-5xl font-bold leading-none" style={{ color: yongshinInfo.color }}>
                     {natal.yongshin_info.name}
                   </span>
@@ -166,10 +181,10 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                 </div>
                 {kisinInfo && (
                   <div
-                    className="rounded-2xl p-4 flex flex-col items-center gap-1.5"
-                    style={{ backgroundColor: kisinInfo.bgColor, border: `1.5px solid ${kisinInfo.borderColor}`, opacity: 0.7 }}
+                    className="animate-glow-pulse rounded-2xl p-4 flex flex-col items-center gap-1.5"
+                    style={{ backgroundColor: kisinInfo.bgColor, border: `1.5px solid ${kisinInfo.borderColor}`, opacity: 0.7, animationDelay: "1.8s", "--glow-color": kisinInfo.borderColor } as React.CSSProperties}
                   >
-                    <span className="text-[10px] font-semibold" style={{ color: kisinInfo.color }}>⚠️ 기신(忌神)</span>
+                    <span className="text-[10px] font-semibold" style={{ color: kisinInfo.color }}>기신(忌神)</span>
                     <span className="font-heading text-5xl font-bold leading-none" style={{ color: kisinInfo.color }}>
                       {kisinName}
                     </span>
@@ -180,13 +195,49 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                 )}
               </div>
 
-              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed text-center px-2">
-                {natal.yongshin_info.meaning}
-              </p>
+              {/* 이번달부터 6개월 — 용신 달 표시 */}
+              {postnatal.upcoming_months?.length > 0 && (
+                <div className="grid grid-cols-6 gap-1">
+                    {postnatal.upcoming_months.map((m) => {
+                      const stemElInfo = getElementInfo(m.stem_element);
+                      const branchElInfo = getElementInfo(m.branch_element);
+                      return (
+                        <div key={`${m.year}-${m.month}`}
+                          className="flex flex-col items-center gap-1 rounded-lg p-1.5 border"
+                          style={{
+                            borderColor: m.matches_yongshin ? yongshinInfo.borderColor : "var(--color-border-light)",
+                            backgroundColor: m.matches_yongshin ? yongshinInfo.bgColor : "var(--color-card)",
+                          }}>
+                          <span className="text-[10px] font-semibold text-[var(--color-ink-light)]">
+                            {m.month}월
+                          </span>
+                          <span className="font-heading text-[10px] font-bold text-[var(--color-ink)] text-center leading-tight">
+                            {ganjiKor(m.ganji)}
+                          </span>
+                          <div className="flex gap-0.5">
+                            <span className="text-[9px] px-1 py-0 rounded-full font-medium"
+                              style={{ color: stemElInfo.color, backgroundColor: stemElInfo.bgColor }}>
+                              {stemElInfo.korean}
+                            </span>
+                            <span className="text-[9px] px-1 py-0 rounded-full font-medium"
+                              style={{ color: branchElInfo.color, backgroundColor: branchElInfo.bgColor }}>
+                              {branchElInfo.korean}
+                            </span>
+                          </div>
+                          {m.matches_yongshin && (
+                            <span className="text-[9px] font-bold whitespace-nowrap" style={{ color: yongshinInfo.color }}>
+                              ★ 용신
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
 
               {/* 올해 · 내년 · 내후년 · 가장 가까운 용신의 해 */}
               <div className={`grid gap-2 ${yearItems.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
-                {yearItems.map(({ year, ganji, stemEl, branchEl, matchesYongshin, label }) => {
+                {yearItems.map(({ year, ganji, stemEl, branchEl, matchesYongshin }) => {
                   const stemElInfo = getElementInfo(stemEl);
                   const branchElInfo = getElementInfo(branchEl);
                   return (
@@ -198,9 +249,8 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                         backgroundColor: matchesYongshin ? yongshinInfo.bgColor : "var(--color-surface)",
                       }}
                     >
-                      {label && <span className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{label}</span>}
-                      <span className="text-[10px] font-semibold text-[var(--color-ink-faint)]">{year}</span>
-                      <span className="font-heading text-lg font-bold text-[var(--color-ink)]">{ganji}</span>
+                      <span className="text-[10px] font-semibold text-[var(--color-ink-light)]">{year}</span>
+                      <span className="font-heading text-xs font-bold text-[var(--color-ink)] text-center">{ganjiKor(ganji)}</span>
                       <div className="flex gap-1">
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                           style={{ color: stemElInfo.color, backgroundColor: stemElInfo.bgColor }}>
@@ -213,63 +263,19 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                       </div>
                       {matchesYongshin && (
                         <span className="text-[10px] font-bold" style={{ color: yongshinInfo.color }}>
-                          ★ 용신 기운
+                          ★ 용신
                         </span>
                       )}
                     </div>
                   );
                 })}
               </div>
+
+              <KkachiTip>{natal.narratives.yongshin_tip}</KkachiTip>
             </>
           )}
         </div>
       </div>
-
-      {/* 활용 가이드 */}
-      {showYongshin && guide && (
-        <div className="slide-card">
-          <CollapsibleSectionHeader title="활용 가이드">
-            용신 오행을 일상의 <strong className="text-[var(--color-ink)]">색·방향·직업·습관</strong>으로 끌어와 가까이 두면 흐름이 부드러워져요. 기신은 같은 영역에서 가능한 줄이는 게 좋습니다.
-          </CollapsibleSectionHeader>
-          <div className="divider" />
-          <div className="slide-card__body space-y-2.5">
-            <KkachiTip>
-              <strong className="text-[var(--color-ink)]">{yongshinInfo.korean}({natal.yongshin_info.name})</strong> 기운을 끌어오는 4가지 통로 — 색·방향·직업·습관이에요. 한 가지씩만 일상에 들여놔도 운의 결이 부드러워져요.
-            </KkachiTip>
-            <div className="rounded-lg p-3"
-              style={{ backgroundColor: yongshinInfo.bgColor, border: `1px solid ${yongshinInfo.borderColor}` }}>
-              <div className="flex items-center gap-1.5 mb-2">
-                <span className="text-base">✨</span>
-                <span className="text-xs font-bold" style={{ color: yongshinInfo.color }}>
-                  {yongshinInfo.korean}({natal.yongshin_info.name}) — 용신 활용
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
-                <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">색깔</span><strong className="text-[var(--color-ink)]">{guide.color}</strong></div>
-                <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">방향</span><strong className="text-[var(--color-ink)]">{guide.direction}</strong></div>
-                <div className="flex gap-1.5 col-span-2"><span className="text-[var(--color-ink-faint)] min-w-[36px]">직업</span><strong className="text-[var(--color-ink)]">{guide.career}</strong></div>
-                <div className="flex gap-1.5 col-span-2"><span className="text-[var(--color-ink-faint)] min-w-[36px]">일상</span><strong className="text-[var(--color-ink)]">{guide.daily}</strong></div>
-              </div>
-            </div>
-            {kisinInfo && kisinName && natal.kisin_guide && (
-              <div className="rounded-lg p-3"
-                style={{ backgroundColor: kisinInfo.bgColor, border: `1px solid ${kisinInfo.borderColor}`, opacity: 0.85 }}>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-base">⚠️</span>
-                  <span className="text-xs font-bold" style={{ color: kisinInfo.color }}>
-                    {kisinInfo.korean}({kisinName}) — 기신 (가능하면 줄이기)
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
-                  <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">색깔</span><strong className="text-[var(--color-ink)]">{natal.kisin_guide.color}</strong></div>
-                  <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">방향</span><strong className="text-[var(--color-ink)]">{natal.kisin_guide.direction}</strong></div>
-                </div>
-              </div>
-            )}
-            <KkachiTip>{natal.narratives.yongshin_tip}</KkachiTip>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

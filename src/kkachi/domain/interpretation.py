@@ -95,6 +95,9 @@ class PostnatalResult:
     # 가장 가까운 용신의 해
     nearest_yongshin_year: int | None = None
 
+    # 이번달 포함 6개월 ganji + 용신 매칭
+    upcoming_months: list[dict] = field(default_factory=list)
+
     # 연도별 띠 관계 (올해·내년·가까운 좋은 해)
     year_zodiac_relations: list[dict] = field(default_factory=list)
 
