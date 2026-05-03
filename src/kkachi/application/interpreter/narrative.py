@@ -188,21 +188,21 @@ class NatalNarrativeInterpreter:
         return "".join(parts)
 
     def _sibi_sinsal_story(self, natal: NatalInfo, name: str) -> str:
-        order: list[tuple[int, str, str, str]] = [
-            (0, "년주", "초년", "조상·뿌리·환경"),
-            (1, "월주", "청년기", "사회·직장"),
-            (2, "일주", "장년기", "자기 본성·배우자"),
-            (3, "시주", "말년", "자녀·결실"),
+        order: list[tuple[int, str, str]] = [
+            (0, "초년", "조상·뿌리·환경"),
+            (1, "청년기", "사회·직장"),
+            (2, "장년기", "자기 본성·배우자"),
+            (3, "말년", "자녀·결실"),
         ]
-        segments: list[tuple[str, str, str, str, str, str]] = []  # (label, era, realm, sName, hanja, meaning)
-        for idx, label, era, realm in order:
+        segments: list[tuple[str, str, str, str, str]] = []  # (era, realm, sName, hanja, meaning)
+        for idx, era, realm in order:
             if idx >= len(natal.sibi_sinsal):
                 continue
             s_name = natal.sibi_sinsal[idx]
             if not s_name:
                 continue
             segments.append((
-                label, era, realm, s_name,
+                era, realm, s_name,
                 _SIBI_SINSAL_HANJA.get(s_name, ""),
                 _SIBI_SINSAL_MEANING.get(s_name, ""),
             ))
@@ -210,26 +210,24 @@ class NatalNarrativeInterpreter:
             return ""
 
         groups: list[dict] = []
-        for label, era, realm, s_name, hanja, meaning in segments:
+        for era, realm, s_name, hanja, meaning in segments:
             if groups and groups[-1]["sName"] == s_name:
                 groups[-1]["eras"].append(era)
-                groups[-1]["labels"].append(label)
                 groups[-1]["realms"].append(realm)
             else:
                 groups.append({
-                    "eras": [era], "labels": [label], "realms": [realm],
+                    "eras": [era], "realms": [realm],
                     "sName": s_name, "hanja": hanja, "meaning": meaning,
                 })
 
-        prefix = f"{name}님의 " if name else "당신의 "
-        parts: list[str] = [f"{prefix}십이신살 흐름은 이래요. "]
+        parts: list[str] = []
         for i, g in enumerate(groups):
             is_first = i == 0
             is_last = i == len(groups) - 1 and len(groups) > 1
             linker = "" if is_first else (" 그러다 " if is_last else " 이어서 ")
-            era_text = "·".join(g["eras"]) + f"({'·'.join(g['labels'])})"
+            era_text = "·".join(g["eras"])
             realm_text = "·".join(dict.fromkeys(seg for r in g["realms"] for seg in r.split("·")))
-            josa = "는 둘 다" if len(g["eras"]) > 1 else _josa_neun("".join(g["eras"]))
+            josa = "는 모두" if len(g["eras"]) > 1 else _josa_neun(era_text)
             hanja_part = f"({g['hanja']})" if g["hanja"] else ""
             ending = _SINSAL_ENDINGS[i % len(_SINSAL_ENDINGS)]
             realm_part = f"{realm_text} 영역에서 " if realm_text else ""

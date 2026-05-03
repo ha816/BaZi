@@ -881,13 +881,13 @@ export default function NatalTab({ natal }: Props) {
           <div className="divider" />
           <div className="slide-card__body space-y-4">
             <KkachiTip>
-              특정 글자 조합으로 만들어지는 <strong className="text-[var(--color-ink)]">사주의 에너지 마커</strong>예요. 옛날엔 길흉으로 봤지만 현대에는 <strong className="text-[var(--color-ink)]">개인의 캐릭터·역량</strong>으로 풀이합니다.
+              신살은 옛날엔 길흉으로 봤지만 현대에는 <strong className="text-[var(--color-ink)]">개인의 특성·역량</strong>으로 풀이합니다.
             </KkachiTip>
 
             {/* 십이신살 — 기둥별 */}
             {natal.sibi_sinsal?.some(Boolean) && (
-              <div>
-                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] mb-2">십이신살(十二神殺)</p>
+              <div className="space-y-3">
+                <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">십이신살(十二神殺)</p>
                 <div className="grid grid-cols-4 gap-2">
                   {[3, 2, 1, 0].map((origI) => {
                     const PILLAR_LABELS_SHORT = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
