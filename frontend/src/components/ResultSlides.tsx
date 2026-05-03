@@ -59,9 +59,8 @@ function StickySajuBar({ natal }: { natal: NatalResult }) {
 
 const FEATURE_TABS = [
   { id: "natal",    emoji: "🌱", label: "만세력" },
-  { id: "yongshin", emoji: "🔮", label: "용신" },
+  { id: "yongshin", emoji: "🔮", label: "용신·삼재" },
   { id: "daeun",    emoji: "🌊", label: "대운&세운" },
-  { id: "samjae",   emoji: "⚡", label: "삼재" },
   { id: "zodiac",   emoji: "🐾", label: "십이지신" },
   { id: "fengshui", emoji: "🧭", label: "풍수" },
   { id: "advice",   emoji: "💬", label: "종합조언" },
@@ -176,8 +175,12 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
             <FortuneTab {...tabProps} />
           </div>
         )}
-        {active === "yongshin" && <YongshinTab    {...tabProps} />}
-        {active === "samjae"   && <SamjaeTab      {...tabProps} />}
+        {active === "yongshin" && (
+          <div className="space-y-4">
+            <YongshinTab {...tabProps} />
+            <SamjaeTab {...tabProps} />
+          </div>
+        )}
         {active === "advice"   && <AdviceTab      {...tabProps} />}
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 
