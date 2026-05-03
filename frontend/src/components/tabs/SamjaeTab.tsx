@@ -114,6 +114,11 @@ export default function SamjaeTab({ natal, postnatal }: Props) {
             <button
               onClick={() => setShowSamjae(true)}
               className="btn-shimmer w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:opacity-70"
+              style={{
+                backgroundImage: "linear-gradient(90deg, #F7EDEC 20%, #E8C4C0 50%, #F7EDEC 80%)",
+                borderColor: "#E0A8A3",
+                color: "var(--color-fire)",
+              }}
             >
               ⚡ 나의 삼재 확인하기
             </button>
@@ -178,9 +183,9 @@ export default function SamjaeTab({ natal, postnatal }: Props) {
               )}
 
               {/* 띠별 12년 사이클 */}
-              <div className="space-y-2">
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-3 space-y-2">
                 <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
-                  내 띠({BRANCH_TO_ZODIAC[birthBranch]?.kor ?? ""}/{BRANCH_TO_ZODIAC[birthBranch]?.hanja ?? birthBranch})의 삼재 주기
+                  삼재 주기 - {BRANCH_TO_ZODIAC[birthBranch]?.kor ?? ""}/{BRANCH_TO_ZODIAC[birthBranch]?.hanja ?? birthBranch}
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {samjaeCycles[0].map((year) => {
@@ -211,10 +216,10 @@ export default function SamjaeTab({ natal, postnatal }: Props) {
                     );
                   })}
                 </div>
-                <KkachiTip>
-                  내 띠의 12년 사이클 안에서 어느 해가 들·눌·날 삼재에 해당하는지 봅시다. 큰 결정을 하기 전에 살펴보시면 좋아요.
-                </KkachiTip>
               </div>
+              <KkachiTip>
+                내 띠의 12년 사이클 안에서 어느 해가 들·눌·날 삼재에 해당하는지 봅시다. 큰 결정을 하기 전에 살펴보시면 좋아요.
+              </KkachiTip>
             </>
           )}
         </div>
