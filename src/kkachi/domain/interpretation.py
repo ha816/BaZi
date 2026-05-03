@@ -33,6 +33,9 @@ class NatalResult:
     strength_label: str = ""
     my_element: dict[str, str] = field(default_factory=dict)
     yongshin_info: dict[str, str] = field(default_factory=dict)
+    kisin_info: dict[str, str] = field(default_factory=dict)
+    yongshin_guide: dict[str, str] = field(default_factory=dict)
+    kisin_guide: dict[str, str] = field(default_factory=dict)
 
     # 십신·십이운성·신살
     sipsin: list[dict[str, str]] = field(default_factory=list)

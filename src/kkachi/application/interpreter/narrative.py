@@ -7,6 +7,12 @@ _STRENGTH_DESC: dict[str, str] = {
     "중화(中和)": "기운이 고르게 균형 잡혀 안정적인 사주예요.",
 }
 
+_STRENGTH_TIP: dict[str, str] = {
+    "신강(身強)": "일간의 기운이 강한 편이에요. 에너지를 쏟을 방향을 잘 고르는 게 중요해요.",
+    "신약(身弱)": "일간의 기운이 약한 편이에요. 나를 지지해주는 환경과 사람을 잘 고르면 훨씬 잘 발휘돼요.",
+    "중화(中和)": "일간의 기운이 균형 잡힌 상태예요. 폭넓은 환경에서 두루 안정적인 성과를 낼 수 있는 타입입니다.",
+}
+
 _ELEMENT_TIP: dict[str, tuple[str, str, str]] = {
     "木": ("진취적인 추진력과 창의성", "성급함과 지속력 부족", "꾸준히 뿌리를 내리는 과정을 즐긴다면 큰 성장을 이룰 수 있어요."),
     "火": ("열정과 뛰어난 표현력", "감정 기복과 충동적인 결정", "열정을 유지하면서도 차분히 결과를 살피는 습관을 들이면 더욱 빛납니다."),
@@ -100,7 +106,22 @@ class NatalNarrativeInterpreter:
             "unseong_story": self._unseong_story(natal, name),
             "sibi_sinsal_story": self._sibi_sinsal_story(natal, name),
             "sinsal_narrative": self._sinsal_narrative(natal, name),
+            "strength_tip": self._strength_tip(natal),
+            "yongshin_tip": self._yongshin_tip(natal, name),
         }
+
+    def _strength_tip(self, natal: NatalInfo) -> str:
+        return _STRENGTH_TIP.get(natal.strength_label, _STRENGTH_TIP["중화(中和)"])
+
+    def _yongshin_tip(self, natal: NatalInfo, name: str) -> str:
+        day_stem = natal.saju.stem_of_day_pillar
+        my_el = natal.my_main_element
+        ys = natal.yongshin
+        return (
+            f"{my_el.meaning}({my_el.name}) 일간인 {day_stem.korean}({day_stem.name})는 "
+            f"{natal.strength_label}으로, {ys.meaning}({ys.name}) 기운이 가장 잘 도와줘요. "
+            f"위 색·방향·습관을 일상에 한 가지씩만 들여도 운의 결이 달라집니다."
+        )
 
     def _pillar_tip(self, natal: NatalInfo, name: str) -> str:
         day_stem = natal.saju.stem_of_day_pillar

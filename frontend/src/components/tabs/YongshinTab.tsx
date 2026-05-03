@@ -13,17 +13,6 @@ const STRENGTH_IMG: Record<string, string> = {
   "신약(身弱)": "/kkachi/strength/신약.png",
 };
 
-const STRENGTH_DESC: Record<string, string> = {
-  "신강(身強)": "일간의 기운이 강한 편이에요. 에너지를 쏟을 방향을 잘 고르는 게 중요해요.",
-  "신약(身弱)": "일간의 기운이 약한 편이에요. 나를 지지해주는 환경과 사람을 잘 고르면 훨씬 잘 발휘돼요.",
-  "중화(中和)": "일간의 기운이 균형 잡힌 상태예요. 폭넓은 환경에서 두루 안정적인 성과를 낼 수 있는 타입입니다.",
-};
-
-const STEM_READING: Record<string, string> = {
-  甲: "갑", 乙: "을", 丙: "병", 丁: "정", 戊: "무",
-  己: "기", 庚: "경", 辛: "신", 壬: "임", 癸: "계",
-};
-
 const STEM_ORDER = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
 const BRANCH_ORDER = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
 
@@ -34,33 +23,18 @@ const BRANCH_ELEMENT: Record<string, string> = {
   子:"水",丑:"土",寅:"木",卯:"木",辰:"土",巳:"火",午:"火",未:"土",申:"金",酉:"金",戌:"土",亥:"水",
 };
 
-// 기신(忌神): 용신을 剋하는 오행
-const KISIN_MAP: Record<string, string> = {
-  木: "金", 火: "水", 土: "木", 金: "火", 水: "土",
-};
-
-const YONGSHIN_GUIDE: Record<string, { color: string; direction: string; career: string; daily: string }> = {
-  木: { color: "초록·청록",   direction: "동쪽",   career: "교육·출판·디자인·환경", daily: "식물·나무 가구·산책" },
-  火: { color: "빨강·주황",   direction: "남쪽",   career: "엔터테인먼트·언론·요식·뷰티", daily: "햇빛·캔들·운동" },
-  土: { color: "노랑·갈색",   direction: "중앙",   career: "부동산·중개·농업·신뢰업", daily: "도자기·황토·정원 가꾸기" },
-  金: { color: "흰색·은색",   direction: "서쪽",   career: "금융·법무·기계·의료",   daily: "금속 액세서리·정돈된 환경" },
-  水: { color: "검정·남색",   direction: "북쪽",   career: "IT·연구·유통·물 관련", daily: "수족관·물·명상" },
-};
-
 interface Props {
   natal: NatalResult;
   postnatal: PostnatalResult;
   name?: string;
 }
 
-export default function YongshinTab({ natal, postnatal, name = "" }: Props) {
+export default function YongshinTab({ natal, postnatal }: Props) {
   const [showYongshin, setShowYongshin] = useState(false);
-  const meInfo = getElementInfo(natal.my_element.name);
   const yongshinInfo = getElementInfo(natal.yongshin_info.name);
-  const kisinName = KISIN_MAP[natal.yongshin_info.name];
+  const kisinName = natal.kisin_info.name;
   const kisinInfo = kisinName ? getElementInfo(kisinName) : null;
-  const guide = YONGSHIN_GUIDE[natal.yongshin_info.name];
-  const strengthText = STRENGTH_DESC[natal.strength_label] ?? STRENGTH_DESC["중화(中和)"];
+  const guide = natal.yongshin_guide;
   const strengthPct = Math.min(100, Math.max(0, 50 + (natal.strength_value / STRENGTH_MAX) * 50));
   const strengthColor =
     natal.strength_label === "신강(身強)"
@@ -104,7 +78,7 @@ export default function YongshinTab({ natal, postnatal, name = "" }: Props) {
       {/* 신강·신약 */}
       <div className="slide-card">
         <CollapsibleSectionHeader title="신강·신약(身強·身弱)">
-          나의 일간(日干) <strong className="text-[var(--color-ink)]">{STEM_READING[natal.day_stem] ?? natal.day_stem}({natal.day_stem})</strong>가 사주 전체에서 얼마나 힘 있는지 보여주는 척도예요.
+          나의 일간(日干) <strong className="text-[var(--color-ink)]">{natal.day_stem_korean}({natal.day_stem})</strong>가 사주 전체에서 얼마나 힘 있는지 보여주는 척도예요.
           <strong className="text-[var(--color-ink)]"> 신강</strong>이면 자기 주도적인 추진력이, <strong className="text-[var(--color-ink)]">신약</strong>이면 환경·사람의 도움을 활용하는 흐름이 두드러집니다. 강약을 알아야 어떤 오행이 용신인지 정해져요.
         </CollapsibleSectionHeader>
         <div className="divider" />
@@ -136,7 +110,7 @@ export default function YongshinTab({ natal, postnatal, name = "" }: Props) {
             className="w-1/2 mx-auto block rounded-xl object-cover"
             onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
           />
-          <KkachiTip>{strengthText}</KkachiTip>
+          <KkachiTip>{natal.narratives.strength_tip}</KkachiTip>
         </div>
       </div>
 
@@ -255,7 +229,7 @@ export default function YongshinTab({ natal, postnatal, name = "" }: Props) {
                 <div className="flex gap-1.5 col-span-2"><span className="text-[var(--color-ink-faint)] min-w-[36px]">일상</span><strong className="text-[var(--color-ink)]">{guide.daily}</strong></div>
               </div>
             </div>
-            {kisinInfo && kisinName && YONGSHIN_GUIDE[kisinName] && (
+            {kisinInfo && kisinName && natal.kisin_guide && (
               <div className="rounded-lg p-3"
                 style={{ backgroundColor: kisinInfo.bgColor, border: `1px solid ${kisinInfo.borderColor}`, opacity: 0.85 }}>
                 <div className="flex items-center gap-1.5 mb-2">
@@ -265,14 +239,12 @@ export default function YongshinTab({ natal, postnatal, name = "" }: Props) {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
-                  <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">색깔</span><strong className="text-[var(--color-ink)]">{YONGSHIN_GUIDE[kisinName].color}</strong></div>
-                  <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">방향</span><strong className="text-[var(--color-ink)]">{YONGSHIN_GUIDE[kisinName].direction}</strong></div>
+                  <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">색깔</span><strong className="text-[var(--color-ink)]">{natal.kisin_guide.color}</strong></div>
+                  <div className="flex gap-1.5"><span className="text-[var(--color-ink-faint)] min-w-[36px]">방향</span><strong className="text-[var(--color-ink)]">{natal.kisin_guide.direction}</strong></div>
                 </div>
               </div>
             )}
-            <KkachiTip>
-              {meInfo.korean}({natal.my_element.name}) 일간인 {STEM_READING[natal.day_stem]}({natal.day_stem})는 {natal.strength_label}으로, <strong className="text-[var(--color-ink)]">{yongshinInfo.korean}({natal.yongshin_info.name})</strong> 기운이 가장 잘 도와줘요. 위 색·방향·습관을 일상에 한 가지씩만 들여도 운의 결이 달라집니다.
-            </KkachiTip>
+            <KkachiTip>{natal.narratives.yongshin_tip}</KkachiTip>
           </div>
         </div>
       )}

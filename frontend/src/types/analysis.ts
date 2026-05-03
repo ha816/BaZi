@@ -79,6 +79,9 @@ export interface NatalResult {
   strength_label: string;
   my_element: { name: string; meaning: string };
   yongshin_info: { name: string; meaning: string };
+  kisin_info: { name: string; meaning: string };
+  yongshin_guide: { color: string; direction: string; career: string; daily: string };
+  kisin_guide: { color: string; direction: string; career: string; daily: string };
   sipsin: SipsinInfo[];
   sibi_unseong: SibiUnseongInfo[];
   sinsal: SinsalInfo[];
@@ -93,6 +96,8 @@ export interface NatalResult {
     unseong_story: string;
     sibi_sinsal_story: string;
     sinsal_narrative: string;
+    strength_tip: string;
+    yongshin_tip: string;
   };
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];

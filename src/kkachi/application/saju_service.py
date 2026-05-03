@@ -15,7 +15,7 @@ from kkachi.application.interpreter.yongshin import YongshinInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
 from kkachi.application.util.util import year_to_ganji
-from kkachi.domain.ganji import JIZAN_ROLE_HANJA, Branch, Stem
+from kkachi.domain.ganji import JIZAN_ROLE_HANJA, Branch, Oheng, Stem
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -41,6 +41,14 @@ class SajuService(InterpreterPort):
     _BRANCH_KOREAN: dict[str, str] = {
         "子": "쥐", "丑": "소", "寅": "호랑이", "卯": "토끼", "辰": "용", "巳": "뱀",
         "午": "말", "未": "양", "申": "원숭이", "酉": "닭", "戌": "개", "亥": "돼지",
+    }
+
+    _YONGSHIN_GUIDE: dict[Oheng, dict[str, str]] = {
+        Oheng.木: {"color": "초록·청록", "direction": "동쪽", "career": "교육·출판·디자인·환경",  "daily": "식물·나무 가구·산책"},
+        Oheng.火: {"color": "빨강·주황", "direction": "남쪽", "career": "엔터테인먼트·언론·요식·뷰티", "daily": "햇빛·캔들·운동"},
+        Oheng.土: {"color": "노랑·갈색", "direction": "중앙", "career": "부동산·중개·농업·신뢰업",     "daily": "도자기·황토·정원 가꾸기"},
+        Oheng.金: {"color": "흰색·은색", "direction": "서쪽", "career": "금융·법무·기계·의료",         "daily": "금속 액세서리·정돈된 환경"},
+        Oheng.水: {"color": "검정·남색", "direction": "북쪽", "career": "IT·연구·유통·물 관련",        "daily": "수족관·물·명상"},
     }
 
     def _zodiac_relation(self, birth_branch: Branch, year: int) -> str:
@@ -153,6 +161,12 @@ class SajuService(InterpreterPort):
                 return base_year + offset
         return None
 
+    @staticmethod
+    def _kisin(yongshin: Oheng) -> Oheng:
+        """기신(忌神) — 용신을 剋하는 오행 (剋의 역방향)."""
+        members = list(Oheng)
+        return members[(members.index(yongshin) - 2) % 5]
+
     def _build_pillar_summary(self, natal: NatalInfo) -> str:
         sorted_elements = sorted(natal.element_stats.items(), key=lambda x: x[1], reverse=True)
         if not sorted_elements or sorted_elements[0][1] == 0:
@@ -175,6 +189,7 @@ class SajuService(InterpreterPort):
         ]
         pillar_stems_korean = [sb.stem.korean for sb in natal.saju.pillars.values()]
         pillar_branches_korean = [sb.branch.korean for sb in natal.saju.pillars.values()]
+        kisin = self._kisin(natal.yongshin)
         return NatalResult(
             pillars=[str(sb) for sb in natal.saju.pillars.values()],
             day_stem=day_stem.name,
@@ -188,6 +203,9 @@ class SajuService(InterpreterPort):
             strength_label=natal.strength_label,
             my_element={"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
             yongshin_info={"name": natal.yongshin.name, "meaning": natal.yongshin.meaning},
+            kisin_info={"name": kisin.name, "meaning": kisin.meaning},
+            yongshin_guide=self._YONGSHIN_GUIDE.get(natal.yongshin, {}),
+            kisin_guide=self._YONGSHIN_GUIDE.get(kisin, {}),
             sipsin=[{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
             sibi_unseong=[
                 {
