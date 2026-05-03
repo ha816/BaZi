@@ -99,7 +99,7 @@ export default function YongshinTab({ natal, postnatal, name = "" }: Props) {
   return (
     <div className="space-y-4">
       {/* 오행(五行) — 분포·관계 */}
-      <OhengAnalysis natal={natal} name={name} />
+      <OhengAnalysis natal={natal} />
 
       {/* 신강·신약 */}
       <div className="slide-card">

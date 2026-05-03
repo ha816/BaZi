@@ -53,6 +53,9 @@ class NatalResult:
     # 팔자 요약
     pillar_summary: str = ""
 
+    # 카드별 동적 풀이 텍스트 (사주별로 합성)
+    narratives: dict[str, str] = field(default_factory=dict)
+
     # 텍스트 해석
     personality: list[InterpretBlock] = field(default_factory=list)
     element_balance: list[InterpretBlock] = field(default_factory=list)

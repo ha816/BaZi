@@ -86,6 +86,14 @@ export interface NatalResult {
   sibi_sinsal: string[];
   gongmang: boolean[];
   pillar_summary: string;
+  narratives: {
+    pillar_tip: string;
+    ohaeng_tip: string;
+    sipsin_story: string;
+    unseong_story: string;
+    sibi_sinsal_story: string;
+    sinsal_narrative: string;
+  };
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];
   feng_shui: InterpretBlock[];

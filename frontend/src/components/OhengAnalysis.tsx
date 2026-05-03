@@ -12,23 +12,6 @@ const GEUK_PAIRS: [number, number][] = [[0,2],[1,3],[2,4],[3,0],[4,1]];
 
 const PILLAR_SHORT = ["년주", "월주", "일주", "시주"];
 
-const ELEMENT_TIP: Record<string, { strength: string; caution: string; advice: string }> = {
-  木: { strength: "진취적인 추진력과 창의성",  caution: "성급함과 지속력 부족",       advice: "꾸준히 뿌리를 내리는 과정을 즐긴다면 큰 성장을 이룰 수 있어요." },
-  火: { strength: "열정과 뛰어난 표현력",      caution: "감정 기복과 충동적인 결정",   advice: "열정을 유지하면서도 차분히 결과를 살피는 습관을 들이면 더욱 빛납니다." },
-  土: { strength: "신중함과 책임감",           caution: "보수성과 변화에 대한 저항",   advice: "자신의 안정감을 바탕으로 타인을 배려하는 마음을 더한다면 더욱 발전할 수 있어요." },
-  金: { strength: "결단력과 원칙에 대한 의지", caution: "지나친 고집과 냉정함",        advice: "원칙을 지키면서도 유연하게 소통한다면 주변의 신뢰를 더욱 얻게 됩니다." },
-  水: { strength: "뛰어난 지혜와 유연한 적응력", caution: "우유부단함과 과도한 걱정", advice: "깊은 통찰력을 믿고 흐름에 몸을 맡기면 자연스럽게 길이 열려요." },
-};
-
-function buildOhaengTip(natal: NatalResult, name: string): string {
-  const elem = natal.my_element.name;
-  const meaning = natal.my_element.meaning;
-  const tip = ELEMENT_TIP[elem];
-  if (!tip) return "";
-  const p = name ? `${name}님은 ` : "";
-  return `${p}${meaning}(${elem}) 기운으로서 ${tip.strength}을 잘 발휘하시되, ${tip.caution}에 주의하세요. ${tip.advice}`;
-}
-
 function OhaengCountDiagram({ stats }: { stats: Record<string, number> }) {
   const CX = 100, CY = 88, PR = 66, NR = 20;
   function pentaPos(i: number): [number, number] {
@@ -163,10 +146,9 @@ function OhaengSourceBreakdown({ pillars, pillarElements = [], stats }: {
 
 interface Props {
   natal: NatalResult;
-  name: string;
 }
 
-export default function OhengAnalysis({ natal, name }: Props) {
+export default function OhengAnalysis({ natal }: Props) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="오행(五行)">
@@ -176,7 +158,7 @@ export default function OhengAnalysis({ natal, name }: Props) {
       <div className="slide-card__body space-y-5">
         <OhaengSourceBreakdown pillars={natal.pillars} pillarElements={natal.pillar_elements} stats={natal.element_stats} />
         <OhaengCountDiagram stats={natal.element_stats} />
-        <KkachiTip>{buildOhaengTip(natal, name)}</KkachiTip>
+        <KkachiTip>{natal.narratives.ohaeng_tip}</KkachiTip>
       </div>
     </div>
   );

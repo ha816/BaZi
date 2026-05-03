@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { NatalResult, SipsinInfo, SibiUnseongInfo, SinsalInfo } from "@/types/analysis";
+import type { NatalResult, SibiUnseongInfo } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import PillarDetail from "@/components/PillarDetail";
 import SectionHeader from "@/components/SectionHeader";
@@ -64,126 +64,6 @@ const UNSEONG_INFO: Record<string, { korean: string; phase: string; tagline: str
   "胎":   { korean: "태",   phase: "태동기", tagline: "씨앗이 잉태되는 단계",   desc: "새 생명이 잉태된 상태, 무한한 가능성의 시작" },
   "養":   { korean: "양",   phase: "태동기", tagline: "보호받으며 자라는 단계", desc: "안전하게 보호받으며 세상 밖으로 나갈 준비" },
 };
-
-function buildSipsinStory(sipsin: SipsinInfo[], name: string): React.ReactNode {
-  if (sipsin.length === 0) return null;
-
-  const catCounts = SIPSIN_CATEGORIES.map((cat) => ({
-    cat,
-    count: sipsin.filter((s) => cat.members.includes(s.sipsin_name)).length,
-  }));
-  const sorted = [...catCounts].sort((a, b) => b.count - a.count);
-  const strong = sorted.filter((c) => c.count >= 2);
-  const missing = catCounts.filter((c) => c.count === 0);
-
-  const prefix = name ? `${name}님 사주는 ` : "이 사주는 ";
-  const firstKeyword = (k: string) => k.split(",")[0].trim();
-
-  let core: React.ReactNode;
-  if (strong.length >= 2) {
-    core = (
-      <>
-        <strong className="text-[var(--color-ink)]">{strong.map((s) => s.cat.label).join("·")}</strong>이(가) 두드러지는 사주예요. {strong.map((s) => firstKeyword(s.cat.keyword)).join("과 ")}이 동시에 살아 있어 자기 페이스로 영역을 끌어가는 흐름입니다.
-      </>
-    );
-  } else if (strong.length === 1) {
-    const s = strong[0];
-    core = (
-      <>
-        <strong className="text-[var(--color-ink)]">{s.cat.label}({s.cat.hanja})</strong>이 가장 두드러지는 사주예요. {firstKeyword(s.cat.keyword)} 영역에서 자기 색이 가장 잘 살아납니다.
-      </>
-    );
-  } else {
-    core = <>다섯 카테고리에 한 글자씩 골고루 들어 있는 균형형이에요. 어느 한쪽으로 치우치지 않고 다양한 영역을 두루 경험하는 흐름입니다.</>;
-  }
-
-  const missingPart = missing.length > 0 && missing.length < 5 ? (
-    <> 단, <strong className="text-[var(--color-ink)]">{missing.map((m) => m.cat.label).join("·")}</strong> 자리는 비어 있어, {missing.map((m) => firstKeyword(m.cat.keyword)).join("·")} 영역에선 환경·사람의 도움을 활용하면 좋아요.</>
-  ) : null;
-
-  return (
-    <span>{prefix}{core}{missingPart}</span>
-  );
-}
-
-/* ── 십이운성 ── */
-const PILLAR_ERA: Record<string, { era: string; realm: string }> = {
-  "년주": { era: "초년", realm: "조상·뿌리·환경" },
-  "월주": { era: "청년기", realm: "사회·직장" },
-  "일주": { era: "장년기", realm: "자기 본성·배우자" },
-  "시주": { era: "말년", realm: "자녀·결실" },
-};
-
-const UNSEONG_VERB: Record<string, string> = {
-  "長生": "갓 시작되는",
-  "沐浴": "들떠 있는",
-  "冠帶": "의욕이 폭발하는",
-  "建祿": "단단히 자립하는",
-  "帝旺": "절정을 찍는",
-  "衰":   "노련하게 조율하는",
-  "病":   "감수성이 깊어지는",
-  "死":   "고요히 멈추는",
-  "墓":   "내공을 쌓는",
-  "絕":   "완전히 끊고 새로 시작하는",
-  "胎":   "씨앗을 품는",
-  "養":   "보호받으며 자라는",
-};
-
-function buildUnseongStory(sibiUnseong: SibiUnseongInfo[], name: string): React.ReactNode {
-  const order = ["년주", "월주", "일주", "시주"];
-  type Seg = { pillar: string; era: string; realm: string; kor: string; hanja: string; verb: string };
-  const segments: Seg[] = [];
-  for (const pillar of order) {
-    const u = sibiUnseong.find((s) => s.pillar === pillar);
-    if (!u) continue;
-    const era = PILLAR_ERA[pillar];
-    const info = UNSEONG_INFO[u.unseong_name];
-    segments.push({
-      pillar,
-      era: era?.era ?? pillar,
-      realm: era?.realm ?? "",
-      kor: info?.korean ?? u.unseong_name,
-      hanja: u.unseong_name,
-      verb: UNSEONG_VERB[u.unseong_name] ?? "",
-    });
-  }
-  if (segments.length === 0) return null;
-
-  // 연속 같은 운성 묶기
-  type Group = { eras: string[]; pillars: string[]; realms: string[]; kor: string; hanja: string; verb: string };
-  const groups: Group[] = [];
-  for (const seg of segments) {
-    const last = groups[groups.length - 1];
-    if (last && last.hanja === seg.hanja) {
-      last.eras.push(seg.era);
-      last.pillars.push(seg.pillar);
-      last.realms.push(seg.realm);
-    } else {
-      groups.push({
-        eras: [seg.era], pillars: [seg.pillar], realms: [seg.realm],
-        kor: seg.kor, hanja: seg.hanja, verb: seg.verb,
-      });
-    }
-  }
-
-  return (
-    <span>
-      {groups.map((g, i) => {
-        const isFirst = i === 0;
-        const isLast = i === groups.length - 1 && groups.length > 1;
-        const linker = isFirst ? "" : isLast ? " 그러다 " : " 이어서 ";
-        const eraText = g.eras.join("·") + `(${g.pillars.join("·")})`;
-        const realmText = [...new Set(g.realms.flatMap((r) => r.split("·")))].join("·");
-        const groupedAdj = g.eras.length > 1 ? "는 모두" : "은";
-        return (
-          <span key={i}>
-            {linker}<strong className="text-[var(--color-ink)]">{eraText}</strong>{groupedAdj} {g.kor}({g.hanja}) — <em className="not-italic" style={{ color: "var(--color-gold)" }}>{g.verb} 시기</em>예요. {realmText && <>이 시기엔 <strong className="text-[var(--color-ink)]">{realmText}</strong> 영역에서 그 기운이 가장 진하게 작동해요.</>}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
 
 function getEnergyPattern(sibiUnseong: SibiUnseongInfo[]) {
   const strong = sibiUnseong.filter((u) => u.strength === "strong").length;
@@ -369,60 +249,6 @@ function LifeEnergyTable({
 }
 
 /* ── 십이신살(十二神殺) ── */
-function buildSibiSinsalStory(sibiSinsal: string[], name: string): React.ReactNode {
-  const order: { idx: number; label: string; era: string; realm: string }[] = [
-    { idx: 0, label: "년주", era: "초년",   realm: "조상·뿌리·환경" },
-    { idx: 1, label: "월주", era: "청년기", realm: "사회·직장" },
-    { idx: 2, label: "일주", era: "장년기", realm: "자기 본성·배우자" },
-    { idx: 3, label: "시주", era: "말년",   realm: "자녀·결실" },
-  ];
-
-  type Seg = { label: string; era: string; realm: string; sName: string; hanja: string; meaning: string };
-  const segments: Seg[] = [];
-  for (const { idx, label, era, realm } of order) {
-    const sName = sibiSinsal[idx];
-    if (!sName) continue;
-    const info = SIBI_SINSAL_INFO[sName];
-    segments.push({ label, era, realm, sName, hanja: info?.hanja ?? "", meaning: info?.meaning ?? "" });
-  }
-  if (segments.length === 0) return null;
-
-  type Group = { eras: string[]; labels: string[]; realms: string[]; sName: string; hanja: string; meaning: string };
-  const groups: Group[] = [];
-  for (const seg of segments) {
-    const last = groups[groups.length - 1];
-    if (last && last.sName === seg.sName) {
-      last.eras.push(seg.era); last.labels.push(seg.label); last.realms.push(seg.realm);
-    } else {
-      groups.push({
-        eras: [seg.era], labels: [seg.label], realms: [seg.realm],
-        sName: seg.sName, hanja: seg.hanja, meaning: seg.meaning,
-      });
-    }
-  }
-
-  const prefix = name ? `${name}님의 ` : "당신의 ";
-
-  return (
-    <span>
-      {prefix}십이신살 흐름은 이래요.{" "}
-      {groups.map((g, i) => {
-        const isFirst = i === 0;
-        const isLast = i === groups.length - 1 && groups.length > 1;
-        const linker = isFirst ? "" : isLast ? " 그러다 " : " 이어서 ";
-        const eraText = g.eras.join("·") + `(${g.labels.join("·")})`;
-        const realmText = [...new Set(g.realms.flatMap((r) => r.split("·")))].join("·");
-        const groupedAdj = g.eras.length > 1 ? "는 둘 다" : "은";
-        return (
-          <span key={i}>
-            {linker}<strong className="text-[var(--color-ink)]">{eraText}</strong>{groupedAdj} {g.sName}{g.hanja && `(${g.hanja})`} — <em className="not-italic" style={{ color: "var(--color-gold)" }}>{g.meaning}</em>의 기운이에요. {realmText && <>이 시기 <strong className="text-[var(--color-ink)]">{realmText}</strong> 영역에서 그 결이 드러납니다.</>}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
 const SIBI_SINSAL_INFO: Record<string, { hanja: string; meaning: string }> = {
   "겁살":   { hanja: "劫殺",   meaning: "빼앗김·사고·도난 주의" },
   "재살":   { hanja: "災殺",   meaning: "재앙·갈등의 기운" },
@@ -452,13 +278,6 @@ const SINSAL_INFO: Record<string, { hanja: string; tagline: string; desc: string
 };
 
 const SINSAL_ORDER = ["도화살", "역마살", "화개살", "천을귀인", "문창귀인", "장성살", "백호살", "천덕귀인", "월덕귀인"];
-
-function buildSinsalNarrative(sinsal: SinsalInfo[], name: string): string {
-  const p = name ? `${name}님` : "이 사주";
-  if (sinsal.length === 0) return "";
-  const names = [...new Set(sinsal.map((s) => s.sinsal_korean))].join(", ");
-  return `${p} 사주에 ${names}이 있어요. 이 특별한 기운을 잘 활용하면 타고난 캐릭터성을 살릴 수 있어요.`;
-}
 
 const OHAENG_KOR = ['나무','불','흙','쇠','물'];
 const OHAENG_COLORS = ['#1B6B3A','#B02020','#8A4F00','#3D3D3D','#0F4F8A'];
@@ -551,38 +370,6 @@ function OhaengCountDiagram({ stats }: { stats: Record<string, number> }) {
 
 const PILLAR_SHORT = ["년주", "월주", "일주", "시주"];
 
-const ELEMENT_TIP: Record<string, { strength: string; caution: string; advice: string }> = {
-  木: { strength: "진취적인 추진력과 창의성",  caution: "성급함과 지속력 부족",       advice: "꾸준히 뿌리를 내리는 과정을 즐긴다면 큰 성장을 이룰 수 있어요." },
-  火: { strength: "열정과 뛰어난 표현력",      caution: "감정 기복과 충동적인 결정",   advice: "열정을 유지하면서도 차분히 결과를 살피는 습관을 들이면 더욱 빛납니다." },
-  土: { strength: "신중함과 책임감",           caution: "보수성과 변화에 대한 저항",   advice: "자신의 안정감을 바탕으로 타인을 배려하는 마음을 더한다면 더욱 발전할 수 있어요." },
-  金: { strength: "결단력과 원칙에 대한 의지", caution: "지나친 고집과 냉정함",        advice: "원칙을 지키면서도 유연하게 소통한다면 주변의 신뢰를 더욱 얻게 됩니다." },
-  水: { strength: "뛰어난 지혜와 유연한 적응력", caution: "우유부단함과 과도한 걱정", advice: "깊은 통찰력을 믿고 흐름에 몸을 맡기면 자연스럽게 길이 열려요." },
-};
-
-function buildOhaengTip(natal: NatalResult, name: string): string {
-  const elem = natal.my_element.name;
-  const meaning = natal.my_element.meaning;
-  const tip = ELEMENT_TIP[elem];
-  if (!tip) return "";
-  const p = name ? `${name}님은 ` : "";
-  return `${p}${meaning}(${elem}) 기운으로서 ${tip.strength}을 잘 발휘하시되, ${tip.caution}에 주의하세요. ${tip.advice}`;
-}
-
-const STRENGTH_DESC: Record<string, string> = {
-  신강: "타고난 에너지가 강하고 자기 주도적인 성향이에요.",
-  신약: "주변 환경의 영향을 잘 받고 협력에서 힘을 발휘해요.",
-  중화: "기운이 고르게 균형 잡혀 안정적인 사주예요.",
-};
-
-function buildPillarTip(natal: NatalResult, name: string): string {
-  const p = name ? `${name}님을 ` : "이 사주를 ";
-  const kor = natal.day_stem_korean || natal.day_stem;
-  const personal = `${p}나타내는 글자는 ${kor}(${natal.day_stem})이에요.`;
-  const concept = "태어난 날(日柱)의 천간(天干)이 자신을 나타냅니다.";
-  const strengthDesc = STRENGTH_DESC[natal.strength_label] ?? "";
-  return [personal, concept, strengthDesc].filter(Boolean).join(" ");
-}
-
 function OhaengSourceBreakdown({ pillars, pillarElements = [], stats }: {
   pillars: string[];
   pillarElements?: { stem_element: string; branch_element: string }[];
@@ -652,7 +439,7 @@ const SINSAL_COMBOS: { needs: string[]; message: string }[] = [
   { needs: ["역마살", "천을귀인"],    message: "움직일수록 귀인이 나타나는 타입이에요. 새로운 환경이 새로운 행운을 데려옵니다." },
 ];
 
-export default function NatalTab({ natal, name }: Props) {
+export default function NatalTab({ natal }: Props) {
   const meInfo = getElementInfo(natal.my_element.name);
   const [sajuOpen, setSajuOpen] = useState(false);
   const [ohengOpen, setOhengOpen] = useState(false);
@@ -859,7 +646,7 @@ export default function NatalTab({ natal, name }: Props) {
                 </div>
               );
             })()}
-            <KkachiTip>{buildSipsinStory(natal.sipsin, name)}</KkachiTip>
+            <KkachiTip>{natal.narratives.sipsin_story}</KkachiTip>
           </div>
         </div>
       )}
@@ -1078,7 +865,7 @@ export default function NatalTab({ natal, name }: Props) {
               pillarStemsKorean={natal.pillar_stems_korean}
               pillarBranchesKorean={natal.pillar_branches_korean}
             />
-            <KkachiTip>{buildUnseongStory(natal.sibi_unseong, name)}</KkachiTip>
+            <KkachiTip>{natal.narratives.unseong_story}</KkachiTip>
             <EnergyPatternCard sibiUnseong={natal.sibi_unseong} />
             <KkachiTip>{getEnergyPattern(natal.sibi_unseong).desc}</KkachiTip>
           </div>
@@ -1125,7 +912,7 @@ export default function NatalTab({ natal, name }: Props) {
                     );
                   })}
                 </div>
-                <KkachiTip>{buildSibiSinsalStory(natal.sibi_sinsal, name)}</KkachiTip>
+                <KkachiTip>{natal.narratives.sibi_sinsal_story}</KkachiTip>
               </div>
             )}
 
@@ -1170,7 +957,7 @@ export default function NatalTab({ natal, name }: Props) {
                     </KkachiTip>
                   )}
                   {activeCombo && <KkachiTip>{activeCombo.message}</KkachiTip>}
-                  {!hasBaekho && !activeCombo && <KkachiTip>{buildSinsalNarrative(natal.sinsal, name)}</KkachiTip>}
+                  {!hasBaekho && !activeCombo && <KkachiTip>{natal.narratives.sinsal_narrative}</KkachiTip>}
                 </>
               );
             })()}

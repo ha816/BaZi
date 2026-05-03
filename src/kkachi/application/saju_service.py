@@ -6,6 +6,7 @@ from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fengshui import FengShuiInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
+from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter
 from kkachi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
 from kkachi.application.interpreter.relationship import RelationshipInterpreter
 from kkachi.application.interpreter.samjae import SamjaeInterpreter
@@ -166,7 +167,7 @@ class SajuService(InterpreterPort):
             summary += " 다섯 기운이 모두 있어 균형 잡힌 구성이에요."
         return summary
 
-    def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True) -> NatalResult:
+    def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True, name: str = "") -> NatalResult:
         day_stem = natal.saju.stem_of_day_pillar
         pillar_elements = [
             {"stem_element": sb.stem.element.name, "branch_element": sb.branch.element.name}
@@ -216,6 +217,7 @@ class SajuService(InterpreterPort):
             sibi_sinsal=natal.sibi_sinsal,
             gongmang=natal.gongmang,
             pillar_summary=self._build_pillar_summary(natal),
+            narratives=NatalNarrativeInterpreter()(natal, name),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),
             feng_shui=FengShuiInterpreter()(natal, birth_year, is_male),
@@ -306,6 +308,6 @@ class SajuService(InterpreterPort):
         birth_year = user.birth_dt.year if user else 0
         is_male = user.gender.is_male if user else True
         return Interpretation(
-            natal=self.interpret_natal(natal, birth_year=birth_year, is_male=is_male),
+            natal=self.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name),
             postnatal=await self.interpret_postnatal(natal, postnatal, name),
         )
