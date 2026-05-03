@@ -274,6 +274,11 @@ export default function FortuneTab({ natal, postnatal }: Props) {
                 seunGanji={postnatal.seun_ganji}
               />
             )}
+            {!hasClashCombine && (
+              <KkachiTip>
+                올해는 들어오는 글자가 사주와 부딪히거나 맞물리는 짝이 없어요. 큰 변동·결합 없이 잔잔하게 흘러가는 시기예요.
+              </KkachiTip>
+            )}
             {hasClashCombine && (
               <div className="space-y-2">
                 {allClashes.map((c, i) => {
@@ -316,9 +321,9 @@ export default function FortuneTab({ natal, postnatal }: Props) {
         </div>
       )}
 
-      {/* 영역별 운세 */}
+      {/* 삶의 영역별 운(運) */}
       <div className="slide-card">
-        <CollapsibleSectionHeader title="영역별 운세">
+        <CollapsibleSectionHeader title="삶의 영역별 운(運)">
           직장·재물·관계 등 <strong className="text-[var(--color-ink)]">삶의 영역마다</strong> 올해 운의 강도가 달라요. 대운(10년)·세운(올해) 십신 분포로 점수를 매기고, 이번달 월운 십신을 뱃지로 함께 표시해요.
         </CollapsibleSectionHeader>
         <div className="divider" />
