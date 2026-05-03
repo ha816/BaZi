@@ -9,7 +9,7 @@ interface Props {
 
 export default function DaeunTimeline({ daeun }: Props) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-5 gap-2">
       {daeun.map((d) => {
         const els = ganjiToElements(d.ganji);
         const stemInfo = getElementInfo(els.stem);

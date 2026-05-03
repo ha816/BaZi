@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
 import KkachiTip from "@/components/KkachiTip";
 import PillarDetail from "@/components/PillarDetail";
+import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 
 const ZODIAC_INFO: Record<string, {
   kor: string;
@@ -226,16 +227,14 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
 
       {/* 나의 띠 심층 프로필 */}
       <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">
-            십이지신(十二支神)
-          </h3>
-          <p className="text-xs text-[var(--color-ink-faint)] mt-1">
-            쥐·소·호랑이·토끼·용·뱀·말·양·원숭이·닭·개·돼지 — 12가지 동물 신령으로 해를 나누고, 태어난 해의 지지(地支)가 곧 자신의 띠입니다.
-          </p>
-        </div>
+        <CollapsibleSectionHeader title="십이지신(十二支神)">
+          쥐·소·호랑이·토끼·용·뱀·말·양·원숭이·닭·개·돼지 — <strong className="text-[var(--color-ink)]">12가지 동물 신령</strong>으로 해를 나누고, 태어난 해의 지지(地支)가 곧 자신의 띠가 돼요. 띠는 사회·대외 이미지에 가장 큰 영향을 줘요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
-        <div className="slide-card__body">
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            나의 띠는 <strong>{zodiac.kor}({yearBranch})</strong>예요. {zodiac.keyword}의 캐릭터로 세상과 만나요.
+          </KkachiTip>
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-[var(--color-ivory-warm)] flex items-center justify-center text-3xl">
               {zodiac.emoji}
@@ -270,17 +269,14 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
 
       {/* 12띠 궁합 등급 표 */}
       <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">
-            십이지 충합(十二支 衝合)
-          </h3>
-          <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-            년주인 {zodiac.kor}띠({yearBranch}) 기준 충·합 분류입니다.
-            실제 궁합은 일주(日柱) 포함 전체 사주로 판단하므로 참고 지표로만 활용하세요!
-          </p>
-        </div>
+        <CollapsibleSectionHeader title="십이지 충합(十二支 衝合)">
+          년주인 <strong className="text-[var(--color-ink)]">{zodiac.kor}띠({yearBranch})</strong> 기준 다른 11개 띠와의 충(衝)·합(合) 분류예요. 삼합·육합은 시너지, 충·원진은 마찰. 실제 궁합은 일주(日柱) 포함 전체 사주로 봐야 하니 참고 지표로만 활용하세요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
-        <div className="slide-card__body">
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            띠끼리도 결이 맞는 짝과 부딪히는 짝이 있어요. 단, 띠는 사주의 한 글자일 뿐이라 전체 궁합과는 다를 수 있어요.
+          </KkachiTip>
           <div className="grid grid-cols-4 gap-2 mb-4">
             {relations.map(({ branch, info, relation }) => {
               const style = RELATION_STYLE[relation];
@@ -339,14 +335,14 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
 
       {/* 사주지지(四柱地支) */}
       <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">사주지지(四柱地支)</h3>
-          <p className="text-xs text-[var(--color-ink-faint)] mt-1 leading-relaxed">
-            사주의 네 기둥 각각에는 지지(地支), 즉 띠가 하나씩 있습니다. 이 띠는 삶의 각 영역에 숨어 있는 나의 본모습입니다.
-          </p>
-        </div>
+        <CollapsibleSectionHeader title="사주지지(四柱地支)">
+          사주의 네 기둥 각각에는 <strong className="text-[var(--color-ink)]">지지(地支)</strong>, 즉 띠가 하나씩 들어 있어요. 년주만이 아니라 4개의 띠가 삶의 각 영역에 숨어 있는 나의 본모습이에요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
-        <div className="slide-card__body space-y-3">
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            나에겐 <strong>4가지 띠</strong>가 있어요. 년주·월주·일주·시주 각 자리의 띠가 모여 다층적인 캐릭터를 만듭니다.
+          </KkachiTip>
           <PillarDetail pillars={natal.pillars} dayStem={natal.day_stem} highlightBranches={true} />
           <div className="grid grid-cols-4 gap-2">
             {pillarBranches.map((branch, i) => {
@@ -384,11 +380,14 @@ export default function ZodiacTab({ natal, postnatal, name }: Props) {
 
       {/* 연도별 띠 궁합 */}
       <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">연도별 띠 궁합</h3>
-        </div>
+        <CollapsibleSectionHeader title="연도별 띠 궁합">
+          올해와 내년·내후년의 <strong className="text-[var(--color-ink)]">띠 흐름</strong>이 내 띠와 어떻게 맞는지 살펴봐요. 삼합·육합 해엔 흐름이 부드럽고, 충 해엔 마찰이 생기기 쉬워요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
-        <div className="slide-card__body space-y-3">
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            앞으로 들어오는 해의 띠 기운이 나와 어떤 결인지 미리 보면 큰 결정 타이밍 잡기 좋아요.
+          </KkachiTip>
           {!showYearGungham ? (
             <button
               onClick={() => setShowYearGungham(true)}

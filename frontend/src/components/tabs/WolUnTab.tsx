@@ -1,24 +1,10 @@
+"use client";
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
-import { getElementInfo, ganjiToElements } from "@/lib/elementColors";
+import { getElementInfo } from "@/lib/elementColors";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import InlineCollapsibleHeader from "@/components/InlineCollapsibleHeader";
 import OhaengRelationDiagram from "@/components/OhaengRelationDiagram";
-
-const GANJI_60 = [
-  "甲子","乙丑","丙寅","丁卯","戊辰","己巳","庚午","辛未","壬申","癸酉",
-  "甲戌","乙亥","丙子","丁丑","戊寅","己卯","庚辰","辛巳","壬午","癸未",
-  "甲申","乙酉","丙戌","丁亥","戊子","己丑","庚寅","辛卯","壬辰","癸巳",
-  "甲午","乙未","丙申","丁酉","戊戌","己亥","庚子","辛丑","壬寅","癸卯",
-  "甲辰","乙巳","丙午","丁未","戊申","己酉","庚戌","辛亥","壬子","癸丑",
-  "甲寅","乙卯","丙辰","丁巳","戊午","己未","庚申","辛酉","壬戌","癸亥",
-];
-
-const SIPSIN_KOR: Record<string, string> = {
-  "比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관",
-  "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관",
-  "偏印": "편인", "正印": "정인",
-};
 
 const STEM_KOR: Record<string, string> = {
   甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
@@ -34,17 +20,10 @@ function ganjiKor(ganji: string): string {
   return `${s}${b}(${ganji})`;
 }
 
-const SIPSIN_MEANING: Record<string, string> = {
-  "比肩": "나와 같은 에너지가 들어오는 시기예요. 독립심과 자아가 강해지고, 주체적으로 길을 개척하게 돼요.",
-  "劫財": "경쟁과 나눔의 기운이에요. 협력하면 힘이 되지만, 재물이 새는 흐름도 있으니 지출을 점검해 봐요.",
-  "食神": "재능이 빛나고 먹을 복이 따르는 시기예요. 하고 싶은 것을 표현하고 베풀수록 더 많이 돌아와요.",
-  "傷官": "창의력과 개성이 폭발하는 시기예요. 틀을 깨는 에너지가 강하지만, 조직 내 마찰은 주의해야 해요.",
-  "偏財": "적극적인 재물 운이 따르는 시기예요. 투자·사업·새로운 기회에 민감하게 반응하면 좋아요.",
-  "正財": "안정적인 수입과 저축의 기운이에요. 꾸준히 성실하게 쌓아가면 재물이 단단해져요.",
-  "偏官": "강한 자극과 도전이 오는 시기예요. 압박감이 있지만 그 안에 성장의 기회가 숨어 있어요.",
-  "正官": "명예와 책임의 기운이에요. 사회적 인정을 받거나 직책·역할의 변화가 찾아올 수 있어요.",
-  "偏印": "직관과 학문의 기운이에요. 공부·연구·자기계발에 집중하기 좋고, 전문성이 쌓이는 시기예요.",
-  "正印": "배움과 보호의 기운이에요. 어른이나 스승의 도움을 받을 수 있고, 마음이 안정되는 시기예요.",
+const SIPSIN_KOR: Record<string, string> = {
+  "比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관",
+  "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관",
+  "偏印": "편인", "正印": "정인",
 };
 
 const SIPSIN_DERIVE: Record<string, { rel: string; yinyang: string; relColor: string }> = {
@@ -60,50 +39,62 @@ const SIPSIN_DERIVE: Record<string, { rel: string; yinyang: string; relColor: st
   "正印": { rel: "나를 도움",   yinyang: "다름", relColor: "#1B6B3A" },
 };
 
+const SIPSIN_MEANING: Record<string, string> = {
+  "比肩": "나와 같은 에너지가 들어오는 시기예요. 독립심과 자아가 강해지고, 주체적으로 길을 개척하게 돼요.",
+  "劫財": "경쟁과 나눔의 기운이에요. 협력하면 힘이 되지만, 재물이 새는 흐름도 있으니 지출을 점검해 봐요.",
+  "食神": "재능이 빛나고 먹을 복이 따르는 시기예요. 하고 싶은 것을 표현하고 베풀수록 더 많이 돌아와요.",
+  "傷官": "창의력과 개성이 폭발하는 시기예요. 틀을 깨는 에너지가 강하지만, 조직 내 마찰은 주의해야 해요.",
+  "偏財": "적극적인 재물 운이 따르는 시기예요. 투자·사업·새로운 기회에 민감하게 반응하면 좋아요.",
+  "正財": "안정적인 수입과 저축의 기운이에요. 꾸준히 성실하게 쌓아가면 재물이 단단해져요.",
+  "偏官": "강한 자극과 도전이 오는 시기예요. 압박감이 있지만 그 안에 성장의 기회가 숨어 있어요.",
+  "正官": "명예와 책임의 기운이에요. 사회적 인정을 받거나 직책·역할의 변화가 찾아올 수 있어요.",
+  "偏印": "직관과 학문의 기운이에요. 공부·연구·자기계발에 집중하기 좋고, 전문성이 쌓이는 시기예요.",
+  "正印": "배움과 보호의 기운이에요. 어른이나 스승의 도움을 받을 수 있고, 마음이 안정되는 시기예요.",
+};
+
 interface Props {
   natal: NatalResult;
   postnatal: PostnatalResult;
 }
 
-export default function SeunTab({ natal, postnatal }: Props) {
-  const seunEls = ganjiToElements(postnatal.seun_ganji);
-
-  const yearItems = [0, 1, 2].map((offset) => {
-    const year = postnatal.year + offset;
-    const ganji = GANJI_60[((year - 4) % 60 + 60) % 60];
-    const els = ganjiToElements(ganji);
-    return {
-      year,
-      ganji,
-      stemEl: els.stem,
-      branchEl: els.branch,
-    };
-  });
+export default function WolUnTab({ natal, postnatal }: Props) {
+  const months = (postnatal.upcoming_months ?? []).slice(0, 4);
+  if (months.length === 0) return null;
+  const current = months[0];
+  const stemSame = current.stem_sipsin.name === current.branch_sipsin.name;
+  const stemKor = SIPSIN_KOR[current.stem_sipsin.name] ?? current.stem_sipsin.name;
+  const branchKor = SIPSIN_KOR[current.branch_sipsin.name] ?? current.branch_sipsin.name;
 
   return (
     <div className="space-y-4">
-      {/* 세운(歲運) 섹션 */}
       <div className="slide-card">
-        <CollapsibleSectionHeader title="세운(歲運)">
-          개인 사주와 무관하게 <strong className="text-[var(--color-ink)]">연도만으로 정해지는 1년 단위 흐름</strong>이에요. 대운(10년)이 큰 챕터라면 세운은 매년 변주되는 잔물결로, 모든 사람이 같은 기운을 맞이해요.
+        <CollapsibleSectionHeader title="월운(月運)">
+          1개월 단위로 흐르는 <strong className="text-[var(--color-ink)]">작은 결</strong>이에요. 세운(1년)이 한 해의 분위기라면 월운은 매달 변주되는 잔물결로, 단기 계획이나 타이밍 잡기에 참고하면 좋아요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            올해와 가까운 연도의 세운을 살펴보세요. 매년 바뀌는 결이 한 해의 분위기를 만들어요.
+            이번달과 가까운 달의 월운을 살펴보세요. 매달 바뀌는 결이 한 달의 분위기를 만들어요.
           </KkachiTip>
-          {/* 3년 세운 그리드 */}
-          <div className="grid grid-cols-3 gap-2">
-            {yearItems.map(({ year, ganji, stemEl, branchEl }) => {
-              const stemElInfo = getElementInfo(stemEl);
-              const branchElInfo = getElementInfo(branchEl);
+          <div className="grid grid-cols-4 gap-2">
+            {months.map((m, i) => {
+              const stemElInfo = getElementInfo(m.stem_element);
+              const branchElInfo = getElementInfo(m.branch_element);
+              const isCurrent = i === 0;
               return (
-                <div
-                  key={year}
-                  className="flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 border border-[var(--color-border-light)] bg-[var(--color-card)]"
+                <div key={`${m.year}-${m.month}`}
+                  className="flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 border"
+                  style={{
+                    borderColor: isCurrent ? "var(--color-gold)" : "var(--color-border-light)",
+                    backgroundColor: isCurrent ? "var(--color-gold-faint)" : "var(--color-card)",
+                  }}
                 >
-                  <span className="text-[10px] font-semibold text-[var(--color-ink-light)]">{year}</span>
-                  <span className="font-heading text-base font-bold text-[var(--color-ink)] text-center">{ganjiKor(ganji)}</span>
+                  <span className="text-[10px] font-semibold text-[var(--color-ink-light)]">
+                    {m.month}월
+                  </span>
+                  <span className="font-heading text-base font-bold text-[var(--color-ink)] text-center">
+                    {ganjiKor(m.ganji)}
+                  </span>
                   <div className="flex gap-1">
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                       style={{ color: stemElInfo.color, backgroundColor: stemElInfo.bgColor }}>
@@ -119,34 +110,32 @@ export default function SeunTab({ natal, postnatal }: Props) {
             })}
           </div>
 
-          {/* 세운과 나의 십신 */}
+          {/* 월운과 나의 십신 */}
           <div className="divider" />
-          <InlineCollapsibleHeader title="세운과 나의 십신">
-            올해 세운의 천간({postnatal.seun_ganji[0]})·지지({postnatal.seun_ganji[1]})가 일주천간인 <strong className="text-[var(--color-ink)]">{natal.day_stem}({natal.my_element.name})</strong>과 맺는 관계를 십신(十神)으로 풀어보아요. 도움/억제, 음양 일치 여부에 따라 한 해의 결이 달라져요.
+          <InlineCollapsibleHeader title="월운과 나의 십신">
+            이번달 월운의 천간({current.ganji[0]})·지지({current.ganji[1]})가 일주천간인 <strong className="text-[var(--color-ink)]">{natal.day_stem}({natal.my_element.name})</strong>과 맺는 관계를 십신(十神)으로 풀어보아요.
           </InlineCollapsibleHeader>
           <div className="divider" />
           <KkachiTip>
-            내 일간({natal.day_stem})이 세운의 천간·지지와 어떻게 만나는지 십신(十神)으로 풀어볼게요.
+            내 일간({natal.day_stem})이 이번달 천간·지지와 어떻게 만나는지 십신(十神)으로 풀어볼게요.
           </KkachiTip>
           <OhaengRelationDiagram
             myElement={natal.my_element.name}
-            stemElement={seunEls.stem}
-            branchElement={seunEls.branch}
+            stemElement={current.stem_element}
+            branchElement={current.branch_element}
             myChar={natal.day_stem}
-            stemChar={postnatal.seun_ganji[0]}
-            branchChar={postnatal.seun_ganji[1]}
-            label="세운"
-            markerPrefix="se"
+            stemChar={current.ganji[0]}
+            branchChar={current.ganji[1]}
+            label="월운"
+            markerPrefix="wo"
           />
-
-          {/* 천간/지지 1×2 그리드 */}
           <div className="grid grid-cols-2 gap-2">
             {[
-              { label: "천간(天干)", sipsin: postnatal.seun_stem },
-              { label: "지지(地支)", sipsin: postnatal.seun_branch },
-            ].map(({ label, sipsin }) => {
-              const info = getElementInfo(sipsin.element);
-              const d = SIPSIN_DERIVE[sipsin.sipsin_name];
+              { label: "천간(天干)", char: current.ganji[0], element: current.stem_element, sipsin: current.stem_sipsin },
+              { label: "지지(地支)", char: current.ganji[1], element: current.branch_element, sipsin: current.branch_sipsin },
+            ].map(({ label, char, element, sipsin }) => {
+              const info = getElementInfo(element);
+              const d = SIPSIN_DERIVE[sipsin.name];
               const myInfo = getElementInfo(natal.my_element.name);
               const myYY = natal.day_stem_yin_yang;
               const tgtYY = d ? (d.yinyang === "일치" ? myYY : (myYY === "양" ? "음" : "양")) : "";
@@ -173,7 +162,7 @@ export default function SeunTab({ natal, postnatal }: Props) {
                         <div className="flex flex-col items-center gap-0.5">
                           <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
                             style={{ backgroundColor: info.bgColor, border: `1.5px solid ${info.borderColor}` }}>
-                            <span className="font-heading text-base font-bold leading-none" style={{ color: info.color }}>{sipsin.char}</span>
+                            <span className="font-heading text-base font-bold leading-none" style={{ color: info.color }}>{char}</span>
                             <span className="text-[8px] mt-0.5" style={{ color: info.color }}>{info.korean}</span>
                           </div>
                           <span className="text-[8px] text-[var(--color-ink-faint)]">{tgtYY}</span>
@@ -190,7 +179,7 @@ export default function SeunTab({ natal, postnatal }: Props) {
                       {label.startsWith("천간") ? "천간 십신" : "지지 십신"}
                     </p>
                     <p className="font-heading text-xl font-bold text-[var(--color-gold)]">
-                      {SIPSIN_KOR[sipsin.sipsin_name] ?? sipsin.sipsin_name}({sipsin.sipsin_name})
+                      {SIPSIN_KOR[sipsin.name] ?? sipsin.name}({sipsin.name})
                     </p>
                     <p className="text-[10px] text-[var(--color-ink-faint)] leading-tight">{sipsin.domain}</p>
                   </div>
@@ -199,20 +188,11 @@ export default function SeunTab({ natal, postnatal }: Props) {
             })}
           </div>
 
-          {/* 세운 십신 통합 풀이 */}
-          {(() => {
-            const stemSame = postnatal.seun_stem.sipsin_name === postnatal.seun_branch.sipsin_name;
-            const stemKor = SIPSIN_KOR[postnatal.seun_stem.sipsin_name] ?? postnatal.seun_stem.sipsin_name;
-            const branchKor = SIPSIN_KOR[postnatal.seun_branch.sipsin_name] ?? postnatal.seun_branch.sipsin_name;
-            return (
-              <KkachiTip>
-                올해 세운은 <strong className="text-[var(--color-ink)]">{stemKor}({postnatal.seun_stem.sipsin_name})</strong>{!stemSame && <>·<strong className="text-[var(--color-ink)]">{branchKor}({postnatal.seun_branch.sipsin_name})</strong></>}의 흐름이에요. {SIPSIN_MEANING[postnatal.seun_stem.sipsin_name] ?? ""}{!stemSame && <> 또 {SIPSIN_MEANING[postnatal.seun_branch.sipsin_name] ?? ""}</>}
-              </KkachiTip>
-            );
-          })()}
+          <KkachiTip>
+            이번달은 <strong className="text-[var(--color-ink)]">{stemKor}({current.stem_sipsin.name})</strong>{!stemSame && <>·<strong className="text-[var(--color-ink)]">{branchKor}({current.branch_sipsin.name})</strong></>}의 흐름이에요. {SIPSIN_MEANING[current.stem_sipsin.name] ?? ""}{!stemSame && <> 또 {SIPSIN_MEANING[current.branch_sipsin.name] ?? ""}</>}
+          </KkachiTip>
         </div>
       </div>
-
     </div>
   );
 }

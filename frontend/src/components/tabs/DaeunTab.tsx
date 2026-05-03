@@ -1,13 +1,10 @@
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
-import { getElementInfo } from "@/lib/elementColors";
+import { getElementInfo, ganjiToElements } from "@/lib/elementColors";
 import DaeunTimeline from "@/components/DaeunTimeline";
 import KkachiTip from "@/components/KkachiTip";
-
-const SAMJAE_STYLE: Record<string, { borderColor: string; labelColor: string; bgColor: string }> = {
-  "눌삼재": { borderColor: "var(--color-fire)",  labelColor: "var(--color-fire)",  bgColor: "#F7EDEC" },
-  "들삼재": { borderColor: "var(--color-earth)", labelColor: "var(--color-earth)", bgColor: "#F5F0E7" },
-  "날삼재": { borderColor: "var(--color-earth)", labelColor: "var(--color-earth)", bgColor: "#F5F0E7" },
-};
+import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
+import InlineCollapsibleHeader from "@/components/InlineCollapsibleHeader";
+import OhaengRelationDiagram from "@/components/OhaengRelationDiagram";
 
 
 
@@ -22,6 +19,12 @@ const GANJI_60 = [
 
 const YIN_YEAR_STEMS = new Set(["乙","丁","己","辛","癸"]);
 
+
+const SIPSIN_KOR: Record<string, string> = {
+  "比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관",
+  "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관",
+  "偏印": "편인", "正印": "정인",
+};
 
 const SIPSIN_MEANING: Record<string, string> = {
   "比肩": "나와 같은 에너지가 들어오는 시기예요. 독립심과 자아가 강해지고, 주체적으로 길을 개척하게 돼요.",
@@ -56,116 +59,6 @@ const BRANCH_SOLAR_TERM: Record<string, string> = {
 };
 
 
-const OHAENG_IDX: Record<string, number> = { '木':0, '火':1, '土':2, '金':3, '水':4 };
-const OHAENG_KOR = ['나무','불','흙','쇠','물'];
-const OHAENG_COLORS = ['#1B6B3A','#B02020','#8A4F00','#3D3D3D','#0F4F8A'];
-const OHAENG_BGS = ['#C8E6D4','#F8CCC8','#F5DCAA','#E0E0E0','#C4DDF5'];
-const OHAENG_BORDERS = ['#6DB890','#E07070','#D4A060','#A0A0A0','#6AAAD8'];
-const SAENG_PAIRS: [number, number][] = [[0,1],[1,2],[2,3],[3,4],[4,0]];
-const GEUK_PAIRS: [number, number][] = [[0,2],[1,3],[2,4],[3,0],[4,1]];
-
-function OhaengDiagram({ myElement, daeunStemElement, daeunBranchElement, label = "대운" }: {
-  myElement: string; daeunStemElement: string; daeunBranchElement: string; label?: string;
-}) {
-  const CX = 100, CY = 88, PR = 66, NR = 20;
-  function pentaPos(i: number): [number, number] {
-    const a = (-90 + i * 72) * Math.PI / 180;
-    return [CX + PR * Math.cos(a), CY + PR * Math.sin(a)];
-  }
-  function arrowSeg(i1: number, i2: number) {
-    const [x1,y1] = pentaPos(i1), [x2,y2] = pentaPos(i2);
-    const dx = x2-x1, dy = y2-y1, l = Math.sqrt(dx*dx+dy*dy);
-    const ux = dx/l, uy = dy/l;
-    return { x1: x1+NR*ux, y1: y1+NR*uy, x2: x2-(NR+4)*ux, y2: y2-(NR+4)*uy };
-  }
-
-  const myIdx = OHAENG_IDX[myElement] ?? -1;
-  const stemIdx = OHAENG_IDX[daeunStemElement] ?? -1;
-  const branchIdx = OHAENG_IDX[daeunBranchElement] ?? -1;
-
-  function isHi(a: number, b: number) {
-    return (a === myIdx && (b === stemIdx || b === branchIdx)) ||
-           ((a === stemIdx || a === branchIdx) && b === myIdx);
-  }
-
-
-  return (
-    <div className="rounded-lg bg-[var(--color-ivory)] border border-[var(--color-border-light)] p-3">
-      <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] mb-2">{label} 오행 관계도</p>
-      <svg viewBox="0 0 200 182" className="w-2/3 mx-auto block">
-        <defs>
-          <marker id="oa-saeng" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5 z" fill="#1B6B3A" opacity="0.7" />
-          </marker>
-          <marker id="oa-geuk" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5 z" fill="#C0392B" opacity="0.6" />
-          </marker>
-        </defs>
-        {SAENG_PAIRS.map(([a,b]) => {
-          const s = arrowSeg(a,b);
-          const hi = isHi(a,b);
-          return <line key={`s${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-            stroke="#1B6B3A" strokeWidth={hi?3:1.2} strokeOpacity={hi?1:0.2} markerEnd="url(#oa-saeng)" />;
-        })}
-        {GEUK_PAIRS.map(([a,b]) => {
-          const s = arrowSeg(a,b);
-          const hi = isHi(a,b);
-          return <line key={`g${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-            stroke="#C0392B" strokeWidth={hi?3:1} strokeOpacity={hi?0.9:0.15}
-            strokeDasharray={hi?undefined:"4,3"} markerEnd="url(#oa-geuk)" />;
-        })}
-        {['木','火','土','金','水'].map((elem, i) => {
-          const [x,y] = pentaPos(i);
-          const isMe = i === myIdx;
-          const isStem = i === stemIdx;
-          const isBranch = i === branchIdx;
-          const active = isMe || isStem || isBranch;
-          const nodeLabel = isMe && isStem && isBranch ? '나=천간·지지'
-            : isMe && isStem ? '나=천간' : isMe && isBranch ? '나=지지'
-            : isStem && isBranch ? '천간·지지'
-            : isMe ? '나' : isStem ? '천간' : isBranch ? '지지' : null;
-          return (
-            <g key={elem}>
-              <circle cx={x} cy={y} r={NR}
-                fill={active ? OHAENG_BGS[i] : '#F5F2EC'}
-                stroke={OHAENG_BORDERS[i]}
-                strokeWidth={active?2.5:1} opacity={active?1:0.45} />
-              <text x={x} y={y-3} textAnchor="middle" dominantBaseline="middle"
-                fontSize={active?16:13} fontWeight={active?700:400}
-                fill={OHAENG_COLORS[i]} opacity={active?1:0.4}
-                style={{ fontFamily: "serif" }}>
-                {elem}
-              </text>
-              <text x={x} y={y+9} textAnchor="middle" dominantBaseline="middle"
-                fontSize={8.5} fill={OHAENG_COLORS[i]} opacity={active?0.85:0.35}>
-                {OHAENG_KOR[i]}
-              </text>
-              {nodeLabel && (
-                <text x={x} y={y+NR+11} textAnchor="middle"
-                  fontSize={8} fontWeight={700}
-                  fill={isMe ? '#8A4F00' : OHAENG_COLORS[i]}>
-                  {nodeLabel}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </svg>
-      <div className="flex items-center gap-5 mt-1 mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-[2px] bg-[#1B6B3A] rounded" />
-          <span className="text-xs text-[var(--color-ink-muted)]">生 — 도움</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 border-t-2 border-dashed border-[#C0392B]" />
-          <span className="text-xs text-[var(--color-ink-muted)]">剋 — 억제</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 interface Props {
   natal: NatalResult;
   postnatal: PostnatalResult;
@@ -193,35 +86,16 @@ export default function DaeunTab({ natal, postnatal }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 삼재 배너 */}
-      {postnatal.samjae && (() => {
-        const s = SAMJAE_STYLE[postnatal.samjae!.type] ?? SAMJAE_STYLE["들삼재"];
-        return (
-          <div className="slide-card overflow-hidden">
-            <div className="px-5 py-4" style={{ backgroundColor: s.bgColor, borderLeft: `4px solid ${s.borderColor}` }}>
-              <p className="text-sm font-bold mb-1" style={{ color: s.labelColor }}>
-                삼재(三災) — {postnatal.samjae!.type}
-              </p>
-              <p className="text-xs text-[var(--color-ink-muted)]">
-                올해({postnatal.samjae!.year_branch}年)는 {postnatal.samjae!.birth_branch}生에게 삼재에 해당하는 해예요.
-              </p>
-            </div>
-          </div>
-        );
-      })()}
-
       {/* 현재 나의 대운 */}
       {currentDaeun && (() => {
         return (
           <div className="slide-card">
-            <div className="slide-card__header">
-              <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">대운(大運)</h3>
-              <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">10년 주기로 바뀌는 큰 운의 흐름</p>
-            </div>
-            <div className="divider" />
-            <div className="slide-card__body">
-              {/* 대운이 만들어지는 방법 */}
-              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-4 mb-5 space-y-3.5">
+            <CollapsibleSectionHeader title="대운(大運)">
+              <p>
+                10년 주기로 바뀌는 <strong className="text-[var(--color-ink)]">큰 운의 흐름</strong>이에요. 인생의 큰 챕터를 만드는 에너지로, 월주(月柱)에서 시작해 60갑자를 따라 한 칸씩 흘러가요. 출생 시점의 절기·성별에 따라 순행/역행이 정해져요.
+              </p>
+              {/* 대운 계산법 */}
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-4 space-y-3.5">
                 <p className="text-[11px] font-semibold text-[var(--color-ink-muted)]">대운 계산법</p>
 
                 {/* ① 방향 */}
@@ -285,118 +159,130 @@ export default function DaeunTab({ natal, postnatal }: Props) {
                   <span className="text-[10px] font-bold text-[var(--color-gold)] w-4 flex-shrink-0 mt-0.5">③</span>
                   <div>
                     <p className="text-[10px] text-[var(--color-ink-faint)] mb-1.5">대운 시작 나이 - 대운수(大運數)</p>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed mb-1">
-                      태어난 날부터 절기{nearestSolarTerm ? `(${nearestSolarTerm})` : ""}까지 날수를 세면 약 {daeunNumber * 3}일.
-                    </p>
                     <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed">
-                      {daeunNumber * 3}을 3으로 나누면 {daeunNumber}세 — 대운이 시작되는 나이. (명리학 3일 = 1년 취급)
+                      태어난 날부터 절기{nearestSolarTerm ? `(${nearestSolarTerm})` : ""}까지 날수를 세면 약 {daeunNumber * 3}일. {daeunNumber * 3}을 3으로 나누면 {daeunNumber}세 — 대운이 시작되는 나이. (명리학 3일 = 1년 취급)
                     </p>
                   </div>
                 </div>
               </div>
+            </CollapsibleSectionHeader>
+            <div className="divider" />
+            <div className="slide-card__body space-y-4">
+              <KkachiTip>
+                대운은 10년씩 머무르는 큰 흐름이에요. 내 용신({natal.yongshin_info.name})과 대운에 따라 그 시기의 방향성을 짐작해볼 수 있어요.
+              </KkachiTip>
 
               {/* 대운 60갑자 순회 */}
               <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-4 space-y-3">
                 <p className="text-[11px] font-semibold text-[var(--color-ink-muted)]">대운 60갑자 순회</p>
                 <DaeunTimeline daeun={postnatal.daeun} />
               </div>
+              {(() => {
+                const els = ganjiToElements(currentDaeun.ganji);
+                const stemKor = getElementInfo(els.stem).korean;
+                const branchKor = getElementInfo(els.branch).korean;
+                return (
+                  <KkachiTip>
+                    {currentDaeun.has_yongshin
+                      ? <>축하합니다! 현재 <strong>대운({currentDaeun.ganji})</strong>에 머물고 있어요. 용신 기운이 들어와 큰 흐름이 부드러운 시기예요.</>
+                      : <>현재 대운은 <strong>{stemKor}·{branchKor}</strong> 오행을 거치는 시기예요. 용신({natal.yongshin_info.meaning}({natal.yongshin_info.name}))과 결이 다르니 환경·사람의 도움을 잘 살피면 흐름이 부드러워져요.</>
+                    }
+                  </KkachiTip>
+                );
+              })()}
+
+              {/* 현재 대운 분석 — 십신 */}
+              {postnatal.daeun_sipsin.length >= 2 && (
+                <>
+                  <div className="divider" />
+                  <InlineCollapsibleHeader title="대운과 나의 십신">
+                    현재 대운의 천간({currentDaeun.ganji[0]})·지지({currentDaeun.ganji[1]})가 일주천간인 <strong className="text-[var(--color-ink)]">{natal.day_stem}({natal.my_element.name})</strong>과 맺는 관계를 십신(十神)으로 풀어보아요. 도움/억제, 음양 일치 여부에 따라 시기의 결이 달라져요.
+                  </InlineCollapsibleHeader>
+                  <div className="divider" />
+                  <KkachiTip>
+                    내 일간({natal.day_stem})이 대운의 천간·지지와 어떻게 만나는지 십신(十神)으로 풀어볼게요.
+                  </KkachiTip>
+                  <OhaengRelationDiagram
+                    myElement={natal.my_element.name}
+                    stemElement={postnatal.daeun_sipsin[0].element}
+                    branchElement={postnatal.daeun_sipsin[1].element}
+                    myChar={natal.day_stem}
+                    stemChar={currentDaeun.ganji[0]}
+                    branchChar={currentDaeun.ganji[1]}
+                    label="대운"
+                    markerPrefix="da"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: "천간(天干)", sipsin: postnatal.daeun_sipsin[0] },
+                      { label: "지지(地支)", sipsin: postnatal.daeun_sipsin[1] },
+                    ].map(({ label, sipsin }) => {
+                      const info = getElementInfo(sipsin.element);
+                      return (
+                        <div key={label}
+                          className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-3 flex flex-col items-center gap-1.5">
+                          <span className="text-[10px] text-[var(--color-ink-faint)]">{label}</span>
+                            {SIPSIN_DERIVE[sipsin.sipsin_name] && (() => {
+                            const d = SIPSIN_DERIVE[sipsin.sipsin_name];
+                            const myKor = getElementInfo(natal.my_element.name).korean;
+                            const tgtKor = getElementInfo(sipsin.element).korean;
+                            const myYY = natal.day_stem_yin_yang;
+                            const tgtYY = d.yinyang === "일치" ? myYY : (myYY === "양" ? "음" : "양");
+                            return (
+                              <div className="w-full space-y-1.5">
+                                <div className="flex items-center justify-center gap-2">
+                                  {/* 일간 chip */}
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
+                                      style={{ backgroundColor: getElementInfo(natal.my_element.name).bgColor, border: `1.5px solid ${getElementInfo(natal.my_element.name).borderColor}` }}>
+                                      <span className="font-heading text-base font-bold leading-none" style={{ color: getElementInfo(natal.my_element.name).color }}>{natal.day_stem}</span>
+                                      <span className="text-[8px] mt-0.5" style={{ color: getElementInfo(natal.my_element.name).color }}>{myKor}</span>
+                                    </div>
+                                    <span className="text-[8px] text-[var(--color-ink-faint)]">{myYY}</span>
+                                  </div>
+                                  {/* 화살표 */}
+                                  <div className="flex items-center pb-4">
+                                    <span className="text-base font-bold" style={{ color: d.relColor }}>→</span>
+                                  </div>
+                                  {/* 대운 chip */}
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
+                                      style={{ backgroundColor: info.bgColor, border: `1.5px solid ${info.borderColor}` }}>
+                                      <span className="font-heading text-base font-bold leading-none" style={{ color: info.color }}>{sipsin.char}</span>
+                                      <span className="text-[8px] mt-0.5" style={{ color: info.color }}>{tgtKor}</span>
+                                    </div>
+                                    <span className="text-[8px] text-[var(--color-ink-faint)]">{tgtYY}</span>
+                                  </div>
+                                </div>
+                                <p className="text-[9px] text-center font-medium">
+                                  <span style={{ color: d.relColor }}>{d.rel}</span>
+                                  <span className="text-[var(--color-ink)]"> · 음양 {d.yinyang}</span>
+                                </p>
+                              </div>
+                            );
+                          })()}
+                          <div className="w-full pt-1.5 border-t border-[var(--color-border-light)] text-center space-y-0.5 mt-0.5">
+                            <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">
+                              {label.startsWith("천간") ? "천간 십신" : "지지 십신"}
+                            </p>
+                            <p className="font-heading text-xl font-bold text-[var(--color-gold)]">
+                              {SIPSIN_KOR[sipsin.sipsin_name] ?? sipsin.sipsin_name}({sipsin.sipsin_name})
+                            </p>
+                            <p className="text-[10px] text-[var(--color-ink-faint)] leading-tight">{sipsin.domain}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <KkachiTip>
+                    이번 대운은 <strong className="text-[var(--color-ink)]">{SIPSIN_KOR[postnatal.daeun_sipsin[0].sipsin_name] ?? postnatal.daeun_sipsin[0].sipsin_name}({postnatal.daeun_sipsin[0].sipsin_name})</strong>·<strong className="text-[var(--color-ink)]">{SIPSIN_KOR[postnatal.daeun_sipsin[1].sipsin_name] ?? postnatal.daeun_sipsin[1].sipsin_name}({postnatal.daeun_sipsin[1].sipsin_name})</strong>의 흐름이에요. {SIPSIN_MEANING[postnatal.daeun_sipsin[0].sipsin_name] ?? ""} 또 {SIPSIN_MEANING[postnatal.daeun_sipsin[1].sipsin_name] ?? ""}
+                  </KkachiTip>
+                </>
+              )}
             </div>
           </div>
         );
       })()}
-
-      {/* 현재 대운 십신 + 충합 */}
-      {currentDaeun && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">현재 대운 분석</h3>
-            <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">
-              {currentDaeun.ganji} · {currentDaeun.start_age}~{currentDaeun.end_age}세
-              <span className="ml-2">· 일간 {natal.day_stem}({natal.my_element.name})</span>
-            </p>
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body space-y-3">
-            {postnatal.daeun_sipsin.length >= 2 && (
-              <OhaengDiagram
-                myElement={natal.my_element.name}
-                daeunStemElement={postnatal.daeun_sipsin[0].element}
-                daeunBranchElement={postnatal.daeun_sipsin[1].element}
-              />
-            )}
-            {postnatal.daeun_sipsin.length >= 2 && (
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { label: "천간(天干)", sipsin: postnatal.daeun_sipsin[0] },
-                  { label: "지지(地支)", sipsin: postnatal.daeun_sipsin[1] },
-                ].map(({ label, sipsin }) => {
-                  const info = getElementInfo(sipsin.element);
-                  return (
-                    <div key={label}
-                      className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-3 flex flex-col items-center gap-1.5">
-                      <span className="text-[10px] text-[var(--color-ink-faint)]">{label}</span>
-                        {SIPSIN_DERIVE[sipsin.sipsin_name] && (() => {
-                        const d = SIPSIN_DERIVE[sipsin.sipsin_name];
-                        const myKor = getElementInfo(natal.my_element.name).korean;
-                        const tgtKor = getElementInfo(sipsin.element).korean;
-                        const myYY = natal.day_stem_yin_yang;
-                        const tgtYY = d.yinyang === "일치" ? myYY : (myYY === "양" ? "음" : "양");
-                        return (
-                          <div className="w-full space-y-1.5">
-                            <div className="flex items-center justify-center gap-2">
-                              {/* 일간 chip */}
-                              <div className="flex flex-col items-center gap-0.5">
-                                <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
-                                  style={{ backgroundColor: getElementInfo(natal.my_element.name).bgColor, border: `1.5px solid ${getElementInfo(natal.my_element.name).borderColor}` }}>
-                                  <span className="font-heading text-base font-bold leading-none" style={{ color: getElementInfo(natal.my_element.name).color }}>{natal.day_stem}</span>
-                                  <span className="text-[8px] mt-0.5" style={{ color: getElementInfo(natal.my_element.name).color }}>{myKor}</span>
-                                </div>
-                                <span className="text-[8px] text-[var(--color-ink-faint)]">{myYY}</span>
-                              </div>
-                              {/* 화살표 */}
-                              <div className="flex items-center pb-4">
-                                <span className="text-base font-bold" style={{ color: d.relColor }}>→</span>
-                              </div>
-                              {/* 대운 chip */}
-                              <div className="flex flex-col items-center gap-0.5">
-                                <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
-                                  style={{ backgroundColor: info.bgColor, border: `1.5px solid ${info.borderColor}` }}>
-                                  <span className="font-heading text-base font-bold leading-none" style={{ color: info.color }}>{sipsin.char}</span>
-                                  <span className="text-[8px] mt-0.5" style={{ color: info.color }}>{tgtKor}</span>
-                                </div>
-                                <span className="text-[8px] text-[var(--color-ink-faint)]">{tgtYY}</span>
-                              </div>
-                            </div>
-                            <p className="text-[9px] text-center font-medium">
-                              <span style={{ color: d.relColor }}>{d.rel}</span>
-                              <span className="text-[var(--color-ink)]"> · 음양 {d.yinyang}</span>
-                            </p>
-                          </div>
-                        );
-                      })()}
-                      <div className="w-full pt-1.5 border-t border-[var(--color-border-light)] text-center space-y-0.5 mt-0.5">
-                        <p className="font-heading text-base font-bold text-[var(--color-gold)]">{sipsin.sipsin_name}</p>
-                        <p className="text-[10px] text-[var(--color-ink-faint)] leading-tight">{sipsin.domain}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {/* 십신 해석 */}
-            {postnatal.daeun_sipsin.length >= 2 && (
-              <div className="space-y-1">
-                <KkachiTip label={`천간 십신 · ${postnatal.daeun_sipsin[0].sipsin_name} (${postnatal.daeun_sipsin[0].domain})`}>
-                  {SIPSIN_MEANING[postnatal.daeun_sipsin[0].sipsin_name] ?? postnatal.daeun_sipsin[0].domain}
-                </KkachiTip>
-                <KkachiTip label={`지지 십신 · ${postnatal.daeun_sipsin[1].sipsin_name} (${postnatal.daeun_sipsin[1].domain})`}>
-                  {SIPSIN_MEANING[postnatal.daeun_sipsin[1].sipsin_name] ?? postnatal.daeun_sipsin[1].domain}
-                </KkachiTip>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
     </div>
   );

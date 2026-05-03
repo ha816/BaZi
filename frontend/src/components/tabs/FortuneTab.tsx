@@ -2,6 +2,7 @@ import type { NatalResult, PostnatalResult } from "@/types/analysis";
 import { ganjiToElements } from "@/lib/elementColors";
 import DomainBarChart from "@/components/DomainBarChart";
 import KkachiTip from "@/components/KkachiTip";
+import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 
 const PILLAR_LABEL_MAP: Record<string, string> = {
   "년주": "조상·사회 영역", "월주": "부모·직장 영역",
@@ -148,11 +149,14 @@ export default function FortuneTab({ natal, postnatal }: Props) {
     <div className="space-y-4">
       {/* 대운·세운 총평 */}
       <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">대운·세운 총평</h3>
-        </div>
+        <CollapsibleSectionHeader title="대운·세운 총평">
+          <strong className="text-[var(--color-ink)]">대운(10년)</strong>과 <strong className="text-[var(--color-ink)]">세운(올해)</strong> 두 흐름이 어떻게 만나는지, 충(衝)·합(合)과 도움/억제까지 통합해 풀이해요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
-        <div className="slide-card__body">
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            큰 흐름인 대운과 잔물결인 세운이 만나는 지점에서 올해의 분위기가 결정돼요.
+          </KkachiTip>
           {postnatal.daeun_sipsin.length >= 2 && (
             <DaeunSeunDiagram
               myElement={natal.my_element.name}
@@ -205,11 +209,14 @@ export default function FortuneTab({ natal, postnatal }: Props) {
 
       {/* 영역별 운세 */}
       <div className="slide-card">
-        <div className="slide-card__header">
-          <h3 className="font-heading text-base font-semibold text-[var(--color-ink)]">영역별 운세</h3>
-        </div>
+        <CollapsibleSectionHeader title="영역별 운세">
+          직장·재물·관계 등 <strong className="text-[var(--color-ink)]">삶의 영역마다</strong> 올해 운의 강도가 달라요. 십신(十神) 분포로 각 영역에 들어오는 기운의 점수를 매겼어요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
-        <div className="slide-card__body">
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            어떤 영역에서 운이 잘 풀리고 어떤 영역에서 조심해야 할지 한눈에 봐요.
+          </KkachiTip>
           <DomainBarChart scores={postnatal.domain_scores} />
           <div className="mt-5 pt-5 border-t border-[var(--color-border-light)] space-y-1">
             {(() => {

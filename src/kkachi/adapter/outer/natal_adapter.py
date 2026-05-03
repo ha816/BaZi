@@ -182,8 +182,9 @@ class PostnatalAdapter(PostnatalPort):
         )
 
     def _get_upcoming_months(self, count: int = 6) -> list[dict]:
-        """이번달 포함 count개월 ganji 정보 반환 (용신 매칭 표시 포함)."""
+        """이번달 포함 count개월 ganji 정보 + 일간 십신 + 용신 매칭 반환."""
         yongshin = self.natal.yongshin
+        day_stem = self.natal.saju.stem_of_day_pillar
         anchor = max(datetime.now(), datetime(self.year, 1, 1))
         results: list[dict] = []
         for offset in range(count):
@@ -194,12 +195,16 @@ class PostnatalAdapter(PostnatalPort):
             month_pillar = saju[Pillar.月柱]
             stem_el = month_pillar.stem.element
             branch_el = month_pillar.branch.element
+            stem_sipsin = Sipsin.of(day_stem, month_pillar.stem)
+            branch_sipsin = Sipsin.of(day_stem, month_pillar.branch)
             results.append({
                 "year": target_year,
                 "month": target_month,
                 "ganji": str(month_pillar),
                 "stem_element": stem_el.name,
                 "branch_element": branch_el.name,
+                "stem_sipsin": {"name": stem_sipsin.name, "domain": stem_sipsin.domain},
+                "branch_sipsin": {"name": branch_sipsin.name, "domain": branch_sipsin.domain},
                 "matches_yongshin": yongshin in (stem_el, branch_el),
             })
         return results
@@ -314,7 +319,7 @@ class PostnatalAdapter(PostnatalPort):
             for i, ganji in enumerate(sequence)
         ]
 
-    def _get_daeun_seq(self, forward: bool, count: int = 8) -> list[str]:
+    def _get_daeun_seq(self, forward: bool, count: int = 10) -> list[str]:
         month = self.natal.saju.pillars[Pillar.月柱]
         stem_idx = month.stem.order
         branch_idx = month.branch.order

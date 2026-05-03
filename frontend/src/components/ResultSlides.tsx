@@ -6,6 +6,7 @@ import type { AnalysisResult, NatalResult } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import NatalTab from "./tabs/NatalTab";
 import YongshinTab from "./tabs/YongshinTab";
+import WolUnTab from "./tabs/WolUnTab";
 import DaeunTab from "./tabs/DaeunTab";
 import SeunTab from "./tabs/SeunTab";
 import FortuneTab from "./tabs/FortuneTab";
@@ -60,7 +61,7 @@ function StickySajuBar({ natal }: { natal: NatalResult }) {
 const FEATURE_TABS = [
   { id: "natal",    emoji: "🌱", label: "만세력" },
   { id: "yongshin", emoji: "🔮", label: "용신·삼재" },
-  { id: "daeun",    emoji: "🌊", label: "대운&세운" },
+  { id: "daeun",    emoji: "🌊", label: "대운·세운" },
   { id: "zodiac",   emoji: "🐾", label: "십이지신" },
   { id: "fengshui", emoji: "🧭", label: "풍수" },
   { id: "advice",   emoji: "💬", label: "종합조언" },
@@ -172,6 +173,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
           <div className="space-y-4">
             <DaeunTab {...tabProps} />
             <SeunTab {...tabProps} />
+            <WolUnTab {...tabProps} />
             <FortuneTab {...tabProps} />
           </div>
         )}

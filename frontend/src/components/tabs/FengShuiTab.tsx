@@ -2,7 +2,7 @@ import type { NatalResult } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import InterpretSection from "@/components/InterpretSection";
 import KkachiTip from "@/components/KkachiTip";
-import SectionHeader from "@/components/SectionHeader";
+import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 
 interface Props {
   natal: NatalResult;
@@ -66,14 +66,14 @@ export default function FengShuiTab({ natal, name }: Props) {
     <div className="space-y-4">
       {/* 나의 풍수 + 행운의 방위 통합 카드 */}
       <div className="slide-card" style={{ borderColor: elInfo.borderColor }}>
-        <div className="slide-card__header">
-          <SectionHeader emoji="🧭" title="나의 풍수" noMargin />
-          <p className="text-xs text-[var(--color-ink-muted)] mt-1">
-            {trigram} — {TRIGRAM_DESC[trigram.split("(")[0]] ?? ""}
-          </p>
-        </div>
+        <CollapsibleSectionHeader title="나의 풍수">
+          생년 기준으로 산출한 <strong className="text-[var(--color-ink)]">쿠아 넘버(九星)</strong>와 <strong className="text-[var(--color-ink)]">팔괘(八卦)</strong>로 본인에게 어울리는 방위·색상을 알려드려요. 동사택/서사택 그룹에 따라 길한 방위가 달라요.
+        </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            나의 본명괘(本命卦)는 <strong>{trigram.split("(")[0]}</strong>이에요. {TRIGRAM_DESC[trigram.split("(")[0]] ?? ""}
+          </KkachiTip>
           {/* 쿠아 타일 + 그룹 */}
           <div className="flex items-start gap-5">
             <div
@@ -141,12 +141,15 @@ export default function FengShuiTab({ natal, name }: Props) {
 
       {/* 피해야 할 방위 + 인테리어 개운법 */}
       <div className="slide-card">
-        <div className="slide-card__body space-y-3">
-          <InterpretSection title="" blocks={otherBlocks} />
-          <KkachiTip label="풍수 활용법">
-            {name ? `${name}님, ` : ""}방위를 맞추기 어려울 때는 행운 색상 소품부터 시작해보세요.
-            작은 변화도 공간의 기운을 바꿀 수 있어요.
+        <CollapsibleSectionHeader title="개운법(開運法)">
+          공간을 활용한 풍수 개운 방법이에요. <strong className="text-[var(--color-ink)]">색상·소품·방위</strong>를 일상에 들이면 운의 결이 달라져요. 피해야 할 방위는 가능하면 침대·책상 머리에 두지 않는 것이 좋아요.
+        </CollapsibleSectionHeader>
+        <div className="divider" />
+        <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            {name ? `${name}님, ` : ""}방위를 맞추기 어려울 땐 행운 색상 소품부터 시작해보세요. 작은 변화도 공간의 기운을 바꿀 수 있어요.
           </KkachiTip>
+          <InterpretSection title="" blocks={otherBlocks} />
         </div>
       </div>
     </div>
