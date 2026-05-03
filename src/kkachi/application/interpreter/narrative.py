@@ -76,6 +76,19 @@ def _first_keyword(keyword: str) -> str:
     return keyword.split(",")[0].strip()
 
 
+def _josa_neun(text: str) -> str:
+    """은/는 자동 선택 — 마지막 글자 받침 유무로 판별."""
+    if not text:
+        return "은"
+    code = ord(text[-1])
+    has_jongseong = 0xAC00 <= code <= 0xD7A3 and (code - 0xAC00) % 28 != 0
+    return "은" if has_jongseong else "는"
+
+
+_UNSEONG_ENDINGS: list[str] = ["시기예요", "단계예요", "흐름이에요"]
+_SINSAL_ENDINGS: list[str] = ["결이 짙어요", "기운이 강해요", "흐름이 두드러져요"]
+
+
 class NatalNarrativeInterpreter:
     """사주별 동적 풀이 텍스트 생성기 — 카드 인트로·스토리를 plain text로 합성."""
 
@@ -168,11 +181,10 @@ class NatalNarrativeInterpreter:
             linker = "" if is_first else (" 그러다 " if is_last else " 이어서 ")
             era_text = "·".join(g["eras"])
             realm_text = "·".join(dict.fromkeys(seg for r in g["realms"] for seg in r.split("·")))
-            grouped_adj = "는 모두" if len(g["eras"]) > 1 else "은"
-            chunk = f"{linker}{era_text}{grouped_adj} {g['korean']}({g['hanja']}) — {g['verb']} 시기예요."
-            if realm_text:
-                chunk += f" 이 시기엔 {realm_text} 영역에서 그 기운이 가장 진하게 작동해요."
-            parts.append(chunk)
+            josa = "는 모두" if len(g["eras"]) > 1 else _josa_neun(era_text)
+            ending = _UNSEONG_ENDINGS[i % len(_UNSEONG_ENDINGS)]
+            realm_part = f"{realm_text} 영역에서 " if realm_text else ""
+            parts.append(f"{linker}{era_text}{josa} {g['korean']}({g['hanja']}) — {realm_part}{g['verb']} {ending}.")
         return "".join(parts)
 
     def _sibi_sinsal_story(self, natal: NatalInfo, name: str) -> str:
@@ -217,12 +229,11 @@ class NatalNarrativeInterpreter:
             linker = "" if is_first else (" 그러다 " if is_last else " 이어서 ")
             era_text = "·".join(g["eras"]) + f"({'·'.join(g['labels'])})"
             realm_text = "·".join(dict.fromkeys(seg for r in g["realms"] for seg in r.split("·")))
-            grouped_adj = "는 둘 다" if len(g["eras"]) > 1 else "은"
+            josa = "는 둘 다" if len(g["eras"]) > 1 else _josa_neun("".join(g["eras"]))
             hanja_part = f"({g['hanja']})" if g["hanja"] else ""
-            chunk = f"{linker}{era_text}{grouped_adj} {g['sName']}{hanja_part} — {g['meaning']}의 기운이에요."
-            if realm_text:
-                chunk += f" 이 시기 {realm_text} 영역에서 그 결이 드러납니다."
-            parts.append(chunk)
+            ending = _SINSAL_ENDINGS[i % len(_SINSAL_ENDINGS)]
+            realm_part = f"{realm_text} 영역에서 " if realm_text else ""
+            parts.append(f"{linker}{era_text}{josa} {g['sName']}{hanja_part} — {realm_part}{g['meaning']}의 {ending}.")
         return "".join(parts)
 
     def _sinsal_narrative(self, natal: NatalInfo, name: str) -> str:
