@@ -10,9 +10,11 @@ const LEVEL_LABEL: Record<string, string> = { high: "좋음", medium: "보통", 
 
 interface Props {
   scores: Record<string, DomainScore>;
+  /** 영역별 월운 뱃지 — 예: { "재물운": ["편재(偏財)"] } */
+  monthBadges?: Record<string, string[]>;
 }
 
-export default function DomainBarChart({ scores }: Props) {
+export default function DomainBarChart({ scores, monthBadges = {} }: Props) {
   const entries = Object.entries(scores);
 
   return (
@@ -21,6 +23,7 @@ export default function DomainBarChart({ scores }: Props) {
         {entries.map(([name, info]) => {
           const colors = LEVEL_COLORS[info.level] ?? LEVEL_COLORS.low;
           const isLow = info.level === "low";
+          const badges = monthBadges[name] ?? [];
           return (
             <div
               key={name}
@@ -51,6 +54,18 @@ export default function DomainBarChart({ scores }: Props) {
                   {Math.round(info.score / 4 * 100)}%
                 </span>
               </div>
+              {badges.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {badges.map((b) => (
+                    <span key={b}
+                      className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full border"
+                      style={{ color: colors.color, borderColor: colors.borderColor, backgroundColor: "var(--color-card)" }}
+                    >
+                      이번달 +{b}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed">{info.reason}</p>
             </div>
           );

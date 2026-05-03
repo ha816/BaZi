@@ -74,7 +74,7 @@ export default function WolUnTab({ natal, postnatal }: Props) {
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            이번달과 가까운 달의 월운을 살펴보세요. 매달 바뀌는 결이 한 달의 분위기를 만들어요.
+            가까운 달의 월운을 보고 나와의 조화를 살펴보세요.
           </KkachiTip>
           <div className="grid grid-cols-4 gap-2">
             {months.map((m, i) => {

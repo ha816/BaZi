@@ -61,7 +61,7 @@ function StickySajuBar({ natal }: { natal: NatalResult }) {
 const FEATURE_TABS = [
   { id: "natal",    emoji: "🌱", label: "만세력" },
   { id: "yongshin", emoji: "🔮", label: "용신·삼재" },
-  { id: "daeun",    emoji: "🌊", label: "대운·세운" },
+  { id: "daeun",    emoji: "🌊", label: "시운(時運)" },
   { id: "zodiac",   emoji: "🐾", label: "십이지신" },
   { id: "fengshui", emoji: "🧭", label: "풍수" },
   { id: "advice",   emoji: "💬", label: "종합조언" },

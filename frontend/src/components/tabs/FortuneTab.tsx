@@ -1,138 +1,207 @@
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
-import { ganjiToElements } from "@/lib/elementColors";
+import { getElementInfo } from "@/lib/elementColors";
 import DomainBarChart from "@/components/DomainBarChart";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
+
+const STEM_ELEMENT: Record<string, string> = {
+  甲:"木", 乙:"木", 丙:"火", 丁:"火", 戊:"土",
+  己:"土", 庚:"金", 辛:"金", 壬:"水", 癸:"水",
+};
+const BRANCH_ELEMENT: Record<string, string> = {
+  子:"水", 丑:"土", 寅:"木", 卯:"木", 辰:"土", 巳:"火",
+  午:"火", 未:"土", 申:"金", 酉:"金", 戌:"土", 亥:"水",
+};
+
+// 합화 오행 — 천간합 5쌍 + 지지육합 6쌍 (양방향 키)
+const COMBINE_OHENG: Record<string, string> = {
+  "甲己":"土", "己甲":"土", "乙庚":"金", "庚乙":"金",
+  "丙辛":"水", "辛丙":"水", "丁壬":"木", "壬丁":"木", "戊癸":"火", "癸戊":"火",
+  "子丑":"土", "丑子":"土", "寅亥":"木", "亥寅":"木",
+  "卯戌":"火", "戌卯":"火", "辰酉":"金", "酉辰":"金", "巳申":"水", "申巳":"水", "午未":"土", "未午":"土",
+};
+
+const ELEMENT_TO_COLOR: Record<string, string> = {
+  "木": "#1B6B3A", "火": "#B02020", "土": "#8A4F00", "金": "#3D3D3D", "水": "#0F4F8A",
+};
+
+const BRANCH_KOR: Record<string, string> = {
+  子:"자", 丑:"축", 寅:"인", 卯:"묘", 辰:"진", 巳:"사",
+  午:"오", 未:"미", 申:"신", 酉:"유", 戌:"술", 亥:"해",
+};
+
+function CheonganCircleDiagram() {
+  const CX = 100, CY = 100, PR = 75, NR = 13;
+  const STEMS = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+  const STEM_KOR_LOCAL: Record<string, string> = {
+    甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
+    己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
+  };
+  function pos(i: number): [number, number] {
+    const a = (-90 + i * 36) * Math.PI / 180;
+    return [CX + PR * Math.cos(a), CY + PR * Math.sin(a)];
+  }
+  function chordSeg(i1: number, i2: number) {
+    const [x1,y1] = pos(i1), [x2,y2] = pos(i2);
+    const dx = x2-x1, dy = y2-y1, l = Math.sqrt(dx*dx+dy*dy);
+    const ux = dx/l, uy = dy/l;
+    return { x1: x1+NR*ux, y1: y1+NR*uy, x2: x2-NR*ux, y2: y2-NR*uy };
+  }
+  // 천간합 5쌍 — 모두 정반대 위치(5칸 차이)
+  const COMBINE_PAIRS: [number, number][] = [[0,5],[1,6],[2,7],[3,8],[4,9]];
+  return (
+    <svg viewBox="0 0 200 200" className="w-2/5 mx-auto block">
+      {COMBINE_PAIRS.map(([a,b]) => {
+        const s = chordSeg(a,b);
+        return <line key={`tc${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+          stroke="#1B6B3A" strokeWidth={1.2} opacity={0.5} />;
+      })}
+      {STEMS.map((st, i) => {
+        const [x,y] = pos(i);
+        const elColor = ELEMENT_TO_COLOR[STEM_ELEMENT[st]] ?? "#78716C";
+        return (
+          <g key={st}>
+            <circle cx={x} cy={y} r={NR} fill="white" stroke={elColor} strokeWidth={1.5} />
+            <text x={x} y={y - 2} textAnchor="middle" dominantBaseline="central"
+              fontSize={13} fontWeight={700} fill={elColor} style={{ fontFamily: "serif" }}>
+              {st}
+            </text>
+            <text x={x} y={y + 8} textAnchor="middle" dominantBaseline="central"
+              fontSize={7} fill={elColor} opacity={0.85}>
+              {STEM_KOR_LOCAL[st]}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function JijiCircleDiagram() {
+  const CX = 100, CY = 100, PR = 75, NR = 13;
+  const BRANCHES = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+  function pos(i: number): [number, number] {
+    const a = (-90 + i * 30) * Math.PI / 180;
+    return [CX + PR * Math.cos(a), CY + PR * Math.sin(a)];
+  }
+  function chordSeg(i1: number, i2: number) {
+    const [x1,y1] = pos(i1), [x2,y2] = pos(i2);
+    const dx = x2-x1, dy = y2-y1, l = Math.sqrt(dx*dx+dy*dy);
+    const ux = dx/l, uy = dy/l;
+    return { x1: x1+NR*ux, y1: y1+NR*uy, x2: x2-NR*ux, y2: y2-NR*uy };
+  }
+  // 6충: 정반대(6칸 차이)
+  const CLASH_PAIRS: [number, number][] = [[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
+  // 6육합
+  const COMBINE_PAIRS: [number, number][] = [[0,1],[2,11],[3,10],[4,9],[5,8],[6,7]];
+  return (
+    <svg viewBox="0 0 200 200" className="w-2/5 mx-auto block">
+      {CLASH_PAIRS.map(([a,b]) => {
+        const s = chordSeg(a,b);
+        return <line key={`c${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+          stroke="#C0392B" strokeWidth={1.2} opacity={0.5} />;
+      })}
+      {COMBINE_PAIRS.map(([a,b]) => {
+        const s = chordSeg(a,b);
+        return <line key={`h${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
+          stroke="#1B6B3A" strokeWidth={1.2} opacity={0.5} />;
+      })}
+      {BRANCHES.map((br, i) => {
+        const [x,y] = pos(i);
+        const elColor = ELEMENT_TO_COLOR[BRANCH_ELEMENT[br]] ?? "#78716C";
+        return (
+          <g key={br}>
+            <circle cx={x} cy={y} r={NR} fill="white" stroke={elColor} strokeWidth={1.5} />
+            <text x={x} y={y - 2} textAnchor="middle" dominantBaseline="central"
+              fontSize={13} fontWeight={700} fill={elColor} style={{ fontFamily: "serif" }}>
+              {br}
+            </text>
+            <text x={x} y={y + 8} textAnchor="middle" dominantBaseline="central"
+              fontSize={7} fill={elColor} opacity={0.85}>
+              {BRANCH_KOR[br]}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 const PILLAR_LABEL_MAP: Record<string, string> = {
   "년주": "조상·사회 영역", "월주": "부모·직장 영역",
   "일주": "나·배우자 영역", "시주": "자녀·미래 영역",
 };
 
-const OHAENG_IDX: Record<string, number> = { '木':0, '火':1, '土':2, '金':3, '水':4 };
-const OHAENG_KOR = ['나무','불','흙','쇠','물'];
-const OHAENG_COLORS = ['#1B6B3A','#B02020','#8A4F00','#3D3D3D','#0F4F8A'];
-const OHAENG_BGS = ['#C8E6D4','#F8CCC8','#F5DCAA','#E0E0E0','#C4DDF5'];
-const OHAENG_BORDERS = ['#6DB890','#E07070','#D4A060','#A0A0A0','#6AAAD8'];
-const SAENG_PAIRS: [number, number][] = [[0,1],[1,2],[2,3],[3,4],[4,0]];
-const GEUK_PAIRS: [number, number][] = [[0,2],[1,3],[2,4],[3,0],[4,1]];
+const SIPSIN_KOR: Record<string, string> = {
+  "比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관",
+  "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관",
+  "偏印": "편인", "正印": "정인",
+};
 
-function DaeunSeunDiagram({ myElement, daeunStemElement, daeunBranchElement, seunStemElement, seunBranchElement }: {
-  myElement: string; daeunStemElement: string; daeunBranchElement: string;
-  seunStemElement: string; seunBranchElement: string;
+const DOMAIN_BY_SIPSIN: Record<string, string> = {
+  "偏財": "재물운", "正財": "재물운",
+  "偏官": "직장·사회운", "正官": "직장·사회운",
+  "偏印": "학업·자격운", "正印": "학업·자격운",
+  "食神": "표현·건강운", "傷官": "표현·건강운",
+  "比肩": "대인관계", "劫財": "대인관계",
+};
+
+const STEM_KOR: Record<string, string> = {
+  甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
+  己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
+};
+
+function DaeunSeunTable({ dayStem, dayBranch, daeunGanji, seunGanji }: {
+  dayStem: string; dayBranch: string; daeunGanji: string; seunGanji: string;
 }) {
-  const CX = 100, CY = 88, PR = 66, NR = 20;
-  function pentaPos(i: number): [number, number] {
-    const a = (-90 + i * 72) * Math.PI / 180;
-    return [CX + PR * Math.cos(a), CY + PR * Math.sin(a)];
-  }
-  function arrowSeg(i1: number, i2: number) {
-    const [x1,y1] = pentaPos(i1), [x2,y2] = pentaPos(i2);
-    const dx = x2-x1, dy = y2-y1, l = Math.sqrt(dx*dx+dy*dy);
-    const ux = dx/l, uy = dy/l;
-    return { x1: x1+NR*ux, y1: y1+NR*uy, x2: x2-(NR+4)*ux, y2: y2-(NR+4)*uy };
-  }
-  const myIdx          = OHAENG_IDX[myElement]          ?? -1;
-  const daeunStemIdx   = OHAENG_IDX[daeunStemElement]  ?? -1;
-  const daeunBranchIdx = OHAENG_IDX[daeunBranchElement] ?? -1;
-  const seunStemIdx    = OHAENG_IDX[seunStemElement]   ?? -1;
-  const seunBranchIdx  = OHAENG_IDX[seunBranchElement] ?? -1;
-  const activeIdxs = new Set([myIdx, daeunStemIdx, daeunBranchIdx, seunStemIdx, seunBranchIdx].filter(i => i >= 0));
-  const daeunIdxs = new Set([daeunStemIdx, daeunBranchIdx].filter(i => i >= 0));
-  const seunIdxs  = new Set([seunStemIdx, seunBranchIdx].filter(i => i >= 0));
-  function isHi(a: number, b: number) {
-    if (!activeIdxs.has(a) || !activeIdxs.has(b)) return false;
-    if (daeunIdxs.has(a) && daeunIdxs.has(b)) return false;
-    if (seunIdxs.has(a)  && seunIdxs.has(b))  return false;
-    return true;
-  }
-
+  const cols = [
+    { key: "일주", label: "일주(日柱)", stem: dayStem, branch: dayBranch, isDay: true },
+    { key: "대운", label: "대운(大運)", stem: daeunGanji[0] ?? "", branch: daeunGanji[1] ?? "", isDay: false },
+    { key: "세운", label: "세운(歲運)", stem: seunGanji[0] ?? "", branch: seunGanji[1] ?? "", isDay: false },
+  ];
   return (
-    <div className="rounded-lg bg-[var(--color-ivory)] border border-[var(--color-border-light)] p-3 mb-4">
-      <p className="text-[10px] font-semibold text-[var(--color-ink-muted)] mb-2">대운·세운 오행 관계도</p>
-      <svg viewBox="0 0 200 182" className="w-2/3 mx-auto block">
-        <defs>
-          <marker id="ds-saeng" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5 z" fill="#1B6B3A" opacity="0.7" />
-          </marker>
-          <marker id="ds-geuk" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-            <path d="M0,0 L0,5 L5,2.5 z" fill="#C0392B" opacity="0.6" />
-          </marker>
-        </defs>
-        {SAENG_PAIRS.map(([a,b]) => {
-          const s = arrowSeg(a,b); const hi = isHi(a,b);
-          return <line key={`s${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-            stroke="#1B6B3A" strokeWidth={hi?3:1.2} strokeOpacity={hi?1:0.2} markerEnd="url(#ds-saeng)" />;
-        })}
-        {GEUK_PAIRS.map(([a,b]) => {
-          const s = arrowSeg(a,b); const hi = isHi(a,b);
-          return <line key={`g${a}${b}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-            stroke="#C0392B" strokeWidth={hi?3:1} strokeOpacity={hi?0.9:0.15}
-            strokeDasharray={hi?undefined:"4,3"} markerEnd="url(#ds-geuk)" />;
-        })}
-        {(['木','火','土','金','水'] as const).map((elem, i) => {
-          const [x,y] = pentaPos(i);
-          const isMe        = i === myIdx;
-          const isDaeunStem = i === daeunStemIdx, isDaeunBranch = i === daeunBranchIdx;
-          const isSeunStem  = i === seunStemIdx,  isSeunBranch  = i === seunBranchIdx;
-          const isDaeun = isDaeunStem || isDaeunBranch;
-          const isSeun  = isSeunStem  || isSeunBranch;
-          const active  = isMe || isDaeun || isSeun;
-          const labels: string[] = [];
-          if (isMe) labels.push('나');
-          if (isDaeunStem && isDaeunBranch) labels.push('대운天地');
-          else { if (isDaeunStem) labels.push('대운天'); if (isDaeunBranch) labels.push('대운地'); }
-          if (isSeunStem && isSeunBranch) labels.push('세운天地');
-          else { if (isSeunStem) labels.push('세운天'); if (isSeunBranch) labels.push('세운地'); }
-          const strokeWidth = isMe ? 3.5 : active ? 2 : 1;
-          const strokeDash  = isMe ? undefined : isDaeun && !isSeun ? "6,3" : isSeun && !isDaeun ? "2,2" : undefined;
-          return (
-            <g key={elem}>
-              <circle cx={x} cy={y} r={NR}
-                fill={active ? OHAENG_BGS[i] : '#F5F2EC'}
-                stroke={OHAENG_BORDERS[i]} strokeWidth={strokeWidth}
-                strokeDasharray={strokeDash} opacity={active?1:0.45} />
-              <text x={x} y={y-3} textAnchor="middle" dominantBaseline="middle"
-                fontSize={active?16:13} fontWeight={active?700:400}
-                fill={OHAENG_COLORS[i]} opacity={active?1:0.4} style={{ fontFamily:"serif" }}>
-                {elem}
-              </text>
-              <text x={x} y={y+9} textAnchor="middle" dominantBaseline="middle"
-                fontSize={8.5} fill={OHAENG_COLORS[i]} opacity={active?0.85:0.35}>
-                {OHAENG_KOR[i]}
-              </text>
-              {labels.map((lbl, li) => (
-                <text key={li} x={x} y={y+NR+11+(li*9)} textAnchor="middle" fontSize={7} fontWeight={700}
-                  fill={OHAENG_COLORS[i]}>
-                  {lbl}
-                </text>
-              ))}
-            </g>
-          );
-        })}
-      </svg>
-      <div className="flex items-center gap-4 mt-1 justify-center flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#78716C" strokeWidth="3"/></svg>
-          <span className="text-[9px] text-[var(--color-ink-faint)]">나</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#78716C" strokeWidth="1.5" strokeDasharray="6,3"/></svg>
-          <span className="text-[9px] text-[var(--color-ink-faint)]">대운</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <svg width="14" height="14"><circle cx="7" cy="7" r="6" fill="none" stroke="#78716C" strokeWidth="1.5" strokeDasharray="3,2"/></svg>
-          <span className="text-[9px] text-[var(--color-ink-faint)]">세운</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-[2px] bg-[#1B6B3A] rounded" />
-          <span className="text-[9px] text-[var(--color-ink-faint)]">生</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 border-t-2 border-dashed border-[#C0392B]" />
-          <span className="text-[9px] text-[var(--color-ink-faint)]">剋</span>
-        </div>
-      </div>
+    <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
+      <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
+        <colgroup>
+          <col style={{ width: "72px" }} />
+          <col />
+          <col />
+          <col />
+        </colgroup>
+        <thead>
+          <tr style={{ backgroundColor: "var(--color-ivory)" }}>
+            <th className="text-[10px] font-medium text-[var(--color-ink-faint)] py-1.5 px-2"></th>
+            {cols.map(({ key, label, isDay }) => (
+              <th key={key} className="text-[10px] font-semibold py-1.5 px-2"
+                style={{ color: isDay ? "var(--color-gold)" : "var(--color-ink-muted)" }}>
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-1.5 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">천간(天干)</td>
+            {cols.map(({ key, stem, isDay }) => (
+              <td key={key} className="py-1.5 px-2">
+                <span className="font-heading text-sm font-bold leading-tight text-[var(--color-ink)]">
+                  {stem ? `${STEM_KOR[stem] ?? stem}(${stem})` : "—"}
+                </span>
+              </td>
+            ))}
+          </tr>
+          <tr className="border-t border-[var(--color-border-light)]">
+            <td className="text-[10px] py-1.5 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">지지(地支)</td>
+            {cols.map(({ key, branch, isDay }) => (
+              <td key={key} className="py-1.5 px-2">
+                <span className="font-heading text-sm font-bold leading-tight text-[var(--color-ink)]">
+                  {branch ? `${BRANCH_KOR[branch] ?? branch}(${branch})` : "—"}
+                </span>
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -143,82 +212,168 @@ interface Props {
 }
 
 export default function FortuneTab({ natal, postnatal }: Props) {
-  const seunEls = ganjiToElements(postnatal.seun_ganji);
+  // 충합 데이터 — 각 항목별로 incoming/target/pillar 모두 보여줌
+  const allClashes = [...postnatal.seun_clashes, ...postnatal.daeun_clashes];
+  const allCombines = [...postnatal.seun_combines, ...postnatal.daeun_combines];
+  const hasClashCombine = allClashes.length > 0 || allCombines.length > 0;
+
+  // 월운 영역 뱃지 — 이번달 천간/지지 십신을 영역별로 매핑
+  const currentMonth = postnatal.upcoming_months?.[0];
+  const monthBadges: Record<string, string[]> = {};
+  if (currentMonth) {
+    for (const s of [currentMonth.stem_sipsin, currentMonth.branch_sipsin]) {
+      const domain = DOMAIN_BY_SIPSIN[s.name];
+      if (!domain) continue;
+      const label = `${SIPSIN_KOR[s.name] ?? s.name}(${s.name})`;
+      (monthBadges[domain] ??= []).push(label);
+    }
+  }
 
   return (
     <div className="space-y-4">
-      {/* 대운·세운 총평 */}
-      <div className="slide-card">
-        <CollapsibleSectionHeader title="대운·세운 총평">
-          <strong className="text-[var(--color-ink)]">대운(10년)</strong>과 <strong className="text-[var(--color-ink)]">세운(올해)</strong> 두 흐름이 어떻게 만나는지, 충(衝)·합(合)과 도움/억제까지 통합해 풀이해요.
-        </CollapsibleSectionHeader>
-        <div className="divider" />
-        <div className="slide-card__body space-y-4">
-          <KkachiTip>
-            큰 흐름인 대운과 잔물결인 세운이 만나는 지점에서 올해의 분위기가 결정돼요.
-          </KkachiTip>
-          {postnatal.daeun_sipsin.length >= 2 && (
-            <DaeunSeunDiagram
-              myElement={natal.my_element.name}
-              daeunStemElement={postnatal.daeun_sipsin[0].element}
-              daeunBranchElement={postnatal.daeun_sipsin[1].element}
-              seunStemElement={seunEls.stem}
-              seunBranchElement={seunEls.branch}
-            />
-          )}
-          <div className="space-y-1">
-            {postnatal.annual_fortune.map((block, i) => (
-              block.description && <KkachiTip key={i}>{block.description}</KkachiTip>
-            ))}
-            {postnatal.major_fortune.flatMap((block, i) =>
-              block.tips.map((tip, j) => (
-                <KkachiTip key={`${i}-${j}`} label={tip.label || undefined}>{tip.text}</KkachiTip>
-              ))
+      {/* 충합(衝合) */}
+      {(hasClashCombine || postnatal.daeun_sipsin.length >= 2) && (
+        <div className="slide-card">
+          <CollapsibleSectionHeader title="충합(衝合)">
+            <p>
+              사주팔자에 대운·세운이 들어오면서 부딪히는 게 <strong className="text-[var(--color-ink)]">충(衝)</strong>, 맞붙는 게 <strong className="text-[var(--color-ink)]">합(合)</strong>이에요.
+            </p>
+            <p>
+              천간끼리의 합을 <strong className="text-[var(--color-ink)]">천간합(天干合)</strong>, 지지끼리의 합과 충을 각각 <strong className="text-[var(--color-ink)]">지지합(地支合)</strong>, <strong className="text-[var(--color-ink)]">지지충(地支冲)</strong>이라고 합니다.
+            </p>
+            <p>
+              아래는 <strong className="text-[var(--color-ink)]">십간(十干)</strong>을 시계처럼 원형 배치한 그림이에요. 정반대 위치의 다섯 쌍이 천간합이에요.
+            </p>
+            <CheonganCircleDiagram />
+            <p>
+              <strong className="text-[var(--color-ink)]">십이지지(十二地支)</strong>도 시계처럼 원형으로 배치한 그림이에요. 정반대의 여섯 짝은 지지충, 맞붙는 여섯 짝은 지지합이라 합니다.
+            </p>
+            <JijiCircleDiagram />
+            <div className="flex items-center gap-3 justify-center flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-[1.5px] bg-[#C0392B]" />
+                <span className="text-[10px]">충</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-[1.5px] bg-[#1B6B3A]" />
+                <span className="text-[10px]">합</span>
+              </div>
+            </div>
+          </CollapsibleSectionHeader>
+          <div className="divider" />
+          <div className="slide-card__body space-y-4">
+            <KkachiTip>
+              나와 대운·세운이 어느 영역에서 부딪히고 어떤 영역에 조화로운지 보세요.
+            </KkachiTip>
+            {postnatal.daeun_sipsin.length >= 2 && (
+              <DaeunSeunTable
+                dayStem={natal.day_stem}
+                dayBranch={natal.pillars[2]?.[1] ?? ""}
+                daeunGanji={postnatal.daeun_sipsin[0].char + postnatal.daeun_sipsin[1].char}
+                seunGanji={postnatal.seun_ganji}
+              />
             )}
-            {/* 충합 — 총평에 통합 서술 */}
-            {(() => {
-              const allClashes = [...postnatal.seun_clashes, ...postnatal.daeun_clashes];
-              const allCombines = [...postnatal.seun_combines, ...postnatal.daeun_combines];
-              const clashGroups: Record<string, string[]> = {};
-              for (const c of allClashes) {
-                (clashGroups[c.incoming] ??= []).push(PILLAR_LABEL_MAP[c.pillar] ?? c.pillar);
-              }
-              const combineGroups: Record<string, { areas: string[]; type: string }> = {};
-              for (const c of allCombines) {
-                if (!combineGroups[c.incoming]) combineGroups[c.incoming] = { areas: [], type: c.type };
-                combineGroups[c.incoming].areas.push(PILLAR_LABEL_MAP[c.pillar] ?? c.pillar);
-              }
-              return (
-                <>
-                  {Object.entries(clashGroups).map(([char, areas]) => (
-                    <KkachiTip key={`clash-${char}`} label="충(衝) — 주의">
-                      {char} 기운이 내 사주의 {areas.join("·")}과 부딪혀요. 이 영역에서 갑작스러운 변화나 갈등이 생길 수 있으니 유연하게 대처하세요.
-                    </KkachiTip>
-                  ))}
-                  {Object.entries(combineGroups).map(([char, { areas, type }]) => (
-                    <KkachiTip key={`combine-${char}`} label="합(合) — 기회">
-                      {char} 기운이 내 사주의 {areas.join("·")}과 합({type})을 이루어요. 이 영역에서 좋은 인연이나 기회가 자연스럽게 열릴 수 있어요.
-                    </KkachiTip>
-                  ))}
-                </>
-              );
-            })()}
+            {hasClashCombine && (
+              <div className="space-y-2">
+                {allClashes.map((c, i) => {
+                  const inEl = BRANCH_ELEMENT[c.incoming];
+                  const tgEl = BRANCH_ELEMENT[c.target];
+                  const inInfo = getElementInfo(inEl);
+                  const tgInfo = getElementInfo(tgEl);
+                  const areaLabel = PILLAR_LABEL_MAP[c.pillar] ?? c.pillar;
+                  return (
+                    <div key={`clash-${i}`}
+                      className="rounded-xl border p-3 space-y-2"
+                      style={{ borderColor: "#E0A8A3", backgroundColor: "#F7EDEC" }}>
+                      <p className="text-[10px] font-semibold" style={{ color: "var(--color-fire)" }}>
+                        지지충(支冲) — {c.pillar}({areaLabel})
+                      </p>
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                            style={{ backgroundColor: inInfo.bgColor, border: `1.5px solid ${inInfo.borderColor}` }}>
+                            <span className="font-heading text-lg font-bold leading-none" style={{ color: inInfo.color }}>{c.incoming}</span>
+                            <span className="text-[8px] mt-0.5" style={{ color: inInfo.color }}>{inInfo.korean}</span>
+                          </div>
+                          <span className="text-[8px] text-[var(--color-ink-faint)]">들어옴</span>
+                        </div>
+                        <span className="text-lg font-bold pb-4" style={{ color: "var(--color-fire)" }}>↔</span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                            style={{ backgroundColor: tgInfo.bgColor, border: `1.5px solid ${tgInfo.borderColor}` }}>
+                            <span className="font-heading text-lg font-bold leading-none" style={{ color: tgInfo.color }}>{c.target}</span>
+                            <span className="text-[8px] mt-0.5" style={{ color: tgInfo.color }}>{tgInfo.korean}</span>
+                          </div>
+                          <span className="text-[8px] text-[var(--color-ink-faint)]">내 사주</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
+                        <strong style={{ color: "var(--color-fire)" }}>{c.incoming}·{c.target}</strong>은 지지 원형에서 정반대 짝이라 부딪히는 <strong>지지충</strong>이에요. <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 갑작스런 변화나 갈등이 생길 수 있으니 유연하게 대처하세요.
+                      </p>
+                    </div>
+                  );
+                })}
+                {allCombines.map((c, i) => {
+                  const isStemHap = c.type === "천간합";
+                  const elMap = isStemHap ? STEM_ELEMENT : BRANCH_ELEMENT;
+                  const inEl = elMap[c.incoming];
+                  const tgEl = elMap[c.target];
+                  const inInfo = getElementInfo(inEl);
+                  const tgInfo = getElementInfo(tgEl);
+                  const harmonyEl = COMBINE_OHENG[`${c.incoming}${c.target}`] ?? "";
+                  const harmonyInfo = harmonyEl ? getElementInfo(harmonyEl) : null;
+                  const areaLabel = PILLAR_LABEL_MAP[c.pillar] ?? c.pillar;
+                  const pairLabel = isStemHap ? "천간합 5쌍" : "지지육합 6쌍";
+                  return (
+                    <div key={`combine-${i}`}
+                      className="rounded-xl border p-3 space-y-2"
+                      style={{ borderColor: "#A8C9B5", backgroundColor: "#EEF4F0" }}>
+                      <p className="text-[10px] font-semibold" style={{ color: "var(--color-wood)" }}>
+                        {c.type} — {c.pillar}({areaLabel})
+                      </p>
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                            style={{ backgroundColor: inInfo.bgColor, border: `1.5px solid ${inInfo.borderColor}` }}>
+                            <span className="font-heading text-lg font-bold leading-none" style={{ color: inInfo.color }}>{c.incoming}</span>
+                            <span className="text-[8px] mt-0.5" style={{ color: inInfo.color }}>{inInfo.korean}</span>
+                          </div>
+                          <span className="text-[8px] text-[var(--color-ink-faint)]">들어옴</span>
+                        </div>
+                        <span className="text-lg font-bold pb-4" style={{ color: "var(--color-wood)" }}>合</span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                            style={{ backgroundColor: tgInfo.bgColor, border: `1.5px solid ${tgInfo.borderColor}` }}>
+                            <span className="font-heading text-lg font-bold leading-none" style={{ color: tgInfo.color }}>{c.target}</span>
+                            <span className="text-[8px] mt-0.5" style={{ color: tgInfo.color }}>{tgInfo.korean}</span>
+                          </div>
+                          <span className="text-[8px] text-[var(--color-ink-faint)]">내 사주</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
+                        <strong style={{ color: "var(--color-wood)" }}>{c.incoming}·{c.target}</strong>은 {pairLabel} 중 하나로 결이 맞아요{harmonyInfo && (<> (합화 <strong style={{ color: harmonyInfo.color }}>{harmonyInfo.korean}({harmonyEl})</strong>)</>)}. <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 좋은 인연이나 기회가 자연스럽게 열릴 수 있어요.
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* 영역별 운세 */}
       <div className="slide-card">
         <CollapsibleSectionHeader title="영역별 운세">
-          직장·재물·관계 등 <strong className="text-[var(--color-ink)]">삶의 영역마다</strong> 올해 운의 강도가 달라요. 십신(十神) 분포로 각 영역에 들어오는 기운의 점수를 매겼어요.
+          직장·재물·관계 등 <strong className="text-[var(--color-ink)]">삶의 영역마다</strong> 올해 운의 강도가 달라요. 대운(10년)·세운(올해) 십신 분포로 점수를 매기고, 이번달 월운 십신을 뱃지로 함께 표시해요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            어떤 영역에서 운이 잘 풀리고 어떤 영역에서 조심해야 할지 한눈에 봐요.
+            어떤 영역에서 운이 잘 풀리고 어떤 영역에서 조심해야 할지 한눈에 봐요. <strong>이번달 +X</strong> 뱃지는 월운에서 그 영역에 추가로 들어오는 기운이에요.
           </KkachiTip>
-          <DomainBarChart scores={postnatal.domain_scores} />
-          <div className="mt-5 pt-5 border-t border-[var(--color-border-light)] space-y-1">
+          <DomainBarChart scores={postnatal.domain_scores} monthBadges={monthBadges} />
+          <div className="space-y-1">
             {(() => {
               const entries = Object.entries(postnatal.domain_scores);
               if (entries.length === 0) return null;
