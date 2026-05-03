@@ -2,6 +2,7 @@
 import type { NatalResult } from "@/types/analysis";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import KkachiTip from "@/components/KkachiTip";
+import PillarOhengGrid from "@/components/PillarOhengGrid";
 
 const OHAENG_KOR = ["나무", "불", "흙", "쇠", "물"];
 const OHAENG_COLORS = ["#1B6B3A", "#B02020", "#8A4F00", "#3D3D3D", "#0F4F8A"];
@@ -156,6 +157,10 @@ export default function OhengAnalysis({ natal }: Props) {
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-5">
+        <KkachiTip>
+          사주팔자 각 글자의 <strong className="text-[var(--color-ink)]">오행</strong>을 보면 타고난 <strong className="text-[var(--color-ink)]">체질·성질</strong>을 볼 수 있어요.
+        </KkachiTip>
+        <PillarOhengGrid natal={natal} />
         <OhaengSourceBreakdown pillars={natal.pillars} pillarElements={natal.pillar_elements} stats={natal.element_stats} />
         <OhaengCountDiagram stats={natal.element_stats} />
         <KkachiTip>{natal.narratives.ohaeng_tip}</KkachiTip>

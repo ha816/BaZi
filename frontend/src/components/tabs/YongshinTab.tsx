@@ -31,6 +31,7 @@ interface Props {
 
 export default function YongshinTab({ natal, postnatal }: Props) {
   const [showYongshin, setShowYongshin] = useState(false);
+  const [showStrength, setShowStrength] = useState(false);
   const yongshinInfo = getElementInfo(natal.yongshin_info.name);
   const kisinName = natal.kisin_info.name;
   const kisinInfo = kisinName ? getElementInfo(kisinName) : null;
@@ -65,7 +66,8 @@ export default function YongshinTab({ natal, postnatal }: Props) {
   const yearItems = [
     { ...makeYear(0), label: "올해" },
     { ...makeYear(1), label: "내년" },
-    ...(nearestYongshinOffset !== null && nearestYongshinOffset !== 0 && nearestYongshinOffset !== 1
+    { ...makeYear(2), label: "내후년" },
+    ...(nearestYongshinOffset !== null && nearestYongshinOffset > 2
       ? [{ ...makeYear(nearestYongshinOffset), label: "가장 가까운 용신의 해" as string | null }]
       : []),
   ];
@@ -83,34 +85,48 @@ export default function YongshinTab({ natal, postnatal }: Props) {
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
-          <div>
-            <div className="relative h-3 rounded-full overflow-hidden bg-[var(--color-parchment)]">
-              <div className="absolute left-1/2 top-0 h-full w-0.5 bg-[var(--color-border-light)] z-10" />
-              <div
-                className="absolute top-0 h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${Math.abs(strengthPct - 50)}%`,
-                  left: strengthPct >= 50 ? "50%" : `${strengthPct}%`,
-                  backgroundColor: strengthColor,
-                }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] mt-1.5">
-              <span className="text-[var(--color-water)]">신약(身弱) −8</span>
-              <span className="font-semibold" style={{ color: strengthColor }}>
-                {natal.strength_value > 0 ? `+${natal.strength_value}` : natal.strength_value} · {natal.strength_label}
-              </span>
-              <span className="text-[var(--color-fire)]">+8 신강(身強)</span>
-            </div>
-          </div>
+          <KkachiTip>
+            나의 일간 <strong className="text-[var(--color-ink)]">{natal.day_stem_korean}({natal.day_stem})</strong>가 사주 안에서 얼마나 단단히 서 있는지 점수로 보여드릴게요. 신강이면 자기 페이스로 밀고 가는 힘이, 신약이면 환경·사람과 함께 펼쳐지는 결이 두드러져요.
+          </KkachiTip>
+          {!showStrength ? (
+            <button
+              onClick={() => setShowStrength(true)}
+              className="btn-shimmer w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:opacity-70"
+            >
+              ✨ 나의 신강·신약 확인하기
+            </button>
+          ) : (
+            <>
+              <div>
+                <div className="relative h-3 rounded-full overflow-hidden bg-[var(--color-parchment)]">
+                  <div className="absolute left-1/2 top-0 h-full w-0.5 bg-[var(--color-border-light)] z-10" />
+                  <div
+                    className="absolute top-0 h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${Math.abs(strengthPct - 50)}%`,
+                      left: strengthPct >= 50 ? "50%" : `${strengthPct}%`,
+                      backgroundColor: strengthColor,
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] mt-1.5">
+                  <span className="text-[var(--color-water)]">신약(身弱) −8</span>
+                  <span className="font-semibold" style={{ color: strengthColor }}>
+                    {natal.strength_value > 0 ? `+${natal.strength_value}` : natal.strength_value} · {natal.strength_label}
+                  </span>
+                  <span className="text-[var(--color-fire)]">+8 신강(身強)</span>
+                </div>
+              </div>
 
-          <img
-            src={STRENGTH_IMG[natal.strength_label] ?? "/kkachi/normal_kkachi_00.png"}
-            alt={natal.strength_label}
-            className="w-1/2 mx-auto block rounded-xl object-cover"
-            onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
-          />
-          <KkachiTip>{natal.narratives.strength_tip}</KkachiTip>
+              <img
+                src={STRENGTH_IMG[natal.strength_label] ?? "/kkachi/normal_kkachi_00.png"}
+                alt={natal.strength_label}
+                className="w-1/2 mx-auto block rounded-xl object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+              />
+              <KkachiTip>{natal.narratives.strength_tip}</KkachiTip>
+            </>
+          )}
         </div>
       </div>
 
@@ -122,6 +138,9 @@ export default function YongshinTab({ natal, postnatal }: Props) {
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
+          <KkachiTip>
+            사주의 균형을 잡아주는 <strong className="text-[var(--color-ink)]">용신(用神)</strong>과 균형을 흐트리는 <strong className="text-[var(--color-ink)]">기신(忌神)</strong>은 5가지 오행 중 한 짝으로 정해져요. 용신이 강한 해·환경에 들어가면 운이 부드럽게 풀려요.
+          </KkachiTip>
           {!showYongshin ? (
             <button
               onClick={() => setShowYongshin(true)}
@@ -165,8 +184,8 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                 {natal.yongshin_info.meaning}
               </p>
 
-              {/* 올해 · 내년 · 가장 가까운 용신의 해 */}
-              <div className={`grid gap-2 ${yearItems.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+              {/* 올해 · 내년 · 내후년 · 가장 가까운 용신의 해 */}
+              <div className={`grid gap-2 ${yearItems.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
                 {yearItems.map(({ year, ganji, stemEl, branchEl, matchesYongshin, label }) => {
                   const stemElInfo = getElementInfo(stemEl);
                   const branchElInfo = getElementInfo(branchEl);
@@ -214,6 +233,9 @@ export default function YongshinTab({ natal, postnatal }: Props) {
           </CollapsibleSectionHeader>
           <div className="divider" />
           <div className="slide-card__body space-y-2.5">
+            <KkachiTip>
+              <strong className="text-[var(--color-ink)]">{yongshinInfo.korean}({natal.yongshin_info.name})</strong> 기운을 끌어오는 4가지 통로 — 색·방향·직업·습관이에요. 한 가지씩만 일상에 들여놔도 운의 결이 부드러워져요.
+            </KkachiTip>
             <div className="rounded-lg p-3"
               style={{ backgroundColor: yongshinInfo.bgColor, border: `1px solid ${yongshinInfo.borderColor}` }}>
               <div className="flex items-center gap-1.5 mb-2">
