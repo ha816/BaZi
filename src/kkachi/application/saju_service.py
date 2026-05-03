@@ -14,7 +14,7 @@ from kkachi.application.interpreter.yongshin import YongshinInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
 from kkachi.application.util.util import year_to_ganji
-from kkachi.domain.ganji import Branch, Stem
+from kkachi.domain.ganji import JIZAN_ROLE_HANJA, Branch, Stem
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -172,10 +172,15 @@ class SajuService(InterpreterPort):
             {"stem_element": sb.stem.element.name, "branch_element": sb.branch.element.name}
             for sb in natal.saju.pillars.values()
         ]
+        pillar_stems_korean = [sb.stem.korean for sb in natal.saju.pillars.values()]
+        pillar_branches_korean = [sb.branch.korean for sb in natal.saju.pillars.values()]
         return NatalResult(
             pillars=[str(sb) for sb in natal.saju.pillars.values()],
             day_stem=day_stem.name,
+            day_stem_korean=day_stem.korean,
             day_stem_yin_yang="양(陽)" if day_stem.is_yang else "음(陰)",
+            pillar_stems_korean=pillar_stems_korean,
+            pillar_branches_korean=pillar_branches_korean,
             pillar_elements=pillar_elements,
             element_stats={o.name: c for o, c in natal.element_stats.items()},
             strength_value=natal.strength,
@@ -183,11 +188,27 @@ class SajuService(InterpreterPort):
             my_element={"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
             yongshin_info={"name": natal.yongshin.name, "meaning": natal.yongshin.meaning},
             sipsin=[{"char": ch, "sipsin_name": s.name, "domain": s.domain} for ch, s in natal.sipsin],
-            sibi_unseong=[{"pillar": p, "unseong_name": u.name, "meaning": u.meaning} for p, u in natal.sibi_unseong],
+            sibi_unseong=[
+                {
+                    "pillar": p,
+                    "unseong_name": u.name,
+                    "unseong_korean": u.korean,
+                    "meaning": u.meaning,
+                    "strength": u.strength,
+                }
+                for p, u in natal.sibi_unseong
+            ],
             sinsal=[{"branch": b.name, "sinsal_korean": s.korean, "meaning": s.meaning} for b, s in natal.sinsal],
             jizan_gan=[
                 [
-                    {"stem": ch, "sipsin_name": s.name, "weight": w, "role": role}
+                    {
+                        "stem": ch,
+                        "stem_korean": Stem.from_char(ch).korean,
+                        "sipsin_name": s.name,
+                        "weight": w,
+                        "role": role,
+                        "role_hanja": JIZAN_ROLE_HANJA.get(role, ""),
+                    }
                     for ch, s, w, role in pillar_jg
                 ]
                 for pillar_jg in natal.jizan_gan

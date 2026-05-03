@@ -8,7 +8,9 @@ export interface SipsinInfo {
 export interface SibiUnseongInfo {
   pillar: string;
   unseong_name: string;
+  unseong_korean: string;
   meaning: string;
+  strength: "strong" | "weak" | "mid";
 }
 
 export interface SinsalInfo {
@@ -57,15 +59,20 @@ export interface PillarElementInfo {
 
 export interface JizanGanItem {
   stem: string;
+  stem_korean: string;
   sipsin_name: string;
   weight: number;
   role: string;
+  role_hanja: string;
 }
 
 export interface NatalResult {
   pillars: string[];
   day_stem: string;
+  day_stem_korean: string;
   day_stem_yin_yang: string;
+  pillar_stems_korean: string[];
+  pillar_branches_korean: string[];
   pillar_elements: PillarElementInfo[];
   element_stats: Record<string, number>;
   strength_value: number;

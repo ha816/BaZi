@@ -75,6 +75,11 @@ class Stem(Enum):
         """천간합(天干合): 나와 합이 되는 천간."""
         return StemCombine.partner_of(self)
 
+    @property
+    def korean(self) -> str:
+        """천간 한국음 — 갑/을/병/정/무/기/경/신/임/계."""
+        return _STEM_KOREAN[self]
+
 
 class Branch(Enum):
     """지지(地支) - 12개의 땅 기운. 子 丑 寅 卯 辰 巳 午 未 申 酉 戌 亥.
@@ -136,6 +141,11 @@ class Branch(Enum):
         """지장간 역할 라벨(여기/중기/본기) — jizan_gan 위치별로 매칭."""
         n = len(_JIZAN_GAN[self])
         return _JIZAN_ROLE_BY_LEN[n]
+
+    @property
+    def korean(self) -> str:
+        """지지 한국음 — 자/축/인/묘/진/사/오/미/신/유/술/해."""
+        return _BRANCH_KOREAN[self]
 
 
 class StemCombine(Enum):
@@ -269,6 +279,30 @@ _JIZAN_ROLE_BY_LEN: dict[int, list[str]] = {
     2: ["여기", "본기"],
     3: ["여기", "중기", "본기"],
 }
+
+JIZAN_ROLE_HANJA: dict[str, str] = {
+    "여기": "餘氣",
+    "중기": "中氣",
+    "본기": "本氣",
+}
+
+_STEM_KOREAN: dict["Stem", str] = {}
+_BRANCH_KOREAN: dict["Branch", str] = {}
+
+
+def _build_korean_readings() -> None:
+    S, B = Stem, Branch
+    _STEM_KOREAN.update({
+        S.甲: "갑", S.乙: "을", S.丙: "병", S.丁: "정", S.戊: "무",
+        S.己: "기", S.庚: "경", S.辛: "신", S.壬: "임", S.癸: "계",
+    })
+    _BRANCH_KOREAN.update({
+        B.子: "자", B.丑: "축", B.寅: "인", B.卯: "묘", B.辰: "진", B.巳: "사",
+        B.午: "오", B.未: "미", B.申: "신", B.酉: "유", B.戌: "술", B.亥: "해",
+    })
+
+
+_build_korean_readings()
 
 
 def _build_jizan_gan() -> None:
@@ -404,6 +438,20 @@ class SibiUnseong(Enum):
     def meaning(self) -> str:
         return self.value
 
+    @property
+    def korean(self) -> str:
+        """운성 한국음 — 장생/목욕/관대/건록/제왕/쇠/병/사/묘/절/태/양."""
+        return _UNSEONG_KOREAN[self]
+
+    @property
+    def strength(self) -> str:
+        """운성 에너지 강도 — strong(建祿·帝旺·冠帶·長生) / weak(病·死·絕) / mid(나머지)."""
+        if self in _STRONG_UNSEONG:
+            return "strong"
+        if self in _WEAK_UNSEONG:
+            return "weak"
+        return "mid"
+
     @classmethod
     def _jangseong_start(cls) -> dict:
         """각 천간의 長生이 시작되는 지지 (lazy 초기화)."""
@@ -426,3 +474,22 @@ class SibiUnseong(Enum):
         else:
             offset = (start.order - branch.order) % 12
         return list(cls)[offset]
+
+
+_UNSEONG_KOREAN: dict["SibiUnseong", str] = {}
+_STRONG_UNSEONG: set["SibiUnseong"] = set()
+_WEAK_UNSEONG: set["SibiUnseong"] = set()
+
+
+def _build_unseong_meta() -> None:
+    U = SibiUnseong
+    _UNSEONG_KOREAN.update({
+        U.長生: "장생", U.沐浴: "목욕", U.冠帶: "관대", U.建祿: "건록",
+        U.帝旺: "제왕", U.衰: "쇠", U.病: "병", U.死: "사",
+        U.墓: "묘", U.絕: "절", U.胎: "태", U.養: "양",
+    })
+    _STRONG_UNSEONG.update({U.建祿, U.帝旺, U.冠帶, U.長生})
+    _WEAK_UNSEONG.update({U.病, U.死, U.絕})
+
+
+_build_unseong_meta()

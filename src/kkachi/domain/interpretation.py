@@ -23,6 +23,9 @@ class NatalResult:
     # 원국
     pillars: list[str] = field(default_factory=list)
     day_stem: str = ""
+    day_stem_korean: str = ""
+    pillar_stems_korean: list[str] = field(default_factory=list)
+    pillar_branches_korean: list[str] = field(default_factory=list)
 
     # 오행·강약·용신
     element_stats: dict[str, int] = field(default_factory=dict)

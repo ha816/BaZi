@@ -107,9 +107,6 @@ function buildSipsinStory(sipsin: SipsinInfo[], name: string): React.ReactNode {
 }
 
 /* ── 십이운성 ── */
-const STRONG_UNSEONG = new Set(["建祿", "帝旺", "冠帶", "長生"]);
-const WEAK_UNSEONG = new Set(["病", "死", "絕"]);
-
 const PILLAR_ERA: Record<string, { era: string; realm: string }> = {
   "년주": { era: "초년", realm: "조상·뿌리·환경" },
   "월주": { era: "청년기", realm: "사회·직장" },
@@ -189,8 +186,8 @@ function buildUnseongStory(sibiUnseong: SibiUnseongInfo[], name: string): React.
 }
 
 function getEnergyPattern(sibiUnseong: SibiUnseongInfo[]) {
-  const strong = sibiUnseong.filter((u) => STRONG_UNSEONG.has(u.unseong_name)).length;
-  const weak = sibiUnseong.filter((u) => WEAK_UNSEONG.has(u.unseong_name)).length;
+  const strong = sibiUnseong.filter((u) => u.strength === "strong").length;
+  const weak = sibiUnseong.filter((u) => u.strength === "weak").length;
   const mid = sibiUnseong.length - strong - weak;
 
   if (strong >= 3) return {
@@ -248,7 +245,14 @@ function EnergyPatternCard({ sibiUnseong }: { sibiUnseong: SibiUnseongInfo[] }) 
   );
 }
 
-function LifeEnergyTable({ sibiUnseong, pillars }: { sibiUnseong: SibiUnseongInfo[]; pillars: string[] }) {
+function LifeEnergyTable({
+  sibiUnseong, pillars, pillarStemsKorean, pillarBranchesKorean,
+}: {
+  sibiUnseong: SibiUnseongInfo[];
+  pillars: string[];
+  pillarStemsKorean: string[];
+  pillarBranchesKorean: string[];
+}) {
   const PILLAR_ORDER: { key: string; label: string; idx: number }[] = [
     { key: "시주", label: "시주(時柱)", idx: 3 },
     { key: "일주", label: "일주(日柱)", idx: 2 },
@@ -266,8 +270,8 @@ function LifeEnergyTable({ sibiUnseong, pillars }: { sibiUnseong: SibiUnseongInf
     return {
       key, label, isDay: key === "일주", u, info, phase,
       stem, branch,
-      stemKor: STEM_KOR[stem] ?? "",
-      branchKor: BRANCH_KOR[branch] ?? "",
+      stemKor: pillarStemsKorean[idx] ?? "",
+      branchKor: pillarBranchesKorean[idx] ?? "",
     };
   });
 
@@ -350,9 +354,7 @@ function LifeEnergyTable({ sibiUnseong, pillars }: { sibiUnseong: SibiUnseongInf
             <td className="text-[10px] py-2 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">에너지</td>
             {cols.map(({ key, u }) => {
               if (!u) return <td key={key} className="py-2 px-2"><span className="text-xs text-[var(--color-ink-faint)]">—</span></td>;
-              const isStrong = STRONG_UNSEONG.has(u.unseong_name);
-              const isWeak = WEAK_UNSEONG.has(u.unseong_name);
-              const label = isStrong ? "강(强)" : isWeak ? "약(弱)" : "평(平)";
+              const label = u.strength === "strong" ? "강(强)" : u.strength === "weak" ? "약(弱)" : "평(平)";
               return (
                 <td key={key} className="py-2 px-2">
                   <span className="text-xs font-bold text-[var(--color-ink)]">{label}</span>
@@ -566,22 +568,6 @@ function buildOhaengTip(natal: NatalResult, name: string): string {
   return `${p}${meaning}(${elem}) 기운으로서 ${tip.strength}을 잘 발휘하시되, ${tip.caution}에 주의하세요. ${tip.advice}`;
 }
 
-const STEM_KOR: Record<string, string> = {
-  甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
-  己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
-};
-
-const ROLE_HANJA: Record<string, string> = {
-  "여기": "餘氣",
-  "중기": "中氣",
-  "본기": "本氣",
-};
-
-const BRANCH_KOR: Record<string, string> = {
-  子:"자", 丑:"축", 寅:"인", 卯:"묘", 辰:"진", 巳:"사",
-  午:"오", 未:"미", 申:"신", 酉:"유", 戌:"술", 亥:"해",
-};
-
 const STRENGTH_DESC: Record<string, string> = {
   신강: "타고난 에너지가 강하고 자기 주도적인 성향이에요.",
   신약: "주변 환경의 영향을 잘 받고 협력에서 힘을 발휘해요.",
@@ -590,7 +576,7 @@ const STRENGTH_DESC: Record<string, string> = {
 
 function buildPillarTip(natal: NatalResult, name: string): string {
   const p = name ? `${name}님을 ` : "이 사주를 ";
-  const kor = STEM_KOR[natal.day_stem] ?? natal.day_stem;
+  const kor = natal.day_stem_korean || natal.day_stem;
   const personal = `${p}나타내는 글자는 ${kor}(${natal.day_stem})이에요.`;
   const concept = "태어난 날(日柱)의 천간(天干)이 자신을 나타냅니다.";
   const strengthDesc = STRENGTH_DESC[natal.strength_label] ?? "";
@@ -715,7 +701,7 @@ export default function NatalTab({ natal, name }: Props) {
           {/* 일간(日干) 정체성 */}
           {(() => {
             const stemProfile = STEM_PROFILE[natal.day_stem] ?? STEM_PROFILE["甲"];
-            const stemKor = STEM_KOR[natal.day_stem] ?? "";
+            const stemKor = natal.day_stem_korean;
             return (
               <div className="rounded-xl p-4 space-y-3 border border-[var(--color-border-light)]"
                 style={{ backgroundColor: "var(--color-card)" }}>
@@ -770,7 +756,7 @@ export default function NatalTab({ natal, name }: Props) {
               <div className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2 space-y-2">
                 <p>
                   {(() => {
-                    const dayKor = STEM_KOR[natal.day_stem] ?? natal.day_stem;
+                    const dayKor = natal.day_stem_korean || natal.day_stem;
                     const last = dayKor[dayKor.length - 1].charCodeAt(0);
                     const hasJongseong = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 !== 0;
                     return (
@@ -803,7 +789,7 @@ export default function NatalTab({ natal, name }: Props) {
           <div className="slide-card__body space-y-4">
             <KkachiTip>
               {(() => {
-                const dayKor = STEM_KOR[natal.day_stem] ?? natal.day_stem;
+                const dayKor = natal.day_stem_korean || natal.day_stem;
                 const last = dayKor[dayKor.length - 1].charCodeAt(0);
                 const hasJongseong = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 !== 0;
                 return (
@@ -907,7 +893,7 @@ export default function NatalTab({ natal, name }: Props) {
                   {bonki && (() => {
                     const info = SIPSIN_INFO[bonki.sipsin_name];
                     const kor = info?.korean ?? bonki.sipsin_name;
-                    const stemKor = STEM_KOR[bonki.stem] ?? bonki.stem;
+                    const stemKor = bonki.stem_korean || bonki.stem;
                     const exposed = heavenlyStems.includes(bonki.stem);
                     return (
                       <>
@@ -980,13 +966,17 @@ export default function NatalTab({ natal, name }: Props) {
                           </tr>
                         </thead>
                         <tbody>
-                          {(["여기", "중기", "본기"] as const).map((role) => (
+                          {(["여기", "중기", "본기"] as const).map((role) => {
+                            const roleHanja = natal.jizan_gan
+                              .flat()
+                              .find((it) => it.role === role)?.role_hanja ?? "";
+                            return (
                             <tr key={role} className="border-t border-[var(--color-border-light)]">
                               <td className="text-[10px] py-2 px-2 whitespace-nowrap text-left"
                                 style={role === "본기"
                                   ? { color: "var(--color-gold)", fontWeight: 700 }
                                   : { color: "var(--color-ink-faint)" }}>
-                                {role}({ROLE_HANJA[role]})
+                                {role}{roleHanja && `(${roleHanja})`}
                               </td>
                               {[3, 2, 1, 0].map((origI) => {
                                 const item = natal.jizan_gan[origI]?.find((it) => it.role === role);
@@ -1017,7 +1007,8 @@ export default function NatalTab({ natal, name }: Props) {
                                 );
                               })}
                             </tr>
-                          ))}
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -1081,7 +1072,12 @@ export default function NatalTab({ natal, name }: Props) {
               사주 4기둥의 십이운성을 보면, <strong className="text-[var(--color-ink)]">인생의 큰 시기별 특징과 에너지</strong>를 짐작해볼 수 있어요.
             </KkachiTip>
             {/* 기둥별 운성 표 */}
-            <LifeEnergyTable sibiUnseong={natal.sibi_unseong} pillars={natal.pillars} />
+            <LifeEnergyTable
+              sibiUnseong={natal.sibi_unseong}
+              pillars={natal.pillars}
+              pillarStemsKorean={natal.pillar_stems_korean}
+              pillarBranchesKorean={natal.pillar_branches_korean}
+            />
             <KkachiTip>{buildUnseongStory(natal.sibi_unseong, name)}</KkachiTip>
             <EnergyPatternCard sibiUnseong={natal.sibi_unseong} />
             <KkachiTip>{getEnergyPattern(natal.sibi_unseong).desc}</KkachiTip>
