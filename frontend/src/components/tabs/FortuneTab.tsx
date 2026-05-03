@@ -151,29 +151,29 @@ const STEM_KOR: Record<string, string> = {
   己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
 };
 
-function DaeunSeunTable({ dayStem, dayBranch, daeunGanji, seunGanji }: {
-  dayStem: string; dayBranch: string; daeunGanji: string; seunGanji: string;
+function DaeunSeunTable({ pillars, daeunGanji, seunGanji }: {
+  pillars: string[]; daeunGanji: string; seunGanji: string;
 }) {
   const cols = [
-    { key: "일주", label: "일주(日柱)", stem: dayStem, branch: dayBranch, isDay: true },
-    { key: "대운", label: "대운(大運)", stem: daeunGanji[0] ?? "", branch: daeunGanji[1] ?? "", isDay: false },
-    { key: "세운", label: "세운(歲運)", stem: seunGanji[0] ?? "", branch: seunGanji[1] ?? "", isDay: false },
+    { key: "년주", label: "년주", group: "natal" as const, stem: pillars[0]?.[0] ?? "", branch: pillars[0]?.[1] ?? "" },
+    { key: "월주", label: "월주", group: "natal" as const, stem: pillars[1]?.[0] ?? "", branch: pillars[1]?.[1] ?? "" },
+    { key: "일주", label: "일주", group: "natal" as const, stem: pillars[2]?.[0] ?? "", branch: pillars[2]?.[1] ?? "" },
+    { key: "시주", label: "시주", group: "natal" as const, stem: pillars[3]?.[0] ?? "", branch: pillars[3]?.[1] ?? "" },
+    { key: "대운", label: "대운", group: "un" as const, stem: daeunGanji[0] ?? "", branch: daeunGanji[1] ?? "" },
+    { key: "세운", label: "세운", group: "un" as const, stem: seunGanji[0] ?? "", branch: seunGanji[1] ?? "" },
   ];
   return (
     <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
       <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
-        <colgroup>
-          <col style={{ width: "72px" }} />
-          <col />
-          <col />
-          <col />
-        </colgroup>
         <thead>
           <tr style={{ backgroundColor: "var(--color-ivory)" }}>
-            <th className="text-[10px] font-medium text-[var(--color-ink-faint)] py-1.5 px-2"></th>
-            {cols.map(({ key, label, isDay }) => (
-              <th key={key} className="text-[10px] font-semibold py-1.5 px-2"
-                style={{ color: isDay ? "var(--color-gold)" : "var(--color-ink-muted)" }}>
+            <th className="text-[9px] font-medium text-[var(--color-ink-faint)] py-1.5 px-1"></th>
+            {cols.map(({ key, label, group }) => (
+              <th key={key} className="text-[10px] font-semibold py-1.5 px-1"
+                style={{
+                  color: group === "un" ? "var(--color-gold)" : "var(--color-ink-muted)",
+                  borderLeft: key === "대운" ? "1px dashed var(--color-border)" : undefined,
+                }}>
                 {label}
               </th>
             ))}
@@ -181,20 +181,22 @@ function DaeunSeunTable({ dayStem, dayBranch, daeunGanji, seunGanji }: {
         </thead>
         <tbody>
           <tr className="border-t border-[var(--color-border-light)]">
-            <td className="text-[10px] py-1.5 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">천간(天干)</td>
-            {cols.map(({ key, stem, isDay }) => (
-              <td key={key} className="py-1.5 px-2">
-                <span className="font-heading text-sm font-bold leading-tight text-[var(--color-ink)]">
+            <td className="text-[9px] py-1.5 px-1 whitespace-nowrap text-left text-[var(--color-ink-faint)]">천간(天干)</td>
+            {cols.map(({ key, stem }) => (
+              <td key={key} className="py-1.5 px-1"
+                style={{ borderLeft: key === "대운" ? "1px dashed var(--color-border)" : undefined }}>
+                <span className="font-heading text-xs font-bold leading-tight text-[var(--color-ink)]">
                   {stem ? `${STEM_KOR[stem] ?? stem}(${stem})` : "—"}
                 </span>
               </td>
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]">
-            <td className="text-[10px] py-1.5 px-2 whitespace-nowrap text-left text-[var(--color-ink-faint)]">지지(地支)</td>
-            {cols.map(({ key, branch, isDay }) => (
-              <td key={key} className="py-1.5 px-2">
-                <span className="font-heading text-sm font-bold leading-tight text-[var(--color-ink)]">
+            <td className="text-[9px] py-1.5 px-1 whitespace-nowrap text-left text-[var(--color-ink-faint)]">지지(地支)</td>
+            {cols.map(({ key, branch }) => (
+              <td key={key} className="py-1.5 px-1"
+                style={{ borderLeft: key === "대운" ? "1px dashed var(--color-border)" : undefined }}>
+                <span className="font-heading text-xs font-bold leading-tight text-[var(--color-ink)]">
                   {branch ? `${BRANCH_KOR[branch] ?? branch}(${branch})` : "—"}
                 </span>
               </td>
@@ -263,12 +265,11 @@ export default function FortuneTab({ natal, postnatal }: Props) {
           <div className="divider" />
           <div className="slide-card__body space-y-4">
             <KkachiTip>
-              나와 대운·세운이 어느 영역에서 부딪히고 어떤 영역에 조화로운지 보세요.
+              나의 사주팔자와 대운·세운이 어느 영역에서 부딪히고 어떤 영역에 조화로운지 보세요.
             </KkachiTip>
             {postnatal.daeun_sipsin.length >= 2 && (
               <DaeunSeunTable
-                dayStem={natal.day_stem}
-                dayBranch={natal.pillars[2]?.[1] ?? ""}
+                pillars={natal.pillars}
                 daeunGanji={postnatal.daeun_sipsin[0].char + postnatal.daeun_sipsin[1].char}
                 seunGanji={postnatal.seun_ganji}
               />
@@ -276,50 +277,22 @@ export default function FortuneTab({ natal, postnatal }: Props) {
             {hasClashCombine && (
               <div className="space-y-2">
                 {allClashes.map((c, i) => {
-                  const inEl = BRANCH_ELEMENT[c.incoming];
-                  const tgEl = BRANCH_ELEMENT[c.target];
-                  const inInfo = getElementInfo(inEl);
-                  const tgInfo = getElementInfo(tgEl);
                   const areaLabel = PILLAR_LABEL_MAP[c.pillar] ?? c.pillar;
                   return (
                     <div key={`clash-${i}`}
                       className="rounded-xl border p-3 space-y-2"
                       style={{ borderColor: "#E0A8A3", backgroundColor: "#F7EDEC" }}>
                       <p className="text-[10px] font-semibold" style={{ color: "var(--color-fire)" }}>
-                        지지충(支冲) — {c.pillar}({areaLabel})
+                        지지충(支冲) — {BRANCH_KOR[c.target] ?? c.target}({c.target})·{BRANCH_KOR[c.incoming] ?? c.incoming}({c.incoming})
                       </p>
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="flex flex-col items-center gap-0.5">
-                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
-                            style={{ backgroundColor: inInfo.bgColor, border: `1.5px solid ${inInfo.borderColor}` }}>
-                            <span className="font-heading text-lg font-bold leading-none" style={{ color: inInfo.color }}>{c.incoming}</span>
-                            <span className="text-[8px] mt-0.5" style={{ color: inInfo.color }}>{inInfo.korean}</span>
-                          </div>
-                          <span className="text-[8px] text-[var(--color-ink-faint)]">들어옴</span>
-                        </div>
-                        <span className="text-lg font-bold pb-4" style={{ color: "var(--color-fire)" }}>↔</span>
-                        <div className="flex flex-col items-center gap-0.5">
-                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
-                            style={{ backgroundColor: tgInfo.bgColor, border: `1.5px solid ${tgInfo.borderColor}` }}>
-                            <span className="font-heading text-lg font-bold leading-none" style={{ color: tgInfo.color }}>{c.target}</span>
-                            <span className="text-[8px] mt-0.5" style={{ color: tgInfo.color }}>{tgInfo.korean}</span>
-                          </div>
-                          <span className="text-[8px] text-[var(--color-ink-faint)]">내 사주</span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
-                        <strong style={{ color: "var(--color-fire)" }}>{c.incoming}·{c.target}</strong>은 지지 원형에서 정반대 짝이라 부딪히는 <strong>지지충</strong>이에요. <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 갑작스런 변화나 갈등이 생길 수 있으니 유연하게 대처하세요.
-                      </p>
+                      <KkachiTip>
+                        <strong style={{ color: "var(--color-fire)" }}>{BRANCH_KOR[c.target] ?? c.target}({c.target})·{BRANCH_KOR[c.incoming] ?? c.incoming}({c.incoming})</strong>은 십이지지 원형에서 정반대의 짝인 지지충이에요. {c.pillar}의 {BRANCH_KOR[c.target] ?? c.target}({c.target})과 충이기에 <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 갑작스런 변화나 갈등이 생길 수 있으니 유연하게 대처하세요.
+                      </KkachiTip>
                     </div>
                   );
                 })}
                 {allCombines.map((c, i) => {
                   const isStemHap = c.type === "천간합";
-                  const elMap = isStemHap ? STEM_ELEMENT : BRANCH_ELEMENT;
-                  const inEl = elMap[c.incoming];
-                  const tgEl = elMap[c.target];
-                  const inInfo = getElementInfo(inEl);
-                  const tgInfo = getElementInfo(tgEl);
                   const harmonyEl = COMBINE_OHENG[`${c.incoming}${c.target}`] ?? "";
                   const harmonyInfo = harmonyEl ? getElementInfo(harmonyEl) : null;
                   const areaLabel = PILLAR_LABEL_MAP[c.pillar] ?? c.pillar;
@@ -329,30 +302,11 @@ export default function FortuneTab({ natal, postnatal }: Props) {
                       className="rounded-xl border p-3 space-y-2"
                       style={{ borderColor: "#A8C9B5", backgroundColor: "#EEF4F0" }}>
                       <p className="text-[10px] font-semibold" style={{ color: "var(--color-wood)" }}>
-                        {c.type} — {c.pillar}({areaLabel})
+                        {c.type} — {(isStemHap ? STEM_KOR : BRANCH_KOR)[c.incoming] ?? c.incoming}({c.incoming})·{(isStemHap ? STEM_KOR : BRANCH_KOR)[c.target] ?? c.target}({c.target})
                       </p>
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="flex flex-col items-center gap-0.5">
-                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
-                            style={{ backgroundColor: inInfo.bgColor, border: `1.5px solid ${inInfo.borderColor}` }}>
-                            <span className="font-heading text-lg font-bold leading-none" style={{ color: inInfo.color }}>{c.incoming}</span>
-                            <span className="text-[8px] mt-0.5" style={{ color: inInfo.color }}>{inInfo.korean}</span>
-                          </div>
-                          <span className="text-[8px] text-[var(--color-ink-faint)]">들어옴</span>
-                        </div>
-                        <span className="text-lg font-bold pb-4" style={{ color: "var(--color-wood)" }}>合</span>
-                        <div className="flex flex-col items-center gap-0.5">
-                          <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
-                            style={{ backgroundColor: tgInfo.bgColor, border: `1.5px solid ${tgInfo.borderColor}` }}>
-                            <span className="font-heading text-lg font-bold leading-none" style={{ color: tgInfo.color }}>{c.target}</span>
-                            <span className="text-[8px] mt-0.5" style={{ color: tgInfo.color }}>{tgInfo.korean}</span>
-                          </div>
-                          <span className="text-[8px] text-[var(--color-ink-faint)]">내 사주</span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed">
+                      <KkachiTip>
                         <strong style={{ color: "var(--color-wood)" }}>{c.incoming}·{c.target}</strong>은 {pairLabel} 중 하나로 결이 맞아요{harmonyInfo && (<> (합화 <strong style={{ color: harmonyInfo.color }}>{harmonyInfo.korean}({harmonyEl})</strong>)</>)}. <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 좋은 인연이나 기회가 자연스럽게 열릴 수 있어요.
-                      </p>
+                      </KkachiTip>
                     </div>
                   );
                 })}
