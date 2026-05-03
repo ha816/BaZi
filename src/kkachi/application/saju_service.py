@@ -14,8 +14,9 @@ from kkachi.application.interpreter.seun import SeunInterpreter
 from kkachi.application.interpreter.yongshin import YongshinInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
+from kkachi.application.util.sipsin_meta import enrich_sipsin, sipsin_domain, sipsin_label
 from kkachi.application.util.util import year_to_ganji
-from kkachi.domain.ganji import JIZAN_ROLE_HANJA, Branch, Oheng, Stem
+from kkachi.domain.ganji import JIZAN_ROLE_HANJA, Branch, Oheng, Sipsin, Stem
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -246,15 +247,34 @@ class SajuService(InterpreterPort):
         rule_advice = AdviceInterpreter()(natal, postnatal)
         advice = await self._enrich_advice(rule_advice, natal, postnatal, name)
         birth_branch_char = list(natal.saju.pillars.values())[0].branch.name
+        me_yang = natal.saju.stem_of_day_pillar.is_yang
+
+        seun_stem_char, seun_stem_sipsin = postnatal.seun_stem
+        seun_branch_char, seun_branch_sipsin = postnatal.seun_branch
+        seun_stem_dict = enrich_sipsin(
+            seun_stem_sipsin, seun_stem_char, Stem.from_char(seun_stem_char).element.name,
+            me_yang=me_yang, include_meaning=True,
+        )
+        seun_branch_dict = enrich_sipsin(
+            seun_branch_sipsin, seun_branch_char, Branch.from_char(seun_branch_char).element.name,
+            me_yang=me_yang, include_meaning=True,
+        )
+        daeun_sipsin = [
+            enrich_sipsin(
+                s, ch,
+                (Stem.from_char(ch).element.name if i == 0 else Branch.from_char(ch).element.name),
+                me_yang=me_yang, include_meaning=True,
+            )
+            for i, (ch, s) in enumerate(postnatal.daeun_sipsin)
+        ]
+        upcoming_months = postnatal.upcoming_months
+        month_badges = self._build_month_badges(upcoming_months)
+
         return PostnatalResult(
             year=postnatal.year,
             seun_ganji=year_to_ganji(postnatal.year),
-            seun_stem={"char": postnatal.seun_stem[0], "sipsin_name": postnatal.seun_stem[1].name,
-                       "domain": postnatal.seun_stem[1].domain,
-                       "element": Stem.from_char(postnatal.seun_stem[0]).element.name},
-            seun_branch={"char": postnatal.seun_branch[0], "sipsin_name": postnatal.seun_branch[1].name,
-                         "domain": postnatal.seun_branch[1].domain,
-                         "element": Branch.from_char(postnatal.seun_branch[0]).element.name},
+            seun_stem=seun_stem_dict,
+            seun_branch=seun_branch_dict,
             yongshin_in_seun=postnatal.yongshin_in_seun,
             yongshin_in_daeun=postnatal.yongshin_in_daeun,
             daeun=[
@@ -267,11 +287,7 @@ class SajuService(InterpreterPort):
                  "end_age": postnatal.current_daeun.end_age}
                 if postnatal.current_daeun else None
             ),
-            daeun_sipsin=[
-                {"char": ch, "sipsin_name": s.name, "domain": s.domain,
-                 "element": (Stem.from_char(ch).element.name if i == 0 else Branch.from_char(ch).element.name)}
-                for i, (ch, s) in enumerate(postnatal.daeun_sipsin)
-            ],
+            daeun_sipsin=daeun_sipsin,
             seun_clashes=postnatal.seun_clashes,
             seun_combines=postnatal.seun_combines,
             daeun_clashes=postnatal.daeun_clashes,
@@ -281,7 +297,8 @@ class SajuService(InterpreterPort):
             nearest_yongshin_year=self._find_nearest_yongshin_year(
                 postnatal.year, year_to_ganji(postnatal.year), natal.yongshin
             ),
-            upcoming_months=postnatal.upcoming_months,
+            upcoming_months=upcoming_months,
+            month_badges=month_badges,
             year_zodiac_relations=self._build_year_zodiac_relations(birth_branch_char, postnatal.year),
             yongshin=YongshinInterpreter()(natal, postnatal),
             fortune_by_domain=FortuneInterpreter()(postnatal),
@@ -291,6 +308,26 @@ class SajuService(InterpreterPort):
             relationships=RelationshipInterpreter()(natal, postnatal),
             advice=advice,
         )
+
+    def _build_month_badges(self, upcoming_months: list[dict]) -> dict[str, list[str]]:
+        """이번달(첫 항목) 천간/지지 십신을 영역별로 매핑."""
+        if not upcoming_months:
+            return {}
+        current = upcoming_months[0]
+        badges: dict[str, list[str]] = {}
+        for key in ("stem_sipsin", "branch_sipsin"):
+            sipsin_dict = current.get(key) or {}
+            name = sipsin_dict.get("sipsin_name")
+            if not name:
+                continue
+            try:
+                sipsin = Sipsin[name]
+            except KeyError:
+                continue
+            domain = sipsin_domain(sipsin)
+            label = sipsin_label(sipsin)
+            badges.setdefault(domain, []).append(label)
+        return badges
 
     async def _enrich_advice(
         self,

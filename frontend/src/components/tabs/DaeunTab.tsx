@@ -1,12 +1,11 @@
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
 import { getElementInfo, ganjiToElements } from "@/lib/elementColors";
+import { REL_KIND_COLOR } from "@/lib/ganji";
 import DaeunTimeline from "@/components/DaeunTimeline";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import InlineCollapsibleHeader from "@/components/InlineCollapsibleHeader";
 import OhaengRelationDiagram from "@/components/OhaengRelationDiagram";
-
-
 
 const GANJI_60 = [
   "甲子","乙丑","丙寅","丁卯","戊辰","己巳","庚午","辛未","壬申","癸酉",
@@ -18,39 +17,6 @@ const GANJI_60 = [
 ];
 
 const YIN_YEAR_STEMS = new Set(["乙","丁","己","辛","癸"]);
-
-
-const SIPSIN_KOR: Record<string, string> = {
-  "比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관",
-  "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관",
-  "偏印": "편인", "正印": "정인",
-};
-
-const SIPSIN_MEANING: Record<string, string> = {
-  "比肩": "나와 같은 에너지가 들어오는 시기예요. 독립심과 자아가 강해지고, 주체적으로 길을 개척하게 돼요.",
-  "劫財": "경쟁과 나눔의 기운이에요. 협력하면 힘이 되지만, 재물이 새는 흐름도 있으니 지출을 점검해 봐요.",
-  "食神": "재능이 빛나고 먹을 복이 따르는 시기예요. 하고 싶은 것을 표현하고 베풀수록 더 많이 돌아와요.",
-  "傷官": "창의력과 개성이 폭발하는 시기예요. 틀을 깨는 에너지가 강하지만, 조직 내 마찰은 주의해야 해요.",
-  "偏財": "적극적인 재물 운이 따르는 시기예요. 투자·사업·새로운 기회에 민감하게 반응하면 좋아요.",
-  "正財": "안정적인 수입과 저축의 기운이에요. 꾸준히 성실하게 쌓아가면 재물이 단단해져요.",
-  "偏官": "강한 자극과 도전이 오는 시기예요. 압박감이 있지만 그 안에 성장의 기회가 숨어 있어요.",
-  "正官": "명예와 책임의 기운이에요. 사회적 인정을 받거나 직책·역할의 변화가 찾아올 수 있어요.",
-  "偏印": "직관과 학문의 기운이에요. 공부·연구·자기계발에 집중하기 좋고, 전문성이 쌓이는 시기예요.",
-  "正印": "배움과 보호의 기운이에요. 어른이나 스승의 도움을 받을 수 있고, 마음이 안정되는 시기예요.",
-};
-
-const SIPSIN_DERIVE: Record<string, { rel: string; yinyang: string; relColor: string }> = {
-  "比肩": { rel: "같은 오행",   yinyang: "일치", relColor: "#78716C" },
-  "劫財": { rel: "같은 오행",   yinyang: "다름", relColor: "#78716C" },
-  "食神": { rel: "내가 도움",   yinyang: "일치", relColor: "#1B6B3A" },
-  "傷官": { rel: "내가 도움",   yinyang: "다름", relColor: "#1B6B3A" },
-  "偏財": { rel: "내가 억제", yinyang: "일치", relColor: "#C0392B" },
-  "正財": { rel: "내가 억제", yinyang: "다름", relColor: "#C0392B" },
-  "偏官": { rel: "나를 억제", yinyang: "일치", relColor: "#C0392B" },
-  "正官": { rel: "나를 억제", yinyang: "다름", relColor: "#C0392B" },
-  "偏印": { rel: "나를 도움",   yinyang: "일치", relColor: "#1B6B3A" },
-  "正印": { rel: "나를 도움",   yinyang: "다름", relColor: "#1B6B3A" },
-};
 
 const BRANCH_SOLAR_TERM: Record<string, string> = {
   "寅":"입춘(立春)", "卯":"경칩(驚蟄)", "辰":"청명(淸明)", "巳":"입하(立夏)",
@@ -218,55 +184,48 @@ export default function DaeunTab({ natal, postnatal }: Props) {
                       { label: "지지(地支)", sipsin: postnatal.daeun_sipsin[1] },
                     ].map(({ label, sipsin }) => {
                       const info = getElementInfo(sipsin.element);
+                      const myInfo = getElementInfo(natal.my_element.name);
+                      const myYY = natal.day_stem_yin_yang;
+                      const relColor = REL_KIND_COLOR[sipsin.rel_kind] ?? "#78716C";
                       return (
                         <div key={label}
                           className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-3 flex flex-col items-center gap-1.5">
                           <span className="text-[10px] text-[var(--color-ink-faint)]">{label}</span>
-                            {SIPSIN_DERIVE[sipsin.sipsin_name] && (() => {
-                            const d = SIPSIN_DERIVE[sipsin.sipsin_name];
-                            const myKor = getElementInfo(natal.my_element.name).korean;
-                            const tgtKor = getElementInfo(sipsin.element).korean;
-                            const myYY = natal.day_stem_yin_yang;
-                            const tgtYY = d.yinyang === "일치" ? myYY : (myYY === "양" ? "음" : "양");
-                            return (
-                              <div className="w-full space-y-1.5">
-                                <div className="flex items-center justify-center gap-2">
-                                  {/* 일간 chip */}
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
-                                      style={{ backgroundColor: getElementInfo(natal.my_element.name).bgColor, border: `1.5px solid ${getElementInfo(natal.my_element.name).borderColor}` }}>
-                                      <span className="font-heading text-base font-bold leading-none" style={{ color: getElementInfo(natal.my_element.name).color }}>{natal.day_stem}</span>
-                                      <span className="text-[8px] mt-0.5" style={{ color: getElementInfo(natal.my_element.name).color }}>{myKor}</span>
-                                    </div>
-                                    <span className="text-[8px] text-[var(--color-ink-faint)]">{myYY}</span>
-                                  </div>
-                                  {/* 화살표 */}
-                                  <div className="flex items-center pb-4">
-                                    <span className="text-base font-bold" style={{ color: d.relColor }}>→</span>
-                                  </div>
-                                  {/* 대운 chip */}
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
-                                      style={{ backgroundColor: info.bgColor, border: `1.5px solid ${info.borderColor}` }}>
-                                      <span className="font-heading text-base font-bold leading-none" style={{ color: info.color }}>{sipsin.char}</span>
-                                      <span className="text-[8px] mt-0.5" style={{ color: info.color }}>{tgtKor}</span>
-                                    </div>
-                                    <span className="text-[8px] text-[var(--color-ink-faint)]">{tgtYY}</span>
-                                  </div>
+                          <div className="w-full space-y-1.5">
+                            <div className="flex items-center justify-center gap-2">
+                              <div className="flex flex-col items-center gap-0.5">
+                                <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
+                                  style={{ backgroundColor: myInfo.bgColor, border: `1.5px solid ${myInfo.borderColor}` }}>
+                                  <span className="font-heading text-base font-bold leading-none" style={{ color: myInfo.color }}>{natal.day_stem}</span>
+                                  <span className="text-[8px] mt-0.5" style={{ color: myInfo.color }}>{myInfo.korean}</span>
                                 </div>
-                                <p className="text-[9px] text-center font-medium">
-                                  <span style={{ color: d.relColor }}>{d.rel}</span>
-                                  <span className="text-[var(--color-ink)]"> · 음양 {d.yinyang}</span>
-                                </p>
+                                <span className="text-[8px] text-[var(--color-ink-faint)]">{myYY}</span>
                               </div>
-                            );
-                          })()}
+                              <div className="flex items-center pb-4">
+                                <span className="text-base font-bold" style={{ color: relColor }}>
+                                  {sipsin.rel.startsWith("나를") ? "←" : "→"}
+                                </span>
+                              </div>
+                              <div className="flex flex-col items-center gap-0.5">
+                                <div className="w-10 h-10 rounded-lg flex flex-col items-center justify-center"
+                                  style={{ backgroundColor: info.bgColor, border: `1.5px solid ${info.borderColor}` }}>
+                                  <span className="font-heading text-base font-bold leading-none" style={{ color: info.color }}>{sipsin.char}</span>
+                                  <span className="text-[8px] mt-0.5" style={{ color: info.color }}>{info.korean}</span>
+                                </div>
+                                <span className="text-[8px] text-[var(--color-ink-faint)]">{sipsin.target_yin_yang}</span>
+                              </div>
+                            </div>
+                            <p className="text-[9px] text-center font-medium">
+                              <span style={{ color: relColor }}>{sipsin.rel}</span>
+                              <span className="text-[var(--color-ink)]"> · 음양 {sipsin.yinyang}</span>
+                            </p>
+                          </div>
                           <div className="w-full pt-1.5 border-t border-[var(--color-border-light)] text-center space-y-0.5 mt-0.5">
                             <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">
                               {label.startsWith("천간") ? "천간 십신" : "지지 십신"}
                             </p>
                             <p className="font-heading text-xl font-bold text-[var(--color-gold)]">
-                              {SIPSIN_KOR[sipsin.sipsin_name] ?? sipsin.sipsin_name}({sipsin.sipsin_name})
+                              {sipsin.sipsin_korean}({sipsin.sipsin_name})
                             </p>
                             <p className="text-[10px] text-[var(--color-ink-faint)] leading-tight">{sipsin.domain}</p>
                           </div>
@@ -274,9 +233,15 @@ export default function DaeunTab({ natal, postnatal }: Props) {
                       );
                     })}
                   </div>
-                  <KkachiTip>
-                    이번 대운은 <strong className="text-[var(--color-ink)]">{SIPSIN_KOR[postnatal.daeun_sipsin[0].sipsin_name] ?? postnatal.daeun_sipsin[0].sipsin_name}({postnatal.daeun_sipsin[0].sipsin_name})</strong>·<strong className="text-[var(--color-ink)]">{SIPSIN_KOR[postnatal.daeun_sipsin[1].sipsin_name] ?? postnatal.daeun_sipsin[1].sipsin_name}({postnatal.daeun_sipsin[1].sipsin_name})</strong>의 흐름이에요. {SIPSIN_MEANING[postnatal.daeun_sipsin[0].sipsin_name] ?? ""} 또 {SIPSIN_MEANING[postnatal.daeun_sipsin[1].sipsin_name] ?? ""}
-                  </KkachiTip>
+                  {(() => {
+                    const stem = postnatal.daeun_sipsin[0];
+                    const branch = postnatal.daeun_sipsin[1];
+                    return (
+                      <KkachiTip>
+                        이번 대운은 <strong className="text-[var(--color-ink)]">{stem.sipsin_korean}({stem.sipsin_name})</strong>·<strong className="text-[var(--color-ink)]">{branch.sipsin_korean}({branch.sipsin_name})</strong>의 흐름이에요. {stem.timing_meaning ?? ""} 또 {branch.timing_meaning ?? ""}
+                      </KkachiTip>
+                    );
+                  })()}
                 </>
               )}
             </div>

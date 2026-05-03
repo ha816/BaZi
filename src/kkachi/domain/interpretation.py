@@ -98,6 +98,9 @@ class PostnatalResult:
     # 이번달 포함 6개월 ganji + 용신 매칭
     upcoming_months: list[dict] = field(default_factory=list)
 
+    # 이번달 십신 → 영역별 뱃지 라벨 (DomainBarChart 키와 일치)
+    month_badges: dict[str, list[str]] = field(default_factory=dict)
+
     # 연도별 띠 관계 (올해·내년·가까운 좋은 해)
     year_zodiac_relations: list[dict] = field(default_factory=list)
 

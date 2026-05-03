@@ -8,6 +8,12 @@ from kkachi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Sam
 from kkachi.domain.user import User
 from kkachi.application.interpreter.fortune import DOMAIN_MAP
 from kkachi.application.port.saju_port import NatalPort, PostnatalPort
+from kkachi.application.util.clash_combine_meta import (
+    enrich_branch_combine,
+    enrich_clash,
+    enrich_stem_combine,
+)
+from kkachi.application.util.sipsin_meta import enrich_sipsin
 from kkachi.application.util.util import parse_term_time, year_to_ganji
 
 
@@ -185,6 +191,7 @@ class PostnatalAdapter(PostnatalPort):
         """이번달 포함 count개월 ganji 정보 + 일간 십신 + 용신 매칭 반환."""
         yongshin = self.natal.yongshin
         day_stem = self.natal.saju.stem_of_day_pillar
+        me_yang = day_stem.is_yang
         anchor = max(datetime.now(), datetime(self.year, 1, 1))
         results: list[dict] = []
         for offset in range(count):
@@ -203,8 +210,14 @@ class PostnatalAdapter(PostnatalPort):
                 "ganji": str(month_pillar),
                 "stem_element": stem_el.name,
                 "branch_element": branch_el.name,
-                "stem_sipsin": {"name": stem_sipsin.name, "domain": stem_sipsin.domain},
-                "branch_sipsin": {"name": branch_sipsin.name, "domain": branch_sipsin.domain},
+                "stem_sipsin": enrich_sipsin(
+                    stem_sipsin, month_pillar.stem.name, stem_el.name,
+                    me_yang=me_yang, include_meaning=True,
+                ),
+                "branch_sipsin": enrich_sipsin(
+                    branch_sipsin, month_pillar.branch.name, branch_el.name,
+                    me_yang=me_yang, include_meaning=True,
+                ),
                 "matches_yongshin": yongshin in (stem_el, branch_el),
             })
         return results
@@ -235,35 +248,25 @@ class PostnatalAdapter(PostnatalPort):
 
     def _get_clashes(self, ganji: str) -> list[dict]:
         incoming = Branch.from_char(ganji[1])
-        results = []
-        for pillar_type, sb in zip(Pillar, list(self.natal.saju.pillars.values())):
-            if incoming.clashes == sb.branch:
-                results.append({
-                    "incoming": incoming.name,
-                    "target": sb.branch.name,
-                    "pillar": pillar_type.korean,
-                })
-        return results
+        return [
+            enrich_clash(target=sb.branch, incoming=incoming, pillar=pillar_type.korean)
+            for pillar_type, sb in zip(Pillar, self.natal.saju.pillars.values())
+            if incoming.clashes == sb.branch
+        ]
 
     def _get_combines(self, ganji: str) -> list[dict]:
         incoming_stem = Stem.from_char(ganji[0])
         incoming_branch = Branch.from_char(ganji[1])
-        results = []
+        results: list[dict] = []
         for pillar_type, sb in zip(Pillar, list(self.natal.saju.pillars.values())):
             if incoming_stem.combines == sb.stem:
-                results.append({
-                    "incoming": incoming_stem.name,
-                    "target": sb.stem.name,
-                    "pillar": pillar_type.korean,
-                    "type": "천간합",
-                })
+                results.append(enrich_stem_combine(
+                    target=sb.stem, incoming=incoming_stem, pillar=pillar_type.korean,
+                ))
             if incoming_branch.combines == sb.branch:
-                results.append({
-                    "incoming": incoming_branch.name,
-                    "target": sb.branch.name,
-                    "pillar": pillar_type.korean,
-                    "type": "지지합",
-                })
+                results.append(enrich_branch_combine(
+                    target=sb.branch, incoming=incoming_branch, pillar=pillar_type.korean,
+                ))
         return results
 
     def _get_domain_scores(

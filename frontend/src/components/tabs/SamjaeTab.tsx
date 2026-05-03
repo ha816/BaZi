@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
+import { BRANCH_KOR } from "@/lib/ganji";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 
@@ -45,11 +46,6 @@ interface Props {
   postnatal: PostnatalResult;
 }
 
-
-const BRANCH_KOR: Record<string, string> = {
-  "子":"자","丑":"축","寅":"인","卯":"묘","辰":"진","巳":"사",
-  "午":"오","未":"미","申":"신","酉":"유","戌":"술","亥":"해",
-};
 
 const BRANCH_TO_ZODIAC: Record<string, { kor: string; hanja: string }> = {
   "子": { kor: "쥐", hanja: "鼠" }, "丑": { kor: "소", hanja: "牛" },

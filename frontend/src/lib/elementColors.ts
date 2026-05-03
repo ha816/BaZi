@@ -69,15 +69,7 @@ export function getElementColor(name: string): string {
   return elementMap[name]?.color ?? "#78716C";
 }
 
-/* ── 천간/지지 → 오행 변환 ── */
-const STEM_ELEMENT: Record<string, string> = {
-  甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土",
-  己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水",
-};
-const BRANCH_ELEMENT: Record<string, string> = {
-  子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
-  午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
-};
+import { STEM_ELEMENT, BRANCH_ELEMENT } from "./ganji";
 
 export function ganjiToElements(ganji: string): { stem: string; branch: string } {
   return {

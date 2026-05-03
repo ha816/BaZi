@@ -1,8 +1,21 @@
 export interface SipsinInfo {
   char: string;
   sipsin_name: string;
+  sipsin_korean: string;
   domain: string;
   element: string;
+  rel: string;
+  rel_kind: "same" | "help_out" | "restrain_out" | "restrain_in" | "help_in";
+  yinyang: "일치" | "다름";
+  target_yin_yang: "양" | "음";
+  timing_meaning?: string;
+}
+
+export interface MonthSipsin {
+  name: string;
+  korean: string;
+  domain: string;
+  meaning: string;
 }
 
 export interface SibiUnseongInfo {
@@ -35,15 +48,25 @@ export interface CurrentDaeun {
 
 export interface ClashInfo {
   incoming: string;
+  incoming_korean: string;
   target: string;
+  target_korean: string;
   pillar: string;
+  area_label: string;
+  narrative: string;
 }
 
 export interface CombineInfo {
   incoming: string;
+  incoming_korean: string;
   target: string;
+  target_korean: string;
   pillar: string;
-  type: string;
+  area_label: string;
+  type: "천간합" | "지지합";
+  harmony_element: string;
+  harmony_element_korean: string;
+  narrative: string;
 }
 
 export interface DomainScore {
@@ -127,10 +150,11 @@ export interface PostnatalResult {
     ganji: string;
     stem_element: string;
     branch_element: string;
-    stem_sipsin: { name: string; domain: string };
-    branch_sipsin: { name: string; domain: string };
+    stem_sipsin: SipsinInfo;
+    branch_sipsin: SipsinInfo;
     matches_yongshin: boolean;
   }>;
+  month_badges: Record<string, string[]>;
   year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string }>;
   yongshin: InterpretBlock[];
   fortune_by_domain: InterpretBlock[];

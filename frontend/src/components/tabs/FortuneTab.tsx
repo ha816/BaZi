@@ -1,42 +1,16 @@
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
-import { getElementInfo } from "@/lib/elementColors";
 import DomainBarChart from "@/components/DomainBarChart";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
-
-const STEM_ELEMENT: Record<string, string> = {
-  甲:"木", 乙:"木", 丙:"火", 丁:"火", 戊:"土",
-  己:"土", 庚:"金", 辛:"金", 壬:"水", 癸:"水",
-};
-const BRANCH_ELEMENT: Record<string, string> = {
-  子:"水", 丑:"土", 寅:"木", 卯:"木", 辰:"土", 巳:"火",
-  午:"火", 未:"土", 申:"金", 酉:"金", 戌:"土", 亥:"水",
-};
-
-// 합화 오행 — 천간합 5쌍 + 지지육합 6쌍 (양방향 키)
-const COMBINE_OHENG: Record<string, string> = {
-  "甲己":"土", "己甲":"土", "乙庚":"金", "庚乙":"金",
-  "丙辛":"水", "辛丙":"水", "丁壬":"木", "壬丁":"木", "戊癸":"火", "癸戊":"火",
-  "子丑":"土", "丑子":"土", "寅亥":"木", "亥寅":"木",
-  "卯戌":"火", "戌卯":"火", "辰酉":"金", "酉辰":"金", "巳申":"水", "申巳":"水", "午未":"土", "未午":"土",
-};
+import { STEM_KOR, BRANCH_KOR, STEM_ELEMENT, BRANCH_ELEMENT } from "@/lib/ganji";
 
 const ELEMENT_TO_COLOR: Record<string, string> = {
   "木": "#1B6B3A", "火": "#B02020", "土": "#8A4F00", "金": "#3D3D3D", "水": "#0F4F8A",
 };
 
-const BRANCH_KOR: Record<string, string> = {
-  子:"자", 丑:"축", 寅:"인", 卯:"묘", 辰:"진", 巳:"사",
-  午:"오", 未:"미", 申:"신", 酉:"유", 戌:"술", 亥:"해",
-};
-
 function CheonganCircleDiagram() {
   const CX = 100, CY = 100, PR = 75, NR = 13;
   const STEMS = ["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
-  const STEM_KOR_LOCAL: Record<string, string> = {
-    甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
-    己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
-  };
   function pos(i: number): [number, number] {
     const a = (-90 + i * 36) * Math.PI / 180;
     return [CX + PR * Math.cos(a), CY + PR * Math.sin(a)];
@@ -68,7 +42,7 @@ function CheonganCircleDiagram() {
             </text>
             <text x={x} y={y + 8} textAnchor="middle" dominantBaseline="central"
               fontSize={7} fill={elColor} opacity={0.85}>
-              {STEM_KOR_LOCAL[st]}
+              {STEM_KOR[st]}
             </text>
           </g>
         );
@@ -126,30 +100,6 @@ function JijiCircleDiagram() {
     </svg>
   );
 }
-
-const PILLAR_LABEL_MAP: Record<string, string> = {
-  "년주": "조상·사회 영역", "월주": "부모·직장 영역",
-  "일주": "나·배우자 영역", "시주": "자녀·미래 영역",
-};
-
-const SIPSIN_KOR: Record<string, string> = {
-  "比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관",
-  "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관",
-  "偏印": "편인", "正印": "정인",
-};
-
-const DOMAIN_BY_SIPSIN: Record<string, string> = {
-  "偏財": "재물운", "正財": "재물운",
-  "偏官": "직장·사회운", "正官": "직장·사회운",
-  "偏印": "학업·자격운", "正印": "학업·자격운",
-  "食神": "표현·건강운", "傷官": "표현·건강운",
-  "比肩": "대인관계", "劫財": "대인관계",
-};
-
-const STEM_KOR: Record<string, string> = {
-  甲:"갑", 乙:"을", 丙:"병", 丁:"정", 戊:"무",
-  己:"기", 庚:"경", 辛:"신", 壬:"임", 癸:"계",
-};
 
 function DaeunSeunTable({ pillars, daeunGanji, seunGanji }: {
   pillars: string[]; daeunGanji: string; seunGanji: string;
@@ -219,18 +169,6 @@ export default function FortuneTab({ natal, postnatal }: Props) {
   const allCombines = [...postnatal.seun_combines, ...postnatal.daeun_combines];
   const hasClashCombine = allClashes.length > 0 || allCombines.length > 0;
 
-  // 월운 영역 뱃지 — 이번달 천간/지지 십신을 영역별로 매핑
-  const currentMonth = postnatal.upcoming_months?.[0];
-  const monthBadges: Record<string, string[]> = {};
-  if (currentMonth) {
-    for (const s of [currentMonth.stem_sipsin, currentMonth.branch_sipsin]) {
-      const domain = DOMAIN_BY_SIPSIN[s.name];
-      if (!domain) continue;
-      const label = `${SIPSIN_KOR[s.name] ?? s.name}(${s.name})`;
-      (monthBadges[domain] ??= []).push(label);
-    }
-  }
-
   return (
     <div className="space-y-4">
       {/* 충합(衝合) */}
@@ -281,37 +219,26 @@ export default function FortuneTab({ natal, postnatal }: Props) {
             )}
             {hasClashCombine && (
               <div className="space-y-2">
-                {allClashes.map((c, i) => {
-                  const areaLabel = PILLAR_LABEL_MAP[c.pillar] ?? c.pillar;
-                  return (
-                    <div key={`clash-${i}`}
-                      className="rounded-xl border p-3 space-y-2"
-                      style={{ borderColor: "#E0A8A3", backgroundColor: "#F7EDEC" }}>
-                      <p className="text-[10px] font-semibold" style={{ color: "var(--color-fire)" }}>
-                        지지충(支冲) — {BRANCH_KOR[c.target] ?? c.target}({c.target})·{BRANCH_KOR[c.incoming] ?? c.incoming}({c.incoming})
-                      </p>
-                      <KkachiTip>
-                        <strong style={{ color: "var(--color-fire)" }}>{BRANCH_KOR[c.target] ?? c.target}({c.target})·{BRANCH_KOR[c.incoming] ?? c.incoming}({c.incoming})</strong>은 십이지지 원형에서 정반대의 짝인 지지충이에요. {c.pillar}의 {BRANCH_KOR[c.target] ?? c.target}({c.target})과 충이기에 <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 갑작스런 변화나 갈등이 생길 수 있으니 유연하게 대처하세요.
-                      </KkachiTip>
-                    </div>
-                  );
-                })}
+                {allClashes.map((c, i) => (
+                  <div key={`clash-${i}`}
+                    className="rounded-xl border p-3 space-y-2"
+                    style={{ borderColor: "#E0A8A3", backgroundColor: "#F7EDEC" }}>
+                    <p className="text-[10px] font-semibold" style={{ color: "var(--color-fire)" }}>
+                      지지충(支冲) — {c.target_korean}({c.target})·{c.incoming_korean}({c.incoming})
+                    </p>
+                    <KkachiTip>{c.narrative}</KkachiTip>
+                  </div>
+                ))}
                 {allCombines.map((c, i) => {
-                  const isStemHap = c.type === "천간합";
-                  const harmonyEl = COMBINE_OHENG[`${c.incoming}${c.target}`] ?? "";
-                  const harmonyInfo = harmonyEl ? getElementInfo(harmonyEl) : null;
-                  const areaLabel = PILLAR_LABEL_MAP[c.pillar] ?? c.pillar;
-                  const pairLabel = isStemHap ? "천간합 5쌍" : "지지육합 6쌍";
+                  const charKor = c.type === "천간합" ? STEM_KOR : BRANCH_KOR;
                   return (
                     <div key={`combine-${i}`}
                       className="rounded-xl border p-3 space-y-2"
                       style={{ borderColor: "#A8C9B5", backgroundColor: "#EEF4F0" }}>
                       <p className="text-[10px] font-semibold" style={{ color: "var(--color-wood)" }}>
-                        {c.type} — {(isStemHap ? STEM_KOR : BRANCH_KOR)[c.incoming] ?? c.incoming}({c.incoming})·{(isStemHap ? STEM_KOR : BRANCH_KOR)[c.target] ?? c.target}({c.target})
+                        {c.type} — {charKor[c.incoming] ?? c.incoming_korean}({c.incoming})·{charKor[c.target] ?? c.target_korean}({c.target})
                       </p>
-                      <KkachiTip>
-                        <strong style={{ color: "var(--color-wood)" }}>{c.incoming}·{c.target}</strong>은 {pairLabel} 중 하나로 결이 맞아요{harmonyInfo && (<> (합화 <strong style={{ color: harmonyInfo.color }}>{harmonyInfo.korean}({harmonyEl})</strong>)</>)}. <strong className="text-[var(--color-ink)]">{areaLabel}</strong>에서 좋은 인연이나 기회가 자연스럽게 열릴 수 있어요.
-                      </KkachiTip>
+                      <KkachiTip>{c.narrative}</KkachiTip>
                     </div>
                   );
                 })}
@@ -331,7 +258,7 @@ export default function FortuneTab({ natal, postnatal }: Props) {
           <KkachiTip>
             어떤 영역에서 운이 잘 풀리고 어떤 영역에서 조심해야 할지 한눈에 봐요. <strong>이번달 +X</strong> 뱃지는 월운에서 그 영역에 추가로 들어오는 기운이에요.
           </KkachiTip>
-          <DomainBarChart scores={postnatal.domain_scores} monthBadges={monthBadges} />
+          <DomainBarChart scores={postnatal.domain_scores} monthBadges={postnatal.month_badges} />
           <div className="space-y-1">
             {(() => {
               const entries = Object.entries(postnatal.domain_scores);
