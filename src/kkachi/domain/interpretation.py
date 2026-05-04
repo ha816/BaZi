@@ -47,6 +47,69 @@ class FengShuiResult:
 
 
 @dataclass
+class ZodiacInfo:
+    branch: str          # 子
+    korean: str          # 쥐
+    emoji: str           # 🐭
+    keyword: str         # 지혜·적응
+    traits: list[str] = field(default_factory=list)
+    strength: str = ""
+    weakness: str = ""
+    compatible: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ZodiacRelation:
+    branch: str
+    info: ZodiacInfo
+    relation: str        # 나·삼합·육합·원진·충·보통
+    relation_label: str  # 삼합(三合)
+
+
+@dataclass
+class PillarZodiac:
+    branch: str
+    info: ZodiacInfo
+    pillar_label: str    # 년주(年柱)
+    role: str            # 사회적 자아
+    role_desc: str       # 남들이 보는 나의 대외 이미지
+    is_year: bool
+
+
+@dataclass
+class SamhapInfo:
+    element: str         # 水
+    label: str           # 水 삼합
+    members: list[str] = field(default_factory=list)
+    in_pillars: bool = False
+
+
+@dataclass
+class PillarPair:
+    i: int               # pillar index a (0=년주, 1=월주, 2=일주, 3=시주)
+    j: int               # pillar index b
+    pillar_label_a: str  # 년주(年柱)
+    pillar_label_b: str  # 일주(日柱)
+    branch_a: str        # 寅
+    branch_b: str        # 戌
+    zodiac_a: str        # 호랑이
+    zodiac_b: str        # 개
+    relation: str        # 삼합·육합·충·원진
+    relation_label: str  # 삼합(三合)
+
+
+@dataclass
+class ZodiacResult:
+    year_branch: str
+    year_info: ZodiacInfo
+    relations: list[ZodiacRelation] = field(default_factory=list)
+    pillar_zodiacs: list[PillarZodiac] = field(default_factory=list)
+    pillar_pairs: list[PillarPair] = field(default_factory=list)
+    pillar_tip: str = ""
+    samhap: SamhapInfo | None = None
+
+
+@dataclass
 class NatalResult:
     """선천 분석 결과 — 생년월일로 고정되는 값."""
 
@@ -93,6 +156,7 @@ class NatalResult:
     personality: list[InterpretBlock] = field(default_factory=list)
     element_balance: list[InterpretBlock] = field(default_factory=list)
     feng_shui: FengShuiResult | None = None
+    zodiac: ZodiacResult | None = None
 
 
 @dataclass
@@ -131,8 +195,9 @@ class PostnatalResult:
     # 이번달 십신 → 영역별 뱃지 라벨 (DomainBarChart 키와 일치)
     month_badges: dict[str, list[str]] = field(default_factory=dict)
 
-    # 연도별 띠 관계 (올해·내년·가까운 좋은 해)
+    # 연도별 띠 관계 (4년치, 좋은 해 없으면 마지막 슬롯에 가까운 좋은 해)
     year_zodiac_relations: list[dict] = field(default_factory=list)
+    year_zodiac_narrative: str = ""
 
     # 텍스트 해석
     yongshin: list[InterpretBlock] = field(default_factory=list)

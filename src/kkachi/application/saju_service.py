@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import asdict
 
 from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fengshui import FengShuiInterpreter
+from kkachi.application.interpreter.zodiac import ZodiacInterpreter
+from kkachi.application.util.zodiac_meta import zodiac_info
 from kkachi.application.interpreter.fortune import FortuneInterpreter
 from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
 from kkachi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
@@ -135,22 +138,69 @@ class SajuService(InterpreterPort):
             branch_char = self._get_year_branch_char(year)
             relation = self._zodiac_relation_type(birth_branch_char, branch_char)
             ganji = year_to_ganji(year)
+            info = zodiac_info(branch_char)
             return {
                 "year": year,
                 "ganji": ganji,
                 "branch": branch_char,
-                "kor": self._BRANCH_KOREAN.get(branch_char, branch_char),
+                "kor": info.korean,
                 "relation": relation,
                 "desc": _DESC_MAP.get(relation, ""),
+                "info": asdict(info),
             }
 
-        rows = [make_row(base_year), make_row(base_year + 1)]
-        for i in range(2, 14):
-            r = make_row(base_year + i)
-            if r["relation"] in ("삼합", "육합"):
-                rows.append(r)
-                break
+        rows = [make_row(base_year + i) for i in range(4)]
+        if not any(r["relation"] in ("삼합", "육합") for r in rows):
+            for i in range(4, 14):
+                r = make_row(base_year + i)
+                if r["relation"] in ("삼합", "육합"):
+                    rows[-1] = r
+                    break
         return rows
+
+    def _build_year_zodiac_narrative(self, rows: list[dict], name: str = "") -> str:
+        body_map: dict[str, str] = {
+            "삼합": "강한 기운이 합쳐지는 해, 도전과 확장에 좋은 타이밍",
+            "육합": "협력과 관계 확장에 유리한 시기",
+            "충":   "예상치 못한 변화와 이동이 많을 수 있는 시기",
+            "원진": "대인관계에서 미묘한 갈등이나 오해가 생기기 쉬운 시기",
+        }
+
+        good = [r for r in rows if r["relation"] in ("삼합", "육합")]
+        bad = [r for r in rows if r["relation"] in ("충", "원진")]
+        bon = [r for r in rows if r["relation"] == "나"]
+
+        if not good and not bad and not bon:
+            return ""
+
+        def fragment(group: list[dict]) -> str:
+            if len(group) == 1:
+                r = group[0]
+                yy = r["year"] % 100
+                return f"{yy}년 {r['kor']}띠와 {r['relation']}으로 {body_map[r['relation']]}"
+            years = ", ".join(f"{r['year'] % 100}년" for r in group)
+            rels = ", ".join(r["relation"] for r in group)
+            bodies = ", ".join(body_map[r["relation"]] for r in group)
+            return f"{years}은 {rels}으로 {bodies}"
+
+        prefix = f"{name}님은 " if name else ""
+        sentences: list[str] = []
+
+        if good:
+            sentences.append(f"{prefix}{fragment(good)}이에요.")
+
+        if bad:
+            head = "반면 " if good else prefix
+            sentences.append(f"{head}{fragment(bad)}예요.")
+
+        if bon:
+            yy = bon[0]["year"] % 100
+            if good or bad:
+                sentences.append(f"{yy}년은 12년마다 돌아오는 본명년(本命年)이라 내실 다지기 좋은 해예요.")
+            else:
+                sentences.append(f"{prefix}{yy}년 본명년(本命年)을 맞아 내실 다지기 좋은 시기예요.")
+
+        return " ".join(sentences)
 
     def _find_nearest_yongshin_year(self, base_year: int, seun_ganji: str, yongshin: Oheng) -> int | None:
         seun_stem = Stem.from_char(seun_ganji[0])
@@ -240,6 +290,7 @@ class SajuService(InterpreterPort):
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),
             feng_shui=FengShuiInterpreter()(natal, birth_year, is_male),
+            zodiac=ZodiacInterpreter()(natal, name),
         )
 
     async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> PostnatalResult:
@@ -269,6 +320,7 @@ class SajuService(InterpreterPort):
         ]
         upcoming_months = postnatal.upcoming_months
         month_badges = self._build_month_badges(upcoming_months)
+        year_zodiac_rows = self._build_year_zodiac_relations(birth_branch_char, postnatal.year)
 
         return PostnatalResult(
             year=postnatal.year,
@@ -299,7 +351,8 @@ class SajuService(InterpreterPort):
             ),
             upcoming_months=upcoming_months,
             month_badges=month_badges,
-            year_zodiac_relations=self._build_year_zodiac_relations(birth_branch_char, postnatal.year),
+            year_zodiac_relations=year_zodiac_rows,
+            year_zodiac_narrative=self._build_year_zodiac_narrative(year_zodiac_rows, name),
             yongshin=YongshinInterpreter()(natal, postnatal),
             fortune_by_domain=FortuneInterpreter()(postnatal),
             annual_fortune=SeunInterpreter()(natal, postnatal),

@@ -125,6 +125,7 @@ export interface NatalResult {
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];
   feng_shui: FengShuiResult | null;
+  zodiac: ZodiacResult | null;
 }
 
 export interface TrigramInfo {
@@ -152,6 +153,63 @@ export interface FengShuiResult {
   avoid_advice: string;
   interior_intro: string;
   interior_tips: InterpretTip[];
+}
+
+export interface ZodiacInfo {
+  branch: string;
+  korean: string;
+  emoji: string;
+  keyword: string;
+  traits: string[];
+  strength: string;
+  weakness: string;
+  compatible: string[];
+}
+
+export interface ZodiacRelation {
+  branch: string;
+  info: ZodiacInfo;
+  relation: string;
+  relation_label: string;
+}
+
+export interface PillarZodiac {
+  branch: string;
+  info: ZodiacInfo;
+  pillar_label: string;
+  role: string;
+  role_desc: string;
+  is_year: boolean;
+}
+
+export interface SamhapInfo {
+  element: string;
+  label: string;
+  members: string[];
+  in_pillars: boolean;
+}
+
+export interface PillarPair {
+  i: number;
+  j: number;
+  pillar_label_a: string;
+  pillar_label_b: string;
+  branch_a: string;
+  branch_b: string;
+  zodiac_a: string;
+  zodiac_b: string;
+  relation: string;
+  relation_label: string;
+}
+
+export interface ZodiacResult {
+  year_branch: string;
+  year_info: ZodiacInfo;
+  relations: ZodiacRelation[];
+  pillar_zodiacs: PillarZodiac[];
+  pillar_pairs: PillarPair[];
+  pillar_tip: string;
+  samhap: SamhapInfo | null;
 }
 
 export interface PostnatalResult {
@@ -182,7 +240,8 @@ export interface PostnatalResult {
     matches_yongshin: boolean;
   }>;
   month_badges: Record<string, string[]>;
-  year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string }>;
+  year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string; info: ZodiacInfo }>;
+  year_zodiac_narrative: string;
   yongshin: InterpretBlock[];
   fortune_by_domain: InterpretBlock[];
   annual_fortune: InterpretBlock[];
