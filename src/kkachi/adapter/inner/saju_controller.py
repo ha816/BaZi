@@ -59,3 +59,17 @@ async def interpret(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
     return asdict(result)
+
+
+@saju_router.post("/saju/report")
+@inject
+async def report(
+    req: AnalysisRequest,
+    saju_svc: SajuService = Depends(Provide[Container.saju_service]),
+) -> dict:
+    try:
+        user = _make_user(req)
+        markdown = await saju_svc.build_report(user, req.analysis_year, req.name)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"레포트 생성 중 오류: {e}")
+    return {"report": markdown}

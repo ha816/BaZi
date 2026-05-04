@@ -8,8 +8,9 @@ from pydantic import BaseModel
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
+from kkachi.application.saju_service import SajuService
 from kkachi.container import Container
-from kkachi.domain.user import Gender
+from kkachi.domain.user import Gender, User
 
 profile_router = APIRouter(prefix="/members/{member_id}/profiles", tags=["profiles"])
 
@@ -107,6 +108,23 @@ async def delete_profile(
     if profile and profile.is_self:
         raise HTTPException(status_code=409, detail="자기 자신 프로필은 삭제할 수 없습니다.")
     await svc.delete_profile(profile_id)
+
+
+@profile_router.post("/{profile_id}/report")
+@inject
+async def report_profile(
+    member_id: UUID,
+    profile_id: UUID,
+    req: AnalyzeRequest,
+    profile_svc: ProfileService = Depends(Provide[Container.profile_service]),
+    saju_svc: SajuService = Depends(Provide[Container.saju_service]),
+) -> dict:
+    profile = await profile_svc.get_profile(profile_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    user = User(gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
+    markdown = await saju_svc.build_report(user, req.year, name=profile.name)
+    return {"report": markdown}
 
 
 @profile_router.post("/{profile_id}/analyze")

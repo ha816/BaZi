@@ -88,13 +88,17 @@ def _first_keyword(keyword: str) -> str:
     return keyword.split(",")[0].strip()
 
 
-def _josa_neun(text: str) -> str:
-    """은/는 자동 선택 — 마지막 글자 받침 유무로 판별."""
+def _josa(text: str, with_jong: str, without_jong: str) -> str:
+    """마지막 글자 받침 유무로 조사를 선택."""
     if not text:
-        return "은"
+        return without_jong
     code = ord(text[-1])
     has_jongseong = 0xAC00 <= code <= 0xD7A3 and (code - 0xAC00) % 28 != 0
-    return "은" if has_jongseong else "는"
+    return with_jong if has_jongseong else without_jong
+
+
+def _josa_neun(text: str) -> str:
+    return _josa(text, "은", "는")
 
 
 _UNSEONG_ENDINGS: list[str] = ["시기예요", "단계예요", "흐름이에요"]
@@ -179,7 +183,8 @@ class NatalNarrativeInterpreter:
             return ""
         strength, caution, advice = tip
         prefix = f"{name}님은 " if name else ""
-        return f"{prefix}{meaning}({elem}) 기운으로서 {strength}을 잘 발휘하시되, {caution}에 주의하세요. {advice}"
+        eul = _josa(strength, "을", "를")
+        return f"{prefix}{meaning}({elem}) 기운으로서 {strength}{eul} 잘 발휘하시되, {caution}에 주의하세요. {advice}"
 
     def _sipsin_story(self, natal: NatalInfo, name: str) -> str:
         if not natal.sipsin:
@@ -196,10 +201,13 @@ class NatalNarrativeInterpreter:
         if len(strong) >= 2:
             labels = "·".join(c[0] for c in strong)
             keywords = "과 ".join(_first_keyword(c[2]) for c in strong)
-            core = f"{labels}이(가) 두드러지는 사주예요. {keywords}이 동시에 살아 있어 자기 페이스로 영역을 끌어가는 흐름입니다."
+            labels_i = _josa(labels, "이", "가")
+            keywords_i = _josa(keywords, "이", "가")
+            core = f"{labels}{labels_i} 두드러지는 사주예요. {keywords}{keywords_i} 동시에 살아 있어 자기 페이스로 영역을 끌어가는 흐름입니다."
         elif len(strong) == 1:
             label, hanja, keyword, _ = strong[0]
-            core = f"{label}({hanja})이 가장 두드러지는 사주예요. {_first_keyword(keyword)} 영역에서 자기 색이 가장 잘 살아납니다."
+            label_i = _josa(label, "이", "가")
+            core = f"{label}({hanja}){label_i} 가장 두드러지는 사주예요. {_first_keyword(keyword)} 영역에서 자기 색이 가장 잘 살아납니다."
         else:
             core = "다섯 카테고리에 한 글자씩 골고루 들어 있는 균형형이에요. 어느 한쪽으로 치우치지 않고 다양한 영역을 두루 경험하는 흐름입니다."
 

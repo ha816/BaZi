@@ -280,8 +280,8 @@ export default function ZodiacTab({ natal, postnatal }: Props) {
               <tbody>
                 <tr className="border-t border-[var(--color-border-light)]">
                   <td className="text-[9px] py-1.5 px-1 whitespace-nowrap text-left text-[var(--color-ink-faint)]">지지(地支)</td>
-                  {[...zodiac.pillar_zodiacs].reverse().map((pz) => (
-                    <td key={`b-${pz.branch}`} className="py-1.5 px-1">
+                  {[...zodiac.pillar_zodiacs].reverse().map((pz, i) => (
+                    <td key={`b-${i}`} className="py-1.5 px-1">
                       <span className="font-heading text-xs font-bold leading-tight text-[var(--color-ink)]">
                         {BRANCH_KOR[pz.branch] ?? pz.branch}({pz.branch})
                       </span>
@@ -290,8 +290,8 @@ export default function ZodiacTab({ natal, postnatal }: Props) {
                 </tr>
                 <tr className="border-t border-[var(--color-border-light)]">
                   <td className="text-[9px] py-1.5 px-1 whitespace-nowrap text-left text-[var(--color-ink-faint)]">띠(生肖)</td>
-                  {[...zodiac.pillar_zodiacs].reverse().map((pz) => (
-                    <td key={`z-${pz.branch}`} className="py-1.5 px-1">
+                  {[...zodiac.pillar_zodiacs].reverse().map((pz, i) => (
+                    <td key={`z-${i}`} className="py-1.5 px-1">
                       <div className="flex flex-col items-center leading-tight">
                         <span className="text-lg">{pz.info.emoji}</span>
                         <span className="text-[10px] text-[var(--color-ink-muted)]">{pz.info.korean}띠</span>
@@ -301,8 +301,8 @@ export default function ZodiacTab({ natal, postnatal }: Props) {
                 </tr>
                 <tr className="border-t border-[var(--color-border-light)]">
                   <td className="text-[9px] py-1.5 px-1 whitespace-nowrap text-left text-[var(--color-ink-faint)]">기운(氣運)</td>
-                  {[...zodiac.pillar_zodiacs].reverse().map((pz) => (
-                    <td key={`k-${pz.branch}`} className="py-1.5 px-1">
+                  {[...zodiac.pillar_zodiacs].reverse().map((pz, i) => (
+                    <td key={`k-${i}`} className="py-1.5 px-1">
                       <span className="text-[10px] font-semibold text-[var(--color-ink)] leading-snug">
                         {pz.info.keyword}
                       </span>
@@ -311,8 +311,8 @@ export default function ZodiacTab({ natal, postnatal }: Props) {
                 </tr>
                 <tr className="border-t border-[var(--color-border-light)]">
                   <td className="text-[9px] py-1.5 px-1 whitespace-nowrap text-left text-[var(--color-ink-faint)]">역할(役割)</td>
-                  {[...zodiac.pillar_zodiacs].reverse().map((pz) => (
-                    <td key={`r-${pz.branch}`} className="py-1.5 px-1">
+                  {[...zodiac.pillar_zodiacs].reverse().map((pz, i) => (
+                    <td key={`r-${i}`} className="py-1.5 px-1">
                       <span className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{pz.role}</span>
                     </td>
                   ))}

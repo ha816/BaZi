@@ -16,6 +16,7 @@ from kkachi.application.interpreter.samjae import SamjaeInterpreter
 from kkachi.application.interpreter.seun import SeunInterpreter
 from kkachi.application.interpreter.yongshin import YongshinInterpreter
 from kkachi.application.port.llm_port import LlmPort
+from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
 from kkachi.application.util.sipsin_meta import enrich_sipsin, sipsin_domain, sipsin_label
 from kkachi.application.util.util import year_to_ganji
@@ -232,6 +233,62 @@ class SajuService(InterpreterPort):
             summary += " 다섯 기운이 모두 있어 균형 잡힌 구성이에요."
         return summary
 
+    @staticmethod
+    def _josa(word: str, with_jong: str, without_jong: str) -> str:
+        if not word:
+            return without_jong
+        code = ord(word[-1])
+        has = 0xAC00 <= code <= 0xD7A3 and (code - 0xAC00) % 28 != 0
+        return with_jong if has else without_jong
+
+    def _build_core_summary(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> str:
+        prefix = f"{name}님은" if name else "이 사주는"
+        day_stem = natal.saju.stem_of_day_pillar
+        my_el = natal.my_main_element
+        yong = natal.yongshin
+        kisin = self._kisin(yong)
+
+        sorted_els = sorted(natal.element_stats.items(), key=lambda x: x[1], reverse=True)
+        strongest, top_count = sorted_els[0]
+        missing = [o for o, c in natal.element_stats.items() if c == 0]
+
+        sentences: list[str] = []
+
+        sentences.append(
+            f"{prefix} {day_stem.korean}({day_stem.name}) 일간으로 "
+            f"{my_el.meaning}({my_el.name}) 기운이 중심인 {natal.strength_label} 사주예요."
+        )
+
+        if strongest is my_el:
+            top_josa = self._josa(strongest.meaning, "이", "가")
+            top_clause = f"여덟 글자 중 주 오행인 {strongest.meaning}{top_josa} {top_count}개로 두텁게 자리잡고 있어요"
+        else:
+            my_josa = self._josa(my_el.meaning, "이", "가")
+            top_clause = (
+                f"여덟 글자 중 {strongest.meaning}({strongest.name})의 기운이 {top_count}개로 가장 많고, "
+                f"주 오행 {my_el.meaning}{my_josa} 받쳐주는 구성이에요"
+            )
+        if missing:
+            miss_names = "·".join(o.meaning for o in missing)
+            sentences.append(f"{top_clause}. 다만 {miss_names}의 기운이 비어 있어 이를 채워주는 흐름이 들어올 때 결이 부드러워져요.")
+        else:
+            sentences.append(f"{top_clause}. 다섯 기운이 모두 있어 비교적 균형 잡힌 구성이에요.")
+
+        kisin_josa = self._josa(kisin.meaning, "은", "는")
+        sentences.append(
+            f"균형을 잡아주는 처방은 용신 {yong.meaning}({yong.name}) — 색·방향·습관에서 가까이 두면 흐름이 가벼워지고, "
+            f"기신 {kisin.meaning}({kisin.name}){kisin_josa} 가능한 멀리하면 좋아요."
+        )
+
+        if postnatal.samjae:
+            stage = postnatal.samjae.get("type", "")
+            if stage:
+                sentences.append(
+                    f"올해는 {stage} 흐름이라 큰 확장보다 내실 다지기에 집중하면 다음 도약의 발판이 돼요."
+                )
+
+        return " ".join(sentences)
+
     def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True, name: str = "") -> NatalResult:
         day_stem = natal.saju.stem_of_day_pillar
         pillar_elements = [
@@ -353,6 +410,7 @@ class SajuService(InterpreterPort):
             month_badges=month_badges,
             year_zodiac_relations=year_zodiac_rows,
             year_zodiac_narrative=self._build_year_zodiac_narrative(year_zodiac_rows, name),
+            core_summary=self._build_core_summary(natal, postnatal, name),
             yongshin=YongshinInterpreter()(natal, postnatal),
             fortune_by_domain=FortuneInterpreter()(postnatal),
             annual_fortune=SeunInterpreter()(natal, postnatal),
@@ -421,3 +479,8 @@ class SajuService(InterpreterPort):
         # postnatal 시점 정보를 yongshin_tip에 합성 (이번달/올해 매칭, 가까운 용신 달·해)
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
         return Interpretation(natal=natal_result, postnatal=postnatal_result)
+
+    async def build_report(self, user: User, year: int, name: str = "") -> str:
+        natal_info, postnatal_info = self.analyze(user, year)
+        interpretation = await self.interpret(natal_info, postnatal_info, user=user, name=name)
+        return LlmReportBuilder().build(interpretation.natal, interpretation.postnatal, user, name)
