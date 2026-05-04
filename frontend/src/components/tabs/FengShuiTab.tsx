@@ -175,53 +175,65 @@ export default function FengShuiTab({ natal, name }: Props) {
           <KkachiTip>
             본명괘(本命卦) {fs.trigram.char}({fs.trigram.reading}) 기준 4개의 길한 방위예요. 1순위 생기(生氣)부터 활용해보세요. 책상·침대 머리를 길방을 향하게 두면 그 종류의 운이 돕는다고 해요.
           </KkachiTip>
+
+          {/* 피해야 할 방위(凶方) */}
+          <div className="divider" />
+          <InlineCollapsibleHeader title="피해야 할 방위(凶方)">
+            본명괘와 맞지 않는 4방위예요. 출입문·침대·책상이 이쪽을 향하면 흐름이 막히기 쉬워요.
+          </InlineCollapsibleHeader>
+          <div className="divider" />
+          <KkachiTip>
+            {fs.avoid_advice}
+          </KkachiTip>
+          <div className="grid grid-cols-4 gap-2">
+            {fs.unlucky_directions.map((d) => (
+              <div
+                key={d}
+                className="rounded-lg p-2 border flex flex-col items-center text-center gap-1"
+                style={{ backgroundColor: "var(--color-ivory)", borderColor: "var(--color-border-light)" }}
+              >
+                <span className="text-base">{DIRECTION_EMOJI[d] ?? "🧭"}</span>
+                <span className="text-sm font-bold leading-none" style={{ color: "var(--color-ink-muted)" }}>
+                  {d}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 피해야 할 방위 + 인테리어 개운법 */}
+      {/* 풍수개운법 카드 */}
       <div className="slide-card">
-        <CollapsibleSectionHeader title="개운법(開運法)">
-          공간을 활용한 풍수 개운 방법이에요. <strong className="text-[var(--color-ink)]">색상·소품·방위</strong>를 일상에 들이면 운의 결이 달라져요. 피해야 할 방위는 가능하면 침대·책상 머리에 두지 않는 것이 좋아요.
+        <CollapsibleSectionHeader title="풍수개운법(風水開運法)">
+          {fs.interior_intro}
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            {name ? `${name}님, ` : ""}방위를 맞추기 어려울 땐 행운 색상 소품부터 시작해보세요. 작은 변화도 공간의 기운을 바꿀 수 있어요.
+            풍수를 고려한 작은 변화로 공간의 기운을 바꿀 수 있어요. 용신의 기운을 공간에 들이는 색상·소품·방위 팁이에요.
           </KkachiTip>
-
-          {/* 피해야 할 방위 */}
-          <div>
-            <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">피해야 할 방위</p>
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {fs.unlucky_directions.map((d) => (
-                <span
-                  key={d}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs"
-                  style={{ borderColor: "var(--color-border-light)", color: "var(--color-ink-muted)" }}
-                >
-                  <span>{DIRECTION_EMOJI[d] ?? "🧭"}</span>
-                  <span>{d}</span>
-                </span>
+          {fs.interior_tips.length > 0 && (
+            <div className="space-y-1.5">
+              {fs.interior_tips.map((tip) => (
+                <div key={tip.label} className="rounded-lg p-2.5 border" style={{ borderColor: "var(--color-border-light)" }}>
+                  <p className="text-xs font-semibold text-[var(--color-ink)]">{tip.label}</p>
+                  <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed mt-0.5">{tip.text}</p>
+                </div>
               ))}
             </div>
-            <p className="text-[11px] text-[var(--color-ink-faint)] leading-relaxed">{fs.avoid_advice}</p>
-          </div>
-
-          {/* 인테리어 개운법 */}
-          {fs.interior_tips.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">인테리어 개운법</p>
-              <p className="text-[11px] text-[var(--color-ink-faint)] mb-2 leading-relaxed">{fs.interior_intro}</p>
-              <div className="space-y-1.5">
-                {fs.interior_tips.map((tip) => (
-                  <div key={tip.label} className="rounded-lg p-2.5 border" style={{ borderColor: "var(--color-border-light)" }}>
-                    <p className="text-xs font-semibold text-[var(--color-ink)]">{tip.label}</p>
-                    <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed mt-0.5">{tip.text}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           )}
+          {(() => {
+            const colorText = fs.interior_tips.find(t => t.label === "행운 색상")?.text;
+            const supplementText = fs.interior_tips.find(t => t.label.includes("보완"))?.text;
+            const bestDirection = fs.lucky_directions[0]?.direction;
+            return (
+              <KkachiTip>
+                {colorText && <>행운 색상({colorText})은 옷·핸드폰 케이스·가방 같은 일상 소품에 활용해보세요. </>}
+                {supplementText && <>집에는 {supplementText}을(를) 두면 용신 {natal.yongshin_info.meaning}({natal.yongshin_info.name})의 기운이 보완돼요. </>}
+                {bestDirection && <>책상·침대 머리는 길방인 {bestDirection}쪽을 향하게 두면 흐름이 자연스럽게 따라와요.</>}
+              </KkachiTip>
+            );
+          })()}
         </div>
       </div>
     </div>
