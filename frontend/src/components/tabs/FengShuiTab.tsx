@@ -1,53 +1,103 @@
 import type { NatalResult } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
-import InterpretSection from "@/components/InterpretSection";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
+import InlineCollapsibleHeader from "@/components/InlineCollapsibleHeader";
 
 interface Props {
   natal: NatalResult;
   name?: string;
 }
 
-const TRIGRAM_DESC: Record<string, string> = {
-  "坎": "팔괘의 물(水·坎). 흐르는 물처럼 어떤 형태에도 적응하며 깊은 지혜를 품어요.",
-  "坤": "팔괘의 땅(地·坤). 대지가 만물을 기르듯 포용력과 인내가 가장 큰 힘이에요.",
-  "震": "팔괘의 우레(雷·震). 천둥이 대지를 깨우듯 강한 추진력과 행동력이 특징이에요.",
-  "巽": "팔괘의 바람(風·巽). 바람이 어디든 스며들듯 유연함과 침투력이 뛰어나요.",
-  "乾": "팔괘의 하늘(天·乾). 하늘이 모든 것을 아우르듯 리더십과 강한 의지가 돋보여요.",
-  "兌": "팔괘의 연못(澤·兌). 잔잔한 물이 빛을 담듯 기쁨과 소통으로 사람을 끌어당겨요.",
-  "艮": "팔괘의 산(山·艮). 산처럼 묵직하고 변하지 않는 신뢰와 안정감이 강점이에요.",
-  "離": "팔괘의 불(火·離). 불꽃이 사방을 밝히듯 열정과 존재감으로 주변을 이끌어요.",
-};
-
 const DIRECTION_EMOJI: Record<string, string> = {
   북: "⬆️", 남: "⬇️", 동: "➡️", 서: "⬅️",
   동북: "↗️", 동남: "↘️", 서남: "↙️", 서북: "↖️",
 };
 
-function parseKuaInfo(blocks: NatalResult["feng_shui"]) {
-  const kuaBlock = blocks.find((b) => b.category === "쿠아 넘버");
-  const luckyBlock = blocks.find((b) => b.category === "행운의 방위");
-  const otherBlocks = blocks.filter(
-    (b) => b.category !== "쿠아 넘버" && b.category !== "행운의 방위"
+function hasJongseong(s: string): boolean {
+  const last = s.charAt(s.length - 1);
+  const code = last.charCodeAt(0);
+  if (code < 0xAC00 || code > 0xD7A3) return false;
+  return (code - 0xAC00) % 28 !== 0;
+}
+
+// 后天八卦 + 洛書(Lo Shu) — 3×3 매직스퀘어 배치
+// 현대 지도식 배치 (上北下南·右東左西)
+const KUA_GRID = [
+  { kua: 6, char: "乾", reading: "건", direction: "서북" },
+  { kua: 1, char: "坎", reading: "감", direction: "북" },
+  { kua: 8, char: "艮", reading: "간", direction: "동북" },
+  { kua: 7, char: "兌", reading: "태", direction: "서" },
+  { kua: 5, char: "·", reading: "",   direction: "중앙" },
+  { kua: 3, char: "震", reading: "진", direction: "동" },
+  { kua: 2, char: "坤", reading: "곤", direction: "서남" },
+  { kua: 9, char: "離", reading: "리", direction: "남" },
+  { kua: 4, char: "巽", reading: "손", direction: "동남" },
+];
+const EAST_GROUP = [1, 3, 4, 9];
+
+const EAST_BG = "#DCEBE0";
+const EAST_BORDER = "#7AAE8C";
+const EAST_INK = "#1B6B3A";
+const WEST_BG = "#FBE9C2";
+const WEST_BORDER = "#D4A85A";
+const WEST_INK = "#8A6420";
+
+function PalGwaeGrid({ kua }: { kua: number }) {
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-1 max-w-[260px] mx-auto">
+        {KUA_GRID.map((cell) => {
+          const isUser = cell.kua === kua;
+          const isCenter = cell.kua === 5;
+          const isEast = EAST_GROUP.includes(cell.kua);
+          const bg = isCenter ? "var(--color-border-light)" : isEast ? EAST_BG : WEST_BG;
+          const border = isCenter ? "var(--color-border-light)" : isEast ? EAST_BORDER : WEST_BORDER;
+          const ink = isCenter ? "var(--color-ink-faint)" : isEast ? EAST_INK : WEST_INK;
+          return (
+            <div
+              key={cell.kua}
+              className="relative aspect-square rounded-md flex flex-col items-center justify-center text-center"
+              style={{
+                backgroundColor: isUser ? "var(--color-gold-faint)" : bg,
+                border: isUser ? "2px solid var(--color-gold)" : `1px solid ${border}`,
+              }}
+            >
+              {isUser && (
+                <span
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[8px] font-bold whitespace-nowrap"
+                  style={{ backgroundColor: "var(--color-gold)", color: "white" }}
+                >
+                  본명괘
+                </span>
+              )}
+              <span className="text-[10px] text-[var(--color-ink-muted)] leading-none">{cell.direction}</span>
+              <span className="font-heading text-sm font-bold leading-none mt-1" style={{ color: ink }}>
+                {cell.reading ? `${cell.reading}(${cell.char})` : cell.char}
+              </span>
+              <span className="text-[11px] font-semibold text-[var(--color-ink-faint)] mt-1">{cell.kua}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-center gap-3 mt-2 text-[10px]">
+        <span className="flex items-center gap-1" style={{ color: EAST_INK }}>
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: EAST_BG, border: `1px solid ${EAST_BORDER}` }} />
+          <strong>동사택(東四宅)</strong>
+        </span>
+        <span className="flex items-center gap-1" style={{ color: WEST_INK }}>
+          <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: WEST_BG, border: `1px solid ${WEST_BORDER}` }} />
+          <strong>서사택(西四宅)</strong>
+        </span>
+      </div>
+    </div>
   );
-
-  const desc = kuaBlock?.description ?? "";
-  const trigramMatch = desc.match(/— (.+?) \//);
-  const trigram = trigramMatch ? trigramMatch[1] : "";
-
-  const ohaengTip = kuaBlock?.tips.find((t) => t.label === "오행");
-  const groupTip = kuaBlock?.tips.find((t) => t.label === "그룹");
-  const element = ohaengTip?.text?.[0] ?? "土";
-  const group = groupTip?.text ?? "";
-
-  return { trigram, element, group, luckyBlock, otherBlocks };
 }
 
 export default function FengShuiTab({ natal, name }: Props) {
-  const blocks = natal.feng_shui ?? [];
+  const fs = natal.feng_shui;
 
-  if (!blocks.length) {
+  if (!fs) {
     return (
       <div className="slide-card">
         <div className="slide-card__body">
@@ -59,83 +109,72 @@ export default function FengShuiTab({ natal, name }: Props) {
     );
   }
 
-  const { trigram, element, group, luckyBlock, otherBlocks } = parseKuaInfo(blocks);
-  const elInfo = getElementInfo(element);
+  const elInfo = getElementInfo(fs.trigram.element);
 
   return (
     <div className="space-y-4">
       {/* 나의 풍수 + 행운의 방위 통합 카드 */}
       <div className="slide-card" style={{ borderColor: elInfo.borderColor }}>
-        <CollapsibleSectionHeader title="나의 풍수">
-          생년 기준으로 산출한 <strong className="text-[var(--color-ink)]">쿠아 넘버(九星)</strong>와 <strong className="text-[var(--color-ink)]">팔괘(八卦)</strong>로 본인에게 어울리는 방위·색상을 알려드려요. 동사택/서사택 그룹에 따라 길한 방위가 달라요.
+        <CollapsibleSectionHeader title="풍수(風水)">
+          <p>
+            <strong className="text-[var(--color-ink)]">풍수(風水)</strong>는 공간의 기운을 다루는 학문으로, 같은 집에 살아도 사람마다 잘 맞는 방위·색상이 달라요. 그 중 <strong className="text-[var(--color-ink)]">팔택풍수(八宅風水)</strong>는 생년·성별로 1~9 사이의 <strong className="text-[var(--color-ink)]">쿠아 넘버(九星)</strong>를 뽑고, 이 숫자가 8괘(八卦) 중 하나에 대응되는데 이를 본인의 <strong className="text-[var(--color-ink)]">본명괘(本命卦)</strong>라 해요. 본명괘에 따라 <strong style={{ color: EAST_INK }}>동사택(東四宅)</strong> 또는 <strong style={{ color: WEST_INK }}>서사택(西四宅)</strong> 두 그룹 중 하나에 속하고, 그룹별로 길한 방위가 달라져요.
+          </p>
+          <p>
+            ※ 전통 풍수 도식은 위가 남(南), 왼쪽이 동(東)으로 그려요. 옛날에 황제·관찰자가 항상 남쪽을 바라보는 자세(面南)를 기준으로 해서, 앞쪽인 남이 그림 위, 왼손 쪽인 동이 왼쪽이었어요.
+          </p>
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            나의 본명괘(本命卦)는 <strong>{trigram.split("(")[0]}</strong>이에요. {TRIGRAM_DESC[trigram.split("(")[0]] ?? ""}
+            공간의 기운을 다루는 풍수(風水)는 사람마다 어울리는 방위가 달라요. 알아보아요.
           </KkachiTip>
-          {/* 쿠아 타일 + 그룹 */}
-          <div className="flex items-start gap-5">
-            <div
-              className="flex-shrink-0 w-20 h-20 rounded-2xl flex flex-col items-center justify-center gap-0.5"
-              style={{ backgroundColor: elInfo.bgColor, border: `1.5px solid ${elInfo.borderColor}` }}
-            >
-              <span className="font-heading text-4xl font-bold leading-none" style={{ color: elInfo.color }}>
-                {trigram.split("(")[0]}
-              </span>
-              <span className="text-[11px] font-medium" style={{ color: elInfo.color }}>
-                {elInfo.korean}({element})
-              </span>
-            </div>
-            <div className="flex-1 min-w-0 pt-1">
-              <span className="font-heading text-2xl font-bold text-[var(--color-ink)]">
-                {group}
-              </span>
-              <p className="text-sm text-[var(--color-ink-muted)] mt-0.5 leading-relaxed">
-                {group.includes("동사택")
-                  ? "동·남·북·동남 방위가 길한 그룹"
-                  : "서·서남·서북·동북 방위가 길한 그룹"}
-              </p>
-            </div>
-          </div>
+          <PalGwaeGrid kua={fs.kua_number} />
+          <KkachiTip>
+            {name ? `${name}님` : "나"}의 본명괘(本命卦)는 {fs.trigram.char}({fs.trigram.reading}){hasJongseong(fs.trigram.reading) ? "으로" : "로"} {fs.group}에 속해요. {fs.trigram.char}({fs.trigram.reading})의 오행은 {fs.trigram.element_korean}({fs.trigram.element}){hasJongseong(fs.trigram.element_korean) ? "이에요" : "예요"}. {fs.trigram.description}
+          </KkachiTip>
 
-          {/* 행운의 방위 그리드 */}
-          {luckyBlock && (
-            <>
-              <div className="divider" />
-              <div>
-                <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">행운의 방위</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {luckyBlock.tips.map((tip, i) => (
-                    <div
-                      key={tip.label}
-                      className="rounded-lg p-3 border"
-                      style={{
-                        backgroundColor: i === 0 ? elInfo.bgColor : "var(--color-ivory)",
-                        borderColor: i === 0 ? elInfo.borderColor : "var(--color-border-light)",
-                      }}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-base">{DIRECTION_EMOJI[tip.label] ?? "🧭"}</span>
-                        <span
-                          className="text-sm font-bold"
-                          style={{ color: i === 0 ? elInfo.color : "var(--color-ink)" }}
-                        >
-                          {tip.label}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed">
-                        {tip.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+          {/* 행운의 방위(吉方) */}
+          <div className="divider" />
+          <InlineCollapsibleHeader title="행운의 방위(吉方)">
+            본명괘를 기준으로 <strong className="text-[var(--color-ink)]">4개의 길한 방위</strong>가 산출돼요. 같은 그룹(<strong style={{ color: EAST_INK }}>동사택</strong>·<strong style={{ color: WEST_INK }}>서사택</strong>)은 4방위를 공유하지만, 각 방위가 어떤 종류의 길방(<strong className="text-[var(--color-ink)]">생기·연년·천의·복위</strong>)으로 작용할지는 본인 쿠아 넘버에 따라 달라져요. <strong className="text-[var(--color-ink)]">생기(生氣)</strong>는 최고 길방(재물·성취), <strong className="text-[var(--color-ink)]">연년(延年)</strong>은 건강·장수·인연, <strong className="text-[var(--color-ink)]">천의(天醫)</strong>는 귀인·치유·회복, <strong className="text-[var(--color-ink)]">복위(伏位)</strong>는 안정·꾸준한 발전을 뜻해요. 본명괘 자체의 방위는 항상 복위가 돼요.
+          </InlineCollapsibleHeader>
+          <div className="divider" />
+          <KkachiTip>
+            본인이 속한 동사택·서사택 그룹의 4방위가 곧 길한 방위가 되고, 본인 쿠아 넘버가 4방위 각각의 길방 종류(생기·연년·천의·복위)를 정해요.
+          </KkachiTip>
+          <div className="grid grid-cols-4 gap-2">
+            {fs.lucky_directions.map((d, i) => (
+              <div
+                key={d.direction}
+                className="rounded-lg p-2 border flex flex-col items-center text-center gap-0.5"
+                style={{
+                  backgroundColor: i === 0 ? elInfo.bgColor : "var(--color-ivory)",
+                  borderColor: i === 0 ? elInfo.borderColor : "var(--color-border-light)",
+                }}
+              >
+                <span className="text-base">{DIRECTION_EMOJI[d.direction] ?? "🧭"}</span>
+                <span
+                  className="text-sm font-bold leading-none"
+                  style={{ color: i === 0 ? elInfo.color : "var(--color-ink)" }}
+                >
+                  {d.direction}
+                </span>
+                <span
+                  className="text-[10px] font-semibold leading-tight mt-0.5"
+                  style={{ color: i === 0 ? elInfo.color : "var(--color-ink-muted)" }}
+                >
+                  {d.kind_korean}
+                  <span className="block text-[8px] opacity-70">({d.kind_han})</span>
+                </span>
+                <p className="text-[9px] text-[var(--color-ink-faint)] leading-tight mt-1">
+                  {d.meaning}
+                </p>
               </div>
-              <KkachiTip>
-                {trigram} — {TRIGRAM_DESC[trigram.split("(")[0]] ?? ""}
-              </KkachiTip>
-            </>
-          )}
+            ))}
+          </div>
+          <KkachiTip>
+            본명괘(本命卦) {fs.trigram.char}({fs.trigram.reading}) 기준 4개의 길한 방위예요. 1순위 생기(生氣)부터 활용해보세요. 책상·침대 머리를 길방을 향하게 두면 그 종류의 운이 돕는다고 해요.
+          </KkachiTip>
         </div>
       </div>
 
@@ -149,7 +188,40 @@ export default function FengShuiTab({ natal, name }: Props) {
           <KkachiTip>
             {name ? `${name}님, ` : ""}방위를 맞추기 어려울 땐 행운 색상 소품부터 시작해보세요. 작은 변화도 공간의 기운을 바꿀 수 있어요.
           </KkachiTip>
-          <InterpretSection title="" blocks={otherBlocks} />
+
+          {/* 피해야 할 방위 */}
+          <div>
+            <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">피해야 할 방위</p>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {fs.unlucky_directions.map((d) => (
+                <span
+                  key={d}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full border text-xs"
+                  style={{ borderColor: "var(--color-border-light)", color: "var(--color-ink-muted)" }}
+                >
+                  <span>{DIRECTION_EMOJI[d] ?? "🧭"}</span>
+                  <span>{d}</span>
+                </span>
+              ))}
+            </div>
+            <p className="text-[11px] text-[var(--color-ink-faint)] leading-relaxed">{fs.avoid_advice}</p>
+          </div>
+
+          {/* 인테리어 개운법 */}
+          {fs.interior_tips.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">인테리어 개운법</p>
+              <p className="text-[11px] text-[var(--color-ink-faint)] mb-2 leading-relaxed">{fs.interior_intro}</p>
+              <div className="space-y-1.5">
+                {fs.interior_tips.map((tip) => (
+                  <div key={tip.label} className="rounded-lg p-2.5 border" style={{ borderColor: "var(--color-border-light)" }}>
+                    <p className="text-xs font-semibold text-[var(--color-ink)]">{tip.label}</p>
+                    <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed mt-0.5">{tip.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

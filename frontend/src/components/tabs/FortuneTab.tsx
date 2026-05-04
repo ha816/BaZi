@@ -259,30 +259,26 @@ export default function FortuneTab({ natal, postnatal }: Props) {
             어떤 영역에서 운이 잘 풀리고 조심해야 할지 한눈에 봐요.
           </KkachiTip>
           <DomainBarChart scores={postnatal.domain_scores} monthBadges={postnatal.month_badges} />
-          <div className="space-y-1">
-            {(() => {
-              const entries = Object.entries(postnatal.domain_scores);
-              if (entries.length === 0) return null;
-              const best = entries.reduce((a, b) => b[1].score > a[1].score ? b : a);
-              const worst = entries.reduce((a, b) => b[1].score < a[1].score ? b : a);
-              if (best[0] === worst[0]) return null;
-              return (
-                <KkachiTip>
-                  올해 가장 좋은 영역은 <strong>{best[0]}</strong>이에요. <strong>{worst[0]}</strong>은 상대적으로 아쉬우니 조심하세요.
-                </KkachiTip>
-              );
-            })()}
-            {postnatal.fortune_by_domain.map((block, i) => (
-              <div key={i}>
-                {block.description && (
-                  <KkachiTip label={block.category || undefined}>{block.description}</KkachiTip>
+          {(() => {
+            const sorted = Object.entries(postnatal.domain_scores).sort(([, a], [, b]) => b.score - a.score);
+            if (sorted.length === 0) return null;
+            const [bestName, bestInfo] = sorted[0];
+            const [worstName, worstInfo] = sorted[sorted.length - 1];
+            const blockByCategory = Object.fromEntries(postnatal.fortune_by_domain.map((b) => [b.category, b]));
+            const bestBlock = blockByCategory[bestName];
+            const worstBlock = blockByCategory[worstName];
+            const bestTip = bestBlock?.tips?.[0]?.text;
+            return (
+              <KkachiTip>
+                올해 가장 좋은 영역은 <strong>{bestName}</strong>({bestInfo.score}%)이에요.
+                {bestBlock?.description && <> {bestBlock.description}</>}
+                {bestTip && <> {bestTip}</>}
+                {bestName !== worstName && (
+                  <> 반대로 <strong>{worstName}</strong>({worstInfo.score}%)은 잠잠한 시기니 큰 변화보다 내실을 다지세요.</>
                 )}
-                {block.tips.map((tip, j) => (
-                  <KkachiTip key={j} label={tip.label || undefined}>{tip.text}</KkachiTip>
-                ))}
-              </div>
-            ))}
-          </div>
+              </KkachiTip>
+            );
+          })()}
         </div>
       </div>
     </div>

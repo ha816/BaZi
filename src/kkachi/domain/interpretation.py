@@ -17,6 +17,36 @@ class InterpretBlock:
 
 
 @dataclass
+class TrigramInfo:
+    char: str            # 예: "坎"
+    reading: str         # 예: "감"
+    element: str         # 예: "水"
+    element_korean: str  # 예: "물"
+    description: str     # 8괘 풀이
+
+
+@dataclass
+class LuckyDirection:
+    direction: str       # "북"
+    kind_korean: str     # "생기"
+    kind_han: str        # "生氣"
+    meaning: str         # "최고 길방, 재물·성취"
+
+
+@dataclass
+class FengShuiResult:
+    kua_number: int
+    trigram: TrigramInfo
+    group: str               # "동사택(東四宅)"
+    is_eastern: bool
+    lucky_directions: list[LuckyDirection] = field(default_factory=list)
+    unlucky_directions: list[str] = field(default_factory=list)
+    avoid_advice: str = ""
+    interior_intro: str = ""
+    interior_tips: list[InterpretTip] = field(default_factory=list)
+
+
+@dataclass
 class NatalResult:
     """선천 분석 결과 — 생년월일로 고정되는 값."""
 
@@ -62,7 +92,7 @@ class NatalResult:
     # 텍스트 해석
     personality: list[InterpretBlock] = field(default_factory=list)
     element_balance: list[InterpretBlock] = field(default_factory=list)
-    feng_shui: list[InterpretBlock] = field(default_factory=list)
+    feng_shui: FengShuiResult | None = None
 
 
 @dataclass

@@ -124,7 +124,34 @@ export interface NatalResult {
   };
   personality: InterpretBlock[];
   element_balance: InterpretBlock[];
-  feng_shui: InterpretBlock[];
+  feng_shui: FengShuiResult | null;
+}
+
+export interface TrigramInfo {
+  char: string;
+  reading: string;
+  element: string;
+  element_korean: string;
+  description: string;
+}
+
+export interface LuckyDirection {
+  direction: string;
+  kind_korean: string;
+  kind_han: string;
+  meaning: string;
+}
+
+export interface FengShuiResult {
+  kua_number: number;
+  trigram: TrigramInfo;
+  group: string;
+  is_eastern: boolean;
+  lucky_directions: LuckyDirection[];
+  unlucky_directions: string[];
+  avoid_advice: string;
+  interior_intro: string;
+  interior_tips: InterpretTip[];
 }
 
 export interface PostnatalResult {
