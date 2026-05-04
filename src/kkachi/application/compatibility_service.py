@@ -91,7 +91,7 @@ def _compute_domain_scores(
         love -= 20
     if has_dokhwa1 or has_dokhwa2:
         love += 10
-    love += int(avg_postnatal("표현·건강운") * 8)
+    love += int((avg_postnatal("재능운") - 50) * 0.3)
     love = max(0, min(100, love))
     love_reasons = []
     if branch_combine:
@@ -106,7 +106,7 @@ def _compute_domain_scores(
     marriage = 45 + yongshin_boost * 15
     if branch_combine:
         marriage += 10
-    marriage += int(avg_postnatal("대인관계") * 5)
+    marriage += int((avg_postnatal("인연운") - 50) * 0.2)
     marriage = max(0, min(100, marriage))
     marriage_reasons = []
     if yongshin_boost:
@@ -121,14 +121,14 @@ def _compute_domain_scores(
         wealth += 15
     elif has_jaesong1 or has_jaesong2:
         wealth += 8
-    wealth += int(avg_postnatal("재물운") * 10)
+    wealth += int((avg_postnatal("재물운") - 50) * 0.4)
     wealth = max(0, min(100, wealth))
     wealth_reasons = []
     if has_jaesong1 and has_jaesong2:
         wealth_reasons.append("두 분 모두 재성(財星)을 보유해 금전 감각이 맞음")
     elif has_jaesong1 or has_jaesong2:
         wealth_reasons.append("한 분이 재성을 보유해 재물 흐름을 이끌어줌")
-    wealth_reasons.append(f"올해 재물운 평균 {avg_postnatal('재물운'):.1f}점 반영")
+    wealth_reasons.append(f"올해 재물운 평균 {avg_postnatal('재물운'):.0f}점 반영")
     wealth_reason = ", ".join(wealth_reasons)
 
     # 직업
@@ -137,14 +137,14 @@ def _compute_domain_scores(
         career += 15
     elif has_gwansong1 or has_gwansong2:
         career += 8
-    career += int(avg_postnatal("직장·사회운") * 10)
+    career += int((avg_postnatal("관록운") - 50) * 0.4)
     career = max(0, min(100, career))
     career_reasons = []
     if has_gwansong1 and has_gwansong2:
         career_reasons.append("두 분 모두 관성(官星)을 보유해 사회적 목표가 비슷함")
     elif has_gwansong1 or has_gwansong2:
         career_reasons.append("한 분이 관성을 보유해 방향을 이끌어줌")
-    career_reasons.append(f"올해 직장·사회운 평균 {avg_postnatal('직장·사회운'):.1f}점 반영")
+    career_reasons.append(f"올해 관록운 평균 {avg_postnatal('관록운'):.0f}점 반영")
     career_reason = ", ".join(career_reasons)
 
     return {

@@ -73,7 +73,7 @@ def test_yongshin_section():
 def test_fortune_by_domain():
     result = _make_postnatal_result()
     assert len(result.fortune_by_domain) > 0
-    domains = ["재물운", "직장·사회운", "학업·자격운", "표현·건강운", "대인관계"]
+    domains = ["재물운", "관록운", "학문운", "재능운", "인연운"]
     text = _block_text(result.fortune_by_domain)
     assert any(d in text for d in domains)
 

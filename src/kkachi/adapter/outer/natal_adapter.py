@@ -13,7 +13,11 @@ from kkachi.application.util.clash_combine_meta import (
     enrich_clash,
     enrich_stem_combine,
 )
-from kkachi.application.util.sipsin_meta import enrich_sipsin
+from kkachi.application.util.sipsin_meta import (
+    enrich_sipsin,
+    sipsin_polarity,
+    sipsin_strength_modifier,
+)
 from kkachi.application.util.util import parse_term_time, year_to_ganji
 
 
@@ -277,12 +281,18 @@ class PostnatalAdapter(PostnatalPort):
     ) -> dict[str, dict]:
         seun_sipsins = [seun_stem[1], seun_branch[1]]
         daeun_sipsins = [s for _, s in self._get_sipsin(current_daeun.ganji)] if current_daeun else []
+        strength = self.natal.strength
         scores = {}
         for domain_name, domain_sipsins in DOMAIN_MAP.items():
             seun_matches = [s for s in seun_sipsins if s in domain_sipsins]
             daeun_matches = [s for s in daeun_sipsins if s in domain_sipsins]
-            score = len(seun_matches) * 2 + len(daeun_matches)
-            level = "high" if score >= 3 else "medium" if score >= 1 else "low"
+            score = 50
+            for s in seun_matches:
+                score += sipsin_polarity(s) * 5 + sipsin_strength_modifier(s, strength) * 3
+            for s in daeun_matches:
+                score += sipsin_polarity(s) * 3 + sipsin_strength_modifier(s, strength) * 2
+            score = max(0, min(100, score))
+            level = "high" if score >= 65 else "medium" if score >= 35 else "low"
             reason = _make_domain_reason(seun_matches, daeun_matches)
             scores[domain_name] = {"score": score, "level": level, "reason": reason}
         return scores
@@ -378,12 +388,12 @@ def _make_domain_reason(seun: list[Sipsin], daeun: list[Sipsin]) -> str:
     daeun_names = list(dict.fromkeys(_SIPSIN_KO[s] for s in daeun))
 
     if seun_names and daeun_names:
-        return f"세운 {', '.join(seun_names)}과 대운 {', '.join(daeun_names)}이 겹쳐 작용합니다."
+        return f"세운(歲運) {' '.join(seun_names)} · 대운(大運) {' '.join(daeun_names)}이 겹쳐 작용합니다."
     if seun_names:
-        return f"세운에 {', '.join(seun_names)}이 들어옵니다."
+        return f"세운(歲運) {' '.join(seun_names)}이 들어옵니다."
     if daeun_names:
-        return f"대운 {', '.join(daeun_names)}의 흐름 속에 있습니다."
-    return "이번 해는 이 영역에 직접적인 기운의 작용이 없습니다."
+        return f"대운(大運) {' '.join(daeun_names)}의 흐름 속에 있습니다."
+    return "별다른 작용 없이 잔잔합니다."
 
 
 def cal_saju(

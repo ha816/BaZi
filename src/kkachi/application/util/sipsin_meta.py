@@ -36,11 +36,31 @@ _SIPSIN_TIMING_MEANING: dict[Sipsin, str] = {
 
 _SIPSIN_DOMAIN: dict[Sipsin, str] = {
     Sipsin.偏財: "재물운", Sipsin.正財: "재물운",
-    Sipsin.偏官: "직장·사회운", Sipsin.正官: "직장·사회운",
-    Sipsin.偏印: "학업·자격운", Sipsin.正印: "학업·자격운",
-    Sipsin.食神: "표현·건강운", Sipsin.傷官: "표현·건강운",
-    Sipsin.比肩: "대인관계", Sipsin.劫財: "대인관계",
+    Sipsin.偏官: "관록운", Sipsin.正官: "관록운",
+    Sipsin.偏印: "학문운", Sipsin.正印: "학문운",
+    Sipsin.食神: "재능운", Sipsin.傷官: "재능운",
+    Sipsin.比肩: "인연운", Sipsin.劫財: "인연운",
 }
+
+_SIPSIN_POLARITY: dict[Sipsin, int] = {
+    Sipsin.比肩: 0,    # 중립 — 자주성·동료
+    Sipsin.劫財: -2,   # 흉 — 재물 손실·다툼
+    Sipsin.食神: +3,   # 대길 — 식복·재능
+    Sipsin.傷官: 0,    # 양면 — 창의지만 마찰
+    Sipsin.偏財: +2,   # 길 — 유동 재물
+    Sipsin.正財: +3,   # 대길 — 안정 재물
+    Sipsin.偏官: -2,   # 흉(七殺) — 압박·도전
+    Sipsin.正官: +3,   # 대길 — 명예·직책
+    Sipsin.偏印: -1,   # 약흉 — 변덕·비주류
+    Sipsin.正印: +3,   # 대길 — 보호·학문
+}
+
+_DRAIN_SIPSIN: frozenset[Sipsin] = frozenset({
+    Sipsin.食神, Sipsin.傷官, Sipsin.偏財, Sipsin.正財, Sipsin.偏官, Sipsin.正官,
+})
+_HELP_SIPSIN: frozenset[Sipsin] = frozenset({
+    Sipsin.比肩, Sipsin.劫財, Sipsin.偏印, Sipsin.正印,
+})
 
 
 def sipsin_korean(sipsin: Sipsin) -> str:
@@ -59,6 +79,24 @@ def sipsin_timing_meaning(sipsin: Sipsin) -> str:
 def sipsin_domain(sipsin: Sipsin) -> str:
     """이 십신이 영향을 미치는 영역명 (DomainBarChart 키와 일치)."""
     return _SIPSIN_DOMAIN[sipsin]
+
+
+def sipsin_polarity(sipsin: Sipsin) -> int:
+    """십신의 길흉 가중치 (-2~+3)."""
+    return _SIPSIN_POLARITY[sipsin]
+
+
+def sipsin_strength_modifier(sipsin: Sipsin, strength: int) -> int:
+    """일간 강약에 따른 길흉 보정 — 신강은 설기를 반김, 신약은 보조를 반김."""
+    is_strong = strength > 2
+    is_weak = strength < -2
+    if is_strong:
+        if sipsin in _DRAIN_SIPSIN: return +2
+        if sipsin in _HELP_SIPSIN:  return -1
+    if is_weak:
+        if sipsin in _HELP_SIPSIN:  return +2
+        if sipsin in _DRAIN_SIPSIN: return -1
+    return 0
 
 
 def enrich_sipsin(

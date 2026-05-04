@@ -20,9 +20,9 @@ class FortuneInterpreter:
             tips = []
             if domain_name == "재물운":
                 tips.append(InterpretTip(label="투자", text=MODERN_INVEST[key_sipsin]))
-            elif domain_name in ("직장·사회운", "학업·자격운"):
+            elif domain_name in ("관록운", "학문운"):
                 tips.append(InterpretTip(label="커리어", text=MODERN_CAREER[key_sipsin]))
-            elif domain_name in ("표현·건강운", "대인관계"):
+            elif domain_name in ("재능운", "인연운"):
                 tips.append(InterpretTip(label="라이프", text=MODERN_LIFESTYLE[key_sipsin]))
 
             blocks.append(InterpretBlock(
@@ -36,10 +36,10 @@ class FortuneInterpreter:
 
 DOMAIN_MAP: dict[str, list[Sipsin]] = {
     "재물운": [Sipsin.偏財, Sipsin.正財],
-    "직장·사회운": [Sipsin.偏官, Sipsin.正官],
-    "학업·자격운": [Sipsin.偏印, Sipsin.正印],
-    "표현·건강운": [Sipsin.食神, Sipsin.傷官],
-    "대인관계": [Sipsin.比肩, Sipsin.劫財],
+    "관록운": [Sipsin.偏官, Sipsin.正官],
+    "학문운": [Sipsin.偏印, Sipsin.正印],
+    "재능운": [Sipsin.食神, Sipsin.傷官],
+    "인연운": [Sipsin.比肩, Sipsin.劫財],
 }
 
 SIPSIN_DETAIL: dict[Sipsin, str] = {

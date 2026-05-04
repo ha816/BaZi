@@ -251,12 +251,12 @@ export default function FortuneTab({ natal, postnatal }: Props) {
       {/* 삶의 영역별 운(運) */}
       <div className="slide-card">
         <CollapsibleSectionHeader title="삶의 영역별 운(運)">
-          직장·재물·관계 등 <strong className="text-[var(--color-ink)]">삶의 영역마다</strong> 올해 운의 강도가 달라요. 대운(10년)·세운(올해) 십신 분포로 점수를 매기고, 이번달 월운 십신을 뱃지로 함께 표시해요.
+          <strong className="text-[var(--color-ink)]">재성(財·재물운)·관성(官·관록운)·인성(印·학문운)·식상(食傷·재능운)·비겁(比劫·인연운)</strong> — 사주까치는 이 다섯 가지로 삶의 영역을 정의해요. 대운(10년)·세운(올해) 십신 분포로 점수를 매기고, 월운(이번달) 십신을 뱃지로 함께 표시해요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            어떤 영역에서 운이 잘 풀리고 어떤 영역에서 조심해야 할지 한눈에 봐요. <strong>이번달 +X</strong> 뱃지는 월운에서 그 영역에 추가로 들어오는 기운이에요.
+            어떤 영역에서 운이 잘 풀리고 조심해야 할지 한눈에 봐요.
           </KkachiTip>
           <DomainBarChart scores={postnatal.domain_scores} monthBadges={postnatal.month_badges} />
           <div className="space-y-1">
