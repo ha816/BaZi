@@ -483,41 +483,85 @@ class SajuService(InterpreterPort):
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
         return Interpretation(natal=natal_result, postnatal=postnatal_result)
 
-    def build_chat_context(self, natal: NatalInfo, postnatal: PostnatalInfo, user: User, name: str = "") -> str:
+    def build_chat_context(self, interpretation: Interpretation, user: User, name: str = "") -> str:
+        natal = interpretation.natal
+        post = interpretation.postnatal
         gender = "남" if user.gender.is_male else "여"
         birth = user.birth_dt.strftime("%Y-%m-%d %H:%M")
-        pillar_spaced = " ".join(str(sb) for sb in natal.saju.pillars.values())
 
-        elem = {o.meaning[0]: c for o, c in natal.element_stats.items()}
-        elem_str = " ".join(f"{k}{v}" for k, v in elem.items())
+        pillar_str = " ".join(natal.pillars)
+        yong = natal.yongshin_info
+        kisin = natal.kisin_info
+        elem_str = " ".join(f"{k}{v}" for k, v in natal.element_stats.items())
 
-        kisin = self._kisin(natal.yongshin)
-        day_stem = natal.saju.stem_of_day_pillar
-
-        seun_stem_sip = postnatal.seun_stem[1].name if postnatal.seun_stem else "?"
-        seun_branch_sip = postnatal.seun_branch[1].name if postnatal.seun_branch else "?"
-        daeun_str = ""
-        if postnatal.current_daeun:
-            d = postnatal.current_daeun
-            daeun_str = f" | 대운: {d.ganji}({d.start_age}~{d.end_age}세)"
-
-        scores = postnatal.domain_scores
-        score_str = " ".join(f"{k}{v['score']}" for k, v in scores.items()) if scores else "없음"
-
-        sinsal_names = [s.korean for _, s in natal.sinsal] if natal.sinsal else []
-        sinsal_str = " ".join(sinsal_names) if sinsal_names else "없음"
-
-        samjae_str = f"삼재({postnatal.samjae['type']})" if postnatal.samjae else "삼재없음"
-
-        lines = [
-            f"[{name or '?'} | {gender} | {birth} | {postnatal.year}년 분석]",
-            f"사주: {pillar_spaced} | 일간: {day_stem.name}({day_stem.element.meaning}/{'양' if day_stem.is_yang else '음'})",
-            f"오행: {elem_str} | {natal.strength_label} | 주오행: {natal.my_main_element.meaning}",
-            f"용신: {natal.yongshin.meaning}({natal.yongshin.name}) | 기신: {kisin.meaning}({kisin.name})",
-            f"세운: {year_to_ganji(postnatal.year)} — {seun_stem_sip}/{seun_branch_sip}{daeun_str}",
-            f"영역점수: {score_str}",
-            f"신살: {sinsal_str} | {samjae_str}",
+        lines: list[str] = [
+            f"[{name or '?'} | {gender} | {birth} | {post.year}년 분석]",
+            f"사주: {pillar_str} | 일간: {natal.day_stem}{natal.day_stem_korean}({natal.day_stem_yin_yang}) | {natal.strength_label}",
+            f"오행: {elem_str} | 주오행: {natal.my_element.get('meaning', '')}",
+            f"용신: {yong.get('meaning', '')}({yong.get('name', '')}) | 기신: {kisin.get('meaning', '')}({kisin.get('name', '')})",
         ]
+
+        # 성격
+        if natal.personality:
+            desc = natal.personality[0].description
+            lines.append(f"\n[성격] {desc[:120]}")
+
+        # 영역별 운
+        _LEVEL_KOR = {"high": "좋음", "medium": "보통", "low": "주의"}
+        if post.domain_scores:
+            lines.append(f"\n[영역별 운] {post.year}년")
+            for domain, info in post.domain_scores.items():
+                score = info.get("score", 0)
+                level = _LEVEL_KOR.get(info.get("level", ""), info.get("level", ""))
+                reason = info.get("reason", "")
+                lines.append(f"{domain} {score}({level}): {reason[:60]}")
+
+        # 삼재
+        if post.samjae:
+            samjae_type = post.samjae.get("type", "")
+            sf_desc = post.samjae_fortune[0].description[:80] if post.samjae_fortune else ""
+            lines.append(f"\n[삼재] {samjae_type}: {sf_desc}")
+        else:
+            lines.append("\n[삼재] 없음")
+
+        # 대운·세운
+        daeun_line = "[대운] 없음"
+        if post.current_daeun:
+            d = post.current_daeun
+            daeun_sip = ""
+            if post.daeun_sipsin:
+                names = "/".join(s.get("sipsin_korean", "") for s in post.daeun_sipsin[:2])
+                daeun_sip = f" — {names}"
+            daeun_line = f"[대운] {d['ganji']}({d['start_age']}~{d['end_age']}세){daeun_sip}"
+        lines.append(daeun_line)
+
+        seun_sip = f"{post.seun_stem.get('sipsin_korean', '')}/{post.seun_branch.get('sipsin_korean', '')}"
+        seun_line = f"[세운] {post.seun_ganji} — {seun_sip}"
+        if post.seun_clashes:
+            clashes = " / ".join(c.get("narrative", "")[:40] for c in post.seun_clashes[:2])
+            seun_line += f"\n  충: {clashes}"
+        if post.seun_combines:
+            combines = " / ".join(c.get("narrative", "")[:40] for c in post.seun_combines[:2])
+            seun_line += f"\n  합: {combines}"
+        lines.append(seun_line)
+
+        # 십이지신
+        if natal.zodiac and natal.zodiac.pillar_zodiacs:
+            birth_z = natal.zodiac.pillar_zodiacs[0]
+            z = birth_z.info
+            compat = "·".join(z.compatible[:3]) if z.compatible else ""
+            compat_str = f" {compat}와 잘 맞음" if compat else ""
+            lines.append(f"\n[십이지신] {z.korean}({birth_z.branch}) — {z.keyword}.{compat_str}")
+            if z.strength:
+                lines.append(f"  강점: {z.strength[:60]}")
+            if z.weakness:
+                lines.append(f"  약점: {z.weakness[:60]}")
+
+        # 신살
+        if natal.sinsal:
+            sinsal_str = " / ".join(s.get("sinsal_korean", "") for s in natal.sinsal)
+            lines.append(f"신살: {sinsal_str}")
+
         return "\n".join(lines)
 
     async def build_report(self, user: User, year: int, name: str = "") -> dict[str, str]:

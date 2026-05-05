@@ -105,7 +105,8 @@ async def chat(
 ) -> StreamingResponse:
     user = User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city)
     natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
-    context = saju_svc.build_chat_context(natal_info, postnatal_info, user, req.name)
+    interpretation = await saju_svc.interpret(natal_info, postnatal_info, user=user, name=req.name)
+    context = saju_svc.build_chat_context(interpretation, user, req.name)
     system_prompt = _CHAT_SYSTEM.format(context=context)
 
     messages = [{"role": "system", "content": system_prompt}] + req.messages[-10:]
