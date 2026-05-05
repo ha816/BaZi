@@ -123,8 +123,7 @@ async def report_profile(
     if profile is None:
         raise HTTPException(status_code=404, detail="Profile not found")
     user = User(gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
-    markdown = await saju_svc.build_report(user, req.year, name=profile.name)
-    return {"report": markdown}
+    return await saju_svc.build_report(user, req.year, name=profile.name)
 
 
 @profile_router.post("/{profile_id}/analyze")

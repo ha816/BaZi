@@ -243,6 +243,7 @@ export interface PostnatalResult {
   year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string; info: ZodiacInfo }>;
   year_zodiac_narrative: string;
   core_summary: string;
+  llm_interpretation: string;
   yongshin: InterpretBlock[];
   fortune_by_domain: InterpretBlock[];
   annual_fortune: InterpretBlock[];

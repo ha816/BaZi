@@ -202,6 +202,9 @@ class PostnatalResult:
     # 종합조언 첫 카드 — 만세력·오행·용신·기신·삼재 통합 narrative
     core_summary: str = ""
 
+    # LLM 통합 해석 (Ollama 사용 가능할 때만 채워짐)
+    llm_interpretation: str = ""
+
     # 텍스트 해석
     yongshin: list[InterpretBlock] = field(default_factory=list)
     fortune_by_domain: list[InterpretBlock] = field(default_factory=list)

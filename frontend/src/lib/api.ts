@@ -44,6 +44,28 @@ export async function analyzeChart(
   return res.json();
 }
 
+export async function streamAiInterpretation(
+  input: AnalysisInput,
+  name: string,
+  onChunk: (accumulated: string) => void,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/saju/stream-report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...input, name }),
+  });
+  if (!res.ok || !res.body) return;
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let accumulated = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    accumulated += decoder.decode(value, { stream: true });
+    onChunk(accumulated);
+  }
+}
+
 export async function analyzePalmistry(file: File): Promise<PalmistryResult> {
   const formData = new FormData();
   formData.append("image", file);

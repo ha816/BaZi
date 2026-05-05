@@ -360,3 +360,26 @@ body {
 .slide-card__body {
   padding: 20px 28px 28px;
 }
+
+.prose-saju h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  margin-top: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+.prose-saju strong {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.prose-saju table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin: 0.5rem 0;
+}
+.prose-saju th, .prose-saju td {
+  border: 1px solid var(--color-border-light);
+  padding: 4px 8px;
+  text-align: left;
+}

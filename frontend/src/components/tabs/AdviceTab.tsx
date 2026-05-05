@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { NatalResult, PostnatalResult, SipsinInfo } from "@/types/analysis";
+import { streamAiInterpretation } from "@/lib/api";
 import { getElementInfo } from "@/lib/elementColors";
 import InterpretSection from "@/components/InterpretSection";
 import DetailToggle from "@/components/DetailToggle";
@@ -54,6 +57,23 @@ interface Props {
 }
 
 export default function AdviceTab({ natal, postnatal }: Props) {
+  type AiState = "idle" | "loading" | "done" | "error";
+  const [aiState, setAiState] = useState<AiState>("idle");
+  const [aiText, setAiText] = useState<string>("");
+
+  useEffect(() => {
+    const inputRaw = sessionStorage.getItem("kkachi_analysis_input");
+    const name = sessionStorage.getItem("kkachi_analysis_name") ?? "";
+    if (!inputRaw) return;
+    const input = JSON.parse(inputRaw);
+    setAiState("loading");
+    streamAiInterpretation(input, name, (accumulated) => {
+      setAiText(accumulated);
+      setAiState("done");
+    })
+      .catch(() => setAiState("error"));
+  }, []);
+
   const meInfo = getElementInfo(natal.my_element.name);
   const yongInfo = getElementInfo(natal.yongshin_info.name);
   const kisinInfo = natal.kisin_info?.name ? getElementInfo(natal.kisin_info.name) : null;
@@ -272,6 +292,38 @@ export default function AdviceTab({ natal, postnatal }: Props) {
           <InterpretSection title="" blocks={postnatal.yongshin} />
         </div>
       </div>
+
+      {/* ⑥ AI 통합 해석 */}
+      {aiState !== "idle" && (
+        <div className="slide-card">
+          <CollapsibleSectionHeader title="AI 통합 해석(人工知能 綜合 解釋)">
+            앞선 모든 분석 데이터를 <strong className="text-[var(--color-ink)]">AI(qwen2.5)</strong>에게 전달해 생성한 통합 해석이에요.
+            룰 엔진이 계산한 숫자와 구조를 바탕으로, <strong className="text-[var(--color-ink)]">자연스러운 언어</strong>로 풀어낸 종합 조언입니다.
+          </CollapsibleSectionHeader>
+          <div className="divider" />
+          <div className="slide-card__body">
+            {aiState === "loading" && (
+              <div className="flex items-center gap-3 py-4 text-sm text-[var(--color-ink-faint)]">
+                <svg className="animate-spin h-4 w-4 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                AI가 사주 전체를 읽고 있어요 (1~2분 소요)...
+              </div>
+            )}
+            {aiState === "done" && (
+              <div className="prose-saju text-sm text-[var(--color-ink-light)] leading-relaxed">
+                <ReactMarkdown>{aiText}</ReactMarkdown>
+              </div>
+            )}
+            {aiState === "error" && (
+              <p className="text-sm text-[var(--color-ink-faint)] py-2">
+                AI 해석을 불러오지 못했어요. Ollama가 실행 중인지 확인해주세요.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

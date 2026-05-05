@@ -31,10 +31,17 @@ _log = logging.getLogger(__name__)
 class SajuService(InterpreterPort):
     """사주 분석 서비스 — Port를 주입받아 전체 분석 파이프라인을 수행한다."""
 
-    def __init__(self, natal_port: NatalPort, postnatal_port: PostnatalPort, llm_port: LlmPort | None = None):
+    def __init__(
+        self,
+        natal_port: NatalPort,
+        postnatal_port: PostnatalPort,
+        llm_port: LlmPort | None = None,
+        openai_port: LlmPort | None = None,
+    ):
         self.natal_port = natal_port
         self.postnatal_port = postnatal_port
-        self._llm_port = llm_port
+        self._llm_port = llm_port        # Ollama (리포트 해석)
+        self._openai_port = openai_port  # OpenAI (AdviceTab 조언)
 
     _SAMHAP_GROUPS: list[tuple[frozenset, str]] = [
         (frozenset({Branch.寅, Branch.午, Branch.戌}), "火"),
@@ -447,12 +454,13 @@ class SajuService(InterpreterPort):
         postnatal: PostnatalInfo,
         name: str,
     ) -> list[InterpretBlock]:
-        if not self._llm_port or not self._llm_port.available:
+        advice_port = self._openai_port or self._llm_port
+        if not advice_port or not advice_port.available:
             return rule_advice
         try:
             daeun_stem = postnatal.current_daeun.ganji[0] if postnatal.current_daeun else ""
             clash_labels = [f"{c.get('stem_or_branch', '')}" for c in postnatal.seun_clashes]
-            llm_text = await self._llm_port.get_advice({
+            llm_text = await advice_port.get_advice({
                 "name": name,
                 "yongshin": natal.yongshin.name,
                 "yongshin_meaning": natal.yongshin.meaning,
@@ -476,11 +484,17 @@ class SajuService(InterpreterPort):
         is_male = user.gender.is_male if user else True
         natal_result = self.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
         postnatal_result = await self.interpret_postnatal(natal, postnatal, name)
-        # postnatal 시점 정보를 yongshin_tip에 합성 (이번달/올해 매칭, 가까운 용신 달·해)
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
         return Interpretation(natal=natal_result, postnatal=postnatal_result)
 
-    async def build_report(self, user: User, year: int, name: str = "") -> str:
+    async def build_report(self, user: User, year: int, name: str = "") -> dict[str, str]:
         natal_info, postnatal_info = self.analyze(user, year)
         interpretation = await self.interpret(natal_info, postnatal_info, user=user, name=name)
-        return LlmReportBuilder().build(interpretation.natal, interpretation.postnatal, user, name)
+        report = LlmReportBuilder().build(interpretation.natal, interpretation.postnatal, user, name)
+        result: dict[str, str] = {"report": report}
+        if self._llm_port and self._llm_port.available:
+            try:
+                result["interpretation"] = await self._llm_port.interpret(report)
+            except Exception:
+                _log.exception("Ollama interpretation failed — report only")
+        return result
