@@ -18,9 +18,9 @@ from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
 from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.util.sipsin_meta import enrich_sipsin, sipsin_domain, sipsin_label
-from kkachi.application.util.util import year_to_ganji
+from kkachi.application.util.util import josa, year_to_ganji
 from kkachi.application.util.zodiac_meta import zodiac_info
-from kkachi.domain.ganji import BRANCH_ANIMAL, BRANCHES_ORDER, JIZAN_ROLE_HANJA, OHENG_GUIDE, SAMHAP_GROUPS, Branch, BranchCombine, BranchClash, BranchWonjin, Oheng, Sipsin, Stem
+from kkachi.domain.ganji import BRANCH_ANIMAL, JIZAN_ROLE_HANJA, OHENG_GUIDE, Branch, Oheng, Sipsin, Stem, branch_relation, year_to_branch_char  # noqa: F401
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -30,19 +30,6 @@ _log = logging.getLogger(__name__)
 
 class NatalService:
     """선천(先天) 해석 — NatalInfo → NatalResult 조립."""
-
-    @staticmethod
-    def kisin(yongshin: Oheng) -> Oheng:
-        members = list(Oheng)
-        return members[(members.index(yongshin) - 2) % 5]
-
-    @staticmethod
-    def josa(word: str, with_jong: str, without_jong: str) -> str:
-        if not word:
-            return without_jong
-        code = ord(word[-1])
-        has = 0xAC00 <= code <= 0xD7A3 and (code - 0xAC00) % 28 != 0
-        return with_jong if has else without_jong
 
     def _build_pillar_summary(self, natal: NatalInfo) -> str:
         sorted_elements = sorted(natal.element_stats.items(), key=lambda x: x[1], reverse=True)
@@ -66,7 +53,7 @@ class NatalService:
         ]
         pillar_stems_korean = [sb.stem.korean for sb in natal.saju.pillars.values()]
         pillar_branches_korean = [sb.branch.korean for sb in natal.saju.pillars.values()]
-        kisin = self.kisin(natal.yongshin)
+        kisin = natal.yongshin.overcome_by
         return NatalResult(
             pillars=[str(sb) for sb in natal.saju.pillars.values()],
             day_stem=day_stem.name,
@@ -126,24 +113,6 @@ class PostnatalService:
     def __init__(self, llm_port: LlmPort | None = None):
         self._llm_port = llm_port
 
-    @staticmethod
-    def _zodiac_relation_type(a: str, b: str) -> str:
-        if a == b:
-            return "나"
-        if any(a in group and b in group for group, _ in SAMHAP_GROUPS):
-            return "삼합"
-        if any({p.first.name, p.second.name} == {a, b} for p in BranchCombine):
-            return "육합"
-        if any({p.first.name, p.second.name} == {a, b} for p in BranchClash):
-            return "충"
-        if any({p.first.name, p.second.name} == {a, b} for p in BranchWonjin):
-            return "원진"
-        return "보통"
-
-    @staticmethod
-    def _get_year_branch_char(year: int) -> str:
-        return BRANCHES_ORDER[(year - 4 + 1200) % 12]
-
     def _build_year_zodiac_relations(self, birth_branch_char: str, base_year: int) -> list[dict]:
         _DESC_MAP: dict[str, str] = {
             "나":   "본명년(本命年) — 12년마다 돌아오는 변화의 해. 내실 다지기에 집중하세요.",
@@ -155,8 +124,8 @@ class PostnatalService:
         }
 
         def make_row(year: int) -> dict:
-            branch_char = self._get_year_branch_char(year)
-            relation = self._zodiac_relation_type(birth_branch_char, branch_char)
+            branch_char = year_to_branch_char(year)
+            relation = branch_relation(birth_branch_char, branch_char)
             ganji = year_to_ganji(year)
             info = zodiac_info(branch_char)
             return {
@@ -256,7 +225,7 @@ class PostnatalService:
         day_stem = natal.saju.stem_of_day_pillar
         my_el = natal.my_main_element
         yong = natal.yongshin
-        kisin = NatalService.kisin(yong)
+        kisin = yong.overcome_by
 
         sorted_els = sorted(natal.element_stats.items(), key=lambda x: x[1], reverse=True)
         strongest, top_count = sorted_els[0]
@@ -270,10 +239,10 @@ class PostnatalService:
         )
 
         if strongest is my_el:
-            top_josa = NatalService.josa(strongest.meaning, "이", "가")
+            top_josa = josa(strongest.meaning, "이", "가")
             top_clause = f"여덟 글자 중 주 오행인 {strongest.meaning}{top_josa} {top_count}개로 두텁게 자리잡고 있어요"
         else:
-            my_josa = NatalService.josa(my_el.meaning, "이", "가")
+            my_josa = josa(my_el.meaning, "이", "가")
             top_clause = (
                 f"여덟 글자 중 {strongest.meaning}({strongest.name})의 기운이 {top_count}개로 가장 많고, "
                 f"주 오행 {my_el.meaning}{my_josa} 받쳐주는 구성이에요"
@@ -284,7 +253,7 @@ class PostnatalService:
         else:
             sentences.append(f"{top_clause}. 다섯 기운이 모두 있어 비교적 균형 잡힌 구성이에요.")
 
-        kisin_josa = NatalService.josa(kisin.meaning, "은", "는")
+        kisin_josa = josa(kisin.meaning, "은", "는")
         sentences.append(
             f"균형을 잡아주는 처방은 용신 {yong.meaning}({yong.name}) — 색·방향·습관에서 가까이 두면 흐름이 가벼워지고, "
             f"기신 {kisin.meaning}({kisin.name}){kisin_josa} 가능한 멀리하면 좋아요."
@@ -414,18 +383,16 @@ class SajuService(InterpreterPort):
         self._postnatal_svc = PostnatalService(llm_port)
 
     def _zodiac_relation(self, birth_branch: Branch, year: int) -> str:
-        seun_ganji = year_to_ganji(year)
-        seun_branch = Branch.from_char(seun_ganji[1])
+        seun_branch = Branch.from_char(year_to_ganji(year)[1])
         kor = BRANCH_ANIMAL.get(seun_branch.name, seun_branch.name)
         label = f"{year}년 {kor}띠 해"
-
-        if birth_branch == seun_branch:
+        rel = branch_relation(birth_branch.name, seun_branch.name)
+        if rel == "나":
             return f"올해({label})와 같은 해예요. 본명년(本命年)으로 변화가 많은 해입니다."
-        if birth_branch.clashes == seun_branch:
+        if rel == "충":
             return f"올해({label})와 충(衝)이 있어요. 예상치 못한 변화에 유연하게 대처하세요."
-        for group, element in SAMHAP_GROUPS:
-            if birth_branch.name in group and seun_branch.name in group:
-                return f"올해({label})와 삼합({element}気)이 맞아요. 좋은 기운이 따릅니다."
+        if rel == "삼합":
+            return f"올해({label})와 삼합이 맞아요. 좋은 기운이 따릅니다."
         return f"올해({label})와 특별한 충·합은 없어요. 꾸준히 나아가기 좋은 해예요."
 
     def basic_analyze(self, user: User, year: int) -> dict:

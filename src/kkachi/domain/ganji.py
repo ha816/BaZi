@@ -38,6 +38,12 @@ class Oheng(Enum):
         members = list(Oheng)
         return members[(members.index(self) - 1) % 5]
 
+    @property
+    def overcome_by(self) -> "Oheng":
+        """나를 극하는 오행(剋我). 상극에서 나를 억제하는 오행."""
+        members = list(Oheng)
+        return members[(members.index(self) - 2) % 5]
+
 
 OHENG_GUIDE: dict["Oheng", dict[str, str]] = {
     Oheng.木: {"color": "초록·청록", "direction": "동쪽", "career": "교육·출판·디자인·환경",  "daily": "식물·나무 가구·산책"},
@@ -323,6 +329,26 @@ class BranchWonjin(Enum):
 
 
 BRANCHES_ORDER: list[str] = [b.name for b in Branch]
+
+
+def year_to_branch_char(year: int) -> str:
+    """연도에 해당하는 지지 문자(한자)를 반환한다."""
+    return BRANCHES_ORDER[(year - 4 + 1200) % 12]
+
+
+def branch_relation(a: str, b: str) -> str:
+    """두 지지 문자(한자)의 관계 타입을 반환한다: 나/삼합/육합/충/원진/보통."""
+    if a == b:
+        return "나"
+    if any(a in group and b in group for group, _ in SAMHAP_GROUPS):
+        return "삼합"
+    if any({p.first.name, p.second.name} == {a, b} for p in BranchCombine):
+        return "육합"
+    if any({p.first.name, p.second.name} == {a, b} for p in BranchClash):
+        return "충"
+    if any({p.first.name, p.second.name} == {a, b} for p in BranchWonjin):
+        return "원진"
+    return "보통"
 
 
 _JIZAN_GAN: dict["Branch", list[Stem]] = {}
