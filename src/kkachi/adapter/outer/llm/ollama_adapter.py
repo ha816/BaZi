@@ -61,6 +61,21 @@ class OllamaAdapter(LlmPort):
     async def interpret(self, report: str) -> str:
         return await self._chat(_INTERPRET_SYSTEM, report)
 
+    async def stream_chat(self, messages: list[dict]) -> AsyncIterator[str]:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream(
+                "POST",
+                f"{self._base_url}/api/chat",
+                json={"model": self._model, "messages": messages, "stream": True},
+            ) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if not line:
+                        continue
+                    data = json.loads(line)
+                    if not data.get("done"):
+                        yield data["message"]["content"]
+
     async def stream_interpret(self, report: str) -> AsyncIterator[str]:
         async with httpx.AsyncClient(timeout=300.0) as client:
             async with client.stream(

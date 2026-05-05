@@ -14,6 +14,7 @@ import SamjaeTab from "./tabs/SamjaeTab";
 import AdviceTab from "./tabs/AdviceTab";
 import ZodiacTab from "./tabs/ZodiacTab";
 import FengShuiTab from "./tabs/FengShuiTab";
+import SajuChat from "./SajuChat";
 import { postFeedback } from "@/lib/api";
 
 const PILLAR_LABEL_KOR = ["년", "월", "일", "시"];
@@ -193,6 +194,8 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
           profileId={profileId}
         />
       </div>
+
+      <SajuChat name={name} />
     </div>
   );
 }

@@ -357,8 +357,7 @@ class SajuService(InterpreterPort):
 
     async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> PostnatalResult:
         current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
-        rule_advice = AdviceInterpreter()(natal, postnatal)
-        advice = await self._enrich_advice(rule_advice, natal, postnatal, name)
+        advice = AdviceInterpreter()(natal, postnatal)
         birth_branch_char = list(natal.saju.pillars.values())[0].branch.name
         me_yang = natal.saju.stem_of_day_pillar.is_yang
 
@@ -483,6 +482,43 @@ class SajuService(InterpreterPort):
         postnatal_result = await self.interpret_postnatal(natal, postnatal, name)
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
         return Interpretation(natal=natal_result, postnatal=postnatal_result)
+
+    def build_chat_context(self, natal: NatalInfo, postnatal: PostnatalInfo, user: User, name: str = "") -> str:
+        gender = "남" if user.gender.is_male else "여"
+        birth = user.birth_dt.strftime("%Y-%m-%d %H:%M")
+        pillar_spaced = " ".join(str(sb) for sb in natal.saju.pillars.values())
+
+        elem = {o.meaning[0]: c for o, c in natal.element_stats.items()}
+        elem_str = " ".join(f"{k}{v}" for k, v in elem.items())
+
+        kisin = self._kisin(natal.yongshin)
+        day_stem = natal.saju.stem_of_day_pillar
+
+        seun_stem_sip = postnatal.seun_stem[1].name if postnatal.seun_stem else "?"
+        seun_branch_sip = postnatal.seun_branch[1].name if postnatal.seun_branch else "?"
+        daeun_str = ""
+        if postnatal.current_daeun:
+            d = postnatal.current_daeun
+            daeun_str = f" | 대운: {d.ganji}({d.start_age}~{d.end_age}세)"
+
+        scores = postnatal.domain_scores
+        score_str = " ".join(f"{k}{v['score']}" for k, v in scores.items()) if scores else "없음"
+
+        sinsal_names = [s.korean for _, s in natal.sinsal] if natal.sinsal else []
+        sinsal_str = " ".join(sinsal_names) if sinsal_names else "없음"
+
+        samjae_str = f"삼재({postnatal.samjae['type']})" if postnatal.samjae else "삼재없음"
+
+        lines = [
+            f"[{name or '?'} | {gender} | {birth} | {postnatal.year}년 분석]",
+            f"사주: {pillar_spaced} | 일간: {day_stem.name}({day_stem.element.meaning}/{'양' if day_stem.is_yang else '음'})",
+            f"오행: {elem_str} | {natal.strength_label} | 주오행: {natal.my_main_element.meaning}",
+            f"용신: {natal.yongshin.meaning}({natal.yongshin.name}) | 기신: {kisin.meaning}({kisin.name})",
+            f"세운: {year_to_ganji(postnatal.year)} — {seun_stem_sip}/{seun_branch_sip}{daeun_str}",
+            f"영역점수: {score_str}",
+            f"신살: {sinsal_str} | {samjae_str}",
+        ]
+        return "\n".join(lines)
 
     async def build_report(self, user: User, year: int, name: str = "") -> dict[str, str]:
         natal_info, postnatal_info = self.analyze(user, year)
