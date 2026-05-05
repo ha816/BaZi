@@ -7,6 +7,7 @@ from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fengshui import FengShuiInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
+from kkachi.application.interpreter.natal import pillar_summary as _pillar_summary, zodiac_relation as _zodiac_relation_text
 from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
 from kkachi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
 from kkachi.application.interpreter.relationship import RelationshipInterpreter
@@ -20,7 +21,7 @@ from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.util.sipsin_meta import enrich_sipsin, sipsin_domain, sipsin_label
 from kkachi.application.util.util import josa, year_to_ganji
 from kkachi.application.util.zodiac_meta import zodiac_info
-from kkachi.domain.ganji import BRANCH_ANIMAL, JIZAN_ROLE_HANJA, OHENG_GUIDE, Branch, Oheng, Sipsin, Stem, branch_relation, year_to_branch_char  # noqa: F401
+from kkachi.domain.ganji import JIZAN_ROLE_HANJA, OHENG_GUIDE, Branch, Oheng, Sipsin, Stem, branch_relation, year_to_branch_char
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -30,20 +31,6 @@ _log = logging.getLogger(__name__)
 
 class NatalService:
     """선천(先天) 해석 — NatalInfo → NatalResult 조립."""
-
-    def _build_pillar_summary(self, natal: NatalInfo) -> str:
-        sorted_elements = sorted(natal.element_stats.items(), key=lambda x: x[1], reverse=True)
-        if not sorted_elements or sorted_elements[0][1] == 0:
-            return ""
-        strongest, count = sorted_elements[0]
-        missing = [o for o, c in natal.element_stats.items() if c == 0]
-        summary = f"여덟 글자 중 {strongest.meaning}({strongest.name})의 기운이 {count}개로 가장 많아요."
-        if missing:
-            names = "·".join(o.meaning for o in missing)
-            summary += f" {names}의 기운이 없어서, 이를 보완하는 운이 오면 좋아요."
-        else:
-            summary += " 다섯 기운이 모두 있어 균형 잡힌 구성이에요."
-        return summary
 
     def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True, name: str = "") -> NatalResult:
         day_stem = natal.saju.stem_of_day_pillar
@@ -98,7 +85,7 @@ class NatalService:
             ],
             sibi_sinsal=natal.sibi_sinsal,
             gongmang=natal.gongmang,
-            pillar_summary=self._build_pillar_summary(natal),
+            pillar_summary=_pillar_summary(natal),
             narratives=NatalNarrativeInterpreter()(natal, name),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),
@@ -382,19 +369,6 @@ class SajuService(InterpreterPort):
         self._natal_svc = NatalService()
         self._postnatal_svc = PostnatalService(llm_port)
 
-    def _zodiac_relation(self, birth_branch: Branch, year: int) -> str:
-        seun_branch = Branch.from_char(year_to_ganji(year)[1])
-        kor = BRANCH_ANIMAL.get(seun_branch.name, seun_branch.name)
-        label = f"{year}년 {kor}띠 해"
-        rel = branch_relation(birth_branch.name, seun_branch.name)
-        if rel == "나":
-            return f"올해({label})와 같은 해예요. 본명년(本命年)으로 변화가 많은 해입니다."
-        if rel == "충":
-            return f"올해({label})와 충(衝)이 있어요. 예상치 못한 변화에 유연하게 대처하세요."
-        if rel == "삼합":
-            return f"올해({label})와 삼합이 맞아요. 좋은 기운이 따릅니다."
-        return f"올해({label})와 특별한 충·합은 없어요. 꾸준히 나아가기 좋은 해예요."
-
     def basic_analyze(self, user: User, year: int) -> dict:
         natal = self.natal_port.analyze(user)
         birth_branch = list(natal.saju.pillars.values())[0].branch
@@ -404,7 +378,7 @@ class SajuService(InterpreterPort):
             "element_stats": {o.name: c for o, c in natal.element_stats.items()},
             "my_element": {"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
             "year_branch": birth_branch.name,
-            "zodiac_relation": self._zodiac_relation(birth_branch, year),
+            "zodiac_relation": _zodiac_relation_text(birth_branch, year),
         }
 
     def analyze(self, user: User, year: int) -> tuple[NatalInfo, PostnatalInfo]:
