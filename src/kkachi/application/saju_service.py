@@ -20,7 +20,7 @@ from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.util.sipsin_meta import enrich_sipsin, sipsin_domain, sipsin_label
 from kkachi.application.util.util import year_to_ganji
 from kkachi.application.util.zodiac_meta import zodiac_info
-from kkachi.domain.ganji import BRANCH_ANIMAL, JIZAN_ROLE_HANJA, OHENG_GUIDE, SAMHAP_GROUPS, Branch, Oheng, Sipsin, Stem
+from kkachi.domain.ganji import BRANCH_ANIMAL, BRANCHES_ORDER, JIZAN_ROLE_HANJA, OHENG_GUIDE, SAMHAP_GROUPS, Branch, BranchCombine, BranchClash, BranchWonjin, Oheng, Sipsin, Stem
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -123,41 +123,26 @@ class NatalService:
 class PostnatalService:
     """후천(後天) 해석 — NatalInfo + PostnatalInfo → PostnatalResult 조립."""
 
-    _SAMHAP_ZODIAC: list[list[str]] = [
-        ["申", "子", "辰"],
-        ["巳", "酉", "丑"],
-        ["寅", "午", "戌"],
-        ["亥", "卯", "未"],
-    ]
-    _YUGHAP_PAIRS: list[tuple[str, str]] = [
-        ("子", "丑"), ("寅", "亥"), ("卯", "戌"), ("辰", "酉"), ("巳", "申"), ("午", "未"),
-    ]
-    _WONJIN_PAIRS: list[tuple[str, str]] = [
-        ("子", "未"), ("丑", "午"), ("寅", "酉"), ("卯", "申"), ("辰", "亥"), ("巳", "戌"),
-    ]
-    _CLASH_ZODIAC_PAIRS: list[tuple[str, str]] = [
-        ("子", "午"), ("丑", "未"), ("寅", "申"), ("卯", "酉"), ("辰", "戌"), ("巳", "亥"),
-    ]
-    _BRANCHES_ORDER: list[str] = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"]
-
     def __init__(self, llm_port: LlmPort | None = None):
         self._llm_port = llm_port
 
-    def _zodiac_relation_type(self, a: str, b: str) -> str:
+    @staticmethod
+    def _zodiac_relation_type(a: str, b: str) -> str:
         if a == b:
             return "나"
-        if any(a in g and b in g for g in self._SAMHAP_ZODIAC):
+        if any(a in group and b in group for group, _ in SAMHAP_GROUPS):
             return "삼합"
-        if any((x == a and y == b) or (x == b and y == a) for x, y in self._YUGHAP_PAIRS):
+        if any({p.first.name, p.second.name} == {a, b} for p in BranchCombine):
             return "육합"
-        if any((x == a and y == b) or (x == b and y == a) for x, y in self._CLASH_ZODIAC_PAIRS):
+        if any({p.first.name, p.second.name} == {a, b} for p in BranchClash):
             return "충"
-        if any((x == a and y == b) or (x == b and y == a) for x, y in self._WONJIN_PAIRS):
+        if any({p.first.name, p.second.name} == {a, b} for p in BranchWonjin):
             return "원진"
         return "보통"
 
-    def _get_year_branch_char(self, year: int) -> str:
-        return self._BRANCHES_ORDER[(year - 4 + 1200) % 12]
+    @staticmethod
+    def _get_year_branch_char(year: int) -> str:
+        return BRANCHES_ORDER[(year - 4 + 1200) % 12]
 
     def _build_year_zodiac_relations(self, birth_branch_char: str, base_year: int) -> list[dict]:
         _DESC_MAP: dict[str, str] = {

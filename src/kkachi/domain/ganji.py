@@ -293,6 +293,38 @@ class BranchClash(Enum):
         raise ValueError(f"No clash partner for {branch}")
 
 
+class BranchWonjin(Enum):
+    """지지원진(地支怨嗔) - 서로 원망·갈등하는 6쌍.
+
+    육합(六合)보다 한 자리 어긋나 마주보는 관계로,
+    두 지지가 만나면 미묘한 긴장과 갈등이 생긴다.
+    """
+
+    子未 = (Branch.子, Branch.未)
+    丑午 = (Branch.丑, Branch.午)
+    寅酉 = (Branch.寅, Branch.酉)
+    卯申 = (Branch.卯, Branch.申)
+    辰亥 = (Branch.辰, Branch.亥)
+    巳戌 = (Branch.巳, Branch.戌)
+
+    def __init__(self, first: Branch, second: Branch):
+        self.first = first
+        self.second = second
+
+    @classmethod
+    def partner_of(cls, branch: Branch) -> Branch:
+        """주어진 지지와 원진인 지지를 반환한다."""
+        for pair in cls:
+            if pair.first == branch:
+                return pair.second
+            if pair.second == branch:
+                return pair.first
+        raise ValueError(f"No wonjin partner for {branch}")
+
+
+BRANCHES_ORDER: list[str] = [b.name for b in Branch]
+
+
 _JIZAN_GAN: dict["Branch", list[Stem]] = {}
 _JIZAN_GAN_WEIGHT: dict["Branch", list[int]] = {}
 _JIZAN_ROLE_BY_LEN: dict[int, list[str]] = {
