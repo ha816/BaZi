@@ -39,6 +39,27 @@ class Oheng(Enum):
         return members[(members.index(self) - 1) % 5]
 
 
+OHENG_GUIDE: dict["Oheng", dict[str, str]] = {
+    Oheng.木: {"color": "초록·청록", "direction": "동쪽", "career": "교육·출판·디자인·환경",  "daily": "식물·나무 가구·산책"},
+    Oheng.火: {"color": "빨강·주황", "direction": "남쪽", "career": "엔터테인먼트·언론·요식·뷰티", "daily": "햇빛·캔들·운동"},
+    Oheng.土: {"color": "노랑·갈색", "direction": "중앙", "career": "부동산·중개·농업·신뢰업",     "daily": "도자기·황토·정원 가꾸기"},
+    Oheng.金: {"color": "흰색·은색", "direction": "서쪽", "career": "금융·법무·기계·의료",         "daily": "금속 액세서리·정돈된 환경"},
+    Oheng.水: {"color": "검정·남색", "direction": "북쪽", "career": "IT·연구·유통·물 관련",        "daily": "수족관·물·명상"},
+}
+
+BRANCH_ANIMAL: dict[str, str] = {
+    "子": "쥐", "丑": "소", "寅": "호랑이", "卯": "토끼", "辰": "용", "巳": "뱀",
+    "午": "말", "未": "양", "申": "원숭이", "酉": "닭", "戌": "개", "亥": "돼지",
+}
+
+SAMHAP_GROUPS: list[tuple[frozenset, str]] = [
+    (frozenset({"寅", "午", "戌"}), "火"),
+    (frozenset({"亥", "卯", "未"}), "木"),
+    (frozenset({"申", "子", "辰"}), "水"),
+    (frozenset({"巳", "酉", "丑"}), "金"),
+]
+
+
 class Stem(Enum):
     """천간(天干) - 10개의 하늘 기운.
     각 천간은 순서(order), 오행(element: Oheng), 음양(is_yang)을 속성으로 가진다.
