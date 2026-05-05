@@ -36,12 +36,10 @@ class SajuService(InterpreterPort):
         natal_port: NatalPort,
         postnatal_port: PostnatalPort,
         llm_port: LlmPort | None = None,
-        openai_port: LlmPort | None = None,
     ):
         self.natal_port = natal_port
         self.postnatal_port = postnatal_port
-        self._llm_port = llm_port        # Ollama (리포트 해석)
-        self._openai_port = openai_port  # OpenAI (AdviceTab 조언)
+        self._llm_port = llm_port
 
     _SAMHAP_GROUPS: list[tuple[frozenset, str]] = [
         (frozenset({Branch.寅, Branch.午, Branch.戌}), "火"),
@@ -454,13 +452,12 @@ class SajuService(InterpreterPort):
         postnatal: PostnatalInfo,
         name: str,
     ) -> list[InterpretBlock]:
-        advice_port = self._openai_port or self._llm_port
-        if not advice_port or not advice_port.available:
+        if not self._llm_port or not self._llm_port.available:
             return rule_advice
         try:
             daeun_stem = postnatal.current_daeun.ganji[0] if postnatal.current_daeun else ""
             clash_labels = [f"{c.get('stem_or_branch', '')}" for c in postnatal.seun_clashes]
-            llm_text = await advice_port.get_advice({
+            llm_text = await self._llm_port.get_advice({
                 "name": name,
                 "yongshin": natal.yongshin.name,
                 "yongshin_meaning": natal.yongshin.meaning,

@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from kkachi.adapter.outer.db.member_repo import MemberRepo
 from kkachi.adapter.outer.db.payment_repo import PaymentRepo
 from kkachi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FeedbackRepo, FortuneRepo, ProfileRepo
-from kkachi.adapter.outer.llm.llm_adapter import LlmAdapter
 from kkachi.adapter.outer.llm.ollama_adapter import OllamaAdapter
 from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
 from kkachi.adapter.outer.weather_adapter import WeatherAdapter
@@ -44,14 +43,12 @@ class Container(containers.DeclarativeContainer):
     # Saju (기존)
     natal_adapter = providers.Singleton(NatalAdapter)
     postnatal_adapter = providers.Singleton(PostnatalAdapter)
-    llm_adapter = providers.Singleton(LlmAdapter)
     ollama_adapter = providers.Singleton(OllamaAdapter)
     saju_service = providers.Singleton(
         SajuService,
         natal_port=natal_adapter,
         postnatal_port=postnatal_adapter,
         llm_port=ollama_adapter,
-        openai_port=llm_adapter,
     )
 
     # 신규
