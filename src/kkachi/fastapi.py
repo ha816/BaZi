@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from kkachi.adapter.inner.compatibility_controller import compatibility_router
 from kkachi.adapter.inner.member_controller import member_router
+from kkachi.adapter.inner.mcp_server import init_mcp_services, mcp as mcp_server
 from kkachi.adapter.inner.palmistry_controller import palmistry_router
 from kkachi.adapter.inner.payment_controller import payment_router
 from kkachi.adapter.inner.profile_controller import profile_router
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
     with open("src/kkachi/resource/local.toml", "rb") as f:
         container.config.from_dict(tomllib.load(f))
     app.state.container = container
+    init_mcp_services(container.saju_service(), container.weather_adapter())
     yield
     await container.db_engine().dispose()
 
@@ -40,3 +42,4 @@ app.include_router(compatibility_router)
 app.include_router(payment_router)
 app.include_router(palmistry_router)
 app.include_router(weather_router)
+app.mount("/mcp", mcp_server.streamable_http_app())
