@@ -1,4 +1,4 @@
-from kkachi.domain.ganji import Branch, Pillar, Sipsin
+from kkachi.domain.ganji import Pillar, Sipsin
 from kkachi.domain.interpretation import InterpretBlock
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
