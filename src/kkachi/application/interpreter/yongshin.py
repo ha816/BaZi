@@ -1,5 +1,18 @@
+from kkachi.domain.ganji import Branch, Oheng, Stem
 from kkachi.domain.interpretation import InterpretBlock
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
+
+
+def find_nearest_yongshin_year(base_year: int, seun_ganji: str, yongshin: Oheng) -> int | None:
+    """base_year 이후 용신 오행이 처음 들어오는 연도를 반환한다 (없으면 None)."""
+    seun_stem = Stem.from_char(seun_ganji[0])
+    seun_branch = Branch.from_char(seun_ganji[1])
+    for offset in range(2, 16):
+        stem = Stem.by_order(seun_stem.order + offset)
+        branch = Branch.by_order(seun_branch.order + offset)
+        if stem.element == yongshin or branch.element == yongshin:
+            return base_year + offset
+    return None
 
 
 class YongshinInterpreter:
