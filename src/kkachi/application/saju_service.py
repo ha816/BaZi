@@ -12,7 +12,6 @@ from kkachi.application.interpreter.natal import (
     pillar_summary as _pillar_summary,
     year_zodiac_narrative as _year_zodiac_narrative,
     year_zodiac_relations as _year_zodiac_relations,
-    zodiac_relation as _zodiac_relation_text,
 )
 from kkachi.application.interpreter.yongshin import find_nearest_yongshin_year as _find_nearest_yongshin_year
 from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
@@ -36,9 +35,18 @@ _log = logging.getLogger(__name__)
 
 
 class NatalService:
-    """선천(先天) 해석 — NatalInfo → NatalResult 조립."""
 
-    def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True, name: str = "") -> NatalResult:
+    def __init__(
+        self,
+        natal_port: NatalPort,
+    ):
+        self._natal_port = natal_port
+
+    def analyze(self, user: User) -> NatalInfo:
+        return self._natal_port.analyze(user)
+
+    def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True,
+                        name: str = "") -> NatalResult:
         day_stem = natal.saju.stem_of_day_pillar
         pillar_elements = [
             {"stem_element": sb.stem.element.name, "branch_element": sb.branch.element.name}
@@ -103,37 +111,18 @@ class NatalService:
 class PostnatalService:
     """후천(後天) 해석 — NatalInfo + PostnatalInfo → PostnatalResult 조립."""
 
-    def __init__(self, llm_port: LlmPort | None = None):
-        self._llm_port = llm_port
-
-    async def _enrich_advice(
+    def __init__(
         self,
-        rule_advice: list[InterpretBlock],
-        natal: NatalInfo,
-        postnatal: PostnatalInfo,
-        name: str,
-    ) -> list[InterpretBlock]:
-        if not self._llm_port or not self._llm_port.available:
-            return rule_advice
-        try:
-            daeun_stem = postnatal.current_daeun.ganji[0] if postnatal.current_daeun else ""
-            clash_labels = [f"{c.get('stem_or_branch', '')}" for c in postnatal.seun_clashes]
-            llm_text = await self._llm_port.get_advice({
-                "name": name,
-                "yongshin": natal.yongshin.name,
-                "yongshin_meaning": natal.yongshin.meaning,
-                "strength_label": natal.strength_label,
-                "element_stats": {o.name: c for o, c in natal.element_stats.items()},
-                "year": postnatal.year,
-                "yongshin_in_seun": postnatal.yongshin_in_seun,
-                "seun_clashes": clash_labels or None,
-                "daeun_stem": daeun_stem,
-            })
-            if llm_text:
-                return [InterpretBlock(description=llm_text)] + rule_advice[1:]
-        except Exception:
-            _log.exception("LLM advice enrichment failed — falling back to rule engine")
-        return rule_advice
+        natal_port: NatalPort,
+        postnatal_port: PostnatalPort,
+        llm_port: LlmPort | None = None,
+    ):
+        self.natal_port = natal_port
+        self.postnatal_port = postnatal_port
+        self.llm_port = llm_port
+
+    def analyze(self, user: User, natal: NatalInfo, year: int) -> PostnatalInfo:
+        return self.postnatal_port.analyze(user, natal, year)
 
     async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> PostnatalResult:
         current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
@@ -205,53 +194,15 @@ class PostnatalService:
         )
 
 
-class SajuService(InterpreterPort):
-    """사주 분석 서비스 — Port를 주입받아 전체 분석 파이프라인을 수행한다."""
+class KkachiLlmService:
 
     def __init__(
         self,
-        natal_port: NatalPort,
-        postnatal_port: PostnatalPort,
+        kkachi_svc: KkachiService,
         llm_port: LlmPort | None = None,
     ):
-        self.natal_port = natal_port
-        self.postnatal_port = postnatal_port
+        self._kkachi_svc = kkachi_svc
         self._llm_port = llm_port
-        self._natal_svc = NatalService()
-        self._postnatal_svc = PostnatalService(llm_port)
-
-    def basic_analyze(self, user: User, year: int) -> dict:
-        natal = self.natal_port.analyze(user)
-        birth_branch = list(natal.saju.pillars.values())[0].branch
-        return {
-            "pillars": [str(sb) for sb in natal.saju.pillars.values()],
-            "day_stem": natal.saju.stem_of_day_pillar.name,
-            "element_stats": {o.name: c for o, c in natal.element_stats.items()},
-            "my_element": {"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
-            "year_branch": birth_branch.name,
-            "zodiac_relation": _zodiac_relation_text(birth_branch, year),
-        }
-
-    def analyze(self, user: User, year: int) -> tuple[NatalInfo, PostnatalInfo]:
-        natal = self.natal_port.analyze(user)
-        postnatal = self.postnatal_port.analyze(user, natal, year)
-        return natal, postnatal
-
-    def interpret_natal(self, natal: NatalInfo, birth_year: int = 0, is_male: bool = True, name: str = ""):
-        return self._natal_svc.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
-
-    async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = ""):
-        return await self._postnatal_svc.interpret_postnatal(natal, postnatal, name)
-
-    async def interpret(
-        self, natal: NatalInfo, postnatal: PostnatalInfo, user: User | None = None, name: str = ""
-    ) -> Interpretation:
-        birth_year = user.birth_dt.year if user else 0
-        is_male = user.gender.is_male if user else True
-        natal_result = self._natal_svc.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
-        postnatal_result = await self._postnatal_svc.interpret_postnatal(natal, postnatal, name)
-        natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
-        return Interpretation(natal=natal_result, postnatal=postnatal_result)
 
     def build_chat_context(self, interpretation: Interpretation, user: User, name: str = "") -> str:
         natal = interpretation.natal
@@ -329,8 +280,8 @@ class SajuService(InterpreterPort):
         return "\n".join(lines)
 
     async def build_report(self, user: User, year: int, name: str = "") -> dict[str, str]:
-        natal_info, postnatal_info = self.analyze(user, year)
-        interpretation = await self.interpret(natal_info, postnatal_info, user=user, name=name)
+        natal_info, postnatal_info = self._kkachi_svc.analyze(user, year)
+        interpretation = await self._kkachi_svc.interpret(natal_info, postnatal_info, user=user, name=name)
         report = LlmReportBuilder().build(interpretation.natal, interpretation.postnatal, user, name)
         result: dict[str, str] = {"report": report}
         if self._llm_port and self._llm_port.available:
@@ -339,3 +290,32 @@ class SajuService(InterpreterPort):
             except Exception:
                 _log.exception("Ollama interpretation failed — report only")
         return result
+
+
+class KkachiService(InterpreterPort):
+    """사주 분석 서비스 — Port를 주입받아 전체 분석 파이프라인을 수행한다."""
+
+    def __init__(
+        self,
+        natal_svc: NatalService,
+        postnatal_svc: PostnatalService,
+        llm_port: LlmPort | None = None,
+    ):
+        self._llm_port = llm_port
+        self._natal_svc = natal_svc
+        self._postnatal_svc = postnatal_svc
+
+    def analyze(self, user: User, year: int) -> tuple[NatalInfo, PostnatalInfo]:
+        natal = self._natal_svc.analyze(user)
+        postnatal = self._postnatal_svc.analyze(user, natal, year)
+        return natal, postnatal
+
+    async def interpret(
+        self, natal: NatalInfo, postnatal: PostnatalInfo, user: User | None = None, name: str = ""
+    ) -> Interpretation:
+        birth_year = user.birth_dt.year if user else 0
+        is_male = user.gender.is_male if user else True
+        natal_result = self._natal_svc.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
+        postnatal_result = await self._postnatal_svc.interpret_postnatal(natal, postnatal, name)
+        natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
+        return Interpretation(natal=natal_result, postnatal=postnatal_result)

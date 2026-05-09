@@ -4,19 +4,18 @@ from datetime import datetime
 
 from mcp.server.fastmcp import FastMCP
 
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 from kkachi.application.use_case.get_annual_fortune import AnnualFortuneInput, GetAnnualFortuneUseCase
-from kkachi.application.use_case.get_basic_chart import BasicChartInput, GetBasicChartUseCase
 from kkachi.application.use_case.get_saju_context import GetSajuContextUseCase, SajuContextInput
 from kkachi.application.use_case.get_weather import GetWeatherUseCase
 
 mcp = FastMCP("사주까치")
 
-_saju_service: SajuService | None = None
+_saju_service: KkachiService | None = None
 _weather_uc: GetWeatherUseCase | None = None
 
 
-def init_mcp_services(saju_service: SajuService, weather_port) -> None:
+def init_mcp_services(saju_service: KkachiService, weather_port) -> None:
     global _saju_service, _weather_uc
     _saju_service = saju_service
     _weather_uc = GetWeatherUseCase(weather_port)
@@ -43,23 +42,6 @@ async def get_saju_context(
         year=year,
         city=city,
         name=name,
-    ))
-
-
-@mcp.tool()
-def get_basic_chart(
-    birth_dt: str,
-    gender: str,
-    year: int,
-    city: str = "Seoul",
-) -> dict:
-    """사주 기본 정보를 반환합니다. 팔자(8글자), 오행 분포, 일간, 주 오행, 올해 십이지신 관계를 포함합니다."""
-    uc = GetBasicChartUseCase(_saju_service)
-    return uc.execute(BasicChartInput(
-        birth_dt=datetime.fromisoformat(birth_dt),
-        gender=gender,
-        year=year,
-        city=city,
     ))
 
 

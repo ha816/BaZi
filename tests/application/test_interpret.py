@@ -2,13 +2,13 @@ import asyncio
 from datetime import datetime
 
 from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.user import Gender, User
 
 _natal = NatalAdapter()
 _postnatal = PostnatalAdapter()
-_service = SajuService(natal_port=_natal, postnatal_port=_postnatal)
+_service = KkachiService(natal_port=_natal, postnatal_port=_postnatal)
 
 
 def _make_result(year: int = 2026) -> Interpretation:
@@ -16,17 +16,6 @@ def _make_result(year: int = 2026) -> Interpretation:
     natal, postnatal = _service.analyze(user, year)
     return asyncio.run(_service.interpret(natal, postnatal))
 
-
-def _make_natal_result() -> NatalResult:
-    user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-    natal, _ = _service.analyze(user, 2026)
-    return _service.interpret_natal(natal)
-
-
-def _make_postnatal_result(year: int = 2026) -> PostnatalResult:
-    user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
-    natal, postnatal = _service.analyze(user, year)
-    return asyncio.run(_service.interpret_postnatal(natal, postnatal))
 
 
 def _block_text(blocks: list[InterpretBlock]) -> str:

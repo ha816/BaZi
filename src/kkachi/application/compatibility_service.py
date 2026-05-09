@@ -3,7 +3,7 @@ from uuid import UUID
 
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.profile_port import ProfilePort
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 from kkachi.domain.compatibility import CompatibilityResult
 from kkachi.domain.ganji import Pillar, Sipsin
 from kkachi.domain.natal import NatalInfo, PostnatalInfo, Sinsal
@@ -160,7 +160,7 @@ class CompatibilityService:
         self,
         profile_port: ProfilePort,
         compatibility_port: CompatibilityPort,
-        saju_service: SajuService,
+        saju_service: KkachiService,
     ):
         self._profile_port = profile_port
         self._compatibility_port = compatibility_port

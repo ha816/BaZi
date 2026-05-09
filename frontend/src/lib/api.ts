@@ -1,7 +1,6 @@
 import type {
   AnalysisInput,
   AnalysisResult,
-  BasicResult,
   CompatibilityInput,
   CompatibilityResult,
   DailyFortune,
@@ -15,24 +14,10 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-export async function getBasicChart(input: AnalysisInput): Promise<BasicResult> {
-  const { analysis_year, ...rest } = input;
-  const res = await fetch(`${API_URL}/saju/basic`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...rest, year: analysis_year }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text);
-  }
-  return res.json();
-}
-
 export async function analyzeChart(
   input: AnalysisInput
 ): Promise<AnalysisResult> {
-  const res = await fetch(`${API_URL}/saju/interpret`, {
+  const res = await fetch(`${API_URL}/kkachi/interpret`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -50,7 +35,7 @@ export async function streamChat(
   messages: { role: string; content: string }[],
   onChunk: (accumulated: string) => void,
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/saju/chat`, {
+  const res = await fetch(`${API_URL}/kkachi/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...input, name, messages }),
@@ -72,7 +57,7 @@ export async function streamAiInterpretation(
   name: string,
   onChunk: (accumulated: string) => void,
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/saju/stream-report`, {
+  const res = await fetch(`${API_URL}/kkachi/stream-report`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...input, name }),

@@ -239,6 +239,10 @@ class NatalInfo:
     gongmang: list[bool] = field(default_factory=list)
 
     @property
+    def year_branch(self) -> Branch:
+        return self.saju[Pillar.年柱].branch
+
+    @property
     def strength_label(self) -> str:
         if self.strength > 0:
             return "신강(身強)"

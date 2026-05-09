@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 from kkachi.domain.user import Gender, User
 
 
@@ -15,7 +15,7 @@ class AnnualFortuneInput:
 
 
 class GetAnnualFortuneUseCase:
-    def __init__(self, saju_service: SajuService):
+    def __init__(self, saju_service: KkachiService):
         self._svc = saju_service
 
     async def execute(self, inp: AnnualFortuneInput) -> dict:

@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 
@@ -117,7 +117,7 @@ async def report_profile(
     profile_id: UUID,
     req: AnalyzeRequest,
     profile_svc: ProfileService = Depends(Provide[Container.profile_service]),
-    saju_svc: SajuService = Depends(Provide[Container.saju_service]),
+    saju_svc: KkachiService = Depends(Provide[Container.saju_service]),
 ) -> dict:
     profile = await profile_svc.get_profile(profile_id)
     if profile is None:

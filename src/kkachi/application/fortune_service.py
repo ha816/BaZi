@@ -8,7 +8,7 @@ from sajupy import calculate_saju as _sajupy_calculate
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.port.weather_port import WeatherPort
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 from kkachi.domain.fortune import Fortune
 from kkachi.domain.ganji import Branch, Oheng, Pillar, Sipsin, StemBranch
 from kkachi.domain.natal import NatalInfo
@@ -371,7 +371,7 @@ class FortuneService:
         self,
         profile_port: ProfilePort,
         fortune_port: FortunePort,
-        saju_service: SajuService,
+        saju_service: KkachiService,
         weather_adapter: WeatherPort | None = None,
     ):
         self._profile_port = profile_port

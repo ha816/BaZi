@@ -10,7 +10,7 @@ from kkachi.adapter.inner.mcp_server import init_mcp_services, mcp as mcp_server
 from kkachi.adapter.inner.palmistry_controller import palmistry_router
 from kkachi.adapter.inner.payment_controller import payment_router
 from kkachi.adapter.inner.profile_controller import profile_router
-from kkachi.adapter.inner.saju_controller import saju_router
+from kkachi.adapter.inner.kkachi_controller import kkachi_router
 from kkachi.adapter.inner.weather_controller import weather_router
 from kkachi.container import Container
 
@@ -35,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(saju_router)
+app.include_router(kkachi_router, prefix="/kkachi")
 app.include_router(member_router)
 app.include_router(profile_router)
 app.include_router(compatibility_router)

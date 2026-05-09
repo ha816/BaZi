@@ -258,15 +258,6 @@ export interface AnalysisResult {
   postnatal: PostnatalResult;
 }
 
-export interface BasicResult {
-  pillars: string[];
-  day_stem: string;
-  element_stats: Record<string, number>;
-  my_element: { name: string; meaning: string };
-  year_branch: string;
-  zodiac_relation: string;
-}
-
 export interface AnalysisInput {
   birth_dt: string; // ISO format: "1990-10-10T14:30:00"
   gender: "male" | "female";

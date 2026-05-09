@@ -12,7 +12,7 @@ from kkachi.application.fortune_service import FortuneService
 from kkachi.application.member_service import MemberService
 from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
-from kkachi.application.saju_service import SajuService
+from kkachi.application.saju_service import KkachiService
 
 
 class Container(containers.DeclarativeContainer):
@@ -45,7 +45,7 @@ class Container(containers.DeclarativeContainer):
     postnatal_adapter = providers.Singleton(PostnatalAdapter)
     ollama_adapter = providers.Singleton(OllamaAdapter)
     saju_service = providers.Singleton(
-        SajuService,
+        KkachiService,
         natal_port=natal_adapter,
         postnatal_port=postnatal_adapter,
         llm_port=ollama_adapter,
