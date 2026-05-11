@@ -20,6 +20,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
   useEffect(() => {
     getForecast(memberId, profile.id, 7)
       .then(setForecast)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [memberId, profile.id]);
 

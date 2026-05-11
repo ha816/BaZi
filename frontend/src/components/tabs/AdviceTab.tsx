@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { NatalResult, PostnatalResult, SipsinInfo } from "@/types/analysis";
 import { streamAiInterpretation } from "@/lib/api";
-import { getElementInfo } from "@/lib/elementColors";
-import InterpretSection from "@/components/InterpretSection";
-import DetailToggle from "@/components/DetailToggle";
-import TermBadge from "@/components/TermBadge";
+import { getElementInfo, ganjiToElements } from "@/lib/elementColors";
+import { ganjiKor } from "@/lib/ganji";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import PillarDetail from "@/components/PillarDetail";
@@ -95,6 +93,7 @@ export default function AdviceTab({ natal, postnatal }: Props) {
     ? (RELATION_STYLE[thisYearZodiac.relation] ?? RELATION_STYLE["보통"])
     : null;
 
+
   return (
     <div className="space-y-4">
 
@@ -174,126 +173,126 @@ export default function AdviceTab({ natal, postnatal }: Props) {
           세운의 <strong className="text-[var(--color-ink)]">천간(天干)</strong>은 사회·관계로 드러나는 변화이고,
           <strong className="text-[var(--color-ink)]"> 지지(地支)</strong>는 내 안에서 느끼는 결이에요.
           용신 기운이 들어온 해는 작은 결정도 더 쉽게 풀려요.
+          내 띠와 올해 띠의 관계, <strong className="text-[var(--color-ink)]"> 삼합(三合)·육합(六合)</strong>은 흐름이 부드럽고,
+          <strong className="text-[var(--color-ink)]"> 충(衝)</strong>은 변화·이동의 동력,
+          <strong className="text-[var(--color-ink)]"> 원진(怨嗔)</strong>은 미묘한 갈등이 생기기 쉬운 결이에요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            올해 어떤 <strong>결의 기운</strong>이 들어오는지 살펴볼게요. 대운은 큰 분위기, 세운은 한 해의 표정이에요.
+            시기상으로 현재 어떤 <strong>기운</strong>이 들어오는지 살펴볼게요. 대운은 큰 분위기, 세운은 한 해의 표정이에요.
           </KkachiTip>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-col items-center gap-0.5 rounded-lg px-4 py-2 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-              <span className="text-[10px] text-[var(--color-ink-faint)]">세운(올해)</span>
-              <span className="font-heading text-xl font-bold text-[var(--color-ink)]">{postnatal.seun_ganji}</span>
-            </div>
-            {postnatal.current_daeun && (
-              <div className="flex flex-col items-center gap-0.5 rounded-lg px-4 py-2 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-                <span className="text-[10px] text-[var(--color-ink-faint)]">현재 대운</span>
-                <span className="font-heading text-xl font-bold text-[var(--color-ink)]">{postnatal.current_daeun.ganji}</span>
+
+          {/* 대운 · 세운 · 월운 그리드 */}
+          {(() => {
+            const wolun = postnatal.upcoming_months?.[0] ?? null;
+            const cards = [
+              postnatal.current_daeun
+                ? { label: "대운(10년)", ganji: postnatal.current_daeun.ganji, highlight: postnatal.yongshin_in_daeun }
+                : null,
+              { label: `세운(${postnatal.year}년)`, ganji: postnatal.seun_ganji, highlight: postnatal.yongshin_in_seun },
+              wolun
+                ? { label: `월운(${wolun.month}월)`, ganji: wolun.ganji, highlight: wolun.matches_yongshin }
+                : null,
+            ].filter(Boolean) as { label: string; ganji: string; highlight: boolean }[];
+
+            return (
+              <div className={`grid gap-2 ${cards.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+                {cards.map(({ label, ganji, highlight }) => {
+                  const els = ganjiToElements(ganji);
+                  const stemInfo = getElementInfo(els.stem);
+                  const branchInfo = getElementInfo(els.branch);
+                  return (
+                    <div key={label}
+                      className="flex flex-col items-center gap-1.5 rounded-xl px-2 py-3 border"
+                      style={{
+                        borderColor: highlight ? "var(--color-gold)" : "var(--color-border-light)",
+                        backgroundColor: highlight ? "var(--color-gold-faint)" : "var(--color-card)",
+                      }}
+                    >
+                      <span className="text-[10px] font-semibold text-[var(--color-ink-light)]">{label}</span>
+                      <span className="font-heading text-base font-bold text-[var(--color-ink)] text-center">
+                        {ganjiKor(ganji)}
+                      </span>
+                      <div className="flex gap-1">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                          style={{ color: stemInfo.color, backgroundColor: stemInfo.bgColor }}>
+                          {stemInfo.korean}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                          style={{ color: branchInfo.color, backgroundColor: branchInfo.bgColor }}>
+                          {branchInfo.korean}
+                        </span>
+                      </div>
+                      {highlight && (
+                        <span className="text-[9px] font-semibold" style={{ color: "var(--color-gold)" }}>✓ 용신</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-            {postnatal.yongshin_in_seun && (
-              <span
-                className="text-xs font-semibold px-2.5 py-1 rounded-full border"
-                style={{ color: yongInfo.color, backgroundColor: yongInfo.bgColor, borderColor: yongInfo.borderColor }}
-              >
-                ✓ 용신 기운 있음
-              </span>
-            )}
-          </div>
+            );
+          })()}
+
           <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
             {buildSeunNarrative(postnatal.seun_stem, postnatal.seun_branch)}
           </p>
-          <DetailToggle>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "하늘 기운", term: "천간", info: postnatal.seun_stem },
-                { label: "땅 기운",   term: "지지",  info: postnatal.seun_branch },
-              ].map(({ label, term, info }) => (
-                <div key={term} className="rounded-lg p-4 bg-[var(--color-ivory)] border border-[var(--color-border-light)]">
-                  <div className="text-xs text-[var(--color-ink-faint)] mb-1">{label} <TermBadge term={term} /></div>
-                  <div className="font-heading text-2xl font-bold text-[var(--color-ink)]">{info.char}</div>
-                  <div className="text-xs text-[var(--color-ink-muted)] mt-1">{info.sipsin_name} — {info.domain}</div>
-                </div>
-              ))}
-            </div>
-          </DetailToggle>
-        </div>
-      </div>
 
-      {/* ③ 올해 십이지신 관계 */}
-      {thisYearZodiac && zodiacRelStyle && (
-        <div className="slide-card">
-          <CollapsibleSectionHeader title="올해 십이지신 관계(歲支 衝合)">
-            내 띠(년주의 지지)와 올해 띠 사이의 결을 봐요.
-            <strong className="text-[var(--color-ink)]"> 삼합(三合)·육합(六合)</strong>은 흐름이 부드러워 협력과 확장에 유리하고,
-            <strong className="text-[var(--color-ink)]"> 충(衝)</strong>은 변화·이동의 동력,
-            <strong className="text-[var(--color-ink)]"> 원진(怨嗔)</strong>은 미묘한 갈등이 생기기 쉬운 결이에요.
-            띠는 사주의 한 글자일 뿐이라 한 해 분위기의 단면으로 봐주세요.
-          </CollapsibleSectionHeader>
-          <div className="divider" />
-          <div className="slide-card__body space-y-4">
-            <KkachiTip>
-              내 띠와 <strong>올해 띠</strong>가 어떤 결로 만나는지 살펴볼게요.
-            </KkachiTip>
-            <div className="flex items-center gap-4">
-              <span className="text-4xl flex-shrink-0">
-                {ZODIAC_EMOJI[thisYearZodiac.branch] ?? "🐾"}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span className="text-sm font-semibold text-[var(--color-ink)]">
-                    {thisYearZodiac.year}년 {thisYearZodiac.kor}띠 ({thisYearZodiac.ganji})
-                  </span>
-                  <span
-                    className="text-xs font-semibold px-2 py-0.5 rounded-full border"
-                    style={{ color: zodiacRelStyle.color, backgroundColor: zodiacRelStyle.bg, borderColor: zodiacRelStyle.border }}
-                  >
-                    {zodiacRelStyle.label}
-                  </span>
-                </div>
-                <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">
-                  {thisYearZodiac.desc}
-                </p>
+          {/* 삶의 영역별 운 */}
+          {Object.keys(postnatal.domain_scores).length > 0 && (
+            <>
+              <div className="divider" />
+              <p className="text-xs font-semibold text-[var(--color-ink-muted)]">삶의 영역별 운</p>
+              <div className="space-y-1.5">
+                {Object.entries(postnatal.domain_scores)
+                  .sort(([, a], [, b]) => b.score - a.score)
+                  .map(([domain, info]) => {
+                    const pct = Math.round((info.score / 100) * 100);
+                    const barColor = info.score >= 70 ? "var(--color-wood)" : info.score >= 40 ? "var(--color-earth)" : "var(--color-fire)";
+                    return (
+                      <div key={domain}>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs font-medium text-[var(--color-ink)]">{domain}</span>
+                          <span className="text-xs text-[var(--color-ink-faint)]">{info.score}점</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-[var(--color-border-light)] overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                        </div>
+                        <p className="text-[10px] text-[var(--color-ink-faint)] mt-0.5 leading-tight">{info.reason}</p>
+                      </div>
+                    );
+                  })}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
 
-      {/* ④ 종합 조언 및 개운법 */}
-      <div className="slide-card">
-        <CollapsibleSectionHeader title="종합 조언 및 개운법(綜合 助言·開運法)">
-          앞선 분석을 모아 <strong className="text-[var(--color-ink)]">일상에서 실천할 수 있는 행동 지침</strong>으로 정리한 카드예요.
-          도움이 되는 <strong className="text-[var(--color-ink)]">색상·방향·습관</strong>까지 구체적으로 안내드려요.
-          개운법(開運法)이란 작은 선택을 통해 운(運)의 결을 다듬어가는 동양 전통의 방법이에요.
-          매일의 사소한 습관이 한 해의 분위기를 바꿔요.
-        </CollapsibleSectionHeader>
-        <div className="divider" />
-        <div className="slide-card__body space-y-4">
-          <KkachiTip>
-            오늘부터 적용할 수 있는 <strong>실천 조언</strong>을 모았어요. 한 가지씩 가볍게 시작해보세요.
-          </KkachiTip>
-          <InterpretSection title="" blocks={postnatal.advice} variant="success" />
-        </div>
-      </div>
-
-      {/* ⑤ 도움이 되는 기운 · 용신 */}
-      <div className="slide-card">
-        <CollapsibleSectionHeader title="도움이 되는 기운(用神 助力)">
-          <strong className="text-[var(--color-ink)]">용신(用神)</strong>은 내 사주에서 부족하거나 약한 부분을 채워주는 핵심 오행이에요.
-          용신 기운이 강해지는 해·시기·환경에서는 큰 일을 도모하기 좋고, 작은 결정도 한결 가볍게 풀려요.
-          반대로 용신을 극(剋)하는 <strong className="text-[var(--color-ink)]">기신(忌神)</strong>의 시기엔 결정 속도를 늦추고 내실을 다지는 게 유리해요.
-        </CollapsibleSectionHeader>
-        <div className="divider" />
-        <div className="slide-card__body space-y-4">
-          <KkachiTip>
-            <strong>용신</strong>은 내 사주의 균형을 잡아주는 처방 같은 오행이에요. 이 기운을 알아두면 시기·선택의 길잡이가 돼요.
-          </KkachiTip>
-          <InterpretSection title="" blocks={postnatal.yongshin} />
+          {/* 올해 십이지신 관계 */}
+          {thisYearZodiac && zodiacRelStyle && (
+            <>
+              <div className="divider" />
+              <div className="flex items-center gap-3">
+                <span className="text-3xl flex-shrink-0">{ZODIAC_EMOJI[thisYearZodiac.branch] ?? "🐾"}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-sm font-semibold text-[var(--color-ink)]">
+                      {thisYearZodiac.year}년 {thisYearZodiac.kor}띠 ({thisYearZodiac.ganji})
+                    </span>
+                    <span
+                      className="text-xs font-semibold px-2 py-0.5 rounded-full border"
+                      style={{ color: zodiacRelStyle.color, backgroundColor: zodiacRelStyle.bg, borderColor: zodiacRelStyle.border }}
+                    >
+                      {zodiacRelStyle.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[var(--color-ink-light)] leading-relaxed">{thisYearZodiac.desc}</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* ⑥ AI 통합 해석 */}
+      {/* ④ AI 통합 해석 */}
       {aiState !== "idle" && (
         <div className="slide-card">
           <CollapsibleSectionHeader title="AI 통합 해석(人工知能 綜合 解釋)">

@@ -5,7 +5,7 @@ from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
 class AdviceInterpreter:
     def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
-        blocks = []
+        blocks: list[InterpretBlock] = []
         yongshin = natal.yongshin
         year = postnatal.year
         in_seun = postnatal.yongshin_in_seun
@@ -13,6 +13,7 @@ class AdviceInterpreter:
         has_clash = bool(postnatal.seun_clashes or postnatal.daeun_clashes)
         has_combine = bool(postnatal.seun_combines or postnatal.daeun_combines)
 
+        # 1. 올해 운세 서사
         if in_seun and in_daeun and not has_clash:
             desc = (
                 f"{year}년은 바람이 돛을 가득 채운 배와 같습니다. "
@@ -43,21 +44,65 @@ class AdviceInterpreter:
                 f"무리한 확장보다는 자기 계발·건강 관리·인간관계 정리 등 "
                 f"내면을 가꾸는 데 집중하면, 다가올 봄에 크게 도약할 수 있습니다."
             )
+        blocks.append(InterpretBlock(description=desc))
 
-        if desc:
-            blocks.append(InterpretBlock(description=desc))
+        # 2. 특수신살
+        if natal.sinsal:
+            _SINSAL_ADVICE = {
+                "역마살": "이동·변동의 기운이 있어요. 해외·여행·이직 기회가 왔을 때 열린 마음으로 받아들이세요.",
+                "도화살": "매력과 인기의 기운이에요. 대인관계·예술·창작 분야에서 빛을 발해요.",
+                "화개살": "학문·예술·종교적 깊이가 있어요. 혼자만의 시간을 통해 역량이 꽃피어요.",
+                "천을귀인": "위기 때 귀인이 나타나는 복이에요. 사람과의 인연을 소중히 하세요.",
+                "문창귀인": "학업·시험·문서운이 강해요. 자격증·시험 도전을 미루지 마세요.",
+                "백호살": "강한 기운이라 날카롭게 쓰면 추진력, 무디게 두면 사고로 돌아와요. 건강·안전에 주의하세요.",
+                "장성살": "리더십과 통솔력이 있어요. 조직·팀에서 앞에 서는 역할이 잘 맞아요.",
+                "천덕귀인": "하늘의 보호가 있는 길신이에요. 재앙을 피하고 복이 오래 머물어요.",
+                "월덕귀인": "조용한 평안과 조율 능력이 있어요. 갈등을 중재하고 화합을 이끄는 역할에서 빛나요.",
+            }
+            tips = [
+                InterpretTip(
+                    label=sinsal.korean,
+                    text=_SINSAL_ADVICE.get(sinsal.korean, sinsal.meaning),
+                )
+                for _, sinsal in natal.sinsal
+            ]
+            blocks.append(InterpretBlock(
+                category="특수신살",
+                description="타고난 특수한 기운이에요. 살(殺)이라는 이름이 붙었어도 잘 활용하면 큰 무기가 돼요.",
+                tips=tips,
+            ))
 
+        # 4. 개운법 (강약·삼재 반영)
         fortune = YONGSHIN_FORTUNE[yongshin]
+        is_strong = natal.strength_label.startswith("신강")
+        is_weak = natal.strength_label.startswith("신약")
+
+        if is_strong:
+            gaeun_desc = f"신강 사주라 기운이 넘쳐요. {yongshin.meaning}의 기운으로 넘치는 에너지를 자연스럽게 흘려보내세요."
+        elif is_weak:
+            gaeun_desc = f"신약 사주라 기운을 채워야 해요. {yongshin.meaning}의 기운을 집중적으로 보강하는 게 핵심이에요."
+        else:
+            gaeun_desc = f"{yongshin.meaning}의 기운을 일상에서 꾸준히 보강하는 방법이에요."
+
+        tips = [
+            InterpretTip(label="추천 활동", text=fortune["활동"]),
+            InterpretTip(label="행운의 색상", text=fortune["색상"]),
+            InterpretTip(label="좋은 방향", text=fortune["방향"]),
+            InterpretTip(label="보충 음식", text=fortune["음식"]),
+            InterpretTip(label="투자 방향", text=fortune["투자"]),
+        ]
+
+        if postnatal.samjae:
+            samjae_type = postnatal.samjae.get("type", "삼재")
+            tips.append(InterpretTip(
+                label=f"삼재({samjae_type}) 주의",
+                text="삼재 기간에는 큰 투자·이사·수술을 피하는 게 좋아요. 검은색 계열 소품과 북쪽 방향을 활용해 액운을 줄여보세요.",
+            ))
+
         blocks.append(InterpretBlock(
             category="개운법",
-            description=f"{yongshin.meaning}의 기운을 보강하는 방법",
-            tips=[
-                InterpretTip(label="추천 활동", text=fortune["활동"]),
-                InterpretTip(label="행운의 색상", text=fortune["색상"]),
-                InterpretTip(label="좋은 방향", text=fortune["방향"]),
-                InterpretTip(label="보충 음식", text=fortune["음식"]),
-                InterpretTip(label="투자 방향", text=fortune["투자"]),
-            ],
+            description=gaeun_desc,
+            tips=tips,
         ))
 
         return blocks

@@ -2,19 +2,29 @@ import asyncio
 from datetime import datetime
 
 from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.saju_service import KkachiService, NatalService, PostnatalService
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.user import Gender, User
 
-_natal = NatalAdapter()
-_postnatal = PostnatalAdapter()
-_service = KkachiService(natal_port=_natal, postnatal_port=_postnatal)
+_natal_adapter = NatalAdapter()
+_postnatal_adapter = PostnatalAdapter()
+_natal_svc = NatalService(natal_port=_natal_adapter)
+_postnatal_svc = PostnatalService(natal_port=_natal_adapter, postnatal_port=_postnatal_adapter)
+_service = KkachiService(natal_svc=_natal_svc, postnatal_svc=_postnatal_svc)
 
 
 def _make_result(year: int = 2026) -> Interpretation:
     user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
     natal, postnatal = _service.analyze(user, year)
     return asyncio.run(_service.interpret(natal, postnatal))
+
+
+def _make_natal_result(year: int = 2026) -> NatalResult:
+    return _make_result(year).natal
+
+
+def _make_postnatal_result(year: int = 2026) -> PostnatalResult:
+    return _make_result(year).postnatal
 
 
 
