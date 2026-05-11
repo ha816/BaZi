@@ -141,16 +141,8 @@ export default function TodayPage() {
               className="rounded-2xl border shadow-sm px-6 py-5 flex items-center gap-4"
               style={tm ? { backgroundColor: `color-mix(in srgb, var(--color-card) 70%, transparent)` } : {}}
             >
-              {/* 날씨 오행 이모지 */}
-              {tm && (
-                <div className={`shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 ${tm.bg}`}>
-                  <span className="text-3xl leading-none">{tm.emoji}</span>
-                  <span className={`text-[10px] font-bold ${tm.color}`}>{tm.label}</span>
-                </div>
-              )}
-
-              {/* 운세 점수 */}
-              <div className="flex-1 min-w-0">
+              {/* 운세 점수 — 왼쪽 고정 */}
+              <div className="shrink-0">
                 {fortune && levelMeta ? (
                   <>
                     <div className="flex items-baseline gap-2">
@@ -169,14 +161,24 @@ export default function TodayPage() {
                 )}
               </div>
 
-              {/* 기온 */}
+              <div className="flex-1" />
+
+              {/* 날씨 이모지 + 기온 — 오른쪽 */}
               {today && (
-                <div className="shrink-0 text-right">
-                  <p className="text-3xl font-thin text-[var(--color-ink)] leading-none">{Math.round(today.temperature)}°</p>
-                  <p className="text-[10px] text-[var(--color-ink-faint)] mt-1 whitespace-nowrap">
-                    {today.temp_min != null ? Math.round(today.temp_min) : "--"}° · {today.temp_max != null ? Math.round(today.temp_max) : "--"}°
-                  </p>
-                  <p className="text-[10px] text-[var(--color-ink-faint)] truncate max-w-[72px]">{conditionText}</p>
+                <div className="shrink-0 flex items-center gap-3">
+                  {tm && (
+                    <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center gap-0.5 ${tm.bg}`}>
+                      <span className="text-2xl leading-none">{tm.emoji}</span>
+                      <span className={`text-[9px] font-bold ${tm.color}`}>{tm.label}</span>
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <p className="text-3xl font-thin text-[var(--color-ink)] leading-none">{Math.round(today.temperature)}°</p>
+                    <p className="text-[10px] text-[var(--color-ink-faint)] mt-1 whitespace-nowrap">
+                      {today.temp_min != null ? Math.round(today.temp_min) : "--"}° · {today.temp_max != null ? Math.round(today.temp_max) : "--"}°
+                    </p>
+                    <p className="text-[10px] text-[var(--color-ink-faint)] truncate max-w-[72px]">{conditionText}</p>
+                  </div>
                 </div>
               )}
             </div>
