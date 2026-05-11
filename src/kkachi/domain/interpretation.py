@@ -30,7 +30,16 @@ class LuckyDirection:
     direction: str       # "북"
     kind_korean: str     # "생기"
     kind_han: str        # "生氣"
-    meaning: str         # "최고 길방, 재물·성취"
+    meaning: str         # "재물·성취·활력"
+    usage: str = ""      # "책상·주요 공간을 이 방향으로"
+
+
+@dataclass
+class UnluckyDirection:
+    direction: str       # "서"
+    kind_korean: str     # "절명"
+    kind_han: str        # "絶命"
+    meaning: str         # "건강·재물 손상, 가장 강한 흉방"
 
 
 @dataclass
@@ -40,7 +49,7 @@ class FengShuiResult:
     group: str               # "동사택(東四宅)"
     is_eastern: bool
     lucky_directions: list[LuckyDirection] = field(default_factory=list)
-    unlucky_directions: list[str] = field(default_factory=list)
+    unlucky_directions: list[UnluckyDirection] = field(default_factory=list)
     avoid_advice: str = ""
     interior_intro: str = ""
     interior_tips: list[InterpretTip] = field(default_factory=list)

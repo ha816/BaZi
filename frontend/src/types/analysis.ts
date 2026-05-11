@@ -141,6 +141,14 @@ export interface LuckyDirection {
   kind_korean: string;
   kind_han: string;
   meaning: string;
+  usage: string;
+}
+
+export interface UnluckyDirection {
+  direction: string;
+  kind_korean: string;
+  kind_han: string;
+  meaning: string;
 }
 
 export interface FengShuiResult {
@@ -149,7 +157,7 @@ export interface FengShuiResult {
   group: string;
   is_eastern: boolean;
   lucky_directions: LuckyDirection[];
-  unlucky_directions: string[];
+  unlucky_directions: UnluckyDirection[];
   avoid_advice: string;
   interior_intro: string;
   interior_tips: InterpretTip[];

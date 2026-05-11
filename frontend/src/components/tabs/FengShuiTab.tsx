@@ -1,4 +1,4 @@
-import type { NatalResult } from "@/types/analysis";
+import type { NatalResult, LuckyDirection, UnluckyDirection, TrigramInfo } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
@@ -21,8 +21,23 @@ function hasJongseong(s: string): boolean {
   return (code - 0xAC00) % 28 !== 0;
 }
 
-// 后天八卦 + 洛書(Lo Shu) — 3×3 매직스퀘어 배치
-// 현대 지도식 배치 (上北下南·右東左西)
+// 초록 계열 — 진할수록 강한 길방
+const LUCKY_KIND_COLOR: Record<string, { bg: string; border: string; ink: string }> = {
+  생기: { bg: "#DCFCE7", border: "#16A34A", ink: "#14532D" },
+  연년: { bg: "#F0FDF4", border: "#4ADE80", ink: "#166534" },
+  천의: { bg: "#F0FDF4", border: "#86EFAC", ink: "#166534" },
+  복위: { bg: "#F7FEF9", border: "#BBF7D0", ink: "#166534" },
+};
+
+// 붉은 계열 — 진할수록 강한 흉방
+const UNLUCKY_COLOR: Record<string, { bg: string; border: string; ink: string }> = {
+  절명: { bg: "#FEE2E2", border: "#DC2626", ink: "#7F1D1D" },
+  오귀: { bg: "#FEE2E2", border: "#F87171", ink: "#991B1B" },
+  육살: { bg: "#FEF2F2", border: "#FCA5A5", ink: "#991B1B" },
+  화해: { bg: "#FFF5F5", border: "#FECACA", ink: "#B91C1C" },
+};
+
+// 후천팔괘 + 낙서(洛書) — 현대 지도식 배치 (위=북, 오른쪽=동)
 const KUA_GRID = [
   { kua: 6, char: "乾", reading: "건", direction: "서북" },
   { kua: 1, char: "坎", reading: "감", direction: "북" },
@@ -43,6 +58,17 @@ const WEST_BG = "#FBE9C2";
 const WEST_BORDER = "#D4A85A";
 const WEST_INK = "#8A6420";
 
+// 3×3 컴패스 — 중앙은 본명괘
+const COMPASS_LAYOUT: (string | null)[][] = [
+  ["서북", "북", "동북"],
+  ["서",   null,  "동"],
+  ["서남", "남", "동남"],
+];
+
+type DirInfo =
+  | { isLucky: true; kind_korean: string; kind_han: string; meaning: string; usage: string }
+  | { isLucky: false; kind_korean: string; kind_han: string; meaning: string };
+
 function PalGwaeGrid({ kua }: { kua: number }) {
   return (
     <div>
@@ -59,8 +85,8 @@ function PalGwaeGrid({ kua }: { kua: number }) {
               key={cell.kua}
               className="relative aspect-square rounded-md flex flex-col items-center justify-center text-center"
               style={{
-                backgroundColor: isUser ? "var(--color-gold-faint)" : bg,
-                border: isUser ? "2px solid var(--color-gold)" : `1px solid ${border}`,
+                backgroundColor: bg,
+                border: isUser ? `2px solid ${border}` : `1px solid ${border}`,
               }}
             >
               {isUser && (
@@ -94,6 +120,100 @@ function PalGwaeGrid({ kua }: { kua: number }) {
   );
 }
 
+function DirectionCompass({
+  lucky_directions,
+  unlucky_directions,
+  trigram,
+  kua,
+}: {
+  lucky_directions: LuckyDirection[];
+  unlucky_directions: UnluckyDirection[];
+  trigram: TrigramInfo;
+  kua: number;
+}) {
+  const dirMap: Record<string, DirInfo> = {};
+  for (const d of lucky_directions) {
+    dirMap[d.direction] = { isLucky: true, kind_korean: d.kind_korean, kind_han: d.kind_han, meaning: d.meaning, usage: d.usage };
+  }
+  for (const d of unlucky_directions) {
+    dirMap[d.direction] = { isLucky: false, kind_korean: d.kind_korean, kind_han: d.kind_han, meaning: d.meaning };
+  }
+
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
+      {COMPASS_LAYOUT.flat().map((dir) => {
+        if (dir === null) {
+          return (
+            <div
+              key="center"
+              className="rounded-lg flex flex-col items-center justify-center text-center p-2 border"
+              style={{ backgroundColor: "transparent", borderColor: "var(--color-border-light)" }}
+            >
+              <span className="text-[8px] font-bold" style={{ color: "var(--color-gold)" }}>본명괘</span>
+              <span className="font-heading text-xl font-bold leading-none mt-0.5" style={{ color: "var(--color-ink)" }}>
+                {trigram.char}
+              </span>
+              <span className="text-[10px] font-semibold" style={{ color: "var(--color-ink-muted)" }}>
+                {trigram.reading} · {kua}번
+              </span>
+            </div>
+          );
+        }
+
+        const info = dirMap[dir];
+        if (!info) return <div key={dir} />;
+
+        const col = info.isLucky
+          ? (LUCKY_KIND_COLOR[info.kind_korean] ?? LUCKY_KIND_COLOR["복위"])
+          : (UNLUCKY_COLOR[info.kind_korean] ?? UNLUCKY_COLOR["화해"]);
+
+        const kindEmoji = info.kind_korean === "생기" ? "✨" : info.kind_korean === "절명" ? "⚠️" : null;
+
+        return (
+          <div
+            key={dir}
+            className="rounded-lg p-2 border flex flex-col items-center text-center gap-0.5"
+            style={{ backgroundColor: col.bg, borderColor: col.border }}
+          >
+            <span className="text-sm leading-none">{DIRECTION_EMOJI[dir] ?? "🧭"}</span>
+            <span className="text-xs font-bold leading-none mt-0.5" style={{ color: col.ink }}>
+              {dir}{kindEmoji && <span className="ml-0.5">{kindEmoji}</span>}
+            </span>
+            <p className="text-[9px] font-semibold leading-tight mt-0.5" style={{ color: col.ink }}>
+              {info.kind_korean} ({info.kind_han}) — {info.meaning.split("—")[0].split(",")[0].trim()}
+            </p>
+            {info.isLucky && (
+              <p className="text-[7px] leading-tight mt-0.5 opacity-65" style={{ color: col.ink }}>
+                {info.usage}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function UnluckyCard({ d }: { d: UnluckyDirection }) {
+  const col = UNLUCKY_COLOR[d.kind_korean] ?? UNLUCKY_COLOR["화해"];
+  return (
+    <div
+      className="rounded-lg p-2.5 border flex flex-col items-center text-center gap-1"
+      style={{ backgroundColor: col.bg, borderColor: col.border }}
+    >
+      <span className="text-base">{DIRECTION_EMOJI[d.direction] ?? "🧭"}</span>
+      <span className="text-sm font-bold leading-none" style={{ color: col.ink }}>{d.direction}</span>
+      <span className="text-[10px] font-semibold leading-tight" style={{ color: col.ink }}>
+        {d.kind_korean}
+        <span className="block text-[8px] opacity-70">({d.kind_han})</span>
+      </span>
+      <p className="text-[9px] leading-tight" style={{ color: col.ink, opacity: 0.8 }}>
+        {d.meaning.split("—")[0].trim()}
+      </p>
+    </div>
+  );
+}
+
 export default function FengShuiTab({ natal, name }: Props) {
   const fs = natal.feng_shui;
 
@@ -110,127 +230,57 @@ export default function FengShuiTab({ natal, name }: Props) {
   }
 
   const elInfo = getElementInfo(fs.trigram.element);
+  const nameLabel = name ? `${name}님` : "나";
 
   return (
     <div className="space-y-4">
-      {/* 나의 풍수 + 행운의 방위 통합 카드 */}
+      {/* 카드 1 — 팔택풍수 + 길방·흉방 */}
       <div className="slide-card" style={{ borderColor: elInfo.borderColor }}>
         <CollapsibleSectionHeader title="풍수(風水)">
           <p>
-            <strong className="text-[var(--color-ink)]">풍수(風水)</strong>는 공간의 기운을 다루는 학문으로, 같은 집에 살아도 사람마다 잘 맞는 방위·색상이 달라요. 그 중 <strong className="text-[var(--color-ink)]">팔택풍수(八宅風水)</strong>는 생년·성별로 1~9 사이의 <strong className="text-[var(--color-ink)]">쿠아 넘버(九星)</strong>를 뽑고, 이 숫자가 8괘(八卦) 중 하나에 대응되는데 이를 본인의 <strong className="text-[var(--color-ink)]">본명괘(本命卦)</strong>라 해요. 본명괘에 따라 <strong style={{ color: EAST_INK }}>동사택(東四宅)</strong> 또는 <strong style={{ color: WEST_INK }}>서사택(西四宅)</strong> 두 그룹 중 하나에 속하고, 그룹별로 길한 방위가 달라져요.
-          </p>
-          <p>
-            ※ 전통 풍수 도식은 위가 남(南), 왼쪽이 동(東)으로 그려요. 옛날에 황제·관찰자가 항상 남쪽을 바라보는 자세(面南)를 기준으로 해서, 앞쪽인 남이 그림 위, 왼손 쪽인 동이 왼쪽이었어요.
+            <strong className="text-[var(--color-ink)]">팔택풍수(八宅風水)</strong>는 생년·성별로
+            1~9 사이의 <strong className="text-[var(--color-ink)]">쿠아 넘버(九星)</strong>를 뽑고,
+            이 숫자가 8괘(八卦) 중 하나인 <strong className="text-[var(--color-ink)]">본명괘(本命卦)</strong>에 대응돼요.
+            본명괘에 따라 <strong style={{ color: EAST_INK }}>동사택(東四宅)</strong> 또는{" "}
+            <strong style={{ color: WEST_INK }}>서사택(西四宅)</strong> 중 하나에 속하며,
+            그룹별로 길한 방위 4개와 흉한 방위 4개가 정해져요.
           </p>
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">
           <KkachiTip>
-            공간의 기운을 다루는 풍수(風水)는 사람마다 어울리는 방위가 달라요. 알아보아요.
+            {nameLabel}의 본명괘(本命卦)는 {fs.trigram.char}({fs.trigram.reading}){hasJongseong(fs.trigram.reading) ? "으로" : "로"}{" "}
+            {fs.group}에 속해요. 쿠아 넘버는 <strong>{fs.kua_number}번</strong>이에요.
           </KkachiTip>
           <PalGwaeGrid kua={fs.kua_number} />
-          <KkachiTip>
-            {name ? `${name}님` : "나"}의 본명괘(本命卦)는 {fs.trigram.char}({fs.trigram.reading}){hasJongseong(fs.trigram.reading) ? "으로" : "로"} {fs.group}에 속해요. {fs.trigram.char}({fs.trigram.reading})의 오행은 {fs.trigram.element_korean}({fs.trigram.element}){hasJongseong(fs.trigram.element_korean) ? "이에요" : "예요"}. {fs.trigram.description}
-          </KkachiTip>
 
-          {/* 행운의 방위(吉方) */}
+          {/* 8방위 길흉 배치 */}
           <div className="divider" />
-          <InlineCollapsibleHeader title="행운의 방위(吉方)">
-            본명괘를 기준으로 <strong className="text-[var(--color-ink)]">4개의 길한 방위</strong>가 산출돼요. 같은 그룹(<strong style={{ color: EAST_INK }}>동사택</strong>·<strong style={{ color: WEST_INK }}>서사택</strong>)은 4방위를 공유하지만, 각 방위가 어떤 종류의 길방(<strong className="text-[var(--color-ink)]">생기·연년·천의·복위</strong>)으로 작용할지는 본인 쿠아 넘버에 따라 달라져요. <strong className="text-[var(--color-ink)]">생기(生氣)</strong>는 최고 길방(재물·성취), <strong className="text-[var(--color-ink)]">연년(延年)</strong>은 건강·장수·인연, <strong className="text-[var(--color-ink)]">천의(天醫)</strong>는 귀인·치유·회복, <strong className="text-[var(--color-ink)]">복위(伏位)</strong>는 안정·꾸준한 발전을 뜻해요. 본명괘 자체의 방위는 항상 복위가 돼요.
+          <InlineCollapsibleHeader title="8방위 길흉(吉凶) 배치">
+            본명괘를 기준으로 8방위 각각의 길흉을 한눈에 표시해요.
           </InlineCollapsibleHeader>
           <div className="divider" />
           <KkachiTip>
-            본인이 속한 동사택·서사택 그룹의 4방위가 곧 길한 방위가 되고, 본인 쿠아 넘버가 4방위 각각의 길방 종류(생기·연년·천의·복위)를 정해요.
+            초록색은 좋은 방위, 붉은색은 나쁜 방위예요. 색이 진할수록 기운이 강해요.
+            초록 중 가장 진한 <strong>생기(生氣)</strong>가 최고 길방이고,
+            붉은 중 가장 진한 <strong>절명(絶命)</strong>이 가장 강한 흉방이에요.
           </KkachiTip>
-          <div className="grid grid-cols-4 gap-2">
-            {fs.lucky_directions.map((d, i) => (
-              <div
-                key={d.direction}
-                className="rounded-lg p-2 border flex flex-col items-center text-center gap-0.5"
-                style={{
-                  backgroundColor: i === 0 ? elInfo.bgColor : "var(--color-ivory)",
-                  borderColor: i === 0 ? elInfo.borderColor : "var(--color-border-light)",
-                }}
-              >
-                <span className="text-base">{DIRECTION_EMOJI[d.direction] ?? "🧭"}</span>
-                <span
-                  className="text-sm font-bold leading-none"
-                  style={{ color: i === 0 ? elInfo.color : "var(--color-ink)" }}
-                >
-                  {d.direction}
-                </span>
-                <span
-                  className="text-[10px] font-semibold leading-tight mt-0.5"
-                  style={{ color: i === 0 ? elInfo.color : "var(--color-ink-muted)" }}
-                >
-                  {d.kind_korean}
-                  <span className="block text-[8px] opacity-70">({d.kind_han})</span>
-                </span>
-                <p className="text-[9px] text-[var(--color-ink-faint)] leading-tight mt-1">
-                  {d.meaning}
-                </p>
-              </div>
-            ))}
-          </div>
-          <KkachiTip>
-            본명괘(本命卦) {fs.trigram.char}({fs.trigram.reading}) 기준 4개의 길한 방위예요. 1순위 생기(生氣)부터 활용해보세요. 책상·침대 머리를 길방을 향하게 두면 그 종류의 운이 돕는다고 해요.
-          </KkachiTip>
+          <DirectionCompass
+            lucky_directions={fs.lucky_directions}
+            unlucky_directions={fs.unlucky_directions}
+            trigram={fs.trigram}
+            kua={fs.kua_number}
+          />
 
-          {/* 피해야 할 방위(凶方) */}
-          <div className="divider" />
-          <InlineCollapsibleHeader title="피해야 할 방위(凶方)">
-            본명괘와 맞지 않는 4방위예요. 출입문·침대·책상이 이쪽을 향하면 흐름이 막히기 쉬워요.
-          </InlineCollapsibleHeader>
-          <div className="divider" />
-          <KkachiTip>
-            {fs.avoid_advice}
-          </KkachiTip>
-          <div className="grid grid-cols-4 gap-2">
-            {fs.unlucky_directions.map((d) => (
-              <div
-                key={d}
-                className="rounded-lg p-2 border flex flex-col items-center text-center gap-1"
-                style={{ backgroundColor: "var(--color-ivory)", borderColor: "var(--color-border-light)" }}
-              >
-                <span className="text-base">{DIRECTION_EMOJI[d] ?? "🧭"}</span>
-                <span className="text-sm font-bold leading-none" style={{ color: "var(--color-ink-muted)" }}>
-                  {d}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 풍수개운법 카드 */}
-      <div className="slide-card">
-        <CollapsibleSectionHeader title="풍수개운법(風水開運法)">
-          {fs.interior_intro}
-        </CollapsibleSectionHeader>
-        <div className="divider" />
-        <div className="slide-card__body space-y-4">
-          <KkachiTip>
-            풍수를 고려한 작은 변화로 공간의 기운을 바꿀 수 있어요. 용신의 기운을 공간에 들이는 색상·소품·방위 팁이에요.
-          </KkachiTip>
-          {fs.interior_tips.length > 0 && (
-            <div className="space-y-1.5">
-              {fs.interior_tips.map((tip) => (
-                <div key={tip.label} className="rounded-lg p-2.5 border" style={{ borderColor: "var(--color-border-light)" }}>
-                  <p className="text-xs font-semibold text-[var(--color-ink)]">{tip.label}</p>
-                  <p className="text-[11px] text-[var(--color-ink-muted)] leading-relaxed mt-0.5">{tip.text}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <KkachiTip>{fs.avoid_advice}</KkachiTip>
           {(() => {
-            const colorText = fs.interior_tips.find(t => t.label === "행운 색상")?.text;
-            const supplementText = fs.interior_tips.find(t => t.label.includes("보완"))?.text;
-            const bestDirection = fs.lucky_directions[0]?.direction;
+            const colorTip = fs.interior_tips.find(t => t.label === "행운 색상 활용");
             return (
               <KkachiTip>
-                {colorText && <>행운 색상({colorText})은 옷·핸드폰 케이스·가방 같은 일상 소품에 활용해보세요. </>}
-                {supplementText && <>집에는 {supplementText}을(를) 두면 용신 {natal.yongshin_info.meaning}({natal.yongshin_info.name})의 기운이 보완돼요. </>}
-                {bestDirection && <>책상·침대 머리는 길방인 {bestDirection}쪽을 향하게 두면 흐름이 자연스럽게 따라와요.</>}
+                {colorTip && <>{colorTip.text} </>}
+                거창한 인테리어가 아니어도 돼요.
+                책상 방향 하나, 베개 위치 하나부터 바꿔보세요.
+                작은 변화가 쌓이면 기운의 흐름이 달라져요.
               </KkachiTip>
             );
           })()}
