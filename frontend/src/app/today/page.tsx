@@ -153,7 +153,6 @@ export default function TodayPage() {
               <div className="flex-1 min-w-0">
                 {fortune && levelMeta ? (
                   <>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] mb-0.5">{profile?.name ?? "오늘"} 운세</p>
                     <div className="flex items-baseline gap-2">
                       <span className="font-heading text-5xl font-thin text-[var(--color-ink)] leading-none">{fortune.total_score}</span>
                       <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${levelMeta.color}`}>{fortune.level}</span>
