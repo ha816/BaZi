@@ -12,13 +12,13 @@ from kkachi.application.fortune_service import FortuneService
 from kkachi.application.member_service import MemberService
 from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.saju_service import KkachiService, NatalService, PostnatalService
 
 
 class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
-            "kkachi.adapter.inner.saju_controller",
+            "kkachi.adapter.inner.kkachi_controller",
             "kkachi.adapter.inner.member_controller",
             "kkachi.adapter.inner.profile_controller",
             "kkachi.adapter.inner.compatibility_controller",
@@ -40,14 +40,21 @@ class Container(containers.DeclarativeContainer):
     feedback_repo = providers.Singleton(FeedbackRepo, session_factory=session_factory)
     payment_repo = providers.Singleton(PaymentRepo, session_factory=session_factory)
 
-    # Saju (기존)
+    # Kkachi
     natal_adapter = providers.Singleton(NatalAdapter)
     postnatal_adapter = providers.Singleton(PostnatalAdapter)
     ollama_adapter = providers.Singleton(OllamaAdapter)
-    saju_service = providers.Singleton(
-        KkachiService,
+    natal_service = providers.Singleton(NatalService, natal_port=natal_adapter)
+    postnatal_service = providers.Singleton(
+        PostnatalService,
         natal_port=natal_adapter,
         postnatal_port=postnatal_adapter,
+        llm_port=ollama_adapter,
+    )
+    kkachi_service = providers.Singleton(
+        KkachiService,
+        natal_svc=natal_service,
+        postnatal_svc=postnatal_service,
         llm_port=ollama_adapter,
     )
 
@@ -62,7 +69,7 @@ class Container(containers.DeclarativeContainer):
         ProfileService,
         profile_port=profile_repo,
         analysis_port=analysis_repo,
-        saju_service=saju_service,
+        saju_service=kkachi_service,
         payment_port=payment_repo,
     )
     compatibility_repo = providers.Singleton(CompatibilityRepo, session_factory=session_factory)
@@ -70,7 +77,7 @@ class Container(containers.DeclarativeContainer):
         CompatibilityService,
         profile_port=profile_repo,
         compatibility_port=compatibility_repo,
-        saju_service=saju_service,
+        saju_service=kkachi_service,
     )
     weather_adapter = providers.Singleton(WeatherAdapter)
     fortune_repo = providers.Singleton(FortuneRepo, session_factory=session_factory)
@@ -78,6 +85,6 @@ class Container(containers.DeclarativeContainer):
         FortuneService,
         profile_port=profile_repo,
         fortune_port=fortune_repo,
-        saju_service=saju_service,
+        saju_service=kkachi_service,
         weather_adapter=weather_adapter,
     )

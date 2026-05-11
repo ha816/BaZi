@@ -30,7 +30,7 @@ def _make_user(req: AnalysisRequest) -> User:
 @inject
 async def interpret(
     req: AnalysisRequest,
-    saju_svc: KkachiService = Depends(Provide[Container.saju_service]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> dict:
     try:
         user = _make_user(req)
@@ -45,7 +45,7 @@ async def interpret(
 @inject
 async def report(
     req: AnalysisRequest,
-    saju_svc: KkachiService = Depends(Provide[Container.saju_service]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> dict:
     try:
         user = _make_user(req)
@@ -79,7 +79,7 @@ _CHAT_SYSTEM = """\
 @inject
 async def chat(
     req: ChatRequest,
-    saju_svc: KkachiService = Depends(Provide[Container.saju_service]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> StreamingResponse:
     user = User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city)
     natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
@@ -101,7 +101,7 @@ async def chat(
 @inject
 async def stream_report(
     req: AnalysisRequest,
-    saju_svc: KkachiService = Depends(Provide[Container.saju_service]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> StreamingResponse:
     user = _make_user(req)
     natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)

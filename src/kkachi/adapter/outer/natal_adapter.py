@@ -396,6 +396,35 @@ def _make_domain_reason(seun: list[Sipsin], daeun: list[Sipsin]) -> str:
     return "별다른 작용 없이 잔잔합니다."
 
 
+_CITY_LONGITUDE: dict[str, float] = {
+    # 한국
+    "seoul": 126.978, "서울": 126.978, "서울특별시": 126.978,
+    "busan": 129.075, "부산": 129.075, "부산광역시": 129.075,
+    "incheon": 126.705, "인천": 126.705, "인천광역시": 126.705,
+    "daegu": 128.601, "대구": 128.601, "대구광역시": 128.601,
+    "daejeon": 127.385, "대전": 127.385, "대전광역시": 127.385,
+    "gwangju": 126.851, "광주": 126.851, "광주광역시": 126.851,
+    "ulsan": 129.312, "울산": 129.312, "울산광역시": 129.312,
+    "suwon": 127.009, "수원": 127.009,
+    "jeju": 126.531, "제주": 126.531, "제주시": 126.531,
+    # 주요 해외 도시
+    "new york": -74.006, "los angeles": -118.244, "london": -0.118,
+    "tokyo": 139.692, "beijing": 116.407, "shanghai": 121.474,
+    "paris": 2.347, "berlin": 13.405, "sydney": 151.209,
+    "singapore": 103.820, "hong kong": 114.158,
+}
+
+
+def _resolve_longitude(city: str, longitude: float | None) -> tuple[str | None, float | None]:
+    """longitude가 없으면 내부 룩업으로 해결, 그것도 없으면 city 문자열 그대로 반환."""
+    if longitude is not None:
+        return None, longitude
+    resolved = _CITY_LONGITUDE.get(city.strip().lower())
+    if resolved is not None:
+        return None, resolved
+    return city, None
+
+
 def cal_saju(
     birth_dt: datetime,
     city: str = "Seoul",
@@ -403,11 +432,12 @@ def cal_saju(
     use_solar_time: bool = True,
 ) -> Saju:
     """sajupy를 호출하여 도메인 Saju 객체를 생성한다."""
+    resolved_city, resolved_lon = _resolve_longitude(city, longitude)
     result = _sajupy_calculate(
         year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
         hour=birth_dt.hour, minute=birth_dt.minute,
-        city=None if longitude is not None else city,
-        longitude=longitude,
+        city=resolved_city,
+        longitude=resolved_lon,
         use_solar_time=use_solar_time,
     )
     return Saju(

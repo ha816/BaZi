@@ -117,7 +117,7 @@ async def report_profile(
     profile_id: UUID,
     req: AnalyzeRequest,
     profile_svc: ProfileService = Depends(Provide[Container.profile_service]),
-    saju_svc: KkachiService = Depends(Provide[Container.saju_service]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> dict:
     profile = await profile_svc.get_profile(profile_id)
     if profile is None:

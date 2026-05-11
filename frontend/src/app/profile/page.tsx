@@ -31,6 +31,7 @@ export default function ProfilePage() {
     setMemberId(id);
     listProfiles(id)
       .then(setProfiles)
+      .catch(console.error)
       .finally(() => setLoading(false));
   }, [router]);
 
