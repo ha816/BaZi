@@ -167,9 +167,9 @@ export default function TodayPage() {
               {today && (
                 <div className="shrink-0 flex items-center gap-3">
                   {tm && (
-                    <div className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 ${tm.bg}`}>
-                      <span className="text-3xl leading-none">{tm.emoji}</span>
-                      <span className={`text-[10px] font-bold ${tm.color}`}>{tm.label}</span>
+                    <div className={`w-32 h-32 rounded-3xl flex flex-col items-center justify-center gap-1 ${tm.bg}`}>
+                      <span className="text-6xl leading-none">{tm.emoji}</span>
+                      <span className={`text-[13px] font-bold ${tm.color}`}>{tm.label}</span>
                     </div>
                   )}
                   <div className="text-right">
