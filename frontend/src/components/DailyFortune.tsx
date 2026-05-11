@@ -140,7 +140,7 @@ function getDowLabel(dateStr: string) {
 }
 
 // ── 단일 날 상세 뷰 ────────────────────────────────────────────────────────
-function DetailView({ data }: { data: DailyFortune }) {
+export function DetailView({ data }: { data: DailyFortune }) {
   const meta = FORECAST_LEVEL_META[data.level] ?? FORECAST_LEVEL_META["평범한 날"];
 
   return (
@@ -226,7 +226,7 @@ function DetailView({ data }: { data: DailyFortune }) {
 }
 
 // ── 주간 컴팩트 뷰 ───────────────────────────────────────────────────────────
-function WeeklyView({ forecast }: { forecast: DailyFortune[] }) {
+export function WeeklyView({ forecast }: { forecast: DailyFortune[] }) {
   return (
     <div className="space-y-2">
       {forecast.map((day, i) => {

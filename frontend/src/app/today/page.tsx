@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { detectLocation } from "@/lib/location";
-import { listProfiles, getDailyFortune } from "@/lib/api";
+import { listProfiles, getForecast } from "@/lib/api";
+import { DetailView, WeeklyView } from "@/components/DailyFortune";
 import KkachiTip from "@/components/KkachiTip";
 import ScoreBar from "@/components/ScoreBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -44,12 +45,13 @@ function dayLabel(dateStr: string, idx: number) {
 }
 
 export default function TodayPage() {
-  const [fortune, setFortune] = useState<DailyFortune | null>(null);
+  const [forecast, setForecast] = useState<DailyFortune[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [days, setDays] = useState<DayWeather[]>([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDomains, setShowDomains] = useState(false);
+  const [activeTab, setActiveTab] = useState<"오늘" | "내일" | "주간">("오늘");
 
   useEffect(() => {
     const memberId = localStorage.getItem(MEMBER_ID_KEY);
@@ -59,9 +61,9 @@ export default function TodayPage() {
         .then((profiles) => {
           const self = profiles.find((p) => p.is_self) ?? profiles[0] ?? null;
           setProfile(self);
-          if (self) return getDailyFortune(memberId, self.id);
+          if (self) return getForecast(memberId, self.id, 7);
         })
-        .then((f) => { if (f) setFortune(f); })
+        .then((f) => { if (f) setForecast(f); })
         .catch(() => {})
         .finally(() => setLoading(false));
     } else {
@@ -96,6 +98,7 @@ export default function TodayPage() {
     }
   }, []);
 
+  const fortune = forecast[0] ?? null;
   const meta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
   const today = days[0] ?? null;
   const yongshin = fortune?.yongshin ?? null;
@@ -132,6 +135,42 @@ export default function TodayPage() {
             </Link>
           </div>
         )}
+
+        {/* 탭 바 */}
+        {!loading && loggedIn && (
+          <div className="flex gap-0.5 p-0.5 bg-[var(--color-parchment)] rounded-lg w-fit">
+            {(["오늘", "내일", "주간"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setActiveTab(t)}
+                className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  activeTab === t
+                    ? "bg-white text-[var(--color-ink)] shadow-sm"
+                    : "text-[var(--color-ink-faint)]"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 내일 탭 */}
+        {!loading && loggedIn && activeTab === "내일" && forecast[1] && (
+          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-5">
+            <DetailView data={forecast[1]} />
+          </div>
+        )}
+
+        {/* 주간 탭 */}
+        {!loading && loggedIn && activeTab === "주간" && forecast.length > 0 && (
+          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-5">
+            <WeeklyView forecast={forecast} />
+          </div>
+        )}
+
+        {activeTab === "오늘" && <>
 
         {/* 핵심 요약 — 운세 + 날씨 통합 카드 */}
         {!loading && (fortune || today) && (() => {
@@ -327,6 +366,8 @@ export default function TodayPage() {
             </Link>
           </div>
         )}
+
+        </>}
 
       </div>
     </main>
