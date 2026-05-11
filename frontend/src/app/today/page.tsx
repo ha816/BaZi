@@ -293,10 +293,6 @@ export default function TodayPage() {
           </div>
         )}
 
-        {/* 오늘 조언 */}
-        {(fortune?.tips?.length ?? 0) > 0 && (
-          <KkachiTip>{fortune!.tips.join("\n")}</KkachiTip>
-        )}
 
         {/* 사주 분석 CTA */}
         {loggedIn && fortune && (
