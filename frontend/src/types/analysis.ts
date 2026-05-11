@@ -378,6 +378,8 @@ export interface HourlyWeather {
 export interface DailyWeather {
   date?: string;
   temperature: number;
+  temp_min?: number;
+  temp_max?: number;
   element: string;
   condition: string;
   hours?: HourlyWeather[];
