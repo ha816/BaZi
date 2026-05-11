@@ -196,7 +196,15 @@ export default function TodayPage() {
         {/* 시간별 예보 — 용신 하이라이트 */}
         {hourSlots.length > 0 && (
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-3">
-            <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-3">시간별 기운</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-semibold text-[var(--color-ink-muted)]">시간별 기운</p>
+              {yongshin && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-emerald-600 font-semibold">최고 = 용신({yongshin})</span>
+                  <span className="text-[10px] text-amber-600 font-semibold">좋아요 = 용신 生</span>
+                </div>
+              )}
+            </div>
             <div className="overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
               <div className="flex gap-1 w-max">
                 {hourSlots.map(({ day, h }, i) => {
