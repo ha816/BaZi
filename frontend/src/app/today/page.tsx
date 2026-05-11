@@ -164,7 +164,7 @@ export default function TodayPage() {
 
                 {/* 날씨 이모지 + 기온 — 오른쪽 */}
                 {today && (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 px-4">
                     {tm && (
                       <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1 ${tm.bg}`}>
                         <span className="text-4xl leading-none">{tm.emoji}</span>
