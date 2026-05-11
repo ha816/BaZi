@@ -143,9 +143,9 @@ export default function TodayPage() {
               style={tm ? { backgroundColor: `color-mix(in srgb, var(--color-card) 70%, transparent)` } : {}}
             >
               {/* 상단: 점수 + 날씨 */}
-              <div className="flex items-center gap-4">
-                {/* 운세 점수 — 왼쪽 고정 */}
-                <div className="shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                {/* 운세 점수 — 왼쪽 */}
+                <div>
                   {fortune && levelMeta ? (
                     <>
                       <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${levelMeta.color}`}>{fortune.level}</span>
@@ -162,16 +162,9 @@ export default function TodayPage() {
                   )}
                 </div>
 
-                {/* 까치 이미지 — 중앙 */}
-                {fortune && levelMeta && (
-                  <img src={levelMeta.image} alt={fortune.level} className="h-20 w-auto object-contain" />
-                )}
-
-                <div className="flex-1" />
-
                 {/* 날씨 이모지 + 기온 — 오른쪽 */}
                 {today && (
-                  <div className="shrink-0 flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     {tm && (
                       <div className={`w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1 ${tm.bg}`}>
                         <span className="text-4xl leading-none">{tm.emoji}</span>
