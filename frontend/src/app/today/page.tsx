@@ -237,7 +237,7 @@ export default function TodayPage() {
                 </div>
               )}
             </div>
-            <div className="overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+            <div className="overflow-x-auto -mx-1 px-1 py-1" style={{ scrollbarWidth: "none" }}>
               <div className="flex gap-1 w-max">
                 {hourSlots.map(({ day, h }, i) => {
                   const isFirstOfDay = i === 0 || hourSlots[i - 1].day !== day;
