@@ -49,6 +49,7 @@ export default function TodayPage() {
   const [days, setDays] = useState<DayWeather[]>([]);
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showDomains, setShowDomains] = useState(false);
 
   useEffect(() => {
     const memberId = localStorage.getItem(MEMBER_ID_KEY);
@@ -183,11 +184,35 @@ export default function TodayPage() {
                 )}
               </div>
 
-              {/* 운세 설명 — 하단 */}
-              {fortune?.description && (
-                <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed border-t border-[var(--color-border-light)] pt-4">
-                  {fortune.description}
-                </p>
+              {/* 운세 설명 + 상세 보기 토글 — 하단 */}
+              {fortune && (
+                <div className="border-t border-[var(--color-border-light)] pt-4 space-y-3">
+                  {fortune.description && (
+                    <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">{fortune.description}</p>
+                  )}
+                  {Object.keys(fortune.domain_scores).length > 0 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setShowDomains((v) => !v)}
+                        className="text-[11px] font-semibold text-[var(--color-gold)] flex items-center gap-1"
+                      >
+                        {showDomains ? "접기 ▲" : "상세 보기 ▼"}
+                      </button>
+                      {showDomains && (
+                        <div className="space-y-2 pt-1">
+                          {Object.entries(fortune.domain_scores).map(([key, val]) => (
+                            <div key={key} className="flex items-center gap-3">
+                              <span className="w-10 text-xs text-[var(--color-ink-muted)] shrink-0">{DOMAIN_LABELS[key] ?? key}</span>
+                              <ScoreBar score={val.score} />
+                              <span className="text-xs font-semibold text-[var(--color-ink)] w-6 text-right">{val.score}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           );
@@ -234,20 +259,6 @@ export default function TodayPage() {
                 })}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* 영역별 운세 */}
-        {fortune && Object.keys(fortune.domain_scores).length > 0 && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-5 pt-4 pb-5 space-y-3">
-            <p className="text-xs font-semibold text-[var(--color-ink-muted)]">영역별 운세</p>
-            {Object.entries(fortune.domain_scores).map(([key, val]) => (
-              <div key={key} className="flex items-center gap-3">
-                <span className="w-10 text-xs text-[var(--color-ink-muted)] shrink-0">{DOMAIN_LABELS[key] ?? key}</span>
-                <ScoreBar score={val.score} />
-                <span className="text-xs font-semibold text-[var(--color-ink)] w-6 text-right">{val.score}</span>
-              </div>
-            ))}
           </div>
         )}
 
