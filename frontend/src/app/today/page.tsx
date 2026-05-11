@@ -31,7 +31,7 @@ interface DayWeather {
 }
 
 const DOMAIN_LABELS: Record<string, string> = {
-  직업운: "직업", 재물운: "재물", 건강운: "건강", 애정운: "애정", 학업운: "학업",
+  직업운: "직업운", 재물운: "재물운", 건강운: "건강운", 애정운: "연애운", 학업운: "학업운",
 };
 
 const GENERATES: Record<string, string> = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
@@ -206,13 +206,15 @@ export default function TodayPage() {
                       </button>
                       {showDomains && (
                         <div className="space-y-2 pt-1">
-                          {Object.entries(fortune.domain_scores).map(([key, val]) => (
-                            <div key={key} className="flex items-center gap-3">
-                              <span className="w-10 text-xs text-[var(--color-ink-muted)] shrink-0">{DOMAIN_LABELS[key] ?? key}</span>
-                              <ScoreBar score={val.score} />
-                              <span className="text-xs font-semibold text-[var(--color-ink)] w-6 text-right">{val.score}</span>
-                            </div>
-                          ))}
+                          {Object.entries(fortune.domain_scores)
+                            .sort(([, a], [, b]) => b.score - a.score)
+                            .map(([key, val]) => (
+                              <div key={key} className="flex items-center gap-3">
+                                <span className="w-14 text-xs text-[var(--color-ink-muted)] shrink-0">{DOMAIN_LABELS[key] ?? key}</span>
+                                <ScoreBar score={val.score} />
+                                <span className="text-xs font-semibold text-[var(--color-ink)] w-6 text-right">{val.score}</span>
+                              </div>
+                            ))}
                         </div>
                       )}
                     </>
