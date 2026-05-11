@@ -18,11 +18,11 @@ const LEVEL_META: Record<string, { label: string; color: string; bg: string }> =
 };
 
 const DOMAIN_LABELS: Record<string, string> = {
-  직업운: "직업",
-  재물운: "재물",
-  건강운: "건강",
-  애정운: "애정",
-  학업운: "학업",
+  직업운: "직업운",
+  재물운: "재물운",
+  건강운: "건강운",
+  애정운: "연애운",
+  학업운: "학업운",
 };
 
 export default function FortunePage() {
