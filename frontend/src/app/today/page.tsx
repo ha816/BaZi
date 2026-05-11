@@ -145,10 +145,8 @@ export default function TodayPage() {
               <div className="shrink-0">
                 {fortune && levelMeta ? (
                   <>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-heading text-5xl font-thin text-[var(--color-ink)] leading-none">{fortune.total_score}</span>
-                      <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${levelMeta.color}`}>{fortune.level}</span>
-                    </div>
+                    <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${levelMeta.color}`}>{fortune.level}</span>
+                    <p className="font-heading text-5xl font-thin text-[var(--color-ink)] leading-none mt-1">{fortune.total_score}</p>
                     {fortune.day_pillar && (
                       <p className="text-[10px] text-[var(--color-ink-faint)] mt-1">일진 {fortune.day_pillar}</p>
                     )}
