@@ -202,7 +202,7 @@ export default function TodayPage() {
                         onClick={() => setShowDomains((v) => !v)}
                         className="text-[11px] font-semibold text-[var(--color-gold)] flex items-center gap-1"
                       >
-                        {showDomains ? "접기 ▲" : "상세 보기 ▼"}
+                        {showDomains ? "접기 ▲" : "영역별 행운 점수 보기 ▼"}
                       </button>
                       {showDomains && (
                         <div className="space-y-2 pt-1">
