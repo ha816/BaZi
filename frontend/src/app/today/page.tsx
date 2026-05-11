@@ -8,7 +8,7 @@ import KkachiTip from "@/components/KkachiTip";
 import ScoreBar from "@/components/ScoreBar";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
-import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
+import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import type { DailyFortune, Profile } from "@/types/analysis";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -190,6 +190,34 @@ export default function TodayPage() {
                   )}
                   {Object.keys(fortune.domain_scores).length > 0 && (
                     <>
+                      {/* 대운/세운/월운/일운 그리드 */}
+                      {(() => {
+                        const gridCards = [
+                          fortune.daeun_ganji ? { label: "대운", ganji: fortune.daeun_ganji, highlight: fortune.yongshin_in_daeun ?? false } : null,
+                          fortune.seun_ganji  ? { label: `세운(${new Date().getFullYear()}년)`, ganji: fortune.seun_ganji,  highlight: fortune.yongshin_in_seun ?? false } : null,
+                          fortune.wol_ganji   ? { label: `월운(${new Date().getMonth() + 1}월)`, ganji: fortune.wol_ganji,   highlight: fortune.yongshin_in_wol  ?? false } : null,
+                          { label: "일운(오늘)", ganji: fortune.day_pillar, highlight: fortune.yongshin_in_il ?? false },
+                        ].filter(Boolean) as { label: string; ganji: string; highlight: boolean }[];
+                        if (!gridCards.length) return null;
+                        return (
+                          <div className="grid grid-cols-4 gap-2">
+                            {gridCards.map(({ label, ganji, highlight }) => {
+                              const stemEl = getElementInfo(ganji[0] ?? "");
+                              return (
+                                <div
+                                  key={label}
+                                  className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 border ${highlight ? "border-[var(--color-gold)] bg-[var(--color-gold-light)]/10" : "border-[var(--color-border-light)]"}`}
+                                >
+                                  <span className="text-[9px] text-[var(--color-ink-faint)] leading-none">{label}</span>
+                                  <span className="font-heading text-lg font-bold leading-none" style={{ color: stemEl.color }}>{ganji[0]}</span>
+                                  <span className="font-heading text-lg leading-none text-[var(--color-ink-muted)]">{ganji[1]}</span>
+                                  {highlight && <span className="text-[8px] font-bold text-[var(--color-gold)] leading-none">용신</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
                       <button
                         type="button"
                         onClick={() => setShowDomains((v) => !v)}

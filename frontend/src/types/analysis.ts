@@ -396,4 +396,11 @@ export interface DailyFortune {
   solar_term?: string;
   yongshin?: string;
   son_eomneun_nal?: boolean;
+  daeun_ganji?: string | null;
+  seun_ganji?: string;
+  wol_ganji?: string;
+  yongshin_in_daeun?: boolean;
+  yongshin_in_seun?: boolean;
+  yongshin_in_wol?: boolean;
+  yongshin_in_il?: boolean;
 }

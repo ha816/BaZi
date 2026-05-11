@@ -9,9 +9,10 @@ from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.port.weather_port import WeatherPort
 from kkachi.application.saju_service import KkachiService
+from kkachi.application.util.util import year_to_ganji
 from kkachi.domain.fortune import Fortune
 from kkachi.domain.ganji import Branch, Oheng, Pillar, Sipsin, StemBranch
-from kkachi.domain.natal import NatalInfo
+from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
 
 
@@ -101,7 +102,7 @@ def _get_day_stembrach(today: date) -> StemBranch:
     return StemBranch.from_text(result["day_pillar"])
 
 
-def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fortune:
+def _compute(natal: NatalInfo, today: date, weather: dict | None = None, postnatal: PostnatalInfo | None = None) -> Fortune:
     day_sb = _get_day_stembrach(today)
     day_stem = day_sb.stem
     day_branch = day_sb.branch
@@ -183,6 +184,14 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
 
     son_nal = _is_son_eomneun_nal(today)
 
+    daeun_ganji = postnatal.current_daeun.ganji if postnatal and postnatal.current_daeun else None
+    seun_ganji = year_to_ganji(today.year) if postnatal is None else year_to_ganji(postnatal.year)
+    wol_ganji = postnatal.upcoming_months[0]["ganji"] if postnatal and postnatal.upcoming_months else ""
+    yongshin_in_daeun = postnatal.yongshin_in_daeun if postnatal else False
+    yongshin_in_seun = postnatal.yongshin_in_seun if postnatal else False
+    yongshin_in_wol = postnatal.upcoming_months[0].get("matches_yongshin", False) if postnatal and postnatal.upcoming_months else False
+    yongshin_in_il = day_element == natal.yongshin
+
     return Fortune(
         date=today.isoformat(),
         day_pillar=str(day_sb),
@@ -196,6 +205,13 @@ def _compute(natal: NatalInfo, today: date, weather: dict | None = None) -> Fort
         solar_term=solar_term_name,
         yongshin=natal.yongshin.name,
         son_eomneun_nal=son_nal,
+        daeun_ganji=daeun_ganji,
+        seun_ganji=seun_ganji,
+        wol_ganji=wol_ganji,
+        yongshin_in_daeun=yongshin_in_daeun,
+        yongshin_in_seun=yongshin_in_seun,
+        yongshin_in_wol=yongshin_in_wol,
+        yongshin_in_il=yongshin_in_il,
     )
 
 
@@ -402,11 +418,11 @@ class FortuneService:
             raise ValueError(f"Profile {profile_id} not found")
 
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
-        natal, _ = self._saju_service.analyze(user, today.year)
+        natal, postnatal = self._saju_service.analyze(user, today.year)
         weather_map = await self._get_weather_map(profile.city, days=1)
         weather = weather_map.get(today.isoformat())
 
-        fortune = _compute(natal, today, weather)
+        fortune = _compute(natal, today, weather, postnatal)
         result = asdict(fortune)
         await self._fortune_port.save(profile_id, today, result)
         return result
@@ -432,8 +448,8 @@ class FortuneService:
                 results.append(cached.result)
                 continue
 
-            natal, _ = self._saju_service.analyze(user, target.year)
-            fortune = _compute(natal, target, weather)
+            natal, postnatal = self._saju_service.analyze(user, target.year)
+            fortune = _compute(natal, target, weather, postnatal)
             result = asdict(fortune)
             await self._fortune_port.save(profile_id, target, result)
             results.append(result)

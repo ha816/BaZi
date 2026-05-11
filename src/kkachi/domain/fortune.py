@@ -16,6 +16,14 @@ class Fortune:
     solar_term: str | None = None      # 절기명 예) "입춘(立春)"
     yongshin: str | None = None        # 용신 오행 이름 예) "水"
     son_eomneun_nal: bool = False      # 손없는 날 (음력 끝자리 9·0일)
+    # 시운 그리드 (대운/세운/월운/일운)
+    daeun_ganji: str | None = None
+    seun_ganji: str = ""
+    wol_ganji: str = ""
+    yongshin_in_daeun: bool = False
+    yongshin_in_seun: bool = False
+    yongshin_in_wol: bool = False
+    yongshin_in_il: bool = False
 
 
 @dataclass
