@@ -143,9 +143,9 @@ export default function TodayPage() {
               style={tm ? { backgroundColor: `color-mix(in srgb, var(--color-card) 70%, transparent)` } : {}}
             >
               {/* 상단: 점수 + 날씨 */}
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-8">
                 {/* 운세 점수 — 왼쪽 */}
-                <div>
+                <div className="flex-1">
                   {fortune && levelMeta ? (
                     <>
                       <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${levelMeta.color}`}>{fortune.level}</span>
