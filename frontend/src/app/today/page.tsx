@@ -148,6 +148,7 @@ export default function TodayPage() {
                 <div className="shrink-0">
                   {fortune && levelMeta ? (
                     <>
+                      <img src={levelMeta.image} alt={fortune.level} className="w-14 h-14 object-contain mb-1" />
                       <span className={`text-xs font-bold border px-2 py-0.5 rounded-full ${levelMeta.color}`}>{fortune.level}</span>
                       <p className="font-heading text-5xl font-thin text-[var(--color-ink)] leading-none mt-1">{fortune.total_score}</p>
                       {fortune.day_pillar && (
