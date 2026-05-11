@@ -52,7 +52,7 @@ const TABS_LOGGED_IN = [
   { href: "/", label: "홈", icon: <IconHome /> },
   { href: "/analysis", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
-  { href: "/today", label: "오늘", icon: <IconSun /> },
+  { href: "/today", label: "시운", icon: <IconSun /> },
   { href: "/my", label: "계정", icon: <IconPerson /> },
 ];
 
@@ -60,7 +60,7 @@ const TABS_GUEST = [
   { href: "/", label: "홈", icon: <IconHome /> },
   { href: "/analysis", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
-  { href: "/today", label: "오늘", icon: <IconSun /> },
+  { href: "/today", label: "시운", icon: <IconSun /> },
   { href: "/join", label: "로그인", icon: <IconPerson /> },
 ];
 

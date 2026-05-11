@@ -114,7 +114,7 @@ export default function TodayPage() {
 
         {/* 헤더 */}
         <header>
-          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">오늘</h1>
+          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">시운(時運)</h1>
           {fortune?.day_pillar && (
             <p className="text-sm text-[var(--color-ink-faint)] mt-0.5">일진 {fortune.day_pillar}</p>
           )}
