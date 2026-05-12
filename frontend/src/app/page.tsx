@@ -61,7 +61,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
             </div>
           )}
           <div className="flex gap-4 pt-1">
-            <Link href="/fortune" className="text-xs text-[var(--color-gold)] font-medium hover:opacity-80 transition-opacity">
+            <Link href="/today" className="text-xs text-[var(--color-gold)] font-medium hover:opacity-80 transition-opacity">
               오늘운세 자세히 →
             </Link>
             <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">

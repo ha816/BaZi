@@ -107,7 +107,10 @@ function HourlyFortuneBar({ data, yongshin }: { data: HourlyWeather[]; yongshin:
                   style={{ width: `${score}%` }}
                 />
               </div>
-              <span className="w-14 flex-shrink-0 text-right">
+              <div className="w-14 flex-shrink-0 flex flex-col items-end gap-0.5">
+                {rel !== "neutral" && (
+                  <span className={`text-xs font-heading font-bold ${colors.text}`}>{h.element}</span>
+                )}
                 {rel === "match" ? (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">
                     최고
@@ -119,7 +122,7 @@ function HourlyFortuneBar({ data, yongshin }: { data: HourlyWeather[]; yongshin:
                 ) : (
                   <span className="text-[10px] text-[var(--color-ink-faint)]">보통</span>
                 )}
-              </span>
+              </div>
             </div>
           );
         })}
@@ -140,18 +143,14 @@ function getDowLabel(dateStr: string) {
 }
 
 // ── 단일 날 상세 뷰 ────────────────────────────────────────────────────────
-export function DetailView({ data }: { data: DailyFortune }) {
+export function DetailView({ data, hideDomainScores }: { data: DailyFortune; hideDomainScores?: boolean }) {
   const meta = FORECAST_LEVEL_META[data.level] ?? FORECAST_LEVEL_META["평범한 날"];
 
   return (
     <div className="space-y-4">
-      {/* 일진 + 레벨 + 날씨 */}
+      {/* 레벨 + 날씨 */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-heading font-semibold text-[var(--color-ink)]">{data.day_pillar}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-ivory-warm)] text-[var(--color-ink-muted)] border border-[var(--color-border-light)]">
-            {data.day_element}
-          </span>
           {data.solar_term && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
               🌿 {data.solar_term}
@@ -173,32 +172,23 @@ export function DetailView({ data }: { data: DailyFortune }) {
         </span>
       </div>
 
-      {/* 종합 점수 바 */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs text-[var(--color-ink-faint)]">
-          <span>종합 운세</span>
-          <span className="font-semibold text-[var(--color-ink)]">{data.total_score}점</span>
-        </div>
-        <div className="h-2 bg-[var(--color-ivory-warm)] rounded-full overflow-hidden">
-          <div className="h-full bg-[var(--color-gold)] rounded-full transition-all" style={{ width: `${data.total_score}%` }} />
-        </div>
-      </div>
-
       {/* 영역별 점수 */}
-      <div className="grid grid-cols-2 gap-2">
-        {Object.entries(data.domain_scores).map(([key, ds]) => (
-          <div key={key} className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-[var(--color-ink-light)]">{DOMAIN_LABELS[key] ?? key}</span>
-              <span className="font-medium text-[var(--color-ink)]">{ds.score}</span>
+      {!hideDomainScores && (
+        <div className="grid grid-cols-2 gap-2">
+          {Object.entries(data.domain_scores).map(([key, ds]) => (
+            <div key={key} className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-[var(--color-ink-light)]">{DOMAIN_LABELS[key] ?? key}</span>
+                <span className="font-medium text-[var(--color-ink)]">{ds.score}</span>
+              </div>
+              <div className="h-1.5 bg-[var(--color-ivory-warm)] rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${LEVEL_BAR[ds.level] ?? "bg-amber-400"}`} style={{ width: `${ds.score}%` }} />
+              </div>
+              <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{ds.reason}</p>
             </div>
-            <div className="h-1.5 bg-[var(--color-ivory-warm)] rounded-full overflow-hidden">
-              <div className={`h-full rounded-full transition-all ${LEVEL_BAR[ds.level] ?? "bg-amber-400"}`} style={{ width: `${ds.score}%` }} />
-            </div>
-            <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{ds.reason}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* 설명 */}
       <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed border-t border-[var(--color-border-light)] pt-3">

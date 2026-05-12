@@ -91,7 +91,7 @@ export const ELEMENT_META: Record<string, {
 export const FORECAST_LEVEL_META: Record<string, {
   color: string; badge: string; icon: string; image: string;
 }> = {
-  "좋은 날":          { color: "text-emerald-700 bg-emerald-50 border-emerald-200", badge: "bg-emerald-100 text-emerald-800", icon: "🌟", image: "/kkachi/good_kkachi.png" },
-  "평범한 날":        { color: "text-amber-700 bg-amber-50 border-amber-200",       badge: "bg-amber-100 text-amber-800",    icon: "☁️", image: "/kkachi/normal_kkachi_00.png" },
+  "좋은 날":          { color: "text-emerald-700 bg-emerald-50 border-emerald-200", badge: "bg-emerald-100 text-emerald-800", icon: "🔥", image: "/kkachi/good_kkachi.png" },
+  "평범한 날":        { color: "text-amber-700 bg-amber-50 border-amber-200",       badge: "bg-amber-100 text-amber-800",    icon: "🌊", image: "/kkachi/normal_kkachi_00.png" },
   "주의가 필요한 날": { color: "text-rose-700 bg-rose-50 border-rose-200",           badge: "bg-rose-100 text-rose-800",      icon: "⚠️", image: "/kkachi/caution_kkachi.png" },
 };
