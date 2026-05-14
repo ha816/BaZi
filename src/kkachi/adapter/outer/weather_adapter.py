@@ -104,8 +104,10 @@ class WeatherAdapter(WeatherPort):
             hour = int(time_part.split(":")[0])
             if hour not in _SHOW_HOURS:
                 continue
-            code = int(h_codes[i]) if i < len(h_codes) else 0
-            temp = h_temps[i] if i < len(h_temps) else 15.0
+            code_val = h_codes[i] if i < len(h_codes) else 0
+            code = int(code_val) if code_val is not None else 0
+            temp_val = h_temps[i] if i < len(h_temps) else 15.0
+            temp = float(temp_val) if temp_val is not None else 15.0
             hours_by_date.setdefault(date_part, []).append({
                 "hour": f"{hour:02d}시",
                 "temperature": round(temp, 1),

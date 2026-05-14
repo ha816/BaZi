@@ -319,16 +319,9 @@ export default function SiunPage() {
 
         {!loading && loggedIn && activeTab === "달력" && forecast.length > 0 && (
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-5">
-            {(() => {
-              const startMonth = new Date(forecast[0].date).getMonth() + 1;
-              const endMonth = new Date(forecast[forecast.length - 1].date).getMonth() + 1;
-              const monthRange = startMonth === endMonth ? `${startMonth}월` : `${startMonth}~${endMonth}월`;
-              return (
-                <h2 className="text-sm font-semibold text-[var(--color-ink)] mb-4 flex items-center gap-2">
-                  🗓️ 시운 달력 ({monthRange})
-                </h2>
-              );
-            })()}
+            <h2 className="text-sm font-bold text-[var(--color-ink)] mb-4 flex items-center gap-2">
+              🗓️ 시운 달력 (최근 4주)
+            </h2>
             <div className="grid grid-cols-7 gap-1">
               {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
                 <div key={d} className="text-[10px] font-bold text-[var(--color-ink-faint)] text-center py-1">{d}</div>
@@ -337,35 +330,39 @@ export default function SiunPage() {
                 const firstDate = new Date(forecast[0].date);
                 const emptySlots = firstDate.getDay();
                 const slots = [];
+                
                 for (let i = 0; i < emptySlots; i++) {
-                  slots.push(<div key={`empty-${i}`} className="h-16" />);
+                  slots.push(<div key={`empty-${i}`} className="h-20" />);
                 }
                 
                 forecast.forEach((day) => {
                   const d = new Date(day.date);
-                  const currentMonth = d.getMonth() + 1;
                   const isToday = day.date === todayStr;
                   const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
                   const sEl = getElementInfo(day.day_pillar[0] ?? "");
                   const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                  const w = day.weather;
                   
                   slots.push(
                     <div
                       key={day.date}
-                      className={`relative flex flex-col items-center gap-0.5 py-1.5 rounded-lg border transition-all h-16 ${
-                        isToday ? "bg-[var(--color-gold-light)]/10 border-[var(--color-gold)] shadow-sm" : "bg-[var(--color-parchment)] border-[var(--color-border-light)]"
+                      className={`relative flex flex-col items-center gap-0.5 py-2 rounded-lg border transition-all h-20 ${
+                        isToday 
+                          ? "bg-[var(--color-gold-light)]/10 border-[var(--color-gold)] shadow-sm z-10 scale-[1.02]" 
+                          : "bg-[var(--color-parchment)] border-[var(--color-border-light)]"
                       }`}
                     >
-                      <div className="flex items-center gap-1">
-                        <span className={`text-[9px] font-bold leading-none ${isWeekend ? "text-rose-500" : "text-[var(--color-ink-faint)]"}`}>
-                          {currentMonth}/{d.getDate()}
+                      <div className="flex items-center justify-between w-full px-1.5 mb-0.5">
+                        <span className={`text-[10px] font-bold leading-none ${isWeekend ? "text-rose-500" : "text-[var(--color-ink-faint)]"}`}>
+                          {d.getMonth() + 1}/{d.getDate()}
                         </span>
+                        {w && <span className="text-[10px] leading-none opacity-70">{elMeta(w.element).emoji}</span>}
                       </div>
-                      <span className="text-base leading-none">{lMeta.icon}</span>
-                      <span className="text-[8px] font-bold leading-none" style={{ color: sEl.color }}>
+                      <span className="text-xl leading-none my-0.5">{lMeta.icon}</span>
+                      <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: sEl.color }}>
                         {toKorean(day.day_pillar[1])}
                       </span>
-                      <span className="text-[9px] font-black text-[var(--color-ink)] leading-none">
+                      <span className="text-[10px] font-black text-[var(--color-ink)] leading-none">
                         {day.total_score}
                       </span>
                     </div>
