@@ -86,9 +86,7 @@ export default function SiunPage() {
     const nowHour = new Date().getHours();
     const isToday = label === "오늘";
 
-    const filteredHours = isToday 
-      ? weather?.hours?.filter((h: HourlyWeather) => parseInt(h.hour) >= nowHour) ?? []
-      : weather?.hours ?? [];
+    const filteredHours = weather?.hours ?? [];
 
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
