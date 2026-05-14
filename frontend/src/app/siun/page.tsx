@@ -156,7 +156,6 @@ export default function SiunPage() {
                     <div className="h-1.5 bg-[var(--color-ivory-warm)] rounded-full overflow-hidden">
                       <div className={`h-full rounded-full transition-all ${LEVEL_BAR[ds.level] ?? "bg-amber-400"}`} style={{ width: `${ds.score}%` }} />
                     </div>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] leading-snug">{ds.reason}</p>
                   </div>
                 ))}
               </div>
