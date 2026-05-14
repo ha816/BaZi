@@ -4,7 +4,7 @@ from datetime import datetime
 
 from mcp.server.fastmcp import FastMCP
 
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.use_case.get_annual_fortune import AnnualFortuneInput, GetAnnualFortuneUseCase
 from kkachi.application.use_case.get_saju_context import GetSajuContextUseCase, SajuContextInput
 from kkachi.application.use_case.get_weather import GetWeatherUseCase

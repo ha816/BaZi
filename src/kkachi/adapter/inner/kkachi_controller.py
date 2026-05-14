@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from kkachi.application.report_builder import LlmReportBuilder
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.kkachi_service import KkachiService
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 

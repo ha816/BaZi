@@ -5,7 +5,7 @@ from uuid import UUID
 from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.kkachi_service import KkachiService
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender, User
 

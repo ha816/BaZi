@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.kkachi_service import KkachiService
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from kkachi.application.saju_service import KkachiService
+from kkachi.application.kkachi_service import KkachiService
 from kkachi.domain.user import Gender, User
 
 

@@ -12,7 +12,7 @@ from kkachi.application.fortune_service import FortuneService
 from kkachi.application.member_service import MemberService
 from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
-from kkachi.application.saju_service import KkachiService, NatalService, PostnatalService
+from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
 
 
 class Container(containers.DeclarativeContainer):
