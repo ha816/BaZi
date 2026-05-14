@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listProfiles, getForecast } from "@/lib/api";
-import { DetailView, WeeklyView } from "@/components/DailyFortune";
-import ScoreBar from "@/components/ScoreBar";
+import { WeeklyView } from "@/components/DailyFortune";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
-import type { DailyFortune, Profile } from "@/types/analysis";
+import type { DailyFortune, Profile, HourlyWeather } from "@/types/analysis";
 
 const DOMAIN_LABELS: Record<string, string> = {
   직업운: "직업운", 재물운: "재물운", 건강운: "건강운", 애정운: "애정운", 학업운: "학업운",
@@ -36,7 +35,7 @@ function dayLabel(dateStr: string, idx: number) {
   return ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
 }
 
-export default function TodayPage() {
+export default function SiunPage() {
   const [forecast, setForecast] = useState<DailyFortune[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -69,9 +68,9 @@ export default function TodayPage() {
 
   const nowHour = new Date().getHours();
   const hourSlots = [
-    ...(todayWeather?.hours?.filter((h) => parseInt(h.hour) >= nowHour) ?? []).map((h) => ({ day: "오늘", h })),
-    ...(forecast[1]?.weather?.hours ?? []).map((h) => ({ day: "내일", h })),
-    ...(forecast[2]?.weather?.hours ?? []).map((h) => ({ day: "모레", h })),
+    ...(todayWeather?.hours?.filter((h: HourlyWeather) => parseInt(h.hour) >= nowHour) ?? []).map((h: HourlyWeather) => ({ day: "오늘", h })),
+    ...(forecast[1]?.weather?.hours ?? []).map((h: HourlyWeather) => ({ day: "내일", h })),
+    ...(forecast[2]?.weather?.hours ?? []).map((h: HourlyWeather) => ({ day: "모레", h })),
   ];
 
   return (
@@ -339,7 +338,7 @@ export default function TodayPage() {
                         <span className="text-lg font-semibold leading-none tracking-wide" style={{ color: stemEl.color }}>
                           {toKorean(tmr.day_pillar)}
                         </span>
-                        <span className="font-heading text-7xl font-bold leading-none" style={{ color: stemEl.color }}>
+                        <span className="font-heading text-7xl font-bold leading-none" style={{ color: tmr.day_pillar }}>
                           {tmr.day_pillar}
                         </span>
                       </div>

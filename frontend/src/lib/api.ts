@@ -172,8 +172,10 @@ export async function getWeather(city: string): Promise<DailyWeather[]> {
   return Array.isArray(data) ? data : (data.days ?? []);
 }
 
-export async function getForecast(memberId: string, profileId: string, days = 7): Promise<DailyFortune[]> {
-  return request<DailyFortune[]>(`/members/${memberId}/profiles/${profileId}/forecast?days=${days}`);
+export async function getForecast(memberId: string, profileId: string, days = 7, startDate?: string): Promise<DailyFortune[]> {
+  const query = new URLSearchParams({ days: days.toString() });
+  if (startDate) query.append("start_date", startDate);
+  return request<DailyFortune[]>(`/members/${memberId}/profiles/${profileId}/forecast?${query.toString()}`);
 }
 
 export async function analyzeCompatibility(

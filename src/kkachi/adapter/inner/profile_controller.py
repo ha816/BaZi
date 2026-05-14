@@ -159,12 +159,14 @@ async def get_forecast(
     member_id: UUID,
     profile_id: UUID,
     days: int = 7,
+    start_date: str | None = None,
     svc: FortuneService = Depends(Provide[Container.fortune_service]),
 ) -> list[dict]:
     try:
-        return await svc.get_forecast(profile_id, days=min(days, 14))
+        start = datetime.fromisoformat(start_date).date() if start_date else None
+        return await svc.get_forecast(profile_id, days=min(days, 35), start_date=start)
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 class FeedbackRequest(BaseModel):

@@ -427,13 +427,19 @@ class FortuneService:
         await self._fortune_port.save(profile_id, today, result)
         return result
 
-    async def get_forecast(self, profile_id: UUID, days: int = 7) -> list[dict]:
-        today = date.today()
+    async def get_forecast(self, profile_id: UUID, days: int = 7, start_date: date | None = None) -> list[dict]:
+        if start_date is None:
+            today = date.today()
+        else:
+            today = start_date
+
         profile = await self._profile_port.get(profile_id)
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
+        # Note: Weather adapter currently only fetches future data. 
+        # For past dates, weather_map will be empty for those dates.
         weather_map = await self._get_weather_map(profile.city, days=days)
 
         results = []

@@ -75,6 +75,7 @@ class WeatherAdapter(WeatherPort):
             "daily": "weather_code,temperature_2m_max,temperature_2m_min",
             "hourly": "temperature_2m,weather_code",
             "timezone": "Asia/Seoul",
+            "past_days": 14,
             "forecast_days": min(days, 16),
         }
         try:
