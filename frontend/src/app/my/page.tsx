@@ -64,7 +64,10 @@ export default function MyPage() {
           <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
             ← 홈으로
           </Link>
-          <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">계정 설정</h1>
+          <div>
+            <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">계정 설정</h1>
+            <p className="text-sm text-[var(--color-ink-muted)] mt-1">회원님의 계정 정보와 설정을 관리할 수 있습니다.</p>
+          </div>
         </header>
 
         {/* 계정 정보 */}

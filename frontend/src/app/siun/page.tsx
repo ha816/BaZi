@@ -1,3 +1,4 @@
+// Optimized Siun Timeline
 "use client";
 
 import { useEffect, useState } from "react";
@@ -86,7 +87,20 @@ export default function SiunPage() {
     const nowHour = new Date().getHours();
     const isToday = label === "오늘";
 
-    const filteredHours = weather?.hours ?? [];
+    // 오늘인 경우: 현재 -2시간부터 + 내일 + 모레까지 합쳐서 연속된 타임라인 제공
+    const filteredHours = (() => {
+      if (!isToday) return []; // 내일/모레 탭은 시간대 제거 (이전 요청사항)
+      
+      const todayHours = (weather?.hours ?? []).filter((h: HourlyWeather) => {
+        const hr = parseInt(h.hour.replace(/[^0-9]/g, ""));
+        return hr >= Math.max(0, nowHour - 2);
+      }).map(h => ({ ...h, dateLabel: "오늘" }));
+
+      const tmrHours = (tmrFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "내일" }));
+      const datHours = (datFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "모레" }));
+
+      return [...todayHours, ...tmrHours, ...datHours];
+    })();
 
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -145,14 +159,14 @@ export default function SiunPage() {
             {/* 영역별 점수 */}
             {Object.keys(data.domain_scores).length > 0 && (
               <div className="grid grid-cols-2 gap-2">
-                {Object.entries(data.domain_scores).map(([key, ds]) => (
+                {Object.entries(data.domain_scores).map(([key, ds]: [string, any]) => (
                   <div key={key} className="space-y-1">
                     <div className="flex justify-between text-xs">
                       <span className="text-[var(--color-ink-light)]">{DOMAIN_LABELS[key] ?? key}</span>
                       <span className="font-medium text-[var(--color-ink)]">{ds.score}</span>
                     </div>
                     <div className="h-1.5 bg-[var(--color-ivory-warm)] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all ${LEVEL_BAR[ds.level] ?? "bg-amber-400"}`} style={{ width: `${ds.score}%` }} />
+                      <div className={`h-full rounded-full transition-all ${LEVEL_BAR[ds.level as string] ?? "bg-amber-400"}`} style={{ width: `${ds.score}%` }} />
                     </div>
                   </div>
                 ))}
@@ -185,12 +199,14 @@ export default function SiunPage() {
           </div>
         </div>
 
-        {/* 시간별 기운 */}
-        {filteredHours.length > 0 && (
+        {/* 시간별 기운 — 오늘만 표시 */}
+        {isToday && filteredHours.length > 0 && (
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-3">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-[var(--color-ink-muted)]">이 시간대가 좋아요</p>
-              {yongshin && (
+              <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
+                {isToday ? "이 시간대가 좋아요" : "시간대별 기운"}
+              </p>
+              {isToday && yongshin && (
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-emerald-600 font-semibold">최고 = {yongshin}</span>
                   <span className="text-[10px] text-amber-600 font-semibold">좋음 = {GENERATES[yongshin] || "상생"}</span>
@@ -198,9 +214,9 @@ export default function SiunPage() {
               )}
             </div>
             <div className="overflow-x-auto -mx-1 px-1 py-1" style={{ scrollbarWidth: "none" }}>
-              <div className="flex gap-1 w-max">
-                {filteredHours.map((h: HourlyWeather, i: number) => {
-                  const rel = yongshin
+              <div className="flex gap-1 w-max items-end">
+                {filteredHours.map((h: HourlyWeather & { dateLabel?: string }, i: number) => {
+                  const rel = (isToday && yongshin)
                     ? h.element === yongshin ? "match"
                     : GENERATES[h.element] === yongshin ? "generates"
                     : "neutral"
@@ -210,14 +226,23 @@ export default function SiunPage() {
                     : rel === "generates"
                     ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl"
                     : "";
+                  
+                  // 날짜가 바뀔 때 표시 (오늘 -> 내일 등)
+                  const showDate = i === 0 || h.dateLabel !== filteredHours[i - 1].dateLabel;
+
                   return (
-                    <div key={i} className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[52px] ${highlight}`}>
-                      <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
-                      <span className="text-2xl">{elMeta(h.element).emoji}</span>
-                      <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
-                      <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(h.temperature)}°</span>
-                      {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
-                      {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋음</span>}
+                    <div key={i} className="flex flex-col gap-1">
+                      {showDate && (
+                        <span className="text-[10px] font-bold text-[var(--color-gold)] ml-1 mb-0.5 w-full text-center">{h.dateLabel}</span>
+                      )}
+                      <div className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[52px] ${highlight}`}>
+                        <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
+                        <span className="text-2xl">{elMeta(h.element).emoji}</span>
+                        <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
+                        <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(h.temperature)}°</span>
+                        {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
+                        {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋음</span>}
+                      </div>
                     </div>
                   );
                 })}
@@ -271,14 +296,9 @@ export default function SiunPage() {
     <main className="min-h-screen py-6 px-4 pb-24">
       <div className="max-w-lg mx-auto space-y-4">
         {/* 헤더 */}
-        <header className="flex items-center justify-between">
+        <header className="space-y-1">
           <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">시운(時運)</h1>
-          {profile && (
-            <div className="text-right">
-              <p className="text-xs font-bold text-[var(--color-ink-faint)]">{profile.name}님의 기운</p>
-              <p className="text-sm font-black text-[var(--color-gold)]">{toKorean(profile.day_gan + profile.day_ji)}일주</p>
-            </div>
-          )}
+          <p className="text-sm text-[var(--color-ink-muted)]">나의 사주와 오늘의 기운이 만나는 순간을 분석합니다.</p>
         </header>
 
         {loading && <LoadingSpinner />}
@@ -329,7 +349,7 @@ export default function SiunPage() {
               {(() => {
                 const firstDate = new Date(forecast[0].date);
                 const emptySlots = firstDate.getDay();
-                const slots = [];
+                const slots: React.ReactNode[] = [];
                 
                 for (let i = 0; i < emptySlots; i++) {
                   slots.push(<div key={`empty-${i}`} className="h-20" />);
@@ -377,4 +397,3 @@ export default function SiunPage() {
     </main>
   );
 }
-

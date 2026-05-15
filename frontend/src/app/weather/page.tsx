@@ -117,6 +117,7 @@ export default function WeatherPage() {
 
         <header className="space-y-1">
           <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">날씨 기운</h1>
+          <p className="text-sm text-[var(--color-ink-muted)]">지금 이 순간, 주변을 감싸는 자연의 오행 에너지를 확인하세요.</p>
         </header>
 
         {loading && <LoadingSpinner />}
