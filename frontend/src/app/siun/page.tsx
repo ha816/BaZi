@@ -75,6 +75,7 @@ export default function SiunPage() {
   const todayFortune = todayIdx !== -1 ? forecast[todayIdx] : null;
   const tmrFortune = todayIdx !== -1 && todayIdx + 1 < forecast.length ? forecast[todayIdx+1] : null;
   const datFortune = todayIdx !== -1 && todayIdx + 2 < forecast.length ? forecast[todayIdx+2] : null;
+  const sahFortune = todayIdx !== -1 && todayIdx + 3 < forecast.length ? forecast[todayIdx+3] : null;
 
   const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
@@ -98,8 +99,9 @@ export default function SiunPage() {
 
       const tmrHours = (tmrFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "내일" }));
       const datHours = (datFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "모레" }));
+      const sahHours = (sahFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "글피" }));
 
-      return [...todayHours, ...tmrHours, ...datHours];
+      return [...todayHours, ...tmrHours, ...datHours, ...sahHours];
     })();
 
     return (
@@ -251,10 +253,10 @@ export default function SiunPage() {
           </div>
         )}
 
-        {/* 주간 예보 */}
+        {/* 주간 시운 */}
         {forecast.length > 0 && (
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-1">
-            <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">주간 예보</p>
+            <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">주간 시운</p>
             <div className="divide-y divide-[var(--color-border-light)]">
               {forecast.slice(todayIdx, todayIdx + 7).map((day, idx) => {
                 const w = day.weather;
@@ -290,7 +292,7 @@ export default function SiunPage() {
     );
   };
 
-  const tabs = ["오늘", "내일", "모레", "달력"];
+  const tabs = ["오늘", "내일", "모레", "글피"];
 
   return (
     <main className="min-h-screen py-6 px-4 pb-24">
@@ -305,7 +307,7 @@ export default function SiunPage() {
 
         {/* 비로그인 */}
         {!loading && !loggedIn && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-8 flex flex-col items-center gap-4 text-center">
+          <div className="rounded-2xl bg-[var(--color-card)] border border(--color-border-light)] shadow-sm p-8 flex flex-col items-center gap-4 text-center">
             <p className="text-5xl">🪄</p>
             <p className="text-base font-semibold text-[var(--color-ink)]">로그인하면 나만의 오늘 운세를 볼 수 있어요</p>
             <Link href="/join" className="px-6 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-sm font-semibold">
@@ -336,63 +338,7 @@ export default function SiunPage() {
         {!loading && loggedIn && activeTab === "오늘" && todayFortune && renderDailyContent(todayFortune, "오늘")}
         {!loading && loggedIn && activeTab === "내일" && tmrFortune && renderDailyContent(tmrFortune, "내일")}
         {!loading && loggedIn && activeTab === "모레" && datFortune && renderDailyContent(datFortune, "모레")}
-
-        {!loading && loggedIn && activeTab === "달력" && forecast.length > 0 && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-5">
-            <h2 className="text-sm font-bold text-[var(--color-ink)] mb-4 flex items-center gap-2">
-              🗓️ 시운 달력 (최근 4주)
-            </h2>
-            <div className="grid grid-cols-7 gap-1">
-              {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
-                <div key={d} className="text-[10px] font-bold text-[var(--color-ink-faint)] text-center py-1">{d}</div>
-              ))}
-              {(() => {
-                const firstDate = new Date(forecast[0].date);
-                const emptySlots = firstDate.getDay();
-                const slots: React.ReactNode[] = [];
-                
-                for (let i = 0; i < emptySlots; i++) {
-                  slots.push(<div key={`empty-${i}`} className="h-20" />);
-                }
-                
-                forecast.forEach((day) => {
-                  const d = new Date(day.date);
-                  const isToday = day.date === todayStr;
-                  const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
-                  const sEl = getElementInfo(day.day_pillar[0] ?? "");
-                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                  const w = day.weather;
-                  
-                  slots.push(
-                    <div
-                      key={day.date}
-                      className={`relative flex flex-col items-center gap-0.5 py-2 rounded-lg border transition-all h-20 ${
-                        isToday 
-                          ? "bg-[var(--color-gold-light)]/10 border-[var(--color-gold)] shadow-sm z-10 scale-[1.02]" 
-                          : "bg-[var(--color-parchment)] border-[var(--color-border-light)]"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full px-1.5 mb-0.5">
-                        <span className={`text-[10px] font-bold leading-none ${isWeekend ? "text-rose-500" : "text-[var(--color-ink-faint)]"}`}>
-                          {d.getMonth() + 1}/{d.getDate()}
-                        </span>
-                        {w && <span className="text-[10px] leading-none opacity-70">{elMeta(w.element).emoji}</span>}
-                      </div>
-                      <span className="text-xl leading-none my-0.5">{lMeta.icon}</span>
-                      <span className="text-[9px] font-bold leading-none mt-0.5" style={{ color: sEl.color }}>
-                        {toKorean(day.day_pillar[1])}
-                      </span>
-                      <span className="text-[10px] font-black text-[var(--color-ink)] leading-none">
-                        {day.total_score}
-                      </span>
-                    </div>
-                  );
-                });
-                return slots;
-              })()}
-            </div>
-          </div>
-        )}
+        {!loading && loggedIn && activeTab === "글피" && sahFortune && renderDailyContent(sahFortune, "글피")}
       </div>
     </main>
   );
