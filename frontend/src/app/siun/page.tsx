@@ -8,6 +8,7 @@ import { WeeklyView } from "@/components/DailyFortune";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
+import { getZodiacEmoji } from "@/lib/zodiac";
 import type { DailyFortune, Profile, HourlyWeather } from "@/types/analysis";
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -41,9 +42,11 @@ function dayLabel(dateStr: string, idx: number) {
 
 export default function SiunPage() {
   const [forecast, setForecast] = useState<DailyFortune[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [forecastLoading, setForecastLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("오늘");
 
   useEffect(() => {
@@ -51,23 +54,32 @@ export default function SiunPage() {
     if (memberId) {
       setLoggedIn(true);
       listProfiles(memberId)
-        .then((profiles) => {
-          const self = profiles.find((p) => p.is_self) ?? profiles[0] ?? null;
+        .then((ps) => {
+          const sorted = [...ps].sort((a, b) => (a.is_self === b.is_self ? 0 : a.is_self ? -1 : 1));
+          setProfiles(sorted);
+          const self = sorted.find((p) => p.is_self) ?? sorted[0] ?? null;
           setProfile(self);
-          if (self) {
-            const start = new Date();
-            start.setDate(start.getDate() - 14);
-            const startStr = start.toLocaleDateString("en-CA");
-            return getForecast(memberId, self.id, 31, startStr);
-          }
         })
-        .then((f) => { if (f) setForecast(f); })
         .catch(() => {})
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const memberId = localStorage.getItem(MEMBER_ID_KEY);
+    if (memberId && profile) {
+      setForecastLoading(true);
+      const start = new Date();
+      start.setDate(start.getDate() - 14);
+      const startStr = start.toLocaleDateString("en-CA");
+      getForecast(memberId, profile.id, 31, startStr)
+        .then((f) => { if (f) setForecast(f); })
+        .catch(() => {})
+        .finally(() => setForecastLoading(false));
+    }
+  }, [profile]);
 
   const todayStr = new Date().toLocaleDateString("en-CA");
   const todayIdx = forecast.findIndex(f => f.date === todayStr);
@@ -305,14 +317,41 @@ export default function SiunPage() {
         {/* 헤더 */}
         <header className="space-y-1">
           <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">시운(時運)</h1>
-          <p className="text-sm text-[var(--color-ink-muted)]">나의 사주와 오늘의 기운이 만나는 순간을 분석합니다.</p>
+          <p className="text-sm text-[var(--color-ink-muted)]">나와 소중한 사람들의 기운이 만나는 순간을 분석합니다.</p>
         </header>
 
         {loading && <LoadingSpinner />}
 
+        {/* 프로필 선택 트레이 */}
+        {!loading && loggedIn && profiles.length > 0 && (
+          <div className="py-2 overflow-x-auto no-scrollbar -mx-4 px-4 border-b border-[var(--color-border-light)] bg-white/50 backdrop-blur-sm sticky top-0 z-20">
+            <div className="flex gap-4 min-w-max">
+              {profiles.map((p) => {
+                const isActive = profile?.id === p.id;
+                return (
+                  <button 
+                    key={p.id} 
+                    onClick={() => setProfile(p)} 
+                    className="flex flex-col items-center gap-1 transition-opacity hover:opacity-80"
+                  >
+                    <div className={`w-12 h-12 rounded-full p-0.5 border-2 transition-all ${isActive ? "border-[var(--color-gold)] scale-110 shadow-sm" : "border-gray-200"}`}>
+                      <div className="w-full h-full rounded-full bg-[var(--color-gold-faint)] flex items-center justify-center text-2xl overflow-hidden">
+                        {getZodiacEmoji(p.birth_dt)}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-bold truncate w-12 text-center ${isActive ? "text-[var(--color-gold)]" : "text-[var(--color-ink-muted)]"}`}>
+                      {p.is_self ? "나" : p.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* 비로그인 */}
         {!loading && !loggedIn && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border(--color-border-light)] shadow-sm p-8 flex flex-col items-center gap-4 text-center">
+          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-8 flex flex-col items-center gap-4 text-center">
             <p className="text-5xl">🪄</p>
             <p className="text-base font-semibold text-[var(--color-ink)]">로그인하면 나만의 오늘 운세를 볼 수 있어요</p>
             <Link href="/join" className="px-6 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-sm font-semibold">
@@ -322,7 +361,7 @@ export default function SiunPage() {
         )}
 
         {/* 탭 바 */}
-        {!loading && loggedIn && (
+        {!loading && loggedIn && profile && (
           <nav className="flex p-1 bg-[var(--color-parchment)] rounded-xl border border-[var(--color-border-light)] shadow-inner">
             {tabs.map((tab) => (
               <button
@@ -340,10 +379,16 @@ export default function SiunPage() {
           </nav>
         )}
 
-        {!loading && loggedIn && activeTab === "오늘" && todayFortune && renderDailyContent(todayFortune, "오늘")}
-        {!loading && loggedIn && activeTab === "내일" && tmrFortune && renderDailyContent(tmrFortune, "내일")}
-        {!loading && loggedIn && activeTab === "모레" && datFortune && renderDailyContent(datFortune, "모레")}
-        {!loading && loggedIn && activeTab === "글피" && sahFortune && renderDailyContent(sahFortune, "글피")}
+        {forecastLoading && (
+          <div className="py-12 flex justify-center">
+            <LoadingSpinner />
+          </div>
+        )}
+
+        {!loading && !forecastLoading && loggedIn && activeTab === "오늘" && todayFortune && renderDailyContent(todayFortune, "오늘")}
+        {!loading && !forecastLoading && loggedIn && activeTab === "내일" && tmrFortune && renderDailyContent(tmrFortune, "내일")}
+        {!loading && !forecastLoading && loggedIn && activeTab === "모레" && datFortune && renderDailyContent(datFortune, "모레")}
+        {!loading && !forecastLoading && loggedIn && activeTab === "글피" && sahFortune && renderDailyContent(sahFortune, "글피")}
       </div>
     </main>
   );
