@@ -181,6 +181,11 @@ export default function SiunPage() {
                 <span className={`inline-flex items-center gap-1 text-sm font-bold border px-3 py-1 rounded-full ${levelMeta.color}`}>
                   {levelMeta.icon} {data.level}
                 </span>
+                {data.son_eomneun_nal && (
+                  <span className="inline-flex items-center gap-1 text-sm font-bold border px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border-indigo-200">
+                    👻 손없는 날
+                  </span>
+                )}
                 {tm && weather && (
                   <span className={`inline-flex items-center gap-1.5 text-sm font-bold border px-3 py-1 rounded-full ${tm.color} ${tm.bg} border-current/20`}>
                     {tm.emoji} {conditionText} {weather.element} {Math.round(weather.temperature)}°

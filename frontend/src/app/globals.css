@@ -210,6 +210,15 @@ body {
   color: var(--color-ink);
 }
 
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* ── Embla Carousel ── */
 .embla {
   position: relative;

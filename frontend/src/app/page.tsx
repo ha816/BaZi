@@ -11,11 +11,51 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
 
+// ── 상단 스토리 트레이 (Story Tray) ─────────────────────────────────────────
+function StoryTray({ profiles, activeId }: { profiles: Profile[]; activeId?: string | null }) {
+  if (profiles.length === 0) return null;
+
+  const scrollToPost = (id: string) => {
+    const el = document.getElementById(`post-${id}`);
+    if (el) {
+      const headerOffset = 130; // Header(60) + StoryTray(70)
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
+  return (
+    <div className="py-4 border-b border-[var(--color-border-light)] bg-white overflow-x-auto no-scrollbar sticky top-[60px] z-10">
+      <div className="flex gap-4 px-4 min-w-max">
+        {profiles.map((p) => {
+          const isActive = p.is_self; 
+          return (
+            <button key={p.id} onClick={() => scrollToPost(p.id)} className="flex flex-col items-center gap-1">
+              <div className={`w-16 h-16 rounded-full p-0.5 border-2 ${isActive ? "border-[var(--color-gold)]" : "border-gray-200"}`}>
+                <div className="w-full h-full rounded-full bg-[var(--color-ink)] flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                  {p.name[0]}
+                </div>
+              </div>
+              <span className="text-[10px] font-medium text-[var(--color-ink-muted)] truncate w-16 text-center">
+                {p.is_self ? "나" : p.name}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── 운세 포스트 (로그인, 프로필별) ─────────────────────────────────────────
 function FortunePost({ profile, memberId }: { profile: Profile; memberId: string }) {
   const [forecast, setForecast] = useState<DailyFortune[] | null>(null);
   const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     getForecast(memberId, profile.id, 7)
@@ -26,71 +66,82 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
 
   const today = forecast?.[0];
   const meta = today ? FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"] : null;
+  const el = today ? ELEMENT_META[today.day_element] ?? ELEMENT_META["土"] : ELEMENT_META["土"];
 
   return (
-    <FeedPost
-      name={profile.name}
+    <div id={`post-${profile.id}`}>
+      <FeedPost
+        name={profile.name}
       handle={`${new Date(profile.birth_dt).getFullYear()}년생 · ${profile.gender === "male" ? "남" : "여"} · ${profile.city}`}
       avatarChar={profile.name[0]}
       avatarClass="bg-[var(--color-ink)]"
       caption={
         today && meta ? (
-          <span>
-            <span className="font-semibold">{profile.name}</span>{" "}
-            <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${meta.color}`}>
-              {meta.icon} {today.level} {today.total_score}점
-            </span>
-            {" "}{today.description}
-          </span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.color}`}>
+                {meta.icon} {today.level} {today.total_score}점
+              </span>
+              {today.son_eomneun_nal && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
+                  👻 손없는 날
+                </span>
+              )}
+            </div>
+            <p className="text-sm">
+              <span className="font-semibold text-[var(--color-ink)]">{profile.name}</span>{" "}
+              {today.description}
+            </p>
+            {today.weather && (
+              <p className="text-[10px] text-[var(--color-ink-muted)] flex items-center gap-1">
+                📍 {profile.city} · {today.weather.condition} {today.weather.temperature}°
+              </p>
+            )}
+            <div className="flex gap-1.5 flex-wrap pt-1">
+              {today.tips.map((tip, i) => (
+                <span key={i} className="text-[10px] text-[var(--color-ink-faint)]">#{tip.replace(/\s/g, "")}</span>
+              ))}
+            </div>
+          </div>
         ) : null
       }
       actions={
         <div className="space-y-1">
-          {/* 운세 상세 토글 */}
-          {forecast && (
-            <button
-              onClick={() => setOpen((v) => !v)}
-              className="text-xs text-[var(--color-gold)] font-medium"
-            >
-              {open ? "접기 ▲" : "오늘/내일/주간 운세 보기 ▼"}
-            </button>
-          )}
-          {open && forecast && (
-            <div className="pt-2">
-              <DailyFortunePanel forecast={forecast} loading={false} />
-            </div>
-          )}
-          <div className="flex gap-4 pt-1">
-            <Link href="/siun" className="text-xs text-[var(--color-gold)] font-medium hover:opacity-80 transition-opacity">
-              오늘운세 자세히 →
-            </Link>
-            <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-              사주 분석 →
-            </Link>
-            <Link href="/compatibility" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-              궁합 보기 →
-            </Link>
+          <div className="flex gap-4 pt-1 border-t border-[var(--color-border-light)] mt-2 py-2">
+            <Link href="/siun" className="text-xs text-[var(--color-gold)] font-medium">자세히 보기</Link>
+            <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)]">사주분석</Link>
+            <Link href="/compatibility" className="text-xs text-[var(--color-ink-faint)]">궁합</Link>
           </div>
         </div>
       }
     >
-      {/* 컨텐츠: 오늘 일진 */}
-      <div className="px-4 py-6 bg-[var(--color-ivory-warm)] flex items-center gap-5">
+      {/* 비주얼 카드 영역 */}
+      <div className={`aspect-square w-full ${el.bg} flex flex-col items-center justify-center relative overflow-hidden`}>
         {loading ? (
           <LoadingSpinner />
         ) : today ? (
           <>
-            <span className="font-heading text-6xl font-bold text-[var(--color-ink)]">{today.day_pillar}</span>
-            <div className="space-y-1">
-              <p className="text-sm text-[var(--color-ink-muted)]">{today.day_element} · {today.level}</p>
-              {today.weather && <p className="text-xs text-[var(--color-ink-faint)]">{today.weather.condition}</p>}
-              <div className="flex gap-2 flex-wrap pt-1">
-                {today.tips.map((tip, i) => (
-                  <span key={i} className="text-xs bg-white border border-[var(--color-border-light)] rounded-full px-2.5 py-0.5 text-[var(--color-ink-muted)]">
-                    {tip}
-                  </span>
-                ))}
+            {/* 배경 장식 */}
+            <div className="absolute top-[-10%] right-[-10%] w-40 h-40 rounded-full bg-white/20 blur-3xl" />
+            <div className="absolute bottom-[-5%] left-[-5%] w-32 h-32 rounded-full bg-black/5 blur-2xl" />
+            
+            <div className="z-10 flex flex-col items-center">
+              <span className="text-[var(--color-ink-faint)] text-xs font-bold tracking-widest mb-2 opacity-60">TODAY'S ENERGY</span>
+              <h2 className="font-heading text-8xl font-black text-[var(--color-ink)] drop-shadow-sm mb-4">
+                {today.day_pillar}
+              </h2>
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-sm border border-white/60">
+                <span className="text-2xl">{el.emoji}</span>
+                <span className={`text-sm font-bold ${el.color}`}>{today.day_element}의 기운</span>
               </div>
+            </div>
+
+            {/* 하단 점수 바 (미니멀) */}
+            <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+              <div className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden mr-4">
+                <div className="h-full bg-[var(--color-gold)]" style={{ width: `${today.total_score}%` }} />
+              </div>
+              <span className="text-xs font-black text-[var(--color-ink)]">{today.total_score}점</span>
             </div>
           </>
         ) : (
@@ -98,6 +149,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
         )}
       </div>
     </FeedPost>
+    </div>
   );
 }
 
@@ -305,11 +357,14 @@ export default function Home() {
     <main className="min-h-screen">
       <div className="max-w-lg mx-auto">
         {/* 상단 헤더 */}
-        <header className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-[var(--color-border-light)]">
+        <header className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-[var(--color-border-light)] bg-white sticky top-0 z-20">
           <div>
             <p className="font-heading text-lg font-bold text-[var(--color-ink)]">{dateLabel}</p>
           </div>
         </header>
+
+        {/* 스토리 트레이 */}
+        {memberId && profiles.length > 0 && <StoryTray profiles={profiles} />}
 
         {/* 피드 */}
         <div>
