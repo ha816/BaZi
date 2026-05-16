@@ -10,6 +10,7 @@ import FeedPost from "@/components/FeedPost";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
+import { getZodiacEmoji } from "@/lib/zodiac";
 
 // ── 상단 스토리 트레이 (Story Tray) ─────────────────────────────────────────
 function StoryTray({ profiles, activeId }: { profiles: Profile[]; activeId?: string | null }) {
@@ -37,8 +38,8 @@ function StoryTray({ profiles, activeId }: { profiles: Profile[]; activeId?: str
           return (
             <button key={p.id} onClick={() => scrollToPost(p.id)} className="flex flex-col items-center gap-1">
               <div className={`w-16 h-16 rounded-full p-0.5 border-2 ${isActive ? "border-[var(--color-gold)]" : "border-gray-200"}`}>
-                <div className="w-full h-full rounded-full bg-[var(--color-ink)] flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-                  {p.name[0]}
+                <div className="w-full h-full rounded-full bg-[var(--color-gold-faint)] flex items-center justify-center text-3xl overflow-hidden shadow-inner">
+                  {getZodiacEmoji(p.birth_dt)}
                 </div>
               </div>
               <span className="text-[10px] font-medium text-[var(--color-ink-muted)] truncate w-16 text-center">
@@ -73,8 +74,8 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       <FeedPost
         name={profile.name}
       handle={`${new Date(profile.birth_dt).getFullYear()}년생 · ${profile.gender === "male" ? "남" : "여"} · ${profile.city}`}
-      avatarChar={profile.name[0]}
-      avatarClass="bg-[var(--color-ink)]"
+      avatarChar={getZodiacEmoji(profile.birth_dt)}
+      avatarClass="bg-[var(--color-gold-faint)] text-2xl"
       caption={
         today && meta ? (
           <div className="space-y-2">
@@ -97,11 +98,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
                 📍 {profile.city} · {today.weather.condition} {today.weather.temperature}°
               </p>
             )}
-            <div className="flex gap-1.5 flex-wrap pt-1">
-              {today.tips.map((tip, i) => (
-                <span key={i} className="text-[10px] text-[var(--color-ink-faint)]">#{tip.replace(/\s/g, "")}</span>
-              ))}
-            </div>
           </div>
         ) : null
       }
@@ -116,7 +112,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       }
     >
       {/* 비주얼 카드 영역 */}
-      <div className={`aspect-square w-full ${el.bg} flex flex-col items-center justify-center relative overflow-hidden`}>
+      <div className={`aspect-[4/3] w-full ${el.bg} flex flex-col items-center justify-center relative overflow-hidden`}>
         {loading ? (
           <LoadingSpinner />
         ) : today ? (
@@ -343,8 +339,9 @@ export default function Home() {
     setMemberId(id);
     if (id) {
       listProfiles(id).then((ps) => {
-        setProfiles(ps);
-        if (ps.length > 0) setWeatherCity(ps[0].city);
+        const sorted = [...ps].sort((a, b) => (a.is_self === b.is_self ? 0 : a.is_self ? -1 : 1));
+        setProfiles(sorted);
+        if (sorted.length > 0) setWeatherCity(sorted[0].city);
       }).catch(() => {});
     } else {
       detectLocation().then((loc) => { if (loc) setWeatherCity(loc.city); }).catch(() => {});
