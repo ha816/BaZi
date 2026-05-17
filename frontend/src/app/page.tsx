@@ -148,7 +148,13 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
                 {meta.icon} {today.level} {today.total_score}점
               </span>
               <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border bg-white/40 border-white/60 backdrop-blur-md shadow-sm ${el.color}`}>
-                <span className="text-xs">{el.emoji}</span> 오늘날씨오행 {today.day_element}
+                <span className="text-xs">{el.emoji}</span> 오늘날씨오행 {
+                  today.day_element === "木" ? "목" :
+                  today.day_element === "火" ? "화" :
+                  today.day_element === "土" ? "토" :
+                  today.day_element === "金" ? "금" :
+                  today.day_element === "水" ? "수" : today.day_element
+                }
               </span>
             </div>
           </>
@@ -169,7 +175,6 @@ function HourlyRow({ h }: { h: HourlyWeather }) {
     <div className="flex items-center gap-2 py-1.5 border-b border-white/50 last:border-0">
       <span className="text-xs text-[var(--color-ink-muted)] w-10 shrink-0">{h.hour}</span>
       <span className="text-base">{m.emoji}</span>
-      <span className={`text-[10px] font-bold ${m.color} w-10 shrink-0`}>{m.label}</span>
       <span className="text-xs text-[var(--color-ink)] flex-1">{h.condition}</span>
       <span className="text-xs font-semibold text-[var(--color-ink)]">{h.temperature}°</span>
     </div>
@@ -218,7 +223,6 @@ function WeatherPost({ city }: { city: string }) {
                     </p>
                     <div className="flex items-center gap-1">
                       <span className="text-3xl">{m.emoji}</span>
-                      <span className={`text-[10px] font-bold ${m.color}`}>{m.label}</span>
                     </div>
                     <p className="text-xs text-[var(--color-ink)] font-medium text-center leading-tight">{day.condition}</p>
                     <span className="text-[10px] text-[var(--color-ink-faint)]">{isOpen ? "▲" : "▼"}</span>
