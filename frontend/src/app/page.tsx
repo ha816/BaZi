@@ -378,9 +378,6 @@ export default function Home() {
             <FortunePost key={p.id} profile={p} memberId={memberId} />
           ))}
 
-          {/* 날씨 포스트 */}
-          <WeatherPost city={weatherCity} />
-
           {/* 항상: 서비스 영상 포스트 */}
           <VideoPost loggedIn={!!memberId} />
         </div>
