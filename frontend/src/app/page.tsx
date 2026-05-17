@@ -69,6 +69,13 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
   const meta = today ? FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"] : null;
   const el = today ? ELEMENT_META[today.day_element] ?? ELEMENT_META["土"] : ELEMENT_META["土"];
 
+  // 플로팅 키워드 추출 (상위 3개)
+  const keywords = today ? Object.entries(today.domain_scores)
+    .map(([key, val]) => ({ key, score: val.score }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(kw => `#${kw.key}${kw.score > 80 ? "운최고" : kw.score > 60 ? "운좋음" : "운보통"}`) : [];
+
   return (
     <div id={`post-${profile.id}`}>
       <FeedPost
@@ -93,11 +100,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
               <span className="font-semibold text-[var(--color-ink)]">{profile.name}</span>{" "}
               {today.description}
             </p>
-            {today.weather && (
-              <p className="text-[10px] text-[var(--color-ink-muted)] flex items-center gap-1">
-                📍 {profile.city} · {today.weather.condition} {today.weather.temperature}°
-              </p>
-            )}
           </div>
         ) : null
       }
@@ -115,29 +117,45 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       <div className={`aspect-[4/3] w-full ${el.bg} flex flex-col items-center justify-center relative overflow-hidden`}>
         {loading ? (
           <LoadingSpinner />
-        ) : today ? (
+        ) : today && meta ? (
           <>
             {/* 배경 장식 */}
             <div className="absolute top-[-10%] right-[-10%] w-40 h-40 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute bottom-[-5%] left-[-5%] w-32 h-32 rounded-full bg-black/5 blur-2xl" />
             
-            <div className="z-10 flex flex-col items-center">
-              <span className="text-[var(--color-ink-faint)] text-xs font-bold tracking-widest mb-2 opacity-60">TODAY'S ENERGY</span>
-              <h2 className="font-heading text-8xl font-black text-[var(--color-ink)] drop-shadow-sm mb-4">
-                {today.day_pillar}
-              </h2>
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/40 backdrop-blur-sm border border-white/60">
-                <span className="text-2xl">{el.emoji}</span>
-                <span className={`text-sm font-bold ${el.color}`}>{today.day_element}의 기운</span>
-              </div>
+            {/* 까치 마스코트 */}
+            <div className="z-10 flex flex-col items-center relative">
+              <img 
+                src={meta.image} 
+                alt="kkachi" 
+                className="w-48 h-48 object-contain animate-float drop-shadow-xl"
+              />
+              
+              {/* 플로팅 키워드 */}
+              {keywords.map((kw, i) => (
+                <div 
+                  key={kw}
+                  className={`absolute z-20 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-white/50 text-[10px] font-bold text-[var(--color-ink)] whitespace-nowrap animate-float`}
+                  style={{
+                    top: i === 0 ? '-10%' : i === 1 ? '20%' : '60%',
+                    left: i === 0 ? '-20%' : i === 1 ? '110%' : '-30%',
+                    animationDelay: `${i * 0.5}s`
+                  }}
+                >
+                  {kw}
+                </div>
+              ))}
             </div>
 
-            {/* 하단 점수 바 (미니멀) */}
-            <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-              <div className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden mr-4">
-                <div className="h-full bg-[var(--color-gold)]" style={{ width: `${today.total_score}%` }} />
+            {/* 하단 행운 부적 / 컬러 정보 */}
+            <div className="absolute bottom-6 left-6 right-6 z-10 flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/40 backdrop-blur-sm border border-white/60">
+                <span className="text-xs font-bold text-[var(--color-ink-muted)]">행운 부적</span>
+                <div className={`w-3 h-3 rounded-full ${el.color.replace('text-', 'bg-')}`} />
+                <span className={`text-[10px] font-bold ${el.color}`}>{today.day_element}의 기운</span>
+                <span className="text-[var(--color-border)]">|</span>
+                <span className="text-[10px] font-black text-[var(--color-ink)]">{today.day_pillar}</span>
               </div>
-              <span className="text-xs font-black text-[var(--color-ink)]">{today.total_score}점</span>
             </div>
           </>
         ) : (
