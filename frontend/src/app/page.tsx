@@ -87,9 +87,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
         today && meta ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${meta.color}`}>
-                {meta.icon} {today.level} {today.total_score}점
-              </span>
               {today.son_eomneun_nal && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
                   👻 손없는 날
@@ -97,8 +94,7 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
               )}
             </div>
             <p className="text-sm">
-              <span className="font-semibold text-[var(--color-ink)]">{profile.name}</span>{" "}
-              {today.description}
+              {today.description.replace(new RegExp(`^${profile.name}\\s*`), "")}
             </p>
           </div>
         ) : null
@@ -106,9 +102,8 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       actions={
         <div className="space-y-1">
           <div className="flex gap-4 pt-1 border-t border-[var(--color-border-light)] mt-2 py-2">
-            <Link href="/siun" className="text-xs text-[var(--color-gold)] font-medium">자세히 보기</Link>
-            <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)]">사주분석</Link>
-            <Link href="/compatibility" className="text-xs text-[var(--color-ink-faint)]">궁합</Link>
+            <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)]">사주분석하기</Link>
+            <Link href="/compatibility" className="text-xs text-[var(--color-ink-faint)]">나와 궁합보기</Link>
           </div>
         </div>
       }
@@ -147,15 +142,14 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
               ))}
             </div>
 
-            {/* 하단 행운 부적 / 컬러 정보 */}
-            <div className="absolute bottom-6 left-6 right-6 z-10 flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/40 backdrop-blur-sm border border-white/60">
-                <span className="text-xs font-bold text-[var(--color-ink-muted)]">행운 부적</span>
-                <div className={`w-3 h-3 rounded-full ${el.color.replace('text-', 'bg-')}`} />
-                <span className={`text-[10px] font-bold ${el.color}`}>{today.day_element}의 기운</span>
-                <span className="text-[var(--color-border)]">|</span>
-                <span className="text-[10px] font-black text-[var(--color-ink)]">{today.day_pillar}</span>
-              </div>
+            {/* 하단 정보 태그들 */}
+            <div className="absolute bottom-6 left-6 right-6 z-10 flex flex-wrap gap-2">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border backdrop-blur-md shadow-sm ${meta.color.replace('bg-', 'bg-white/40 border-white/60 ')}`}>
+                {meta.icon} {today.level} {today.total_score}점
+              </span>
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border bg-white/40 border-white/60 backdrop-blur-md shadow-sm ${el.color}`}>
+                <span className="text-xs">{el.emoji}</span> 오늘날씨오행 {today.day_element}
+              </span>
             </div>
           </>
         ) : (
