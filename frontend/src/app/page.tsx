@@ -147,15 +147,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
               <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border backdrop-blur-md shadow-sm ${meta.color.replace('bg-', 'bg-white/40 border-white/60 ')}`}>
                 {meta.icon} {today.level} {today.total_score}점
               </span>
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border bg-white/40 border-white/60 backdrop-blur-md shadow-sm ${el.color}`}>
-                <span className="text-xs">{el.emoji}</span> 오늘날씨오행 {
-                  today.day_element === "木" ? "목" :
-                  today.day_element === "火" ? "화" :
-                  today.day_element === "土" ? "토" :
-                  today.day_element === "金" ? "금" :
-                  today.day_element === "水" ? "수" : today.day_element
-                }
-              </span>
             </div>
           </>
         ) : (
