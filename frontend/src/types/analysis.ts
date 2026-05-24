@@ -289,6 +289,8 @@ export interface CompatibilityDomainScore {
   score: number;
   level: string;
   reason: string;
+  pros?: string[];
+  cons?: string[];
 }
 
 export interface PalmLineScores {

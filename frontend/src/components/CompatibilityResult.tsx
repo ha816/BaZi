@@ -3,9 +3,10 @@
 import type { CompatibilityResult, PillarSnapshot } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import KkachiTip from "./KkachiTip";
+import OhengPairDiagram from "./OhengPairDiagram";
 import PillarPairDiagram from "./PillarPairDiagram";
-import ScoreBar from "./ScoreBar";
 import SectionHeader from "./SectionHeader";
+import { SINSAL_INFO } from "./tabs/natal/data";
 
 interface Props {
   data: CompatibilityResult;
@@ -21,6 +22,153 @@ const DOMAIN_ICONS: Record<string, string> = {
 };
 
 const ELEMENTS_ORDER = ["木", "火", "土", "金", "水"];
+
+function elementsToKor(arr: string[]): string {
+  return arr.map((e) => `${getElementInfo(e).korean}(${e})`).join(", ");
+}
+
+const DOMAIN_THEMES: Record<string, { intro: string; positive: string; negative: string }> = {
+  연애: { intro: "연애 영역에서는", positive: "감정 교감과 끌림이", negative: "감정 기복이" },
+  결혼: { intro: "결혼 영역에서는", positive: "안정적 호흡이", negative: "부부 사이 긴장이" },
+  재물: { intro: "재물 영역에서는", positive: "재물 흐름이", negative: "금전 갈등이" },
+  직업: { intro: "직업 영역에서는", positive: "사회적 조화가", negative: "역할 충돌이" },
+};
+
+function summarizeAllDomains(scores: Record<string, { score: number; level: string }>): string {
+  const order = ["연애", "결혼", "재물", "직업"];
+  const present = order.filter((n) => scores[n] != null);
+  if (present.length === 0) return "";
+
+  const strong: string[] = [];
+  const ok: string[] = [];
+  const weak: string[] = [];
+  for (const name of present) {
+    const lv = scores[name].level;
+    if (lv === "최고" || lv === "좋음") strong.push(name);
+    else if (lv === "보통") ok.push(name);
+    else weak.push(name);
+  }
+
+  const avg = present.reduce((s, n) => s + scores[n].score, 0) / present.length;
+  let intro: string;
+  if (avg >= 70) intro = "네 영역 모두 두루 잘 맞는 인연이에요.";
+  else if (avg >= 55) intro = "네 영역 흐름이 골고루 좋은 편이에요.";
+  else if (avg >= 45) intro = "네 영역 흐름이 무난한 편이에요.";
+  else intro = "네 영역에서 노력이 필요한 인연이에요.";
+
+  const parts: string[] = [];
+  if (strong.length > 0) parts.push(`${strong.join("·")} 쪽이 특히 호흡이 좋아요`);
+  if (weak.length > 0) parts.push(`${weak.join("·")} 쪽은 조금 더 노력이 필요해요`);
+  if (ok.length > 0 && parts.length === 0) parts.push("전반적으로 무난한 흐름이에요");
+  else if (ok.length > 0) parts.push(`${ok.join("·")} 쪽은 평이한 흐름이에요`);
+
+  return parts.length > 0 ? `${intro} ${parts.join(", ")}.` : intro;
+}
+
+function summarizeDomain(domain: string, pros: string[], cons: string[]): string {
+  const theme = DOMAIN_THEMES[domain];
+  if (!theme) return "";
+  if (pros.length === 0 && cons.length === 0) return "";
+  const parts: string[] = [];
+  if (pros.length > 0) {
+    parts.push(`${pros.slice(0, 3).join(", ")} 덕분에 ${theme.positive} 강해요.`);
+  }
+  if (cons.length > 0) {
+    parts.push(`다만 ${cons.slice(0, 3).join(", ")}로 ${theme.negative} 따라올 수 있어요.`);
+  }
+  return `${theme.intro} ${parts.join(" ")}`;
+}
+
+const SHARED_SINSAL_MEANING: Record<string, string> = {
+  "천을귀인": "위기 순간 서로를 지켜주는 강력한 인연",
+  "월덕귀인": "갈등 없이 평화롭게 흐르는 사이",
+  "천덕귀인": "복이 두텁게 깃든 행운의 결합",
+  "도화살": "이성적 매력이 강한 화려한 인연",
+  "역마살": "함께 움직이고 변화를 즐기는 활동적 인연",
+  "화개살": "예술·종교·학문 코드가 깊게 통하는 정신적 인연",
+  "백호살": "에너지가 강해 함께 큰일을 도모하는 인연",
+  "장성살": "리더십과 야망이 통하는 카리스마 커플",
+  "문창귀인": "학문·문서 코드가 통해 함께 성장하는 인연",
+};
+
+const UNIQUE_SINSAL_ROLE: Record<string, string> = {
+  "천을귀인": "위기 때 든든하게 지켜주는 자리",
+  "월덕귀인": "갈등을 부드럽게 조율해주는 자리",
+  "천덕귀인": "복을 끌어와 함께 누리게 하는 자리",
+  "도화살": "이성적 매력을 더해주는 자리",
+  "역마살": "새로운 기회·이동을 끌어오는 자리",
+  "화개살": "예술·정신적 깊이를 더해주는 자리",
+  "백호살": "강한 추진력으로 일을 밀어붙이는 자리",
+  "장성살": "방향을 잡고 이끌어주는 리더 자리",
+  "문창귀인": "공부·문서·전문성을 받쳐주는 자리",
+};
+
+const DOMAIN_RADAR_ORDER: { label: string; angleDeg: number }[] = [
+  { label: "연애", angleDeg: -90 },
+  { label: "결혼", angleDeg: 0 },
+  { label: "재물", angleDeg: 90 },
+  { label: "직업", angleDeg: 180 },
+];
+
+function DomainRadar({ scores }: { scores: Record<string, { score: number }> }) {
+  const cx = 70, cy = 70, maxR = 50;
+  const labelOff = 14;
+
+  const points = DOMAIN_RADAR_ORDER.map(({ label, angleDeg }) => {
+    const score = scores[label]?.score ?? 0;
+    const r = (score / 100) * maxR;
+    const rad = (angleDeg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad), label, score };
+  });
+
+  return (
+    <svg viewBox="-30 -10 200 160" className="w-full max-w-[260px] mx-auto block">
+      {/* Grid rings */}
+      {[0.25, 0.5, 0.75, 1].map((ratio, i) => {
+        const r = maxR * ratio;
+        const pts = DOMAIN_RADAR_ORDER.map(({ angleDeg }) => {
+          const rad = (angleDeg * Math.PI) / 180;
+          return `${cx + r * Math.cos(rad)},${cy + r * Math.sin(rad)}`;
+        }).join(" ");
+        return (
+          <polygon key={i} points={pts} fill="none"
+            stroke="var(--color-border-light)" strokeWidth={0.6} />
+        );
+      })}
+      {/* Axes */}
+      <line x1={cx} y1={cy - maxR} x2={cx} y2={cy + maxR} stroke="var(--color-border-light)" strokeWidth={0.5} />
+      <line x1={cx - maxR} y1={cy} x2={cx + maxR} y2={cy} stroke="var(--color-border-light)" strokeWidth={0.5} />
+      {/* Score polygon */}
+      <polygon
+        points={points.map((p) => `${p.x},${p.y}`).join(" ")}
+        fill="var(--color-gold)" fillOpacity={0.22}
+        stroke="var(--color-gold)" strokeWidth={1.5}
+      />
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r={2.5} fill="var(--color-gold)" />
+      ))}
+      {/* Labels */}
+      {DOMAIN_RADAR_ORDER.map(({ label, angleDeg }, i) => {
+        const rad = (angleDeg * Math.PI) / 180;
+        const lx = cx + (maxR + labelOff) * Math.cos(rad);
+        const ly = cy + (maxR + labelOff) * Math.sin(rad);
+        const score = points[i].score;
+        return (
+          <g key={label}>
+            <text x={lx} y={ly - 4} textAnchor="middle" dominantBaseline="middle"
+              fontSize={10} fontWeight={600} fill="var(--color-ink)">
+              {DOMAIN_ICONS[label]} {label}
+            </text>
+            <text x={lx} y={ly + 6} textAnchor="middle" dominantBaseline="middle"
+              fontSize={9} fill="var(--color-gold)">
+              {score}점
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 function ScoreRing({ score }: { score: number }) {
   const r = 52;
@@ -89,13 +237,12 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
     element_complement = { p1_lacks: [], p1_provides: [], p2_lacks: [], p2_provides: [], overlap_strong: [], score: 0 },
     shared_sinsal = [], unique_sinsal_1 = [], unique_sinsal_2 = [],
     samhap_completions = [],
-    key_traits = [],
     narrative = null,
   } = data;
 
   return (
     <div className="space-y-4">
-      {/* ── 1. 종합 점수 카드 ── */}
+      {/* ── 1. 종합 궁합 + 사주 한눈 비교 ── */}
       <div className="slide-card">
         <div className="slide-card__header">
           <SectionHeader title="종합 궁합" noMargin />
@@ -103,7 +250,7 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
         <div className="divider" />
         <div className="slide-card__body space-y-5">
           <KkachiTip>
-            {name1}님과 {name2}님은 <strong>{label}</strong>이에요. 카드를 하나씩 펼치며 두 분의 관계를 풀어드릴게요.
+            {name1}님과 {name2}님은 {label}이에요. 카드를 하나씩 펼치며 두 분의 관계를 풀어드릴게요.
           </KkachiTip>
 
           <div className="flex flex-col md:flex-row items-center gap-7">
@@ -120,39 +267,12 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
             <div className="flex-1 text-center md:text-left space-y-3">
               <h2 className="font-heading text-2xl font-bold text-[var(--color-ink)]">{label}</h2>
               <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">{description}</p>
-              <p className="text-xs text-[var(--color-ink-faint)]">{name1} × {name2}</p>
             </div>
           </div>
 
-          {key_traits.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {key_traits.map((t) => (
-                <span
-                  key={t}
-                  className="text-[11px] font-medium px-2.5 py-1 rounded-full border"
-                  style={{ background: "var(--color-gold-faint)", color: "var(--color-gold)", borderColor: "var(--color-gold-light)" }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── 2. 두 사주 비교 카드 ── */}
-      {pillar1_snapshot && pillar2_snapshot && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <SectionHeader title="사주 한눈 비교" noMargin />
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body space-y-4">
-            <KkachiTip>
-              두 분의 사주팔자를 위·아래로 나란히 펼쳤어요. 같은 기둥끼리(年-年, 月-月, 日-日, 時-時) 만났을 때 일어나는 <strong>합·충·형·해·파·원진</strong>이 가운데 줄에 표시됩니다.
-            </KkachiTip>
-
-            {samhap_completions.length > 0 && (
+          {pillar1_snapshot && pillar2_snapshot && (
+            <div className="space-y-4">
+              {samhap_completions.length > 0 && (
               <div className="space-y-2">
                 {samhap_completions.map((c, i) => {
                   const info = getElementInfo(c.element);
@@ -170,7 +290,7 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
                           삼합 완성 — {info.label}({info.korean})국
                         </p>
                         <p className="opacity-80 mt-0.5">
-                          {name1} <strong>{c.p1_branches.join("")}</strong> + {name2} <strong>{c.p2_branches.join("")}</strong> → 운명적 호흡
+                          {name1}님 {c.p1_branches.join("")} + {name2}님 {c.p2_branches.join("")} → 운명적 호흡
                         </p>
                       </div>
                     </div>
@@ -186,52 +306,55 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
               name1={name1}
               name2={name2}
             />
-          </div>
-        </div>
-      )}
 
-      {/* ── 3. 오행 보완 카드 ── */}
-      {pillar1_snapshot && pillar2_snapshot && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <SectionHeader title="오행 보완" noMargin />
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body space-y-5">
-            <KkachiTip>
-              한쪽에 부족한 오행을 상대가 가지고 있으면 서로를 채워주는 사이가 돼요. 반대로 같은 오행이 둘 다 강하면 충돌이 잦을 수 있어요.
-            </KkachiTip>
+            {/* ── 오행 보완 sub-section ── */}
+            <div className="pt-2 mt-2 border-t border-[var(--color-border-light)] space-y-4">
+              <h4 className="font-heading text-sm font-semibold text-[var(--color-ink)]">
+                오행 보완
+              </h4>
+              <KkachiTip>
+                한쪽에 부족한 오행을 상대가 가지고 있으면 서로를 채워주는 사이가 돼요. 반대로 같은 오행이 둘 다 강하면 충돌이 잦을 수 있어요.
+              </KkachiTip>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ElementBar snapshot={pillar1_snapshot} label={name1} />
-              <ElementBar snapshot={pillar2_snapshot} label={name2} />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <ElementBar snapshot={pillar1_snapshot} label={`${name1}님`} />
+                <ElementBar snapshot={pillar2_snapshot} label={`${name2}님`} />
+              </div>
 
-            <div className="space-y-2 text-xs">
-              {element_complement.p2_provides.length > 0 && (
-                <p className="text-[var(--color-ink-muted)]">
-                  · <strong className="text-[var(--color-ink)]">{name2}</strong>이(가) <strong className="text-emerald-700">{element_complement.p2_provides.join(", ")}</strong> 기운으로 <strong>{name1}</strong>의 부족함을 채워줘요
-                </p>
-              )}
-              {element_complement.p1_provides.length > 0 && (
-                <p className="text-[var(--color-ink-muted)]">
-                  · <strong className="text-[var(--color-ink)]">{name1}</strong>이(가) <strong className="text-emerald-700">{element_complement.p1_provides.join(", ")}</strong> 기운으로 <strong>{name2}</strong>의 부족함을 채워줘요
-                </p>
-              )}
-              {element_complement.overlap_strong.length > 0 && (
-                <p className="text-[var(--color-fire)]">
-                  · 두 분 모두 <strong>{element_complement.overlap_strong.join(", ")}</strong> 기운이 과중해 충돌이 생길 수 있어요
-                </p>
-              )}
-              {element_complement.p1_provides.length === 0 &&
-                element_complement.p2_provides.length === 0 &&
-                element_complement.overlap_strong.length === 0 && (
-                  <p className="text-[var(--color-ink-faint)]">· 오행 구성이 비슷한 균형 관계예요</p>
+              <OhengPairDiagram
+                p1={pillar1_snapshot}
+                p2={pillar2_snapshot}
+                name1={name1}
+                name2={name2}
+              />
+
+              <div className="space-y-2">
+                {element_complement.p2_provides.length > 0 && (
+                  <KkachiTip>
+                    {name2}님이 {elementsToKor(element_complement.p2_provides)} 기운으로 {name1}님의 부족함을 채워줘요.
+                  </KkachiTip>
                 )}
+                {element_complement.p1_provides.length > 0 && (
+                  <KkachiTip>
+                    {name1}님이 {elementsToKor(element_complement.p1_provides)} 기운으로 {name2}님의 부족함을 채워줘요.
+                  </KkachiTip>
+                )}
+                {element_complement.overlap_strong.length > 0 && (
+                  <KkachiTip>
+                    두 분 모두 {elementsToKor(element_complement.overlap_strong)} 기운이 과중해 충돌이 생길 수 있어요.
+                  </KkachiTip>
+                )}
+                {element_complement.p1_provides.length === 0 &&
+                  element_complement.p2_provides.length === 0 &&
+                  element_complement.overlap_strong.length === 0 && (
+                    <KkachiTip>오행 구성이 비슷한 균형 관계예요.</KkachiTip>
+                  )}
+              </div>
             </div>
           </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ── 4. 영역별 궁합 카드 ── */}
       <div className="slide-card">
@@ -240,102 +363,208 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
         </div>
         <div className="divider" />
         <div className="slide-card__body space-y-5">
-          <KkachiTip>
-            연애·결혼·재물·직업 네 영역 각각에서 두 분의 사주가 어떻게 상호작용하는지 점수와 근거로 풀어드릴게요.
-          </KkachiTip>
+          <KkachiTip>{summarizeAllDomains(domain_scores)}</KkachiTip>
 
-          <div className="space-y-5">
-            {Object.entries(domain_scores).map(([domain, info]) => (
-              <div key={domain} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{DOMAIN_ICONS[domain] ?? "◎"}</span>
-                    <span className="text-sm font-medium text-[var(--color-ink)]">{domain}</span>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ background: "var(--color-gold-faint)", color: "var(--color-gold)" }}
-                    >
-                      {info.level}
+          <DomainRadar scores={domain_scores} />
+
+          <div className="space-y-3">
+            {Object.entries(domain_scores).map(([domain, info]) => {
+              const pros = info.pros ?? [];
+              const cons = info.cons ?? [];
+              const summary = summarizeDomain(domain, pros, cons);
+              return (
+                <div
+                  key={domain}
+                  className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{DOMAIN_ICONS[domain] ?? "◎"}</span>
+                      <span className="text-sm font-medium text-[var(--color-ink)]">{domain}</span>
+                      <span
+                        className="text-[10px] px-2 py-0.5 rounded-full"
+                        style={{ background: "var(--color-gold-faint)", color: "var(--color-gold)" }}
+                      >
+                        {info.level}
+                      </span>
+                    </div>
+                    <span className="font-heading text-base font-bold text-[var(--color-ink)]">
+                      {info.score}<span className="text-xs text-[var(--color-ink-faint)] ml-0.5">점</span>
                     </span>
                   </div>
-                  <span className="text-sm font-semibold text-[var(--color-ink-light)]">
-                    {info.score}점
-                  </span>
+
+                  {summary && <KkachiTip>{summary}</KkachiTip>}
+
+                  {(pros.length > 0 || cons.length > 0) && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {pros.map((p) => (
+                        <span
+                          key={`+${p}`}
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap"
+                          style={{ background: "#dcfce7", color: "#15803d", borderColor: "#86efac" }}
+                        >
+                          ＋ {p}
+                        </span>
+                      ))}
+                      {cons.map((c) => (
+                        <span
+                          key={`-${c}`}
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap"
+                          style={{ background: "#fee2e2", color: "#b91c1c", borderColor: "#fca5a5" }}
+                        >
+                          − {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <ScoreBar score={info.score} />
-                <p className="text-xs text-[var(--color-ink-faint)] leading-relaxed">{info.reason}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {/* ── 공유·고유 신살 sub-section ── */}
+          {(shared_sinsal.length > 0 || unique_sinsal_1.length > 0 || unique_sinsal_2.length > 0) && (
+            <div className="pt-2 mt-2 border-t border-[var(--color-border-light)] space-y-4">
+              <h4 className="font-heading text-sm font-semibold text-[var(--color-ink)]">
+                공유·고유 신살
+              </h4>
+              <KkachiTip>
+                신살(神殺)은 사주에 깃든 특별한 기운으로, 옛날에는 길흉으로 봤지만 현대에는 <strong>개인의 캐릭터·역량</strong>으로 풀이해요. <strong>함께 가진 신살</strong>은 두 분이 같은 코드를 공유한다는 뜻이고, <strong>한쪽만 가진 신살</strong>은 그 분이 그 영역에서 상대를 받쳐주는 자리예요.
+              </KkachiTip>
+
+              {shared_sinsal.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-[var(--color-ink-muted)]">함께 가진 신살</p>
+                  <div className="space-y-2">
+                    {shared_sinsal.map((s) => {
+                      const info = SINSAL_INFO[s];
+                      const meaning = SHARED_SINSAL_MEANING[s];
+                      return (
+                        <div
+                          key={s}
+                          className="rounded-lg border p-2.5 flex gap-2.5"
+                          style={{ background: "#dcfce7", borderColor: "#86efac" }}
+                        >
+                          <img
+                            src={`/kkachi/sinsal/sinsal_${s}.png`}
+                            alt={s}
+                            className="w-56 h-40 rounded-md object-cover flex-shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+                          />
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <p className="text-xs font-bold" style={{ color: "#15803d" }}>
+                              ★ {s}
+                              {info?.hanja && <span className="font-normal ml-1 opacity-75">({info.hanja})</span>}
+                              {info?.tagline && (
+                                <span className="text-[10px] font-normal text-[var(--color-ink-muted)] ml-1.5">
+                                  — {info.tagline}
+                                </span>
+                              )}
+                            </p>
+                            {info?.desc && (
+                              <p className="text-[10px] text-[var(--color-ink-muted)] leading-snug">
+                                {info.desc}
+                              </p>
+                            )}
+                            {meaning && (
+                              <p className="text-[10px] font-semibold leading-snug" style={{ color: "#15803d" }}>
+                                → {meaning}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {unique_sinsal_1.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-[var(--color-ink-muted)]">{name1}님만 가진 신살</p>
+                    <div className="space-y-2">
+                      {unique_sinsal_1.map((s) => {
+                        const info = SINSAL_INFO[s];
+                        const role = UNIQUE_SINSAL_ROLE[s];
+                        return (
+                          <div
+                            key={s}
+                            className="rounded-lg border p-2.5 flex gap-2.5"
+                            style={{ background: "var(--color-ivory)", borderColor: "var(--color-border-light)" }}
+                          >
+                            <img
+                              src={`/kkachi/sinsal/sinsal_${s}.png`}
+                              alt={s}
+                              className="w-24 h-24 rounded-md object-cover flex-shrink-0"
+                              onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+                            />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <p className="text-xs font-semibold text-[var(--color-ink)]">
+                                {s}
+                                {info?.hanja && <span className="font-normal text-[var(--color-ink-faint)] ml-1">({info.hanja})</span>}
+                                {info?.tagline && <span className="text-[10px] font-normal text-[var(--color-ink-muted)] ml-1.5">— {info.tagline}</span>}
+                              </p>
+                              {info?.desc && (
+                                <p className="text-[10px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
+                              )}
+                              {role && (
+                                <p className="text-[10px] font-medium leading-snug" style={{ color: "var(--color-gold)" }}>
+                                  → {name1}님이 {name2}님에게 {role}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {unique_sinsal_2.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-[var(--color-ink-muted)]">{name2}님만 가진 신살</p>
+                    <div className="space-y-2">
+                      {unique_sinsal_2.map((s) => {
+                        const info = SINSAL_INFO[s];
+                        const role = UNIQUE_SINSAL_ROLE[s];
+                        return (
+                          <div
+                            key={s}
+                            className="rounded-lg border p-2.5 flex gap-2.5"
+                            style={{ background: "var(--color-ivory)", borderColor: "var(--color-border-light)" }}
+                          >
+                            <img
+                              src={`/kkachi/sinsal/sinsal_${s}.png`}
+                              alt={s}
+                              className="w-24 h-24 rounded-md object-cover flex-shrink-0"
+                              onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+                            />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <p className="text-xs font-semibold text-[var(--color-ink)]">
+                                {s}
+                                {info?.hanja && <span className="font-normal text-[var(--color-ink-faint)] ml-1">({info.hanja})</span>}
+                                {info?.tagline && <span className="text-[10px] font-normal text-[var(--color-ink-muted)] ml-1.5">— {info.tagline}</span>}
+                              </p>
+                              {info?.desc && (
+                                <p className="text-[10px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
+                              )}
+                              {role && (
+                                <p className="text-[10px] font-medium leading-snug" style={{ color: "var(--color-gold)" }}>
+                                  → {name2}님이 {name1}님에게 {role}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* ── 5. 공유 신살 카드 ── */}
-      {(shared_sinsal.length > 0 || unique_sinsal_1.length > 0 || unique_sinsal_2.length > 0) && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <SectionHeader title="공유·고유 신살" noMargin />
-          </div>
-          <div className="divider" />
-          <div className="slide-card__body space-y-4">
-            <KkachiTip>
-              <strong>신살(神殺)</strong>은 사주에 깃든 특별한 기운이에요. 같은 신살을 공유하면 코드가 맞고, 한쪽만 가지면 그 영역에서 도움을 줄 수 있어요.
-            </KkachiTip>
-
-            {shared_sinsal.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-[var(--color-ink-muted)]">함께 가진 신살</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {shared_sinsal.map((s) => (
-                    <span
-                      key={s}
-                      className="text-[11px] font-medium px-2.5 py-1 rounded-full border"
-                      style={{ background: "#dcfce7", color: "#15803d", borderColor: "#86efac" }}
-                    >
-                      ★ {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {unique_sinsal_1.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[var(--color-ink-muted)]">{name1}만 가진 신살</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {unique_sinsal_1.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full border"
-                        style={{ background: "var(--color-ivory)", color: "var(--color-ink-muted)", borderColor: "var(--color-border-light)" }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {unique_sinsal_2.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[var(--color-ink-muted)]">{name2}만 가진 신살</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {unique_sinsal_2.map((s) => (
-                      <span
-                        key={s}
-                        className="text-[11px] font-medium px-2 py-0.5 rounded-full border"
-                        style={{ background: "var(--color-ivory)", color: "var(--color-ink-muted)", borderColor: "var(--color-border-light)" }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── 6. AI 해석 카드 ── */}
       {narrative && (

@@ -333,101 +333,164 @@ class CompatibilityService:
 
         # 연애
         love = 50
-        love_reasons = []
+        love_pros: list[str] = []
+        love_cons: list[str] = []
         for r in all_branch_rels:
             if r.kind == "branch_combine":
                 love += 7
-                love_reasons.append(f"{r.pillar1} 육합")
+                love_pros.append(f"{r.pillar1} 육합")
             elif r.kind == "branch_clash":
                 love -= 7
-                love_reasons.append(f"{r.pillar1} 충")
+                love_cons.append(f"{r.pillar1} 충")
             elif r.kind == "wonjin":
                 love -= 4
+                love_cons.append(f"{r.pillar1} 원진")
         if any(r.kind == "samhap" for r in pillar_relations):
             love += 8
-            love_reasons.append("삼합 반합 — 마음의 결이 같음")
+            love_pros.append("삼합 반합")
         if "도화살" in shared_sinsal:
             love += 12
-            love_reasons.append("도화살 공유 — 이성적 끌림")
-        love += int((avg_postnatal("재능운") - 50) * 0.2)
+            love_pros.append("도화살 공유 — 이성적 끌림")
+        # 식상(食傷)/연애 영역 인자: 식신·상관 보유 — 매력·표현력
+        has_sik1 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal1.sipsin)
+        has_sik2 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal2.sipsin)
+        if has_sik1 and has_sik2:
+            love += 5
+            love_pros.append("두 분 모두 식상 — 표현력·매력 풍부")
+        talent_avg = avg_postnatal("재능운")
+        if talent_avg >= 65:
+            love_pros.append(f"올해 재능운 양호({talent_avg:.0f})")
+        elif talent_avg <= 35:
+            love_cons.append(f"올해 재능운 부진({talent_avg:.0f})")
+        love += int((talent_avg - 50) * 0.2)
         love = max(0, min(100, love))
-        love_reason = ", ".join(love_reasons[:3]) if love_reasons else "기본 관계로 산출"
 
         # 결혼
         marriage = 45
-        marriage_reasons = []
+        marriage_pros: list[str] = []
+        marriage_cons: list[str] = []
         for r in day_rels:
             if r.kind in ("stem_combine", "branch_combine"):
                 marriage += 12
-                marriage_reasons.append("일주 합 — 부부 합")
+                marriage_pros.append("일주 합 — 부부 합")
             elif r.kind == "branch_clash":
                 marriage -= 10
-                marriage_reasons.append("일주 충 — 갈등 주의")
+                marriage_cons.append("일주 충 — 갈등 주의")
             elif r.kind == "stem_clash":
                 marriage -= 8
-                marriage_reasons.append("일주 천간충 — 의견 충돌 주의")
+                marriage_cons.append("일주 천간충")
         if "천을귀인" in shared_sinsal:
             marriage += 10
-            marriage_reasons.append("천을귀인 공유 — 위기에 서로 보호")
+            marriage_pros.append("천을귀인 공유 — 위기에 서로 보호")
+        if "월덕귀인" in shared_sinsal:
+            marriage += 6
+            marriage_pros.append("월덕귀인 공유 — 평화로운 흐름")
         if samhap_completions:
             marriage += SAMHAP_COMPLETION_MARRIAGE
-            marriage_reasons.append(
-                f"삼합({samhap_completions[0]['element']}국) 완성 — 운명적 호흡"
-            )
+            marriage_pros.append(f"삼합({samhap_completions[0]['element']}국) 완성")
         strongest1 = max(natal1.element_stats, key=lambda o: natal1.element_stats.get(o, 0))
         strongest2 = max(natal2.element_stats, key=lambda o: natal2.element_stats.get(o, 0))
         if strongest2.generates == natal1.yongshin:
             marriage += 8
-            marriage_reasons.append(f"상대 {strongest2.name} 기운이 내 용신({natal1.yongshin.name})을 도움")
+            marriage_pros.append(f"상대 {strongest2.name}이 내 용신({natal1.yongshin.name}) 도움")
         if strongest1.generates == natal2.yongshin:
             marriage += 8
-        marriage += int((avg_postnatal("인연운") - 50) * 0.2)
+            marriage_pros.append(f"내 {strongest1.name}이 상대 용신({natal2.yongshin.name}) 도움")
+        # 인성(印星) 보유 — 정서적 안정
+        has_in1 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal1.sipsin)
+        has_in2 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal2.sipsin)
+        if has_in1 and has_in2:
+            marriage += 4
+            marriage_pros.append("두 분 모두 인성 — 정서적 안정")
+        yeon_avg = avg_postnatal("인연운")
+        if yeon_avg >= 65:
+            marriage_pros.append(f"올해 인연운 양호({yeon_avg:.0f})")
+        elif yeon_avg <= 35:
+            marriage_cons.append(f"올해 인연운 부진({yeon_avg:.0f})")
+        marriage += int((yeon_avg - 50) * 0.2)
         marriage = max(0, min(100, marriage))
-        marriage_reason = ", ".join(marriage_reasons[:3]) if marriage_reasons else "기본 관계로 산출"
 
         # 재물
         wealth = 45
-        wealth_reasons = []
+        wealth_pros: list[str] = []
+        wealth_cons: list[str] = []
         if has_jae1 and has_jae2:
             wealth += 15
-            wealth_reasons.append("두 분 모두 재성(財星) 보유")
+            wealth_pros.append("두 분 모두 재성(財星) 보유")
         elif has_jae1 or has_jae2:
             wealth += 8
-            wealth_reasons.append("한 분이 재성 보유 — 재물 흐름 주도")
+            wealth_pros.append("한 분 재성 보유 — 재물 주도")
+        else:
+            wealth_cons.append("양쪽 재성 부재 — 재물 흐름 약함")
+        # 식상생재(食傷生財) — 식신·상관이 있으면 재성을 키움
+        if has_sik1 and has_sik2 and (has_jae1 or has_jae2):
+            wealth += 5
+            wealth_pros.append("식상생재(食傷生財) — 재물 창출력")
         for r in day_rels:
             if r.kind in ("stem_combine", "branch_combine"):
                 wealth += 5
+                wealth_pros.append("일주 합")
         if element_complement.get("score", 0) >= 5:
             wealth += 5
-            wealth_reasons.append("오행 보완으로 재물 시너지")
-        wealth += int((avg_postnatal("재물운") - 50) * 0.2)
+            wealth_pros.append("오행 보완 시너지")
+        elif element_complement.get("overlap_strong"):
+            wealth_cons.append("오행 과잉 중복")
+        jae_avg = avg_postnatal("재물운")
+        if jae_avg >= 65:
+            wealth_pros.append(f"올해 재물운 양호({jae_avg:.0f})")
+        elif jae_avg <= 35:
+            wealth_cons.append(f"올해 재물운 부진({jae_avg:.0f})")
+        wealth += int((jae_avg - 50) * 0.2)
         wealth = max(0, min(100, wealth))
-        wealth_reason = ", ".join(wealth_reasons[:3]) if wealth_reasons else "기본 관계로 산출"
 
         # 직업
         career = 45
-        career_reasons = []
+        career_pros: list[str] = []
+        career_cons: list[str] = []
         if has_gwan1 and has_gwan2:
             career += 15
-            career_reasons.append("두 분 모두 관성(官星) 보유")
+            career_pros.append("두 분 모두 관성(官星) 보유")
         elif has_gwan1 or has_gwan2:
             career += 8
-            career_reasons.append("한 분이 관성 보유 — 방향 제시")
+            career_pros.append("한 분 관성 보유 — 방향 제시")
+        else:
+            career_cons.append("양쪽 관성 부재 — 사회적 방향성 약함")
+        # 인성+관성 = 관인상생(官印相生) 직장 안정
+        if has_in1 and has_in2 and (has_gwan1 or has_gwan2):
+            career += 5
+            career_pros.append("관인상생(官印相生) — 직장 안정")
         for r in wol_rels:
             if r.kind in ("stem_combine", "branch_combine"):
                 career += 6
-                career_reasons.append("월주 합 — 사회 환경 조화")
+                career_pros.append("월주 합 — 사회 환경 조화")
             elif r.kind == "branch_clash":
                 career -= 6
-        career += int((avg_postnatal("관록운") - 50) * 0.2)
+                career_cons.append("월주 충")
+        # 문창귀인 공유 — 학업·문서·전문성
+        if "문창귀인" in shared_sinsal:
+            career += 5
+            career_pros.append("문창귀인 공유 — 전문성 코드")
+        gwan_avg = avg_postnatal("관록운")
+        if gwan_avg >= 65:
+            career_pros.append(f"올해 관록운 양호({gwan_avg:.0f})")
+        elif gwan_avg <= 35:
+            career_cons.append(f"올해 관록운 부진({gwan_avg:.0f})")
+        career += int((gwan_avg - 50) * 0.2)
         career = max(0, min(100, career))
-        career_reason = ", ".join(career_reasons[:3]) if career_reasons else "기본 관계로 산출"
+
+        def _reason(pros: list[str], cons: list[str]) -> str:
+            parts = (pros + cons)[:3]
+            return ", ".join(parts) if parts else "기본 관계로 산출"
 
         return {
-            "연애": {"score": love, "level": _level(love), "reason": love_reason},
-            "결혼": {"score": marriage, "level": _level(marriage), "reason": marriage_reason},
-            "재물": {"score": wealth, "level": _level(wealth), "reason": wealth_reason},
-            "직업": {"score": career, "level": _level(career), "reason": career_reason},
+            "연애": {"score": love, "level": _level(love), "reason": _reason(love_pros, love_cons),
+                    "pros": love_pros, "cons": love_cons},
+            "결혼": {"score": marriage, "level": _level(marriage), "reason": _reason(marriage_pros, marriage_cons),
+                    "pros": marriage_pros, "cons": marriage_cons},
+            "재물": {"score": wealth, "level": _level(wealth), "reason": _reason(wealth_pros, wealth_cons),
+                    "pros": wealth_pros, "cons": wealth_cons},
+            "직업": {"score": career, "level": _level(career), "reason": _reason(career_pros, career_cons),
+                    "pros": career_pros, "cons": career_cons},
         }
 
     def _compute_key_traits(
