@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile } from "@/types/analysis";
 import {
   analyzeCompatibility,
   analyzeCompatibilityByProfiles,
   listProfiles,
-  preparePayment,
 } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import CompatibilityResultView from "@/components/CompatibilityResult";
@@ -17,9 +15,7 @@ import PersonCard, { type PersonState, DEFAULT_MANUAL } from "@/components/Perso
 import { MEMBER_ID_KEY, HOUR_OPTIONS } from "@/lib/constants";
 
 export default function CompatibilityPage() {
-  const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [memberId, setMemberId] = useState<string | null>(null);
   const [detectedCity, setDetectedCity] = useState("Seoul");
   const [person1, setPerson1] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "male" }, profileId: "" });
   const [person2, setPerson2] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "female", birthDate: "1993-01-01" }, profileId: "" });
@@ -35,7 +31,6 @@ export default function CompatibilityPage() {
   useEffect(() => {
     const id = localStorage.getItem(MEMBER_ID_KEY);
     if (!id) return;
-    setMemberId(id);
     listProfiles(id).then((ps) => {
       setProfiles(ps);
       if (ps.length > 0) {
@@ -65,28 +60,6 @@ export default function CompatibilityPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const credit = sessionStorage.getItem("kkachi_credit_compatibility");
-    if (!credit) {
-      const mid = localStorage.getItem(MEMBER_ID_KEY);
-      if (!mid) {
-        router.push("/join");
-        return;
-      }
-      try {
-        const { order_id, amount, feature_type, order_name } = await preparePayment({
-          member_id: mid,
-          feature_type: "compatibility",
-        });
-        router.push(
-          `/payment/checkout?order_id=${order_id}&amount=${amount}&feature_type=${feature_type}&order_name=${encodeURIComponent(order_name)}`
-        );
-      } catch {
-        router.push("/join");
-      }
-      return;
-    }
-    sessionStorage.removeItem("kkachi_credit_compatibility");
 
     setLoading(true);
     setError(null);

@@ -306,6 +306,40 @@ export interface PalmistryResult {
   blocks: InterpretBlock[];
 }
 
+export interface PillarRelation {
+  pillar1: string;        // "年柱" | "月柱" | "日柱" | "時柱"
+  pillar2: string;
+  kind:
+    | "stem_combine"
+    | "branch_combine"
+    | "branch_clash"
+    | "wonjin"
+    | "hyung"
+    | "hae"
+    | "pa"
+    | "samhap";
+  label: string;          // "卯戌 육합", "丑未 충"
+  polarity: 1 | -1 | 0;
+}
+
+export interface PillarSnapshot {
+  pillars: string[];                  // ["甲子", "丙寅", ...]
+  day_stem: string;                   // "甲"
+  element_stats: Record<string, number>;
+  my_main_element: string;
+  strength_label: string;
+  yongshin: string;
+}
+
+export interface ElementComplement {
+  p1_lacks: string[];
+  p1_provides: string[];
+  p2_lacks: string[];
+  p2_provides: string[];
+  overlap_strong: string[];
+  score: number;
+}
+
 export interface CompatibilityResult {
   total_score: number;
   label: string;
@@ -314,6 +348,15 @@ export interface CompatibilityResult {
   stem_combine: boolean;
   branch_combine: boolean;
   branch_clash: boolean;
+  pillar1_snapshot: PillarSnapshot | null;
+  pillar2_snapshot: PillarSnapshot | null;
+  pillar_relations: PillarRelation[];
+  element_complement: ElementComplement;
+  shared_sinsal: string[];
+  unique_sinsal_1: string[];
+  unique_sinsal_2: string[];
+  key_traits: string[];
+  narrative: string | null;
 }
 
 export interface PersonInput {

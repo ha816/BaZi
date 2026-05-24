@@ -79,6 +79,7 @@ class Container(containers.DeclarativeContainer):
         profile_port=profile_repo,
         compatibility_port=compatibility_repo,
         saju_service=kkachi_service,
+        llm_port=ollama_adapter,
     )
     weather_adapter = providers.Singleton(WeatherAdapter)
     fortune_repo = providers.Singleton(FortuneRepo, session_factory=session_factory)

@@ -328,6 +328,82 @@ class BranchWonjin(Enum):
         raise ValueError(f"No wonjin partner for {branch}")
 
 
+class BranchHyung(Enum):
+    """지지형(地支刑) — 서로 억압·자극하는 관계.
+
+    삼형: 寅巳申(持勢之刑), 丑戌未(無恩之刑), 子卯(無禮之刑) 그리고 자형(自刑) 辰·午·酉·亥.
+    pair-level로 정의하여 두 지지의 만남에서 부분형(部分刑)도 감지한다.
+    """
+
+    寅巳 = (Branch.寅, Branch.巳)
+    巳申 = (Branch.巳, Branch.申)
+    寅申 = (Branch.寅, Branch.申)
+    丑戌 = (Branch.丑, Branch.戌)
+    戌未 = (Branch.戌, Branch.未)
+    丑未 = (Branch.丑, Branch.未)
+    子卯 = (Branch.子, Branch.卯)
+    辰辰 = (Branch.辰, Branch.辰)
+    午午 = (Branch.午, Branch.午)
+    酉酉 = (Branch.酉, Branch.酉)
+    亥亥 = (Branch.亥, Branch.亥)
+
+    def __init__(self, first: Branch, second: Branch):
+        self.first = first
+        self.second = second
+
+    @classmethod
+    def find(cls, b1: Branch, b2: Branch) -> "BranchHyung | None":
+        """두 지지가 형(刑) 관계인지 검사하고 해당 enum을 반환한다."""
+        for pair in cls:
+            if {pair.first, pair.second} == {b1, b2} or (pair.first == pair.second == b1 == b2):
+                return pair
+        return None
+
+
+class BranchHae(Enum):
+    """지지육해(六害) — 서로 방해·다툼이 생기는 6쌍."""
+
+    子未 = (Branch.子, Branch.未)
+    丑午 = (Branch.丑, Branch.午)
+    寅巳 = (Branch.寅, Branch.巳)
+    卯辰 = (Branch.卯, Branch.辰)
+    申亥 = (Branch.申, Branch.亥)
+    酉戌 = (Branch.酉, Branch.戌)
+
+    def __init__(self, first: Branch, second: Branch):
+        self.first = first
+        self.second = second
+
+    @classmethod
+    def find(cls, b1: Branch, b2: Branch) -> "BranchHae | None":
+        for pair in cls:
+            if {pair.first, pair.second} == {b1, b2}:
+                return pair
+        return None
+
+
+class BranchPa(Enum):
+    """지지파(破) — 서로 깨뜨리는 6쌍."""
+
+    子酉 = (Branch.子, Branch.酉)
+    卯午 = (Branch.卯, Branch.午)
+    辰丑 = (Branch.辰, Branch.丑)
+    戌未 = (Branch.戌, Branch.未)
+    寅亥 = (Branch.寅, Branch.亥)
+    巳申 = (Branch.巳, Branch.申)
+
+    def __init__(self, first: Branch, second: Branch):
+        self.first = first
+        self.second = second
+
+    @classmethod
+    def find(cls, b1: Branch, b2: Branch) -> "BranchPa | None":
+        for pair in cls:
+            if {pair.first, pair.second} == {b1, b2}:
+                return pair
+        return None
+
+
 BRANCHES_ORDER: list[str] = [b.name for b in Branch]
 
 

@@ -53,4 +53,4 @@ async def analyze_compatibility_direct(
     gender2 = Gender.MALE if req.person2.gender == "male" else Gender.FEMALE
     user1 = User(name=req.person1.name, gender=gender1, birth_dt=req.person1.birth_dt, city=req.person1.city)
     user2 = User(name=req.person2.name, gender=gender2, birth_dt=req.person2.birth_dt, city=req.person2.city)
-    return svc.compute_direct(user1, user2, req.year)
+    return await svc.compute_direct(user1, user2, req.year)
