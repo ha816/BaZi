@@ -1,7 +1,8 @@
 import asyncio
 from datetime import datetime
 
-from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from kkachi.adapter.outer.natal_adapter import NatalAdapter
+from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
 from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
 from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
 from kkachi.domain.user import Gender, User

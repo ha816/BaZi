@@ -5,7 +5,8 @@ from kkachi.adapter.outer.db.member_repo import MemberRepo
 from kkachi.adapter.outer.db.payment_repo import PaymentRepo
 from kkachi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FeedbackRepo, FortuneRepo, ProfileRepo
 from kkachi.adapter.outer.llm.ollama_adapter import OllamaAdapter
-from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from kkachi.adapter.outer.natal_adapter import NatalAdapter
+from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
 from kkachi.adapter.outer.weather_adapter import WeatherAdapter
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.fortune_service import FortuneService

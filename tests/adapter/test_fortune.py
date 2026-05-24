@@ -3,7 +3,8 @@ from datetime import datetime
 
 from kkachi.domain.ganji import Sipsin
 from kkachi.domain.user import Gender, User
-from kkachi.adapter.outer.natal_adapter import NatalAdapter, PostnatalAdapter
+from kkachi.adapter.outer.natal_adapter import NatalAdapter
+from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
 from kkachi.application.util.util import year_to_ganji
 
 _natal = NatalAdapter()
