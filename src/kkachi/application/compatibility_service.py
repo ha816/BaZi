@@ -7,7 +7,8 @@ from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.domain.compatibility import CompatibilityResult, PillarRelation, PillarSnapshot
 from kkachi.domain.ganji import (
-    SAMHAP_GROUPS, BranchHae, BranchHyung, BranchPa, BranchWonjin, Oheng, Pillar, Sipsin,
+    SAMHAP_GROUPS, BranchHae, BranchHyung, BranchPa, BranchWonjin,
+    Oheng, Pillar, Sipsin, StemClash,
 )
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
@@ -22,6 +23,7 @@ PILLAR_WEIGHT = {
 
 RELATION_DELTA = {
     "stem_combine": 10,
+    "stem_clash": -8,
     "branch_combine": 12,
     "branch_clash": -10,
     "wonjin": -6,
@@ -176,6 +178,11 @@ class CompatibilityService:
                     pillar1=k, pillar2=k, kind="stem_combine",
                     label=f"{sb1.stem.name}{sb2.stem.name} 천간합", polarity=1,
                 ))
+            if (sc := StemClash.find(sb1.stem, sb2.stem)):
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="stem_clash",
+                    label=f"{sc.first.name}{sc.second.name} 천간충", polarity=-1,
+                ))
             if sb1.branch != sb2.branch and sb1.branch.combines == sb2.branch:
                 relations.append(PillarRelation(
                     pillar1=k, pillar2=k, kind="branch_combine",
@@ -234,8 +241,9 @@ class CompatibilityService:
             in_p2 = group & b2
             if (in_p1 | in_p2) != group:
                 continue
-            if not in_p1 or not in_p2:
-                continue  # 한쪽에서만 완성된 경우는 관계 시그널 약함
+            # 양쪽이 각자 상대가 갖지 않은 멤버를 가져야 진정한 cross-completion
+            if not (in_p1 - in_p2) or not (in_p2 - in_p1):
+                continue
             completions.append({
                 "element": result_el,
                 "branches": sorted(group),
@@ -355,6 +363,9 @@ class CompatibilityService:
             elif r.kind == "branch_clash":
                 marriage -= 10
                 marriage_reasons.append("일주 충 — 갈등 주의")
+            elif r.kind == "stem_clash":
+                marriage -= 8
+                marriage_reasons.append("일주 천간충 — 의견 충돌 주의")
         if "천을귀인" in shared_sinsal:
             marriage += 10
             marriage_reasons.append("천을귀인 공유 — 위기에 서로 보호")
@@ -437,6 +448,8 @@ class CompatibilityService:
             traits.append("일주 천간합 — 부부 합")
         if any(r.kind == "branch_combine" and r.pillar1 == day and r.pillar2 == day for r in pillar_relations):
             traits.append("일지 육합 — 감정 교감")
+        if any(r.kind == "stem_clash" and r.pillar1 == day and r.pillar2 == day for r in pillar_relations):
+            traits.append("일주 천간충 — 의견 충돌")
         if pos >= 3:
             traits.append("기운이 잘 맞음")
         if element_complement.get("score", 0) >= 6:

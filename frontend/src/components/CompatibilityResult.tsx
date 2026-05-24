@@ -81,10 +81,16 @@ function ElementBar({ snapshot, label }: { snapshot: PillarSnapshot; label: stri
 }
 
 export default function CompatibilityResultView({ data, name1, name2 }: Props) {
+  // 신규 필드는 이전 캐시(JSONB) 에 없을 수 있으므로 안전한 기본값 적용
   const {
     total_score, label, domain_scores, description,
-    pillar1_snapshot, pillar2_snapshot, pillar_relations, element_complement,
-    shared_sinsal, unique_sinsal_1, unique_sinsal_2, samhap_completions, key_traits, narrative,
+    pillar1_snapshot = null, pillar2_snapshot = null,
+    pillar_relations = [],
+    element_complement = { p1_lacks: [], p1_provides: [], p2_lacks: [], p2_provides: [], overlap_strong: [], score: 0 },
+    shared_sinsal = [], unique_sinsal_1 = [], unique_sinsal_2 = [],
+    samhap_completions = [],
+    key_traits = [],
+    narrative = null,
   } = data;
 
   return (

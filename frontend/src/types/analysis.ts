@@ -311,6 +311,7 @@ export interface PillarRelation {
   pillar2: string;
   kind:
     | "stem_combine"
+    | "stem_clash"
     | "branch_combine"
     | "branch_clash"
     | "wonjin"

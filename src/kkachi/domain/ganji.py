@@ -203,6 +203,29 @@ class StemCombine(Enum):
         raise ValueError(f"No combine partner for {stem}")
 
 
+class StemClash(Enum):
+    """천간충(天干衝) - 같은 음양·정반대 오행이 만나 충돌하는 4쌍.
+
+    戊·己(土) 는 중앙에 있어 충이 없다.
+    """
+
+    甲庚 = (Stem.甲, Stem.庚)  # 양목 ↔ 양금
+    乙辛 = (Stem.乙, Stem.辛)  # 음목 ↔ 음금
+    丙壬 = (Stem.丙, Stem.壬)  # 양화 ↔ 양수
+    丁癸 = (Stem.丁, Stem.癸)  # 음화 ↔ 음수
+
+    def __init__(self, first: Stem, second: Stem):
+        self.first = first
+        self.second = second
+
+    @classmethod
+    def find(cls, s1: Stem, s2: Stem) -> "StemClash | None":
+        for pair in cls:
+            if {pair.first, pair.second} == {s1, s2}:
+                return pair
+        return None
+
+
 class StemBranch:
     """간지(干支) - 천간과 지지의 조합. 사주의 각 기둥을 구성하는 단위."""
 

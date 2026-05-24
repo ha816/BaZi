@@ -5,13 +5,14 @@ import PillarDetail from "./PillarDetail";
 
 const KIND_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
   stem_combine:   { label: "천간합", color: "#16a34a", bg: "#dcfce7", border: "#86efac" },
+  stem_clash:     { label: "천간충", color: "#b91c1c", bg: "#fecaca", border: "#f87171" },
   branch_combine: { label: "육합",   color: "#16a34a", bg: "#dcfce7", border: "#86efac" },
   branch_clash:   { label: "충",     color: "#dc2626", bg: "#fee2e2", border: "#fca5a5" },
   wonjin:         { label: "원진",   color: "#ea580c", bg: "#ffedd5", border: "#fdba74" },
   hyung:          { label: "형",     color: "#9333ea", bg: "#f3e8ff", border: "#d8b4fe" },
   hae:            { label: "해",     color: "#2563eb", bg: "#dbeafe", border: "#93c5fd" },
   pa:             { label: "파",     color: "#6b7280", bg: "#f3f4f6", border: "#d1d5db" },
-  samhap:         { label: "삼합",   color: "#0d9488", bg: "#ccfbf1", border: "#5eead4" },
+  samhap:         { label: "반합",   color: "#0d9488", bg: "#ccfbf1", border: "#5eead4" },
 };
 
 // PillarDetail은 [3,2,1,0] 순서로 시→일→월→년 컬럼 렌더링

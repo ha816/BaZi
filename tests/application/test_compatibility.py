@@ -95,7 +95,7 @@ def test_pillar_relations_present_and_well_formed():
     svc = _service()
     n1, n2, _, _ = _make_pair()
     rels = svc._compute_pillar_relations(n1, n2)
-    valid_kinds = {"stem_combine", "branch_combine", "branch_clash", "wonjin", "hyung", "hae", "pa", "samhap"}
+    valid_kinds = {"stem_combine", "stem_clash", "branch_combine", "branch_clash", "wonjin", "hyung", "hae", "pa", "samhap"}
     pillar_kor = {p.korean for p in Pillar}
     for r in rels:
         assert r.kind in valid_kinds
@@ -124,10 +124,22 @@ def test_samhap_completions_structure():
         assert c["element"] in samhap_elements
         assert len(c["branches"]) == 3
         assert set(c["branches"]) <= branch_set
-        # cross-completion 만 — 한쪽 단독은 제외
-        assert c["p1_branches"] and c["p2_branches"]
-        # 두 집합의 합이 group 과 일치
-        assert set(c["p1_branches"]) | set(c["p2_branches"]) == set(c["branches"])
+        # 양쪽이 각자 상대가 갖지 않은 멤버를 가져야 함 (진정한 cross-completion)
+        p1 = set(c["p1_branches"])
+        p2 = set(c["p2_branches"])
+        assert p1 - p2, "p1 이 단독으로 기여하는 멤버가 있어야 함"
+        assert p2 - p1, "p2 가 단독으로 기여하는 멤버가 있어야 함"
+        assert p1 | p2 == set(c["branches"])
+
+
+def test_stem_clash_detected_for_known_pair():
+    """직접 갑경(甲庚) 쌍을 만들면 stem_clash 가 잡혀야 한다."""
+    from kkachi.domain.ganji import StemClash, Stem
+    assert StemClash.find(Stem.甲, Stem.庚).name == "甲庚"
+    assert StemClash.find(Stem.庚, Stem.甲).name == "甲庚"
+    assert StemClash.find(Stem.甲, Stem.乙) is None
+    # 戊·己 는 충 없음
+    assert StemClash.find(Stem.戊, Stem.甲) is None
 
 
 def test_samhap_completion_boosts_marriage_and_total():
