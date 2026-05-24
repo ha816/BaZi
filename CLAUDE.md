@@ -37,45 +37,59 @@ BaZi/
 ├── alembic.ini
 ├── docker/
 │   └── docker-compose.yml   # 로컬 개발용 PostgreSQL 17
-├── src/bazi/
+├── src/kkachi/
 ├── fastapi.py               # FastAPI 앱 + CORS + 라우터 등록
 ├── container.py             # DI Container (dependency-injector Singleton)
 ├── domain/
-│   ├── ganji.py             # Oheng, Stem, Branch, Sipsin, SibiUnseong enum
+│   ├── ganji.py             # Oheng, Stem, Branch, Sipsin, SibiUnseong enum + 상수
 │   ├── natal.py             # Saju, NatalInfo, PostnatalInfo, DaeunPeriod dataclass
 │   ├── user.py              # User dataclass, Gender enum
 │   ├── interpretation.py    # NatalResult + PostnatalResult + Interpretation dataclass
+│   ├── fortune.py           # DailyFortune + Forecast + 시운 도메인
 │   ├── member.py            # Member dataclass
 │   ├── profile.py           # Profile + Analysis dataclass
 │   ├── compatibility.py     # CompatibilityResult + Compatibility dataclass
-│   └── daily_fortune.py     # DailyFortune + DailyFortuneCache dataclass
+│   └── payment.py           # Payment dataclass
 ├── application/
-│   ├── saju_service.py           # SajuService: analyze() + interpret() 오케스트레이션
+│   ├── kkachi_service.py         # KkachiService: analyze() + interpret() 오케스트레이션
 │   ├── member_service.py         # MemberService: create/get (이메일 중복 시 기존 반환)
 │   ├── profile_service.py        # ProfileService: analyze_profile() 캐시 우선
 │   ├── compatibility_service.py  # CompatibilityService: 오행 기반 궁합 계산 + 캐시
-│   ├── daily_fortune_service.py  # DailyFortuneService: 일진+날씨 기반 운세, 7일 예보
+│   ├── fortune_service.py        # FortuneService: 일진/시운/대운/세운 + 날씨, 예보
+│   ├── payment_service.py        # PaymentService: 결제 처리
+│   ├── report_builder.py         # 해석 결과 → 최종 리포트 포맷팅
 │   ├── port/saju_port.py             # NatalPort, PostnatalPort, InterpreterPort ABC
 │   ├── port/member_port.py           # MemberPort ABC
 │   ├── port/profile_port.py          # ProfilePort ABC
 │   ├── port/analysis_port.py         # AnalysisPort ABC
 │   ├── port/compatibility_port.py    # CompatibilityPort ABC
-│   ├── port/daily_fortune_port.py    # DailyFortunePort ABC
-│   └── port/weather_port.py          # WeatherPort ABC
-│   ├── interpreter/              # 9개 텍스트 해석기 클래스
+│   ├── port/fortune_port.py          # FortunePort ABC (일진/시운 통합)
+│   ├── port/weather_port.py          # WeatherPort ABC
+│   ├── port/payment_port.py          # PaymentPort ABC
+│   ├── port/feedback_port.py         # FeedbackPort ABC (해석 만족도 피드백)
+│   ├── port/llm_port.py              # LlmPort ABC
+│   ├── interpreter/              # 13개 텍스트 해석기 (advice/daeun/fengshui/fortune/
+│   │                             #   hand_shape/narrative/natal/personality/relationship/
+│   │                             #   samjae/seun/yongshin/zodiac)
+│   ├── use_case/                 # get_annual_fortune, get_saju_context, get_weather
 │   └── util/util.py              # year_to_ganji 등 유틸
 └── adapter/
-    ├── inner/saju_controller.py            # POST /saju/interpret
+    ├── inner/kkachi_controller.py          # POST /saju/basic, /saju/interpret
     ├── inner/member_controller.py          # POST/GET /members
     ├── inner/profile_controller.py         # /members/{id}/profiles + /analyze + /daily + /forecast
     ├── inner/compatibility_controller.py   # POST /compatibility, POST /compatibility/direct
+    ├── inner/weather_controller.py         # GET /weather
+    ├── inner/palmistry_controller.py       # POST /palmistry (손금 분석)
+    ├── inner/payment_controller.py         # POST /payments
+    ├── inner/mcp_server.py                 # MCP 서버 엔드포인트
     ├── outer/natal_adapter.py              # NatalAdapter + PostnatalAdapter (sajupy 연동)
     ├── outer/weather_adapter.py            # WeatherAdapter (Open-Meteo, 7일 예보, 도시→lat/lon 지오코딩)
+    ├── outer/llm/ollama_adapter.py         # LLM 어댑터 (Ollama 로컬 호출)
     └── outer/db/
-        ├── base.py          # make_engine, make_session_factory
-        ├── models.py        # MemberModel, ProfileModel, AnalysisModel, CompatibilityModel, DailyFortuneModel
+        ├── models.py        # MemberModel, ProfileModel, AnalysisModel, CompatibilityModel, DailyFortuneModel, PaymentModel
         ├── member_repo.py   # MemberPort 구현
-        └── profile_repo.py  # ProfilePort + AnalysisPort + CompatibilityRepo + DailyFortuneRepo 구현
+        ├── profile_repo.py  # ProfilePort + AnalysisPort + CompatibilityRepo + DailyFortuneRepo 구현
+        └── payment_repo.py  # PaymentPort 구현
 
 frontend/src/
 ├── app/
@@ -84,30 +98,69 @@ frontend/src/
 │   │   ├── page.tsx          # 무료 분석 — POST /saju/basic → FreeResultSlides
 │   │   └── deep/page.tsx     # 심층(프리미엄) 분석 — 로그인 필수, sessionStorage 입력값 사용
 │   ├── compatibility/        # 궁합 페이지 (프로필 선택 or 직접 입력)
-│   └── my/                   # 회원 가입 + 프로필 관리 + 오늘의 운세
+│   ├── my/                   # 계정 설정 (정보·로그아웃·탈퇴)
+│   ├── join/                 # 로그인/회원가입
+│   ├── profile/              # 프로필 관리 (추가·삭제)
+│   ├── siun/                 # 시운(時運) — 오늘/내일/주간 탭
+│   ├── weather/              # 날씨 + 오행 매핑
+│   ├── palmistry/            # 손금 (MediaPipe)
+│   └── payment/              # checkout / success / fail
 ├── components/
 │   ├── AnalysisForm.tsx      # 사주 입력 폼 — 이름+성별+생년월일+경도, 프로필 저장 버튼, 정밀 설정 collapsible
-│   ├── SectionHeader.tsx     # 섹션 헤더 공통 컴포넌트 (emoji + 제목 + 무료/프리미엄 뱃지)
-│   ├── FreeResultSlides.tsx  # 무료 결과 화면 — 팔자+오행분포+십이지신+블러 CTA
-│   ├── ResultSlides.tsx      # 심층 분석 결과 화면 — 탭 오케스트레이터, name prop 포함
-│   ├── KkachiTip.tsx         # 까치 마스코트 말풍선 컴포넌트 (설명·조언에 사용)
-│   ├── ElementRadar.tsx      # 오행 분포 — CSS 가로 바 차트 (recharts 제거)
-│   ├── PillarDetail.tsx      # 사주팔자 그리드 — pillarSummary prop 추가 (sipsin/sinsal 섹션 제거)
+│   ├── SectionHeader.tsx              # 섹션 헤더 공통 (emoji + 제목 + 무료/프리미엄 뱃지)
+│   ├── CollapsibleSectionHeader.tsx   # 접고 펼치는 섹션 헤더
+│   ├── InlineCollapsibleHeader.tsx    # 인라인용 접기 헤더
+│   ├── SectionAccordion.tsx           # 아코디언 그룹
+│   ├── ResultSlides.tsx      # 심층 분석 결과 — 탭 오케스트레이터, name prop 포함
+│   ├── SlideCarousel.tsx     # 슬라이드 캐러셀
+│   ├── KkachiTip.tsx         # 까치 마스코트 말풍선
+│   ├── CounselorComment.tsx  # 상담사 코멘트 박스
+│   ├── ElementRadar.tsx      # 오행 분포 — CSS 가로 바 차트
+│   ├── OhengAnalysis.tsx     # 오행 분석 카드
+│   ├── OhaengRelationDiagram.tsx # 오행 상생/상극 다이어그램
+│   ├── PillarCard.tsx        # 기둥(년/월/일/시) 단일 카드
+│   ├── PillarDetail.tsx      # 사주팔자 그리드 (pillar_summary 포함)
+│   ├── PillarOhengGrid.tsx   # 팔자 + 오행 통합 그리드
+│   ├── DaeunSeunTable.tsx    # 대운·세운 표
+│   ├── DaeunTimeline.tsx     # 대운 타임라인
+│   ├── DomainBarChart.tsx    # 도메인 점수 바 차트
+│   ├── FortuneSummary.tsx    # 운세 요약 카드
+│   ├── DailyFortune.tsx      # 오늘/내일/주간 운세 패널 (날씨 배지 포함)
 │   ├── CompatibilityResult.tsx
-│   ├── DailyFortune.tsx      # 오늘/내일/주간 탭 운세 패널 (날씨 배지 포함)
+│   ├── PersonCard.tsx        # 인물 카드 (궁합용)
+│   ├── ProfileCard.tsx       # 프로필 카드
+│   ├── ProfileForm.tsx       # 프로필 입력 폼
+│   ├── ScoreBar.tsx          # 점수 바 컴포넌트
+│   ├── InterpretSection.tsx  # 해석 섹션 wrapper
+│   ├── DetailToggle.tsx      # 더보기 토글
+│   ├── TermBadge.tsx         # 용어 배지 (툴팁 연동)
+│   ├── Tooltip.tsx           # 공통 툴팁
+│   ├── FeedPost.tsx          # 홈 피드 카드
+│   ├── BottomNav.tsx         # 하단 네비게이션
+│   ├── SajuChat.tsx          # 사주 챗 (LLM 인터페이스)
 │   └── LoadingSpinner.tsx
 │   └── tabs/
-│       ├── NatalTab.tsx        # 사주팔자 탭 — 팔자그리드·오행·십신·십이운성·신살
-│       ├── PersonalityTab.tsx  # 성격분석 탭
+│       ├── NatalTab.tsx        # 사주팔자 탭 — 팔자·오행·십신·십이운성·신살
+│       ├── PersonalityTab.tsx  # (placeholder — 현재 NatalTab으로 통합 검토 중)
 │       ├── FortuneTab.tsx      # 올해운세 탭
 │       ├── DaeunTab.tsx        # 대운흐름 탭
-│       ├── RelationshipTab.tsx # 인간관계 탭
+│       ├── SeunTab.tsx         # 세운(年運) 탭
+│       ├── WolUnTab.tsx        # 월운(月運) 탭
+│       ├── YongshinTab.tsx     # 용신(用神) 탭
+│       ├── SamjaeTab.tsx       # 삼재 탭
+│       ├── FengShuiTab.tsx     # 풍수(팔택풍수) 탭
 │       ├── AdviceTab.tsx       # 종합조언 탭
-│       └── ZodiacTab.tsx       # 12지신 탭
+│       ├── ZodiacTab.tsx       # 12지신 탭
+│       └── AiTab.tsx           # AI 해석 탭
 ├── lib/
 │   ├── api.ts                # API 호출 함수 전체 (getBasicChart 포함)
+│   ├── ganji.ts              # 천간·지지 메타 단일 SoT (프론트엔드)
+│   ├── elementColors.ts      # 오행별 색상 매핑
+│   ├── zodiac.ts             # 12지신 메타
+│   ├── glossary.ts           # 용어 사전 (TermBadge 연동)
+│   ├── constants.ts          # 공통 상수
 │   └── location.ts           # ipapi.co 기반 IP 위치 감지
-└── types/analysis.ts         # TypeScript 타입 정의 (NatalResult.pillar_summary 추가)
+└── types/analysis.ts         # TypeScript 타입 정의 (NatalResult.pillar_summary 포함)
 
 frontend/public/kkachi/
 ├── normal_kkachi_00.png      # 기본 까치 (KkachiTip에 사용)
@@ -132,19 +185,23 @@ frontend/public/kkachi/
 
 ```
 POST /saju/basic  (무료 — 팔자·오행·십이지신)
-  → SajuService.basic_analyze(user, year)
+  → KkachiService.basic_analyze(user, year)
       → NatalAdapter → NatalInfo
       → pillars, element_stats, my_element, year_branch, zodiac_relation 반환
   → JSON 응답
 
 POST /saju/interpret  (심층 — 로그인 필요)
-  → SajuService.analyze()
-      → NatalAdapter → NatalInfo (간지, 오행, 강약, 용신, 십신, 십이운성, 신살)
-      → PostnatalAdapter → PostnatalInfo (세운, 대운, 삼재, 충합, 영역점수)
-  → SajuService.interpret()
-      → 9개 Interpreter → Interpretation (최종 결과)
+  → KkachiService.analyze()
+      → NatalAdapter → NatalInfo (간지, 오행, 강약, 용신, 십신, 십이운성, 신살, 풍수, 12지신)
+      → PostnatalAdapter → PostnatalInfo (세운, 대운, 월운, 시운, 삼재, 충합, 영역점수)
+  → KkachiService.interpret()
+      → 13개 Interpreter → Interpretation (최종 결과)
+      → ReportBuilder → 최종 포맷팅
   → asdict() → JSON 응답
 ```
+
+> 최근 이관: 시운(時運)·대운·세운·월운, 풍수(팔택풍수), 12지신 해석 로직은 모두 백엔드로 이관됨.
+> 프론트엔드의 `lib/ganji.ts`는 표시용 메타(이름/색상)에만 사용 — 해석 분기 금지.
 
 ## Always / Never
 
@@ -152,6 +209,7 @@ POST /saju/interpret  (심층 — 로그인 필요)
 - `uv run`으로 Python 실행 (pip, python 직접 실행 금지)
 - 테스트를 먼저 실행해서 기존 동작 확인 후 수정
 - 3개 이상 파일 변경 시 Plan 먼저
+- **리팩토링 작업 시 `docs/REFACTORING.md`를 먼저 읽을 것**
 
 **NEVER:**
 - `git push --force`
@@ -314,8 +372,12 @@ erDiagram
 | `/join` | 회원가입 / 로그인 (이메일 기반, 완료 후 `/profile` redirect) |
 | `/my` | 계정 설정 — 정보 확인 · 로그아웃 · **회원 탈퇴** (이메일 확인 후 cascade 삭제) |
 | `/profile` | 프로필 관리 — 추가 / 삭제 (비로그인 시 `/join` redirect) |
-| `/analysis` | 사주 분석 — 프로필 선택 or 직접 입력 |
+| `/analysis` | 사주 분석 — 프로필 선택 or 직접 입력 (무료) → `/analysis/deep` (심층) |
 | `/compatibility` | 궁합 — 프로필 선택 or 직접 입력, 둘 다 프로필이면 캐시 적용 |
+| `/siun` | 시운(時運) — 오늘/내일/주간 탭, 날씨 배지 포함 |
+| `/weather` | 날씨 + 오행 매핑 |
+| `/palmistry` | 손금 분석 (MediaPipe + OpenCV) |
+| `/payment/{checkout\|success\|fail}` | 결제 플로우 |
 
 ### 비로그인 결과 공개 정책
 - `/analysis`: `POST /saju/basic`으로 팔자·오행분포·십이지신(十二支神) 무료 공개
@@ -396,3 +458,5 @@ tests/
 └── application/
     └── test_interpret.py     # 종합 해석 통합 테스트
 ```
+
+> 시운/풍수/12지신 백엔드 이관 후 회귀 테스트가 부족함 — 신규 작성 시 우선 영역.
