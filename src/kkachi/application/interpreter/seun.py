@@ -5,13 +5,22 @@ from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
 class SeunInterpreter:
     def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
-        if not postnatal.current_daeun:
-            return []
-
         stem_char, _ = postnatal.seun_stem
         branch_char, _ = postnatal.seun_branch
-        seun_elem = Stem.from_char(stem_char).element
 
+        blocks: list[InterpretBlock] = [
+            InterpretBlock(
+                description=(
+                    f"{postnatal.year}년 세운(歲運)은 {stem_char}{branch_char}이에요. "
+                    f"한 해의 표정을 만드는 이 기운이 올해 당신의 일상에 어떤 결을 더해줄지 살펴봅니다."
+                )
+            )
+        ]
+
+        if not postnatal.current_daeun:
+            return blocks
+
+        seun_elem = Stem.from_char(stem_char).element
         daeun_ganji = postnatal.current_daeun.ganji
         daeun_elem = Stem.from_char(daeun_ganji[0]).element
 
@@ -27,6 +36,10 @@ class SeunInterpreter:
                 f"이럴 때일수록 여러 곳에 힘을 분산하기보다 한 가지에 집중하는 것이 훨씬 힘이 됩니다."
             )
         else:
-            return []
+            text = (
+                f"대운({daeun_ganji})과 올해 기운({stem_char}{branch_char})이 무난히 공존하는 해예요. "
+                f"드라마틱한 변화보다 꾸준한 흐름이 어울리는, 다지기 좋은 시기입니다."
+            )
 
-        return [InterpretBlock(description=text)]
+        blocks.append(InterpretBlock(description=text))
+        return blocks
