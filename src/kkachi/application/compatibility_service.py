@@ -6,7 +6,9 @@ from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.domain.compatibility import CompatibilityResult, PillarRelation, PillarSnapshot
-from kkachi.domain.ganji import BranchHae, BranchHyung, BranchPa, BranchWonjin, Oheng, Pillar, Sipsin
+from kkachi.domain.ganji import (
+    SAMHAP_GROUPS, BranchHae, BranchHyung, BranchPa, BranchWonjin, Oheng, Pillar, Sipsin,
+)
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
 
@@ -26,7 +28,11 @@ RELATION_DELTA = {
     "hyung": -8,
     "hae": -5,
     "pa": -4,
+    "samhap": 8,
 }
+
+SAMHAP_COMPLETION_BONUS = 12   # 삼합 완성(3-of-3) per group
+SAMHAP_COMPLETION_MARRIAGE = 15  # 결혼 도메인 가산
 
 
 def _level(score: int) -> str:
@@ -103,6 +109,7 @@ class CompatibilityService:
         postnatal1: PostnatalInfo, postnatal2: PostnatalInfo,
     ) -> CompatibilityResult:
         pillar_relations = self._compute_pillar_relations(natal1, natal2)
+        samhap_completions = self._compute_samhap_completions(natal1, natal2)
         element_complement = self._compute_element_complement(natal1, natal2)
         shared_sinsal, unique_s1, unique_s2 = self._compute_shared_sinsal(natal1, natal2)
 
@@ -112,12 +119,16 @@ class CompatibilityService:
         branch_combine = any(r.kind == "branch_combine" for r in day_rels)
         branch_clash = any(r.kind == "branch_clash" for r in day_rels)
 
-        total_score = self._compute_total_score(pillar_relations, element_complement, len(shared_sinsal))
+        total_score = self._compute_total_score(
+            pillar_relations, element_complement, len(shared_sinsal), len(samhap_completions),
+        )
         domain_scores = self._compute_domain_scores(
             natal1, natal2, postnatal1, postnatal2,
-            pillar_relations, shared_sinsal, element_complement,
+            pillar_relations, shared_sinsal, element_complement, samhap_completions,
         )
-        key_traits = self._compute_key_traits(pillar_relations, element_complement, shared_sinsal)
+        key_traits = self._compute_key_traits(
+            pillar_relations, element_complement, shared_sinsal, samhap_completions,
+        )
         description = self._make_description(natal1, natal2, pillar_relations)
 
         return CompatibilityResult(
@@ -135,6 +146,7 @@ class CompatibilityService:
             shared_sinsal=shared_sinsal,
             unique_sinsal_1=unique_s1,
             unique_sinsal_2=unique_s2,
+            samhap_completions=samhap_completions,
             key_traits=key_traits,
             narrative=None,
         )
@@ -152,51 +164,85 @@ class CompatibilityService:
     def _compute_pillar_relations(
         self, natal1: NatalInfo, natal2: NatalInfo
     ) -> list[PillarRelation]:
+        """같은 기둥(年-年, 月-月, 日-日, 時-時) 4쌍에 대해 7관계 + 반합 검출."""
         relations: list[PillarRelation] = []
-        for p1 in Pillar:
-            sb1 = natal1.saju[p1]
-            for p2 in Pillar:
-                sb2 = natal2.saju[p2]
-                k1, k2 = p1.korean, p2.korean
+        for p in Pillar:
+            sb1 = natal1.saju[p]
+            sb2 = natal2.saju[p]
+            k = p.korean
 
-                if sb1.stem.combines == sb2.stem:
+            if sb1.stem.combines == sb2.stem:
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="stem_combine",
+                    label=f"{sb1.stem.name}{sb2.stem.name} 천간합", polarity=1,
+                ))
+            if sb1.branch != sb2.branch and sb1.branch.combines == sb2.branch:
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="branch_combine",
+                    label=f"{sb1.branch.name}{sb2.branch.name} 육합", polarity=1,
+                ))
+            if sb1.branch.clashes == sb2.branch:
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="branch_clash",
+                    label=f"{sb1.branch.name}{sb2.branch.name} 충", polarity=-1,
+                ))
+            for w in BranchWonjin:
+                if {w.first, w.second} == {sb1.branch, sb2.branch}:
                     relations.append(PillarRelation(
-                        pillar1=k1, pillar2=k2, kind="stem_combine",
-                        label=f"{sb1.stem.name}{sb2.stem.name} 천간합", polarity=1,
+                        pillar1=k, pillar2=k, kind="wonjin",
+                        label=f"{w.first.name}{w.second.name} 원진", polarity=-1,
                     ))
-                if sb1.branch != sb2.branch and sb1.branch.combines == sb2.branch:
+                    break
+            if (h := BranchHyung.find(sb1.branch, sb2.branch)):
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="hyung",
+                    label=f"{h.first.name}{h.second.name} 형", polarity=-1,
+                ))
+            if (hae := BranchHae.find(sb1.branch, sb2.branch)):
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="hae",
+                    label=f"{hae.first.name}{hae.second.name} 해", polarity=-1,
+                ))
+            if (pa := BranchPa.find(sb1.branch, sb2.branch)):
+                relations.append(PillarRelation(
+                    pillar1=k, pillar2=k, kind="pa",
+                    label=f"{pa.first.name}{pa.second.name} 파", polarity=-1,
+                ))
+            for group, result_el in SAMHAP_GROUPS:
+                if (
+                    sb1.branch.name in group
+                    and sb2.branch.name in group
+                    and sb1.branch != sb2.branch
+                ):
                     relations.append(PillarRelation(
-                        pillar1=k1, pillar2=k2, kind="branch_combine",
-                        label=f"{sb1.branch.name}{sb2.branch.name} 육합", polarity=1,
+                        pillar1=k, pillar2=k, kind="samhap",
+                        label=f"{sb1.branch.name}{sb2.branch.name} 반합({result_el})",
+                        polarity=1,
                     ))
-                if sb1.branch.clashes == sb2.branch:
-                    relations.append(PillarRelation(
-                        pillar1=k1, pillar2=k2, kind="branch_clash",
-                        label=f"{sb1.branch.name}{sb2.branch.name} 충", polarity=-1,
-                    ))
-                for w in BranchWonjin:
-                    if {w.first, w.second} == {sb1.branch, sb2.branch}:
-                        relations.append(PillarRelation(
-                            pillar1=k1, pillar2=k2, kind="wonjin",
-                            label=f"{w.first.name}{w.second.name} 원진", polarity=-1,
-                        ))
-                        break
-                if (h := BranchHyung.find(sb1.branch, sb2.branch)):
-                    relations.append(PillarRelation(
-                        pillar1=k1, pillar2=k2, kind="hyung",
-                        label=f"{h.first.name}{h.second.name} 형", polarity=-1,
-                    ))
-                if (hae := BranchHae.find(sb1.branch, sb2.branch)):
-                    relations.append(PillarRelation(
-                        pillar1=k1, pillar2=k2, kind="hae",
-                        label=f"{hae.first.name}{hae.second.name} 해", polarity=-1,
-                    ))
-                if (pa := BranchPa.find(sb1.branch, sb2.branch)):
-                    relations.append(PillarRelation(
-                        pillar1=k1, pillar2=k2, kind="pa",
-                        label=f"{pa.first.name}{pa.second.name} 파", polarity=-1,
-                    ))
+                    break
         return relations
+
+    def _compute_samhap_completions(
+        self, natal1: NatalInfo, natal2: NatalInfo,
+    ) -> list[dict]:
+        """두 사람의 8지지를 합쳐 삼합국이 완성되는 경우만 반환 (한쪽 단독 완성 제외)."""
+        b1 = {natal1.saju[p].branch.name for p in Pillar}
+        b2 = {natal2.saju[p].branch.name for p in Pillar}
+        completions: list[dict] = []
+        for group, result_el in SAMHAP_GROUPS:
+            in_p1 = group & b1
+            in_p2 = group & b2
+            if (in_p1 | in_p2) != group:
+                continue
+            if not in_p1 or not in_p2:
+                continue  # 한쪽에서만 완성된 경우는 관계 시그널 약함
+            completions.append({
+                "element": result_el,
+                "branches": sorted(group),
+                "p1_branches": sorted(in_p1),
+                "p2_branches": sorted(in_p2),
+            })
+        return completions
 
     def _compute_element_complement(self, natal1: NatalInfo, natal2: NatalInfo) -> dict:
         p1_lacks: list[str] = []
@@ -239,16 +285,17 @@ class CompatibilityService:
         pillar_relations: list[PillarRelation],
         element_complement: dict,
         shared_sinsal_count: int,
+        samhap_completion_count: int,
     ) -> int:
         raw = 50.0
         pillar_by_kor = {p.korean: p for p in Pillar}
         for rel in pillar_relations:
             base = RELATION_DELTA.get(rel.kind, 0)
-            w_p1 = PILLAR_WEIGHT.get(pillar_by_kor.get(rel.pillar1), 0.5)
-            w_p2 = PILLAR_WEIGHT.get(pillar_by_kor.get(rel.pillar2), 0.5)
-            raw += base * (w_p1 + w_p2) / 2
+            w = PILLAR_WEIGHT.get(pillar_by_kor.get(rel.pillar1), 0.5)
+            raw += base * w
         raw += element_complement.get("score", 0)
         raw += shared_sinsal_count * 2
+        raw += samhap_completion_count * SAMHAP_COMPLETION_BONUS
         return max(0, min(100, int(round(raw))))
 
     def _compute_domain_scores(
@@ -258,6 +305,7 @@ class CompatibilityService:
         pillar_relations: list[PillarRelation],
         shared_sinsal: list[str],
         element_complement: dict,
+        samhap_completions: list[dict],
     ) -> dict[str, dict]:
         def avg_postnatal(key: str) -> float:
             s1 = postnatal1.domain_scores.get(key, {}).get("score", 50)
@@ -281,12 +329,15 @@ class CompatibilityService:
         for r in all_branch_rels:
             if r.kind == "branch_combine":
                 love += 7
-                love_reasons.append(f"{r.pillar1}·{r.pillar2} 육합")
+                love_reasons.append(f"{r.pillar1} 육합")
             elif r.kind == "branch_clash":
                 love -= 7
-                love_reasons.append(f"{r.pillar1}·{r.pillar2} 충")
+                love_reasons.append(f"{r.pillar1} 충")
             elif r.kind == "wonjin":
                 love -= 4
+        if any(r.kind == "samhap" for r in pillar_relations):
+            love += 8
+            love_reasons.append("삼합 반합 — 마음의 결이 같음")
         if "도화살" in shared_sinsal:
             love += 12
             love_reasons.append("도화살 공유 — 이성적 끌림")
@@ -307,6 +358,11 @@ class CompatibilityService:
         if "천을귀인" in shared_sinsal:
             marriage += 10
             marriage_reasons.append("천을귀인 공유 — 위기에 서로 보호")
+        if samhap_completions:
+            marriage += SAMHAP_COMPLETION_MARRIAGE
+            marriage_reasons.append(
+                f"삼합({samhap_completions[0]['element']}국) 완성 — 운명적 호흡"
+            )
         strongest1 = max(natal1.element_stats, key=lambda o: natal1.element_stats.get(o, 0))
         strongest2 = max(natal2.element_stats, key=lambda o: natal2.element_stats.get(o, 0))
         if strongest2.generates == natal1.yongshin:
@@ -368,12 +424,15 @@ class CompatibilityService:
         pillar_relations: list[PillarRelation],
         element_complement: dict,
         shared_sinsal: list[str],
+        samhap_completions: list[dict],
     ) -> list[str]:
         traits: list[str] = []
         day = Pillar.日柱.korean
         pos = sum(1 for r in pillar_relations if r.polarity > 0)
         neg = sum(1 for r in pillar_relations if r.polarity < 0)
 
+        if samhap_completions:
+            traits.append(f"삼합({samhap_completions[0]['element']}국) 완성")
         if any(r.kind == "stem_combine" and r.pillar1 == day and r.pillar2 == day for r in pillar_relations):
             traits.append("일주 천간합 — 부부 합")
         if any(r.kind == "branch_combine" and r.pillar1 == day and r.pillar2 == day for r in pillar_relations):
@@ -438,10 +497,14 @@ class CompatibilityService:
         self, result: CompatibilityResult, natal1: NatalInfo, natal2: NatalInfo,
     ) -> str:
         day = Pillar.日柱.korean
-        day_rels = [r.label for r in result.pillar_relations if r.pillar1 == day and r.pillar2 == day]
-        other_rels = [r.label for r in result.pillar_relations if r.pillar1 != day or r.pillar2 != day][:3]
+        day_rels = [r.label for r in result.pillar_relations if r.pillar1 == day]
+        other_rels = [r.label for r in result.pillar_relations if r.pillar1 != day][:3]
         key_rels = day_rels + other_rels
         scores_line = " / ".join(f"{k} {v['score']}" for k, v in result.domain_scores.items())
+        samhap_line = (
+            ", ".join(f"{c['element']}국({''.join(c['branches'])})" for c in result.samhap_completions)
+            if result.samhap_completions else "없음"
+        )
         return (
             "두 분의 사주 궁합 데이터입니다. 친근한 존댓말로 400자 이내로 풀어주세요.\n"
             f"- 첫 번째 분: 일간 {natal1.saju.stem_of_day_pillar.name}, 주오행 {natal1.my_main_element.name}, "
@@ -449,6 +512,7 @@ class CompatibilityService:
             f"- 두 번째 분: 일간 {natal2.saju.stem_of_day_pillar.name}, 주오행 {natal2.my_main_element.name}, "
             f"{natal2.strength_label}, 용신 {natal2.yongshin.name}\n"
             f"- 핵심 관계: {', '.join(key_rels) if key_rels else '특별한 합·충 없음'}\n"
+            f"- 삼합 완성: {samhap_line}\n"
             f"- 공유 신살: {', '.join(result.shared_sinsal) if result.shared_sinsal else '없음'}\n"
             f"- 종합 점수: {result.total_score}점 ({result.label})\n"
             f"- 영역별: {scores_line}\n"

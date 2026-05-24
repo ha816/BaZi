@@ -28,7 +28,6 @@ interface Props {
 export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: Props) {
   const samePillarRels = (kor: string) =>
     relations.filter((r) => r.pillar1 === kor && r.pillar2 === kor);
-  const crossPillarRels = relations.filter((r) => r.pillar1 !== r.pillar2);
 
   return (
     <div className="space-y-3">
@@ -69,29 +68,6 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: P
       <div className="text-xs font-semibold text-[var(--color-ink-muted)]">
         <span className="px-2 py-0.5 rounded-full bg-[var(--color-gold-faint)] text-[var(--color-gold)]">{name2}</span>
       </div>
-
-      {crossPillarRels.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-[var(--color-border-light)]">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-ink-faint)] mb-2">
-            기둥 간 교차 관계
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {crossPillarRels.map((r, i) => {
-              const m = KIND_META[r.kind];
-              if (!m) return null;
-              return (
-                <span
-                  key={i}
-                  className="text-[11px] font-medium px-2 py-1 rounded-md border"
-                  style={{ color: m.color, background: m.bg, borderColor: m.border }}
-                >
-                  {name1} {r.pillar1} ↔ {name2} {r.pillar2} · {r.label}
-                </span>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

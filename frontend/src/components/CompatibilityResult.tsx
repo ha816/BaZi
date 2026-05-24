@@ -84,7 +84,7 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
   const {
     total_score, label, domain_scores, description,
     pillar1_snapshot, pillar2_snapshot, pillar_relations, element_complement,
-    shared_sinsal, unique_sinsal_1, unique_sinsal_2, key_traits, narrative,
+    shared_sinsal, unique_sinsal_1, unique_sinsal_2, samhap_completions, key_traits, narrative,
   } = data;
 
   return (
@@ -143,8 +143,36 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
           <div className="divider" />
           <div className="slide-card__body space-y-4">
             <KkachiTip>
-              두 분의 사주팔자를 위·아래로 나란히 펼쳤어요. 가운데 줄의 <strong>합·충·형·해·파·원진</strong>이 두 사주가 만났을 때 일어나는 작용입니다.
+              두 분의 사주팔자를 위·아래로 나란히 펼쳤어요. 같은 기둥끼리(年-年, 月-月, 日-日, 時-時) 만났을 때 일어나는 <strong>합·충·형·해·파·원진</strong>이 가운데 줄에 표시됩니다.
             </KkachiTip>
+
+            {samhap_completions.length > 0 && (
+              <div className="space-y-2">
+                {samhap_completions.map((c, i) => {
+                  const info = getElementInfo(c.element);
+                  return (
+                    <div
+                      key={i}
+                      className="rounded-xl px-4 py-3 border flex items-center gap-3"
+                      style={{ background: info.bgColor, borderColor: info.borderColor }}
+                    >
+                      <span className="font-heading text-2xl font-bold" style={{ color: info.color }}>
+                        {c.branches.join("")}
+                      </span>
+                      <div className="flex-1 text-xs leading-relaxed" style={{ color: info.color }}>
+                        <p className="font-semibold">
+                          삼합 완성 — {info.label}({info.korean})국
+                        </p>
+                        <p className="opacity-80 mt-0.5">
+                          {name1} <strong>{c.p1_branches.join("")}</strong> + {name2} <strong>{c.p2_branches.join("")}</strong> → 운명적 호흡
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             <PillarPairDiagram
               p1={pillar1_snapshot}
               p2={pillar2_snapshot}

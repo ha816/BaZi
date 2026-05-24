@@ -340,6 +340,13 @@ export interface ElementComplement {
   score: number;
 }
 
+export interface SamhapCompletion {
+  element: string;          // "火" | "水" | "金" | "木"
+  branches: string[];       // ["寅", "午", "戌"]
+  p1_branches: string[];
+  p2_branches: string[];
+}
+
 export interface CompatibilityResult {
   total_score: number;
   label: string;
@@ -355,6 +362,7 @@ export interface CompatibilityResult {
   shared_sinsal: string[];
   unique_sinsal_1: string[];
   unique_sinsal_2: string[];
+  samhap_completions: SamhapCompletion[];
   key_traits: string[];
   narrative: string | null;
 }

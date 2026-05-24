@@ -41,6 +41,7 @@ class CompatibilityResult:
     shared_sinsal: list[str] = field(default_factory=list)
     unique_sinsal_1: list[str] = field(default_factory=list)
     unique_sinsal_2: list[str] = field(default_factory=list)
+    samhap_completions: list[dict] = field(default_factory=list)
     key_traits: list[str] = field(default_factory=list)
     narrative: str | None = None
 

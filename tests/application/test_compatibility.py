@@ -95,7 +95,7 @@ def test_pillar_relations_present_and_well_formed():
     svc = _service()
     n1, n2, _, _ = _make_pair()
     rels = svc._compute_pillar_relations(n1, n2)
-    valid_kinds = {"stem_combine", "branch_combine", "branch_clash", "wonjin", "hyung", "hae", "pa"}
+    valid_kinds = {"stem_combine", "branch_combine", "branch_clash", "wonjin", "hyung", "hae", "pa", "samhap"}
     pillar_kor = {p.korean for p in Pillar}
     for r in rels:
         assert r.kind in valid_kinds
@@ -103,6 +103,43 @@ def test_pillar_relations_present_and_well_formed():
         assert r.pillar2 in pillar_kor
         assert r.polarity in (1, -1)
         assert r.label  # not empty
+
+
+def test_pillar_relations_are_same_pillar_only():
+    """모델은 같은 기둥끼리만 비교 — pillar1 == pillar2 항상 성립해야 한다."""
+    svc = _service()
+    n1, n2, _, _ = _make_pair()
+    rels = svc._compute_pillar_relations(n1, n2)
+    for r in rels:
+        assert r.pillar1 == r.pillar2, f"교차 기둥 관계가 잡힘: {r}"
+
+
+def test_samhap_completions_structure():
+    svc = _service()
+    n1, n2, _, _ = _make_pair()
+    comps = svc._compute_samhap_completions(n1, n2)
+    samhap_elements = {"火", "水", "金", "木"}
+    branch_set = {"子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"}
+    for c in comps:
+        assert c["element"] in samhap_elements
+        assert len(c["branches"]) == 3
+        assert set(c["branches"]) <= branch_set
+        # cross-completion 만 — 한쪽 단독은 제외
+        assert c["p1_branches"] and c["p2_branches"]
+        # 두 집합의 합이 group 과 일치
+        assert set(c["p1_branches"]) | set(c["p2_branches"]) == set(c["branches"])
+
+
+def test_samhap_completion_boosts_marriage_and_total():
+    """삼합 완성이 있으면 결혼·종합 점수에 보너스가 반영되어야 한다."""
+    svc = _service()
+    n1, n2, p1, p2 = _make_pair()
+    result = svc._compute(n1, n2, p1, p2)
+    if result.samhap_completions:
+        # marriage 도메인 reason 에 삼합 언급이 있어야 함
+        assert "삼합" in result.domain_scores["결혼"]["reason"]
+        # key_traits 에 삼합 트레이트 노출
+        assert any("삼합" in t for t in result.key_traits)
 
 
 def test_element_complement_structure():
