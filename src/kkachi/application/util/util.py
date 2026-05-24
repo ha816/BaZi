@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from kkachi.domain.ganji import Branch, Stem
+from kkachi.domain.ganji import BRANCHES_ORDER, Branch, BranchClash, BranchCombine, BranchWonjin, SAMHAP_GROUPS, Stem
 
 
 def year_to_ganji(year: int) -> str:
@@ -8,6 +8,26 @@ def year_to_ganji(year: int) -> str:
     stem = Stem.by_order((year - 4) % 10)
     branch = Branch.by_order((year - 4) % 12)
     return stem.name + branch.name
+
+
+def year_to_branch_char(year: int) -> str:
+    """연도에 해당하는 지지 문자(한자)를 반환한다. (예: 2026 → '午')"""
+    return BRANCHES_ORDER[(year - 4 + 1200) % 12]
+
+
+def branch_relation(a: str, b: str) -> str:
+    """두 지지 문자(한자)의 관계 타입을 반환한다: 나/삼합/육합/충/원진/보통."""
+    if a == b:
+        return "나"
+    if any(a in group and b in group for group, _ in SAMHAP_GROUPS):
+        return "삼합"
+    if any({p.first.name, p.second.name} == {a, b} for p in BranchCombine):
+        return "육합"
+    if any({p.first.name, p.second.name} == {a, b} for p in BranchClash):
+        return "충"
+    if any({p.first.name, p.second.name} == {a, b} for p in BranchWonjin):
+        return "원진"
+    return "보통"
 
 
 def josa(word: str, with_jong: str, without_jong: str) -> str:

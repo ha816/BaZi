@@ -1,9 +1,9 @@
 from dataclasses import asdict
 
 from kkachi.application.util.sipsin_meta import sipsin_domain, sipsin_label
-from kkachi.application.util.util import josa, year_to_ganji
+from kkachi.application.util.util import branch_relation, josa, year_to_branch_char, year_to_ganji
 from kkachi.application.util.zodiac_meta import zodiac_info
-from kkachi.domain.ganji import BRANCH_ANIMAL, Branch, Sipsin, branch_relation, year_to_branch_char
+from kkachi.domain.ganji import BRANCH_ANIMAL, Branch, Sipsin
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
 

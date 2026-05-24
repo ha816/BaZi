@@ -331,26 +331,6 @@ class BranchWonjin(Enum):
 BRANCHES_ORDER: list[str] = [b.name for b in Branch]
 
 
-def year_to_branch_char(year: int) -> str:
-    """연도에 해당하는 지지 문자(한자)를 반환한다."""
-    return BRANCHES_ORDER[(year - 4 + 1200) % 12]
-
-
-def branch_relation(a: str, b: str) -> str:
-    """두 지지 문자(한자)의 관계 타입을 반환한다: 나/삼합/육합/충/원진/보통."""
-    if a == b:
-        return "나"
-    if any(a in group and b in group for group, _ in SAMHAP_GROUPS):
-        return "삼합"
-    if any({p.first.name, p.second.name} == {a, b} for p in BranchCombine):
-        return "육합"
-    if any({p.first.name, p.second.name} == {a, b} for p in BranchClash):
-        return "충"
-    if any({p.first.name, p.second.name} == {a, b} for p in BranchWonjin):
-        return "원진"
-    return "보통"
-
-
 _JIZAN_GAN: dict["Branch", list[Stem]] = {}
 _JIZAN_GAN_WEIGHT: dict["Branch", list[int]] = {}
 _JIZAN_ROLE_BY_LEN: dict[int, list[str]] = {
