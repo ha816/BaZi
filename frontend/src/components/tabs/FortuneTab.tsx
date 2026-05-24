@@ -3,11 +3,8 @@ import DomainBarChart from "@/components/DomainBarChart";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import { STEM_KOR, BRANCH_KOR, STEM_ELEMENT, BRANCH_ELEMENT } from "@/lib/ganji";
+import { getElementColor } from "@/lib/elementColors";
 import DaeunSeunTable from "@/components/DaeunSeunTable";
-
-const ELEMENT_TO_COLOR: Record<string, string> = {
-  "木": "#1B6B3A", "火": "#B02020", "土": "#8A4F00", "金": "#3D3D3D", "水": "#0F4F8A",
-};
 
 function CheonganCircleDiagram() {
   const CX = 100, CY = 100, PR = 75, NR = 13;
@@ -33,7 +30,7 @@ function CheonganCircleDiagram() {
       })}
       {STEMS.map((st, i) => {
         const [x,y] = pos(i);
-        const elColor = ELEMENT_TO_COLOR[STEM_ELEMENT[st]] ?? "#78716C";
+        const elColor = getElementColor(STEM_ELEMENT[st]);
         return (
           <g key={st}>
             <circle cx={x} cy={y} r={NR} fill="white" stroke={elColor} strokeWidth={1.5} />
@@ -83,7 +80,7 @@ function JijiCircleDiagram() {
       })}
       {BRANCHES.map((br, i) => {
         const [x,y] = pos(i);
-        const elColor = ELEMENT_TO_COLOR[BRANCH_ELEMENT[br]] ?? "#78716C";
+        const elColor = getElementColor(BRANCH_ELEMENT[br]);
         return (
           <g key={br}>
             <circle cx={x} cy={y} r={NR} fill="white" stroke={elColor} strokeWidth={1.5} />

@@ -4,6 +4,8 @@ import type { NatalResult, PostnatalResult, SipsinInfo } from "@/types/analysis"
 import { streamAiInterpretation } from "@/lib/api";
 import { getElementInfo, ganjiToElements } from "@/lib/elementColors";
 import { ganjiKor } from "@/lib/ganji";
+import { ZODIAC_EMOJIS } from "@/lib/zodiac";
+import { RELATION_STYLE } from "@/lib/relations";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import PillarDetail from "@/components/PillarDetail";
@@ -26,19 +28,6 @@ const SIPSIN_YEAR_DESC: Record<string, string> = {
   "正官": "직장·사회적 지위가 안정되는 해예요. 인정받기 좋지만 책임도 무거워져요.",
   "偏印": "영감과 직감이 강해지는 해예요. 공부·연구·자격증에 유리하지만 생각이 많아지고 외로워질 수 있어요.",
   "正印": "학문적 지원과 안정이 들어오는 해예요. 어머니나 윗사람의 도움을 받기 좋은 시기예요.",
-};
-
-const ZODIAC_EMOJI: Record<string, string> = {
-  "子": "🐭", "丑": "🐂", "寅": "🐯", "卯": "🐰", "辰": "🐲", "巳": "🐍",
-  "午": "🐴", "未": "🐑", "申": "🐒", "酉": "🐓", "戌": "🐕", "亥": "🐗",
-};
-
-const RELATION_STYLE: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  "삼합": { label: "삼합 ★", color: "#1A7A4A", bg: "#C8EDD8", border: "#5CB882" },
-  "육합": { label: "육합 ★", color: "#1A5FA0", bg: "#C8DFF5", border: "#5A9ED0" },
-  "보통": { label: "보통",    color: "#8A8A96", bg: "#F0F0F4", border: "#C8C8D4" },
-  "원진": { label: "원진",    color: "#B05A20", bg: "#FCDDC0", border: "#E09050" },
-  "충":   { label: "충",      color: "#B82020", bg: "#FBCFC8", border: "#E07070" },
 };
 
 function buildSeunNarrative(stem: SipsinInfo, branch: SipsinInfo): string {
@@ -271,7 +260,7 @@ export default function AdviceTab({ natal, postnatal }: Props) {
             <>
               <div className="divider" />
               <div className="flex items-center gap-3">
-                <span className="text-3xl flex-shrink-0">{ZODIAC_EMOJI[thisYearZodiac.branch] ?? "🐾"}</span>
+                <span className="text-3xl flex-shrink-0">{ZODIAC_EMOJIS[thisYearZodiac.branch] ?? "🐾"}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-sm font-semibold text-[var(--color-ink)]">
