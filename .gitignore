@@ -28,3 +28,11 @@ Thumbs.db
 
 # uv
 uv.lock
+
+# TLS certificates (e.g. tailscale cert outputs)
+*.crt
+*.key
+*.pem
+
+# Claude Code runtime
+.claude/scheduled_tasks.lock
