@@ -197,14 +197,14 @@ function CompatibilityPageInner() {
             </div>
           </div>
 
-          <div className="flex items-end gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
             <label className="flex-1 space-y-1.5">
               <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
               <input type="number" value={year} onChange={(e) => setYear(+e.target.value)}
                 className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors" min={1920} max={2100} />
             </label>
             <button type="submit" disabled={loading}
-              className="flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-2.5 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
+              className="w-full sm:flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 sm:py-2.5 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
               {loading ? "분석 중..." : "궁합 보기"}
             </button>
           </div>

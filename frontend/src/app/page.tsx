@@ -125,20 +125,20 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
             
             {/* 까치 마스코트 */}
             <div className="z-10 flex flex-col items-center relative">
-              <img 
-                src={meta.image} 
-                alt="kkachi" 
-                className="w-48 h-48 object-contain animate-float drop-shadow-xl"
+              <img
+                src={meta.image}
+                alt="kkachi"
+                className="w-36 h-36 md:w-48 md:h-48 object-contain animate-float drop-shadow-xl"
               />
-              
+
               {/* 플로팅 키워드 */}
               {keywords.map((kw, i) => (
-                <div 
+                <div
                   key={kw}
                   className={`absolute z-20 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-white/50 text-[10px] font-bold text-[var(--color-ink)] whitespace-nowrap animate-float`}
                   style={{
-                    top: i === 0 ? '-10%' : i === 1 ? '20%' : '60%',
-                    left: i === 0 ? '-20%' : i === 1 ? '110%' : '-30%',
+                    top: i === 0 ? '0%' : i === 1 ? '30%' : '70%',
+                    left: i === 0 ? '-5%' : i === 1 ? '85%' : '-10%',
                     animationDelay: `${i * 0.5}s`
                   }}
                 >

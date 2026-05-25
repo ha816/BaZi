@@ -201,10 +201,10 @@ function PersonCell({ pillar }: { pillar: string }) {
   const branchColor = getElementInfo(BRANCH_ELEMENT[branch] ?? "").color;
   return (
     <div className="flex flex-col items-center leading-tight">
-      <span className="font-heading text-base font-bold" style={{ color: stemColor }}>
+      <span className="font-heading text-sm md:text-base font-bold" style={{ color: stemColor }}>
         {STEM_KOR[stem] ?? stem}({stem})
       </span>
-      <span className="font-heading text-base font-bold" style={{ color: branchColor }}>
+      <span className="font-heading text-sm md:text-base font-bold" style={{ color: branchColor }}>
         {BRANCH_KOR[branch] ?? branch}({branch})
       </span>
     </div>
@@ -265,16 +265,8 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: P
     <div className="space-y-3">
     <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
       <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
-        <colgroup>
-          <col style={{ width: "44px" }} />
-          <col />
-          <col />
-          <col />
-          <col />
-        </colgroup>
         <thead>
           <tr style={{ backgroundColor: "var(--color-ivory)" }}>
-            <th />
             {COLUMN_HEADERS.map(({ kor, han }) => (
               <th
                 key={kor}
@@ -287,7 +279,6 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: P
         </thead>
         <tbody>
           <tr className="border-t border-[var(--color-border-light)]">
-            <td className="py-2 px-1" />
             {COLUMN_HEADERS.map(({ kor, origIndex }) => (
               <td key={`p1-${kor}`} className="py-2 px-1">
                 <PersonCell pillar={p1.pillars[origIndex] ?? ""} />
@@ -295,7 +286,6 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: P
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]">
-            <td className="py-2 px-1" />
             {COLUMN_HEADERS.map(({ kor, origIndex }) => (
               <td key={`p2-${kor}`} className="py-2 px-1">
                 <PersonCell pillar={p2.pillars[origIndex] ?? ""} />
@@ -303,7 +293,6 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: P
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]" style={{ backgroundColor: "var(--color-ivory)" }}>
-            <td className="py-1.5 px-1" />
             {COLUMN_HEADERS.map(({ kor }) => (
               <td key={`rel-${kor}`} className="py-1.5 px-1">
                 <RelationCell rels={samePillarRels(kor)} />

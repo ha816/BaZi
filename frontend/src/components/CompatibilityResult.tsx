@@ -238,7 +238,7 @@ function SinsalCard({ name, badge, accent, footer }: SinsalCardProps) {
       <img
         src={`/kkachi/sinsal/sinsal_${name}.png`}
         alt={name}
-        className="w-24 h-24 rounded-md object-cover flex-shrink-0"
+        className="w-20 h-20 md:w-24 md:h-24 rounded-md object-cover flex-shrink-0"
         onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
       />
       <div className="flex-1 min-w-0 space-y-1">
@@ -249,7 +249,7 @@ function SinsalCard({ name, badge, accent, footer }: SinsalCardProps) {
           >
             {badge}
           </span>
-          <span className="text-xs font-bold text-[var(--color-ink)]">
+          <span className="text-sm md:text-xs font-bold text-[var(--color-ink)]">
             {name}
             {info?.hanja && (
               <span className="font-normal text-[var(--color-ink-faint)] ml-1">({info.hanja})</span>
@@ -257,15 +257,15 @@ function SinsalCard({ name, badge, accent, footer }: SinsalCardProps) {
           </span>
         </div>
         {info?.tagline && (
-          <p className="text-[10px] font-medium text-[var(--color-ink-muted)] leading-snug">
+          <p className="text-xs md:text-[10px] font-medium text-[var(--color-ink-muted)] leading-snug">
             {info.tagline}
           </p>
         )}
         {info?.desc && (
-          <p className="text-[10px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
+          <p className="text-xs md:text-[10px] text-[var(--color-ink-muted)] leading-snug">{info.desc}</p>
         )}
         {footer && (
-          <p className="text-[10px] font-semibold leading-snug" style={{ color: accent.footColor }}>
+          <p className="text-xs md:text-[10px] font-semibold leading-snug" style={{ color: accent.footColor }}>
             → {footer}
           </p>
         )}

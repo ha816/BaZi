@@ -37,7 +37,7 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
         </p>
       )}
 
-      <div className="grid grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-4 gap-1.5 md:gap-4">
         {[3, 2, 1, 0].map((origI, i) => {
           const pillar = pillars[origI] ?? "";
           const stem = pillar[0];
@@ -56,15 +56,15 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                 : { borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }
               }
             >
-              <div className="px-3 py-3 border-b" style={{ borderColor: isDayPillar ? "var(--color-gold)" : "var(--color-border-light)" }}>
+              <div className="px-1.5 md:px-3 py-2 md:py-3 border-b" style={{ borderColor: isDayPillar ? "var(--color-gold)" : "var(--color-border-light)" }}>
                 {basic ? (
-                  <div className="text-sm font-medium text-[var(--color-ink)]">
-                    {PILLAR_LABELS[origI]}<span className="text-xs font-normal text-[var(--color-ink-faint)] ml-0.5">({PILLAR_TERMS_HAN[origI]})</span>
+                  <div className="text-xs md:text-sm font-medium text-[var(--color-ink)] leading-tight">
+                    {PILLAR_LABELS[origI]}<span className="text-[10px] md:text-xs font-normal text-[var(--color-ink-faint)] ml-0.5">({PILLAR_TERMS_HAN[origI]})</span>
                   </div>
                 ) : (
                   <>
-                    <div className="text-sm font-medium text-[var(--color-ink)]">{PILLAR_LABELS[origI]}</div>
-                    <div className="text-xs text-[var(--color-ink-faint)]">
+                    <div className="text-xs md:text-sm font-medium text-[var(--color-ink)] leading-tight">{PILLAR_LABELS[origI]}</div>
+                    <div className="text-[10px] md:text-xs text-[var(--color-ink-faint)] leading-tight">
                       {PILLAR_SUB[origI]} <span className="opacity-60">(<TermBadge term={PILLAR_TERMS[origI]} />)</span>
                     </div>
                   </>
@@ -77,27 +77,27 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                 )}
               </div>
 
-              <div className="px-3 py-4">
+              <div className="px-1.5 md:px-3 py-3 md:py-4">
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-faint)] mb-1">
                   천간(天干)
                 </div>
                 <div
-                  className="font-heading text-2xl md:text-3xl font-bold"
+                  className="font-heading text-lg md:text-3xl font-bold leading-tight"
                   style={{ color: stemInfo?.color ?? "var(--color-ink)" }}
                 >
                   {STEM_KOR[stem]}({stem})
                 </div>
                 {stemInfo && (
-                  <div className="text-xs mt-1" style={{ color: stemInfo.color }}>
+                  <div className="text-[10px] md:text-xs mt-1 leading-tight" style={{ color: stemInfo.color }}>
                     {stemInfo.korean}({stemInfo.label})
                   </div>
                 )}
               </div>
 
-              <div className="mx-4 h-px bg-[var(--color-border-light)]" />
+              <div className="mx-2 md:mx-4 h-px bg-[var(--color-border-light)]" />
 
               <div
-                className={`px-3 py-4 rounded-b-xl ${
+                className={`px-1.5 md:px-3 py-3 md:py-4 rounded-b-xl ${
                   highlightBranches
                     ? "bg-[var(--color-gold-faint)]"
                     : ""
@@ -107,13 +107,13 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                   지지(地支)
                 </div>
                 <div
-                  className="font-heading text-2xl md:text-3xl font-bold"
+                  className="font-heading text-lg md:text-3xl font-bold leading-tight"
                   style={{ color: branchInfo?.color ?? "var(--color-ink)" }}
                 >
                   {BRANCH_KOR[branch]}({branch})
                 </div>
                 {branchInfo && (
-                  <div className="text-xs mt-1" style={{ color: branchInfo.color }}>
+                  <div className="text-[10px] md:text-xs mt-1 leading-tight" style={{ color: branchInfo.color }}>
                     {branchInfo.korean}({branchInfo.label})
                   </div>
                 )}

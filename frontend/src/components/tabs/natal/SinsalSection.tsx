@@ -46,7 +46,7 @@ export default function SinsalSection({ natal }: Props) {
                     <div className="text-[10px] text-[var(--color-ink-faint)]">{PILLAR_LABELS_SHORT[origI]}</div>
                     {sinsalName ? (
                       <>
-                        <div className="text-sm font-semibold text-[var(--color-ink)] leading-tight">
+                        <div className="text-xs md:text-sm font-semibold text-[var(--color-ink)] leading-tight">
                           {sinsalName}
                           {info && <span className="text-[9px] font-normal text-[var(--color-ink-faint)] ml-0.5">({info.hanja})</span>}
                         </div>
@@ -54,7 +54,7 @@ export default function SinsalSection({ natal }: Props) {
                           <div className="text-[9px] text-[var(--color-ink-faint)] leading-snug">{info.meaning}</div>
                         )}
                       </>
-                    ) : <div className="text-sm font-semibold text-[var(--color-ink-faint)]">—</div>}
+                    ) : <div className="text-xs md:text-sm font-semibold text-[var(--color-ink-faint)]">—</div>}
                   </div>
                 );
               })}
