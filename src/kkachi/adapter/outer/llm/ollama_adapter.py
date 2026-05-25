@@ -9,11 +9,13 @@ from kkachi.application.port.llm_port import LlmPort
 
 _log = logging.getLogger(__name__)
 
-_ADVICE_SYSTEM = "당신은 한국 사주명리 전문가입니다. 친근하고 따뜻하게, 구체적 행동 조언 중심으로 답해주세요."
-_INTERPRET_SYSTEM = "당신은 한국 사주명리 전문가입니다. 아래 사주 데이터와 해석 가이드를 따라 통합 해석을 작성해주세요."
+_KOREAN_RULE = "반드시 한국어(한글)로만 작성하세요. 중국어·일본어·영어 단어 사용 금지 (고유명사·전문용어 제외)."
+_ADVICE_SYSTEM = f"당신은 한국 사주명리 전문가입니다. 친근하고 따뜻하게, 구체적 행동 조언 중심으로 답해주세요. {_KOREAN_RULE}"
+_INTERPRET_SYSTEM = f"당신은 한국 사주명리 전문가입니다. 아래 사주 데이터와 해석 가이드를 따라 통합 해석을 작성해주세요. {_KOREAN_RULE}"
 
 _NUM_PREDICT_SHORT = 500
 _NUM_PREDICT_NARRATIVE = 700
+_KEEP_ALIVE = "10m"
 
 
 class OllamaAdapter(LlmPort):
@@ -41,6 +43,7 @@ class OllamaAdapter(LlmPort):
                     {"role": "user", "content": user},
                 ],
                 "stream": False,
+                "keep_alive": _KEEP_ALIVE,
                 "options": {"num_predict": num_predict},
             },
         )
@@ -74,6 +77,7 @@ class OllamaAdapter(LlmPort):
                     "model": self._model,
                     "messages": messages,
                     "stream": True,
+                    "keep_alive": _KEEP_ALIVE,
                     "options": {"num_predict": _NUM_PREDICT_SHORT},
                 },
             ) as resp:
@@ -97,6 +101,7 @@ class OllamaAdapter(LlmPort):
                         {"role": "user", "content": report},
                     ],
                     "stream": True,
+                    "keep_alive": _KEEP_ALIVE,
                     "options": {"num_predict": _NUM_PREDICT_NARRATIVE},
                 },
             ) as resp:
