@@ -25,6 +25,7 @@ class Container(containers.DeclarativeContainer):
             "kkachi.adapter.inner.compatibility_controller",
             "kkachi.adapter.inner.payment_controller",
             "kkachi.adapter.inner.weather_controller",
+            "kkachi.adapter.inner.admin_controller",
         ],
     )
 

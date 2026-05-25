@@ -1,12 +1,12 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from kkachi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, FortuneModel, InterpretFeedbackModel, ProfileModel
 from kkachi.application.port.compatibility_port import CompatibilityPort
-from kkachi.application.port.feedback_port import FeedbackPort
+from kkachi.application.port.feedback_port import FeedbackPort, FeedbackSummary
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.profile_port import ProfilePort
@@ -198,3 +198,25 @@ class FeedbackRepo(FeedbackPort):
             f = InterpretFeedbackModel(profile_id=profile_id, tab_id=tab_id, rating=rating)
             session.add(f)
             await session.commit()
+
+    async def summary(self) -> list[FeedbackSummary]:
+        async with self._sf() as session:
+            stmt = (
+                select(
+                    InterpretFeedbackModel.tab_id,
+                    func.count().label("total"),
+                    func.sum(InterpretFeedbackModel.rating).label("positive"),
+                )
+                .group_by(InterpretFeedbackModel.tab_id)
+            )
+            rows = (await session.execute(stmt)).all()
+            return [
+                FeedbackSummary(
+                    tab_id=tab_id,
+                    total=total,
+                    positive=positive or 0,
+                    negative=total - (positive or 0),
+                    positive_rate=(positive or 0) / total if total else 0.0,
+                )
+                for tab_id, total, positive in rows
+            ]

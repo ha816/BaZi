@@ -256,3 +256,15 @@ export async function postFeedback(
   );
 }
 
+export interface FeedbackSummary {
+  tab_id: string;
+  total: number;
+  positive: number;
+  negative: number;
+  positive_rate: number;
+}
+
+export async function getFeedbackSummary(): Promise<FeedbackSummary[]> {
+  return request<FeedbackSummary[]>("/admin/feedback/summary");
+}
+
