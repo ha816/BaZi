@@ -67,11 +67,12 @@ export default function SajuChat({ name }: Props) {
       {/* 플로팅 버튼 */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-24 right-4 z-[60] w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl"
-        style={{ backgroundColor: "var(--color-gold)", color: "#fff" }}
-        aria-label="사주 상담"
+        className="fixed bottom-24 right-4 z-[60] h-14 rounded-full shadow-lg flex items-center gap-2 pl-3 pr-4 text-white"
+        style={{ backgroundColor: "var(--color-gold)" }}
+        aria-label="까치 상담"
       >
-        🐦
+        <span className="text-2xl leading-none">🐦</span>
+        <span className="text-sm font-semibold">까치 상담</span>
       </button>
 
       {/* 채팅 패널 */}

@@ -13,7 +13,7 @@ _ADVICE_SYSTEM = "당신은 한국 사주명리 전문가입니다. 친근하고
 _INTERPRET_SYSTEM = "당신은 한국 사주명리 전문가입니다. 아래 사주 데이터와 해석 가이드를 따라 통합 해석을 작성해주세요."
 
 _NUM_PREDICT_SHORT = 500
-_NUM_PREDICT_NARRATIVE = 500
+_NUM_PREDICT_NARRATIVE = 700
 
 
 class OllamaAdapter(LlmPort):
