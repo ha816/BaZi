@@ -75,6 +75,7 @@ export default function BottomNav() {
   }, []);
 
   if (!mounted) return null;
+  if (pathname === "/chat" || pathname === "/compatibility/chat") return null;
 
   const tabs = loggedIn ? TABS_LOGGED_IN : TABS_GUEST;
 

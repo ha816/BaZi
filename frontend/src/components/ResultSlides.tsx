@@ -195,7 +195,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
         />
       </div>
 
-      <SajuChat name={name} />
+      <SajuChat />
     </div>
   );
 }

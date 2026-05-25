@@ -118,10 +118,13 @@ function CompatibilityPageInner() {
           : await analyzeCompatibility(input);
       setResult(data);
       setChatInput(input);
-      setResultNames({
+      const names = {
         name1: getName(person1, "첫 번째 분"),
         name2: getName(person2, "두 번째 분"),
-      });
+      };
+      setResultNames(names);
+      sessionStorage.setItem("kkachi_compat_input", JSON.stringify(input));
+      sessionStorage.setItem("kkachi_compat_names", JSON.stringify(names));
 
       const controller = new AbortController();
       narrativeAbortRef.current = controller;
@@ -225,9 +228,7 @@ function CompatibilityPageInner() {
         )}
       </div>
 
-      {result && chatInput && !loading && (
-        <CompatibilityChat input={chatInput} name1={resultNames.name1} name2={resultNames.name2} />
-      )}
+      {result && chatInput && !loading && <CompatibilityChat />}
     </main>
   );
 }
