@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from typing import Literal
 from uuid import UUID
 
 from kkachi.application.kkachi_service import KkachiService
@@ -12,6 +13,15 @@ from kkachi.domain.ganji import (
 )
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
+
+
+RelationType = Literal["lover", "friend", "family"]
+
+RELATION_LABEL: dict[RelationType, str] = {
+    "lover":  "연인·부부",
+    "friend": "친구·동료",
+    "family": "가족",
+}
 
 
 PILLAR_WEIGHT = {
@@ -36,65 +46,214 @@ RELATION_DELTA = {
 SAMHAP_COMPLETION_BONUS = 12   # 삼합 완성(3-of-3) per group
 SAMHAP_COMPLETION_MARRIAGE = 15  # 결혼 도메인 가산
 
-DOMAIN_INTROS: dict[str, list[tuple[int, str]]] = {
-    "연애": [
-        (70, "감정선이 가장 자연스럽게 통하는 흐름이에요."),
-        (55, "감정 교감이 부드럽게 이어지는 사이예요."),
-        (40, "끌림은 있지만 호흡을 맞춰갈 여지가 있어요."),
-        (0,  "감정선이 엇갈리기 쉬워 천천히 다가가는 게 좋아요."),
-    ],
-    "결혼": [
-        (70, "장기 동반자로 안정적으로 어우러지는 결합이에요."),
-        (55, "함께 살아가는 호흡이 무난하게 맞춰지는 사이예요."),
-        (40, "결혼이라는 결정 앞에 노력이 더해져야 하는 흐름이에요."),
-        (0,  "결혼 영역에선 충돌 요소가 많아 거리감 관리가 필요해요."),
-    ],
-    "재물": [
-        (70, "재물 흐름이 활발하게 도는 시기예요."),
-        (55, "재물 관리가 큰 무리 없이 안정적인 흐름이에요."),
-        (40, "재물 흐름이 평이해 작은 결정도 신중함이 필요해요."),
-        (0,  "재물 영역에선 보수적 운용이 권장되는 흐름이에요."),
-    ],
-    "직업": [
-        (70, "사회적 호흡이 잘 맞아 함께 성취를 끌어내는 흐름이에요."),
-        (55, "직업·역할 면에서 무난하게 어우러지는 사이예요."),
-        (40, "사회적 방향에서 의견을 자주 맞춰야 하는 흐름이에요."),
-        (0,  "직업 영역에선 각자 영역을 분리하는 게 안전한 흐름이에요."),
-    ],
+DOMAIN_LABEL_BY_REL: dict[RelationType, dict[str, str]] = {
+    "lover":  {"연애": "연애",       "결혼": "결혼",        "재물": "재물",       "직업": "직업"},
+    "friend": {"연애": "친밀감",     "결혼": "신뢰·약속",   "재물": "재물 협력",  "직업": "협업"},
+    "family": {"연애": "정서 교감",  "결혼": "유대",        "재물": "가운(家運)", "직업": "함께 이루는 일"},
 }
 
-DOMAIN_KIND_PHRASE: dict[str, dict[str, str]] = {
-    "연애": {
-        "harmony": "감정선이 부드럽게 맞물리는 자리",
-        "clash":   "감정 기복이 끼어들기 쉬운 자리",
-        "sinsal":  "끌림의 코드가 살아 있는 자리",
-        "sipsin":  "타고난 매력·표현이 통하는 자리",
-        "element": "오행 흐름이 받쳐주는 자리",
-        "fortune": "올해 흐름이 영향을 더하는 자리",
+DOMAIN_INTROS_BY_REL: dict[RelationType, dict[str, list[tuple[int, str]]]] = {
+    "lover": {
+        "연애": [
+            (70, "감정선이 가장 자연스럽게 통하는 흐름이에요."),
+            (55, "감정 교감이 부드럽게 이어지는 사이예요."),
+            (40, "끌림은 있지만 호흡을 맞춰갈 여지가 있어요."),
+            (0,  "감정선이 엇갈리기 쉬워 천천히 다가가는 게 좋아요."),
+        ],
+        "결혼": [
+            (70, "장기 동반자로 안정적으로 어우러지는 결합이에요."),
+            (55, "함께 살아가는 호흡이 무난하게 맞춰지는 사이예요."),
+            (40, "결혼이라는 결정 앞에 노력이 더해져야 하는 흐름이에요."),
+            (0,  "결혼 영역에선 충돌 요소가 많아 거리감 관리가 필요해요."),
+        ],
+        "재물": [
+            (70, "재물 흐름이 활발하게 도는 시기예요."),
+            (55, "재물 관리가 큰 무리 없이 안정적인 흐름이에요."),
+            (40, "재물 흐름이 평이해 작은 결정도 신중함이 필요해요."),
+            (0,  "재물 영역에선 보수적 운용이 권장되는 흐름이에요."),
+        ],
+        "직업": [
+            (70, "사회적 호흡이 잘 맞아 함께 성취를 끌어내는 흐름이에요."),
+            (55, "직업·역할 면에서 무난하게 어우러지는 사이예요."),
+            (40, "사회적 방향에서 의견을 자주 맞춰야 하는 흐름이에요."),
+            (0,  "직업 영역에선 각자 영역을 분리하는 게 안전한 흐름이에요."),
+        ],
     },
-    "결혼": {
-        "harmony": "부부 호흡이 자연스럽게 맞는 자리",
-        "clash":   "갈등이 쌓이기 쉬운 자리",
-        "sinsal":  "위기 때 서로를 지켜주는 코드",
-        "sipsin":  "정서적 안정이 받쳐지는 자리",
-        "element": "오행이 서로의 부족을 채워주는 자리",
-        "fortune": "올해 인연 흐름이 결혼 결정을 받쳐주는 자리",
+    "friend": {
+        "연애": [
+            (70, "마음이 가장 편하게 닿는 사이예요."),
+            (55, "친밀한 교감이 자연스럽게 이어지는 사이예요."),
+            (40, "친해질 여지는 있지만 호흡을 맞춰갈 시간이 필요해요."),
+            (0,  "처음엔 거리가 느껴질 수 있어 천천히 다가가는 게 좋아요."),
+        ],
+        "결혼": [
+            (70, "오래 함께 갈 수 있는 신뢰가 단단한 사이예요."),
+            (55, "약속을 무난하게 지키며 관계가 길게 이어지는 사이예요."),
+            (40, "신뢰를 쌓으려면 작은 약속부터 챙겨가야 하는 흐름이에요."),
+            (0,  "약속·역할이 어긋나기 쉬워 명확히 정리해두면 좋아요."),
+        ],
+        "재물": [
+            (70, "함께 도모하는 일에서 재물 흐름이 활발하게 도는 시기예요."),
+            (55, "공동 지출·협업이 큰 무리 없이 흘러가는 사이예요."),
+            (40, "돈 얘기는 신중하게, 경계를 분명히 정해두면 좋아요."),
+            (0,  "공동 자금·투자는 보류하고 분리해 운영하는 게 안전해요."),
+        ],
+        "직업": [
+            (70, "팀워크가 잘 맞아 함께 성취를 끌어내는 흐름이에요."),
+            (55, "역할 분담이 무난하게 이뤄지는 사이예요."),
+            (40, "협업 시 의견 차이를 자주 조율해야 하는 흐름이에요."),
+            (0,  "업무 영역은 분리하고 각자 영역에 집중하는 게 안전해요."),
+        ],
     },
-    "재물": {
-        "harmony": "재물 호흡이 맞아 들어가는 자리",
-        "clash":   "재물 갈등이 끼어들 수 있는 자리",
-        "sinsal":  "재물 코드를 더해주는 자리",
-        "sipsin":  "재물 창출의 기질이 살아 있는 자리",
-        "element": "오행 흐름이 재물에 영향을 주는 자리",
-        "fortune": "올해 재물 흐름이 더해지는 자리",
+    "family": {
+        "연애": [
+            (70, "정서적 유대가 가장 깊게 닿는 사이예요."),
+            (55, "감정의 흐름이 부드럽게 이어지는 가족이에요."),
+            (40, "정서적 거리감이 있어 작은 표현을 더해가면 좋아요."),
+            (0,  "감정이 엇갈리기 쉬워 서로의 페이스를 존중해주세요."),
+        ],
+        "결혼": [
+            (70, "가족 유대가 단단하게 자리잡은 흐름이에요."),
+            (55, "함께 살아가는 호흡이 무난하게 맞춰지는 가족이에요."),
+            (40, "유대를 쌓으려면 함께 보내는 시간이 더 필요한 흐름이에요."),
+            (0,  "거리감 관리가 필요한 흐름, 개인 영역을 존중해주세요."),
+        ],
+        "재물": [
+            (70, "가운(家運)이 활발하게 도는 시기예요."),
+            (55, "가운이 큰 무리 없이 안정적으로 흘러가는 흐름이에요."),
+            (40, "가운 흐름이 평이해 함께 점검할 시점이에요."),
+            (0,  "가운 영역에선 보수적 운용이 권장되는 흐름이에요."),
+        ],
+        "직업": [
+            (70, "함께 도모하는 일에서 호흡이 잘 맞는 흐름이에요."),
+            (55, "함께 이루는 일이 무난하게 진행되는 흐름이에요."),
+            (40, "함께 일할 땐 방향을 자주 맞춰야 하는 흐름이에요."),
+            (0,  "각자 영역을 분리해 운영하는 게 안전한 흐름이에요."),
+        ],
     },
-    "직업": {
-        "harmony": "사회적 호흡이 맞아 들어가는 자리",
-        "clash":   "역할 충돌이 끼어들 수 있는 자리",
-        "sinsal":  "전문성·신뢰의 코드가 살아 있는 자리",
-        "sipsin":  "사회적 기질이 받쳐지는 자리",
-        "element": "오행 흐름이 사회운에 영향을 주는 자리",
-        "fortune": "올해 사회 흐름이 더해지는 자리",
+}
+
+DOMAIN_KIND_PHRASE_BY_REL: dict[RelationType, dict[str, dict[str, str]]] = {
+    "lover": {
+        "연애": {
+            "harmony": "감정선이 부드럽게 맞물리는 자리",
+            "clash":   "감정 기복이 끼어들기 쉬운 자리",
+            "sinsal":  "끌림의 코드가 살아 있는 자리",
+            "sipsin":  "타고난 매력·표현이 통하는 자리",
+            "element": "오행 흐름이 받쳐주는 자리",
+            "fortune": "올해 흐름이 영향을 더하는 자리",
+        },
+        "결혼": {
+            "harmony": "부부 호흡이 자연스럽게 맞는 자리",
+            "clash":   "갈등이 쌓이기 쉬운 자리",
+            "sinsal":  "위기 때 서로를 지켜주는 코드",
+            "sipsin":  "정서적 안정이 받쳐지는 자리",
+            "element": "오행이 서로의 부족을 채워주는 자리",
+            "fortune": "올해 인연 흐름이 결혼 결정을 받쳐주는 자리",
+        },
+        "재물": {
+            "harmony": "재물 호흡이 맞아 들어가는 자리",
+            "clash":   "재물 갈등이 끼어들 수 있는 자리",
+            "sinsal":  "재물 코드를 더해주는 자리",
+            "sipsin":  "재물 창출의 기질이 살아 있는 자리",
+            "element": "오행 흐름이 재물에 영향을 주는 자리",
+            "fortune": "올해 재물 흐름이 더해지는 자리",
+        },
+        "직업": {
+            "harmony": "사회적 호흡이 맞아 들어가는 자리",
+            "clash":   "역할 충돌이 끼어들 수 있는 자리",
+            "sinsal":  "전문성·신뢰의 코드가 살아 있는 자리",
+            "sipsin":  "사회적 기질이 받쳐지는 자리",
+            "element": "오행 흐름이 사회운에 영향을 주는 자리",
+            "fortune": "올해 사회 흐름이 더해지는 자리",
+        },
+    },
+    "friend": {
+        "연애": {
+            "harmony": "마음이 부드럽게 통하는 자리",
+            "clash":   "감정 거리감이 생길 수 있는 자리",
+            "sinsal":  "친밀한 코드가 살아 있는 자리",
+            "sipsin":  "타고난 매력·표현이 통하는 자리",
+            "element": "오행 흐름이 받쳐주는 자리",
+            "fortune": "올해 흐름이 영향을 더하는 자리",
+        },
+        "결혼": {
+            "harmony": "신뢰·약속 호흡이 자연스럽게 맞는 자리",
+            "clash":   "약속이 어긋나기 쉬운 자리",
+            "sinsal":  "위기 때 서로를 지켜주는 코드",
+            "sipsin":  "신뢰가 받쳐지는 자리",
+            "element": "오행이 서로의 부족을 채워주는 자리",
+            "fortune": "올해 흐름이 신뢰를 받쳐주는 자리",
+        },
+        "재물": {
+            "harmony": "재물 호흡이 맞아 들어가는 자리",
+            "clash":   "재물 갈등이 끼어들 수 있는 자리",
+            "sinsal":  "재물 코드를 더해주는 자리",
+            "sipsin":  "재물 창출의 기질이 살아 있는 자리",
+            "element": "오행 흐름이 재물에 영향을 주는 자리",
+            "fortune": "올해 재물 흐름이 더해지는 자리",
+        },
+        "직업": {
+            "harmony": "협업 호흡이 맞아 들어가는 자리",
+            "clash":   "역할 충돌이 끼어들 수 있는 자리",
+            "sinsal":  "전문성·신뢰의 코드가 살아 있는 자리",
+            "sipsin":  "사회적 기질이 받쳐지는 자리",
+            "element": "오행 흐름이 사회운에 영향을 주는 자리",
+            "fortune": "올해 사회 흐름이 더해지는 자리",
+        },
+    },
+    "family": {
+        "연애": {
+            "harmony": "정서가 부드럽게 통하는 자리",
+            "clash":   "감정 기복이 끼어들기 쉬운 자리",
+            "sinsal":  "정서 교감의 코드가 살아 있는 자리",
+            "sipsin":  "정서 표현이 통하는 자리",
+            "element": "오행 흐름이 받쳐주는 자리",
+            "fortune": "올해 흐름이 영향을 더하는 자리",
+        },
+        "결혼": {
+            "harmony": "가족 유대가 자연스럽게 맞는 자리",
+            "clash":   "갈등이 쌓이기 쉬운 자리",
+            "sinsal":  "위기 때 서로를 지켜주는 코드",
+            "sipsin":  "정서적 안정이 받쳐지는 자리",
+            "element": "오행이 서로의 부족을 채워주는 자리",
+            "fortune": "올해 가족 흐름이 유대를 받쳐주는 자리",
+        },
+        "재물": {
+            "harmony": "가운 호흡이 맞아 들어가는 자리",
+            "clash":   "재물 갈등이 끼어들 수 있는 자리",
+            "sinsal":  "가운 코드를 더해주는 자리",
+            "sipsin":  "재물 창출의 기질이 살아 있는 자리",
+            "element": "오행 흐름이 가운에 영향을 주는 자리",
+            "fortune": "올해 가운 흐름이 더해지는 자리",
+        },
+        "직업": {
+            "harmony": "함께 도모하는 호흡이 맞는 자리",
+            "clash":   "역할 충돌이 끼어들 수 있는 자리",
+            "sinsal":  "공동의 코드가 살아 있는 자리",
+            "sipsin":  "사회적 기질이 받쳐지는 자리",
+            "element": "오행 흐름이 사회운에 영향을 주는 자리",
+            "fortune": "올해 사회 흐름이 더해지는 자리",
+        },
+    },
+}
+
+TOTAL_LABEL_BY_REL: dict[RelationType, list[tuple[int, str]]] = {
+    "lover":  [(80, "천생연분"),       (65, "잘 맞는 인연"),   (45, "무난한 인연"), (0, "노력이 필요한 인연")],
+    "friend": [(80, "절친한 인연"),    (65, "잘 통하는 사이"), (45, "무난한 사이"), (0, "노력이 필요한 사이")],
+    "family": [(80, "깊은 가족 인연"), (65, "따뜻한 인연"),    (45, "무난한 인연"), (0, "거리감 관리가 필요한 인연")],
+}
+
+GENERIC_ADVICE_BY_REL: dict[RelationType, dict[str, str]] = {
+    "friend": {
+        "high": "흐름이 잘 맞는 시기, 함께 작은 프로젝트나 취미를 시도해보세요.",
+        "mid":  "서로의 페이스를 존중하며 가볍게 자주 만나는 게 좋아요.",
+        "low":  "각자 영역을 존중하고 호흡을 천천히 맞춰가는 시기예요.",
+    },
+    "family": {
+        "high": "정서적 유대가 든든한 시기, 작은 일상도 함께 나눠보세요.",
+        "mid":  "서로의 영역을 존중하며 따뜻한 관심을 자주 표현해보세요.",
+        "low":  "감정이 격해질 땐 한 호흡 두고, 거리감을 조절하는 게 좋아요.",
     },
 }
 
@@ -111,14 +270,11 @@ def _level(score: int) -> str:
     return "주의"
 
 
-def _label(score: int) -> str:
-    if score >= 80:
-        return "천생연분"
-    if score >= 65:
-        return "잘 맞는 인연"
-    if score >= 45:
-        return "무난한 인연"
-    return "노력이 필요한 인연"
+def _label_for(score: int, rel: RelationType) -> str:
+    for threshold, text in TOTAL_LABEL_BY_REL[rel]:
+        if score >= threshold:
+            return text
+    return TOTAL_LABEL_BY_REL[rel][-1][1]
 
 
 class CompatibilityService:
@@ -134,27 +290,36 @@ class CompatibilityService:
         self._saju_service = saju_service
         self._llm_port = llm_port
 
-    async def compute_direct(self, user1: User, user2: User, year: int) -> dict:
+    async def compute_direct(
+        self, user1: User, user2: User, year: int,
+        relation_type: RelationType = "lover",
+    ) -> dict:
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
-        result = self._compute(natal1, natal2, postnatal1, postnatal2)
+        result = self._compute(natal1, natal2, postnatal1, postnatal2, relation_type)
         return asdict(result)
 
     def build_chat_context(
         self,
         user1: User, user2: User, year: int,
         name1: str = "", name2: str = "",
+        relation_type: RelationType = "lover",
     ) -> str:
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
-        result = self._compute(natal1, natal2, postnatal1, postnatal2)
-        return self._format_chat_context(result, natal1, natal2, user1, user2, year, name1, name2)
+        result = self._compute(natal1, natal2, postnatal1, postnatal2, relation_type)
+        return self._format_chat_context(
+            result, natal1, natal2, user1, user2, year, name1, name2, relation_type,
+        )
 
-    def build_narrative_prompt(self, user1: User, user2: User, year: int) -> str:
+    def build_narrative_prompt(
+        self, user1: User, user2: User, year: int,
+        relation_type: RelationType = "lover",
+    ) -> str:
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
-        result = self._compute(natal1, natal2, postnatal1, postnatal2)
-        return self._build_narrative_prompt(result, natal1, natal2)
+        result = self._compute(natal1, natal2, postnatal1, postnatal2, relation_type)
+        return self._build_narrative_prompt(result, natal1, natal2, relation_type)
 
     def _format_chat_context(
         self,
@@ -162,7 +327,9 @@ class CompatibilityService:
         natal1: NatalInfo, natal2: NatalInfo,
         user1: User, user2: User, year: int,
         name1: str, name2: str,
+        relation_type: RelationType = "lover",
     ) -> str:
+        label_map = DOMAIN_LABEL_BY_REL[relation_type]
         def _person_block(label: str, user: User, natal: NatalInfo) -> str:
             gender = "남" if user.gender.is_male else "여"
             birth = user.birth_dt.strftime("%Y-%m-%d %H:%M")
@@ -186,7 +353,8 @@ class CompatibilityService:
             if result.samhap_completions else "없음"
         )
         scores_line = " / ".join(
-            f"{k} {v.get('score', 0)}({v.get('level', '')})" for k, v in result.domain_scores.items()
+            f"{label_map.get(k, k)} {v.get('score', 0)}({v.get('level', '')})"
+            for k, v in result.domain_scores.items()
         )
         ec = result.element_complement or {}
         complement_parts: list[str] = []
@@ -199,7 +367,7 @@ class CompatibilityService:
         complement_line = " / ".join(complement_parts) if complement_parts else "특이사항 없음"
 
         return "\n".join([
-            f"[궁합 분석 {year}년]",
+            f"[궁합 분석 {year}년 · 관계 유형: {RELATION_LABEL[relation_type]}]",
             _person_block(name1 or "첫 번째 분", user1, natal1),
             "",
             _person_block(name2 or "두 번째 분", user2, natal2),
@@ -214,12 +382,15 @@ class CompatibilityService:
             f"- 키 트레이트: {', '.join(result.key_traits)}",
         ])
 
-    async def analyze_compatibility(self, pid1: UUID, pid2: UUID, year: int) -> dict:
+    async def analyze_compatibility(
+        self, pid1: UUID, pid2: UUID, year: int,
+        relation_type: RelationType = "lover",
+    ) -> dict:
         lo, hi = (pid1, pid2) if str(pid1) < str(pid2) else (pid2, pid1)
 
         cached = await self._compatibility_port.get(lo, hi, year)
         if cached:
-            return cached.result
+            return self._apply_relation_prose(cached.result, relation_type)
 
         profile1 = await self._profile_port.get(pid1)
         profile2 = await self._profile_port.get(pid2)
@@ -234,15 +405,29 @@ class CompatibilityService:
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
 
-        result = self._compute(natal1, natal2, postnatal1, postnatal2)
+        result = self._compute(natal1, natal2, postnatal1, postnatal2, relation_type)
         result_dict = asdict(result)
         await self._compatibility_port.save(lo, hi, year, result_dict)
+        return result_dict
+
+    def _apply_relation_prose(self, result_dict: dict, rel: RelationType) -> dict:
+        """캐시 hit 시: 점수·pros·cons는 그대로, 관계 유형 기반 prose만 재생성."""
+        result_dict["label"] = _label_for(result_dict.get("total_score", 0), rel)
+        label_map = DOMAIN_LABEL_BY_REL[rel]
+        for domain, info in result_dict.get("domain_scores", {}).items():
+            info["display_name"] = label_map.get(domain, domain)
+            score = info.get("score", 0)
+            pros = info.get("pros") or []
+            cons = info.get("cons") or []
+            advice = self._advice_for(domain, score, pros, cons, rel)
+            info["narrative"] = self._narrate_domain(domain, score, pros, cons, rel, advice)
         return result_dict
 
     def _compute(
         self,
         natal1: NatalInfo, natal2: NatalInfo,
         postnatal1: PostnatalInfo, postnatal2: PostnatalInfo,
+        relation_type: RelationType = "lover",
     ) -> CompatibilityResult:
         pillar_relations = self._compute_pillar_relations(natal1, natal2)
         samhap_completions = self._compute_samhap_completions(natal1, natal2)
@@ -261,6 +446,7 @@ class CompatibilityService:
         domain_scores = self._compute_domain_scores(
             natal1, natal2, postnatal1, postnatal2,
             pillar_relations, shared_sinsal, element_complement, samhap_completions,
+            relation_type,
         )
         key_traits = self._compute_key_traits(
             pillar_relations, element_complement, shared_sinsal, samhap_completions,
@@ -269,7 +455,7 @@ class CompatibilityService:
 
         return CompatibilityResult(
             total_score=total_score,
-            label=_label(total_score),
+            label=_label_for(total_score, relation_type),
             domain_scores=domain_scores,
             description=description,
             stem_combine=stem_combine,
@@ -448,6 +634,7 @@ class CompatibilityService:
         shared_sinsal: list[str],
         element_complement: dict,
         samhap_completions: list[dict],
+        relation_type: RelationType = "lover",
     ) -> dict[str, dict]:
         def avg_postnatal(key: str) -> float:
             s1 = postnatal1.domain_scores.get(key, {}).get("score", 50)
@@ -614,54 +801,37 @@ class CompatibilityService:
             parts = [p["text"] for p in (pros + cons)[:3]]
             return ", ".join(parts) if parts else "기본 관계로 산출"
 
+        label_map = DOMAIN_LABEL_BY_REL[relation_type]
+
+        def _entry(domain: str, score: int, pros: list[dict], cons: list[dict]) -> dict:
+            advice = self._advice_for(domain, score, pros, cons, relation_type)
+            return {
+                "score": score,
+                "level": _level(score),
+                "reason": _reason(pros, cons),
+                "display_name": label_map.get(domain, domain),
+                "pros": pros,
+                "cons": cons,
+                "narrative": self._narrate_domain(domain, score, pros, cons, relation_type, advice),
+            }
+
         return {
-            "연애": {
-                "score": love, "level": _level(love),
-                "reason": _reason(love_pros, love_cons),
-                "pros": love_pros, "cons": love_cons,
-                "narrative": self._narrate_domain(
-                    "연애", love, love_pros, love_cons,
-                    self._advice_love(love, love_pros, love_cons),
-                ),
-            },
-            "결혼": {
-                "score": marriage, "level": _level(marriage),
-                "reason": _reason(marriage_pros, marriage_cons),
-                "pros": marriage_pros, "cons": marriage_cons,
-                "narrative": self._narrate_domain(
-                    "결혼", marriage, marriage_pros, marriage_cons,
-                    self._advice_marriage(marriage, marriage_pros, marriage_cons),
-                ),
-            },
-            "재물": {
-                "score": wealth, "level": _level(wealth),
-                "reason": _reason(wealth_pros, wealth_cons),
-                "pros": wealth_pros, "cons": wealth_cons,
-                "narrative": self._narrate_domain(
-                    "재물", wealth, wealth_pros, wealth_cons,
-                    self._advice_wealth(wealth, wealth_pros, wealth_cons),
-                ),
-            },
-            "직업": {
-                "score": career, "level": _level(career),
-                "reason": _reason(career_pros, career_cons),
-                "pros": career_pros, "cons": career_cons,
-                "narrative": self._narrate_domain(
-                    "직업", career, career_pros, career_cons,
-                    self._advice_career(career, career_pros, career_cons),
-                ),
-            },
+            "연애": _entry("연애", love, love_pros, love_cons),
+            "결혼": _entry("결혼", marriage, marriage_pros, marriage_cons),
+            "재물": _entry("재물", wealth, wealth_pros, wealth_cons),
+            "직업": _entry("직업", career, career_pros, career_cons),
         }
 
     @staticmethod
     def _narrate_domain(
         domain: str, score: int,
         pros: list[dict], cons: list[dict],
+        relation_type: RelationType = "lover",
         advice: str = "",
     ) -> str:
-        intros = DOMAIN_INTROS.get(domain, [(0, "")])
+        intros = DOMAIN_INTROS_BY_REL[relation_type].get(domain, [(0, "")])
         intro = next(text for threshold, text in intros if score >= threshold)
-        kind_map = DOMAIN_KIND_PHRASE.get(domain, {})
+        kind_map = DOMAIN_KIND_PHRASE_BY_REL[relation_type].get(domain, {})
         parts: list[str] = [intro]
 
         if pros:
@@ -695,7 +865,23 @@ class CompatibilityService:
 
     @staticmethod
     def _has_text(items: list[dict], keyword: str) -> bool:
-        return any(keyword in it["text"] for it in items)
+        return any(keyword in it.get("text", "") for it in items if isinstance(it, dict))
+
+    def _advice_for(
+        self, domain: str, score: int,
+        pros: list[dict], cons: list[dict],
+        relation_type: RelationType,
+    ) -> str:
+        if relation_type == "lover":
+            if domain == "연애": return self._advice_love(score, pros, cons)
+            if domain == "결혼": return self._advice_marriage(score, pros, cons)
+            if domain == "재물": return self._advice_wealth(score, pros, cons)
+            if domain == "직업": return self._advice_career(score, pros, cons)
+            return ""
+        tiers = GENERIC_ADVICE_BY_REL[relation_type]
+        if score >= 70: return tiers["high"]
+        if score <= 40: return tiers["low"]
+        return tiers["mid"]
 
     def _advice_love(self, score: int, pros: list[dict], cons: list[dict]) -> str:
         if self._has_text(pros, "도화살"):
@@ -824,29 +1010,36 @@ class CompatibilityService:
 
     async def _inject_narrative(
         self, result: CompatibilityResult, natal1: NatalInfo, natal2: NatalInfo,
+        relation_type: RelationType = "lover",
     ) -> None:
         if not self._llm_port or not self._llm_port.available:
             return
         try:
-            prompt = self._build_narrative_prompt(result, natal1, natal2)
+            prompt = self._build_narrative_prompt(result, natal1, natal2, relation_type)
             result.narrative = await self._llm_port.interpret(prompt)
         except Exception:
             result.narrative = None
 
     def _build_narrative_prompt(
         self, result: CompatibilityResult, natal1: NatalInfo, natal2: NatalInfo,
+        relation_type: RelationType = "lover",
     ) -> str:
         day = Pillar.日柱.korean
         day_rels = [r.label for r in result.pillar_relations if r.pillar1 == day]
         other_rels = [r.label for r in result.pillar_relations if r.pillar1 != day][:3]
         key_rels = day_rels + other_rels
-        scores_line = " / ".join(f"{k} {v['score']}" for k, v in result.domain_scores.items())
+        label_map = DOMAIN_LABEL_BY_REL[relation_type]
+        scores_line = " / ".join(
+            f"{label_map.get(k, k)} {v['score']}" for k, v in result.domain_scores.items()
+        )
         samhap_line = (
             ", ".join(f"{c['element']}국({''.join(c['branches'])})" for c in result.samhap_completions)
             if result.samhap_completions else "없음"
         )
         return (
-            "두 분의 사주 궁합 데이터입니다. 친근한 존댓말로 400자 이내로 풀어주세요.\n"
+            f"두 분의 사주 궁합 데이터입니다. 관계 유형은 '{RELATION_LABEL[relation_type]}'이에요. "
+            "그 톤에 맞게 친근한 존댓말로 300자 이내로 풀어주세요. "
+            "연인·부부 전용 어휘(연애·결혼·끌림 등)는 다른 관계 유형엔 쓰지 말아주세요.\n"
             f"- 첫 번째 분: 일간 {natal1.saju.stem_of_day_pillar.name}, 주오행 {natal1.my_main_element.name}, "
             f"{natal1.strength_label}, 용신 {natal1.yongshin.name}\n"
             f"- 두 번째 분: 일간 {natal2.saju.stem_of_day_pillar.name}, 주오행 {natal2.my_main_element.name}, "

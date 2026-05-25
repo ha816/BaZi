@@ -483,7 +483,7 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-lg">{DOMAIN_ICONS[domain] ?? "◎"}</span>
                     <span className="font-heading text-base font-bold text-[var(--color-ink)]">
-                      {domain} {info.score}점
+                      {info.display_name ?? domain} {info.score}점
                     </span>
                     <span
                       className="text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap"

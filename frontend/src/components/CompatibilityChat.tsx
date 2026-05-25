@@ -16,12 +16,6 @@ interface Props {
   name2: string;
 }
 
-const SUGGESTIONS = [
-  "두 사람 갈등을 줄이는 방법이 궁금해요",
-  "결혼해도 좋을 인연일까요?",
-  "올해 둘이 같이 시도해볼 만한 게 있을까요?",
-];
-
 export default function CompatibilityChat({ input, name1, name2 }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -103,22 +97,9 @@ export default function CompatibilityChat({ input, name1, name2 }: Props) {
 
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0">
             {messages.length === 0 && (
-              <div className="space-y-3">
-                <p className="text-xs text-center text-[var(--color-ink-faint)] py-1">
-                  두 분의 관계에 대해 까치에게 물어보세요 🐦
-                </p>
-                <div className="flex flex-col gap-1.5">
-                  {SUGGESTIONS.map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => send(q)}
-                      className="text-left text-xs px-3 py-2 rounded-lg border border-[var(--color-border-light)] hover:border-[var(--color-gold)] hover:bg-[var(--color-gold-faint)] transition-colors text-[var(--color-ink-muted)]"
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-xs text-center text-[var(--color-ink-faint)] py-2">
+                두 분의 관계에 대해 까치에게 물어보세요 🐦
+              </p>
             )}
             {messages.map((m, i) => (
               <div

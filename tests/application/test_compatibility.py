@@ -225,47 +225,46 @@ def test_analyze_compatibility_cache_hit_skips_recompute():
     assert r1["total_score"] == r2["total_score"]
 
 
-def test_narrative_injection_with_mock_llm():
-    """LlmPort 가 있으면 narrative 가 채워져야 한다."""
-
-    class _FakeLlm:
-        available = True
-
-        async def get_advice(self, params): return ""
-        async def interpret(self, report: str) -> str:
-            return "MOCK_NARRATIVE"
-        async def stream_interpret(self, report):
-            yield "MOCK_NARRATIVE"
-
-    svc = _service(llm_port=_FakeLlm())
-    u1 = _user(1990, 5, 15, 10, Gender.MALE)
-    u2 = _user(1992, 8, 20, 14, Gender.FEMALE)
-    result = asyncio.run(svc.compute_direct(u1, u2, 2026))
-    assert result["narrative"] == "MOCK_NARRATIVE"
-
-
-def test_narrative_none_when_llm_unavailable():
+def test_narrative_prompt_includes_relation_type():
+    """build_narrative_prompt 가 관계 유형에 맞춰 톤·라벨을 반영해야 한다."""
     svc = _service(llm_port=None)
     u1 = _user(1990, 5, 15, 10, Gender.MALE)
     u2 = _user(1992, 8, 20, 14, Gender.FEMALE)
-    result = asyncio.run(svc.compute_direct(u1, u2, 2026))
-    assert result["narrative"] is None
+
+    lover_prompt = svc.build_narrative_prompt(u1, u2, 2026, "lover")
+    friend_prompt = svc.build_narrative_prompt(u1, u2, 2026, "friend")
+    family_prompt = svc.build_narrative_prompt(u1, u2, 2026, "family")
+
+    assert "연인·부부" in lover_prompt
+    assert "친구·동료" in friend_prompt
+    assert "가족" in family_prompt
+    # 친구 톤일 때 영역별 라벨이 displayed label로 바뀌어야 함
+    assert "친밀감" in friend_prompt
+    assert "협업" in friend_prompt
+    # 가족 톤일 때
+    assert "정서 교감" in family_prompt
+    assert "가운(家運)" in family_prompt
 
 
-def test_narrative_failure_is_swallowed():
-    """LLM 호출이 실패해도 narrative=None 으로 안전하게 폴백."""
-
-    class _BrokenLlm:
-        available = True
-
-        async def get_advice(self, params): return ""
-        async def interpret(self, report: str) -> str:
-            raise RuntimeError("ollama down")
-        async def stream_interpret(self, report):
-            yield ""
-
-    svc = _service(llm_port=_BrokenLlm())
+def test_relation_type_changes_labels_and_narrative():
+    """관계 유형이 바뀌면 총평·도메인 라벨·narrative 가 갈아끼워져야 한다."""
+    svc = _service(llm_port=None)
     u1 = _user(1990, 5, 15, 10, Gender.MALE)
     u2 = _user(1992, 8, 20, 14, Gender.FEMALE)
-    result = asyncio.run(svc.compute_direct(u1, u2, 2026))
-    assert result["narrative"] is None
+
+    lover = asyncio.run(svc.compute_direct(u1, u2, 2026, "lover"))
+    friend = asyncio.run(svc.compute_direct(u1, u2, 2026, "friend"))
+    family = asyncio.run(svc.compute_direct(u1, u2, 2026, "family"))
+
+    # 점수는 동일
+    assert lover["total_score"] == friend["total_score"] == family["total_score"]
+    for d in ("연애", "결혼", "재물", "직업"):
+        assert lover["domain_scores"][d]["score"] == friend["domain_scores"][d]["score"]
+
+    # display_name 은 관계 유형별로 다름
+    assert lover["domain_scores"]["연애"]["display_name"] == "연애"
+    assert friend["domain_scores"]["연애"]["display_name"] == "친밀감"
+    assert family["domain_scores"]["연애"]["display_name"] == "정서 교감"
+
+    # 총평 라벨도 관계 유형별로 다른 어휘 사용
+    assert lover["label"] != friend["label"] or lover["label"] != family["label"]

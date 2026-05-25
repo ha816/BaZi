@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile } from "@/types/analysis";
+import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile, RelationType } from "@/types/analysis";
 import {
   analyzeCompatibility,
   analyzeCompatibilityByProfiles,
@@ -23,6 +23,7 @@ export default function CompatibilityPage() {
   const [person1, setPerson1] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "male" }, profileId: "" });
   const [person2, setPerson2] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "female", birthDate: "1993-01-01" }, profileId: "" });
   const [year, setYear] = useState(new Date().getFullYear());
+  const [relationType, setRelationType] = useState<RelationType>("lover");
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [chatInput, setChatInput] = useState<CompatibilityInput | null>(null);
   const [resultNames, setResultNames] = useState<{ name1: string; name2: string }>({ name1: "", name2: "" });
@@ -100,11 +101,12 @@ export default function CompatibilityPage() {
         person1: personToInput(person1),
         person2: personToInput(person2),
         year,
+        relation_type: relationType,
       };
       // 둘 다 프로필이면 /compatibility (캐시 지원), 아니면 /compatibility/direct
       const data =
         person1.mode === "profile" && person2.mode === "profile" && person1.profileId && person2.profileId
-          ? await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year)
+          ? await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year, relationType)
           : await analyzeCompatibility(input);
       setResult(data);
       setChatInput(input);
@@ -159,6 +161,29 @@ export default function CompatibilityPage() {
             <div className="flex items-center justify-center flex-shrink-0 text-2xl text-[var(--color-gold-light)]">♥</div>
             <PersonCard label="두 번째 분" state={person2} profiles={profiles}
               onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
+            <div className="flex gap-2">
+              {([
+                { value: "lover",  label: "연인·부부" },
+                { value: "friend", label: "친구·동료" },
+                { value: "family", label: "가족" },
+              ] as const).map(({ value, label }) => {
+                const active = relationType === value;
+                return (
+                  <button key={value} type="button" onClick={() => setRelationType(value)}
+                    className={`flex-1 rounded-lg py-2 text-sm border transition-colors ${
+                      active
+                        ? "bg-[var(--color-ink)] text-[var(--color-ivory)] border-[var(--color-ink)]"
+                        : "bg-white text-[var(--color-ink-muted)] border-[var(--color-border)] hover:border-[var(--color-gold-light)]"
+                    }`}>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex items-end gap-4">

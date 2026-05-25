@@ -292,10 +292,13 @@ export interface DomainSignal {
   text: string;
 }
 
+export type RelationType = "lover" | "friend" | "family";
+
 export interface CompatibilityDomainScore {
   score: number;
   level: string;
   reason: string;
+  display_name?: string;
   // 캐시 호환: 이전엔 string[], 신규는 DomainSignal[]
   pros?: Array<string | DomainSignal>;
   cons?: Array<string | DomainSignal>;
@@ -391,6 +394,7 @@ export interface CompatibilityInput {
   person1: PersonInput;
   person2: PersonInput;
   year: number;
+  relation_type?: RelationType;
 }
 
 export interface Member {

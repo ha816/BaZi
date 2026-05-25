@@ -155,11 +155,17 @@ export async function analyzeProfileChart(
 export async function analyzeCompatibilityByProfiles(
   profileId1: string,
   profileId2: string,
-  year: number
+  year: number,
+  relationType: import("@/types/analysis").RelationType = "lover",
 ): Promise<CompatibilityResult> {
   return request<CompatibilityResult>("/compatibility", {
     method: "POST",
-    body: JSON.stringify({ profile_id_1: profileId1, profile_id_2: profileId2, year }),
+    body: JSON.stringify({
+      profile_id_1: profileId1,
+      profile_id_2: profileId2,
+      year,
+      relation_type: relationType,
+    }),
   });
 }
 
