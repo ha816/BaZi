@@ -215,6 +215,29 @@ export async function streamCompatibilityChat(
   }
 }
 
+export async function streamCompatibilityNarrative(
+  input: CompatibilityInput,
+  onChunk: (accumulated: string) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/compatibility/narrative`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+    signal,
+  });
+  if (!res.ok || !res.body) return;
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let accumulated = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    accumulated += decoder.decode(value, { stream: true });
+    onChunk(accumulated);
+  }
+}
+
 export async function postFeedback(
   memberId: string,
   profileId: string,

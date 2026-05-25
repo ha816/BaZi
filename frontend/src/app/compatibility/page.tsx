@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile } from "@/types/analysis";
 import {
   analyzeCompatibility,
   analyzeCompatibilityByProfiles,
   listProfiles,
+  streamCompatibilityNarrative,
 } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import CompatibilityChat from "@/components/CompatibilityChat";
@@ -24,8 +26,12 @@ export default function CompatibilityPage() {
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [chatInput, setChatInput] = useState<CompatibilityInput | null>(null);
   const [resultNames, setResultNames] = useState<{ name1: string; name2: string }>({ name1: "", name2: "" });
+  const [narrative, setNarrative] = useState("");
+  const [narrativeLoading, setNarrativeLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const narrativeAbortRef = useRef<AbortController | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     detectLocation().then((loc) => { if (loc) setDetectedCity(loc.city); });
@@ -36,12 +42,22 @@ export default function CompatibilityPage() {
     if (!id) return;
     listProfiles(id).then((ps) => {
       setProfiles(ps);
-      if (ps.length > 0) {
-        setPerson1((s) => ({ ...s, mode: "profile", profileId: ps[0].id }));
-        if (ps.length > 1) setPerson2((s) => ({ ...s, mode: "profile", profileId: ps[1].id }));
-      }
+      if (ps.length === 0) return;
+
+      const p1Param = searchParams.get("p1");
+      const p2Param = searchParams.get("p2");
+      const selfP = ps.find((p) => p.is_self);
+
+      const p1 = ps.find((p) => p.id === p1Param) ?? selfP ?? ps[0];
+      const p2 =
+        ps.find((p) => p.id === p2Param && p.id !== p1.id) ??
+        ps.find((p) => p.id !== p1.id && !p.is_self) ??
+        ps.find((p) => p.id !== p1.id);
+
+      setPerson1((s) => ({ ...s, mode: "profile", profileId: p1.id }));
+      if (p2) setPerson2((s) => ({ ...s, mode: "profile", profileId: p2.id }));
     }).catch(() => {});
-  }, []);
+  }, [searchParams]);
 
   const toPersonInput = (s: PersonState): PersonInput => {
     const hourOpt = HOUR_OPTIONS.find((h) => h.value === s.manual.selectedHour);
@@ -72,10 +88,13 @@ export default function CompatibilityPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    narrativeAbortRef.current?.abort();
     setLoading(true);
     setError(null);
     setResult(null);
     setChatInput(null);
+    setNarrative("");
+    setNarrativeLoading(false);
     try {
       const input: CompatibilityInput = {
         person1: personToInput(person1),
@@ -93,12 +112,25 @@ export default function CompatibilityPage() {
         name1: getName(person1, "첫 번째 분"),
         name2: getName(person2, "두 번째 분"),
       });
+
+      const controller = new AbortController();
+      narrativeAbortRef.current = controller;
+      setNarrativeLoading(true);
+      streamCompatibilityNarrative(input, setNarrative, controller.signal)
+        .catch(() => {})
+        .finally(() => {
+          if (narrativeAbortRef.current === controller) setNarrativeLoading(false);
+        });
     } catch (err) {
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => { narrativeAbortRef.current?.abort(); };
+  }, []);
 
   return (
     <main className="min-h-screen py-10 md:py-16 px-4">
@@ -154,7 +186,9 @@ export default function CompatibilityPage() {
         {result && !loading && (
           <CompatibilityResultView data={result}
             name1={getName(person1, "첫 번째 분")}
-            name2={getName(person2, "두 번째 분")} />
+            name2={getName(person2, "두 번째 분")}
+            streamingNarrative={narrative}
+            narrativeLoading={narrativeLoading} />
         )}
       </div>
 

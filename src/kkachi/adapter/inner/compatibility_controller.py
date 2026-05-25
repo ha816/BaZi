@@ -98,3 +98,28 @@ async def compatibility_chat(
                 yield chunk
 
     return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
+
+
+class CompatibilityNarrativeRequest(BaseModel):
+    person1: PersonInput
+    person2: PersonInput
+    year: int
+
+
+@compatibility_router.post("/narrative")
+@inject
+async def compatibility_narrative(
+    req: CompatibilityNarrativeRequest,
+    svc: CompatibilityService = Depends(Provide[Container.compatibility_service]),
+) -> StreamingResponse:
+    user1 = _to_user(req.person1)
+    user2 = _to_user(req.person2)
+    prompt = svc.build_narrative_prompt(user1, user2, req.year)
+
+    async def generate():
+        llm = svc._llm_port
+        if llm and llm.available:
+            async for chunk in llm.stream_interpret(prompt):
+                yield chunk
+
+    return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")

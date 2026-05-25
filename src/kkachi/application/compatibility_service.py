@@ -138,7 +138,6 @@ class CompatibilityService:
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
         result = self._compute(natal1, natal2, postnatal1, postnatal2)
-        await self._inject_narrative(result, natal1, natal2)
         return asdict(result)
 
     def build_chat_context(
@@ -150,6 +149,12 @@ class CompatibilityService:
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
         result = self._compute(natal1, natal2, postnatal1, postnatal2)
         return self._format_chat_context(result, natal1, natal2, user1, user2, year, name1, name2)
+
+    def build_narrative_prompt(self, user1: User, user2: User, year: int) -> str:
+        natal1, postnatal1 = self._saju_service.analyze(user1, year)
+        natal2, postnatal2 = self._saju_service.analyze(user2, year)
+        result = self._compute(natal1, natal2, postnatal1, postnatal2)
+        return self._build_narrative_prompt(result, natal1, natal2)
 
     def _format_chat_context(
         self,
@@ -230,7 +235,6 @@ class CompatibilityService:
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
 
         result = self._compute(natal1, natal2, postnatal1, postnatal2)
-        await self._inject_narrative(result, natal1, natal2)
         result_dict = asdict(result)
         await self._compatibility_port.save(lo, hi, year, result_dict)
         return result_dict

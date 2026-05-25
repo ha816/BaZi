@@ -103,7 +103,12 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
         <div className="space-y-1">
           <div className="flex gap-4 pt-1 border-t border-[var(--color-border-light)] mt-2 py-2">
             <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)]">사주분석하기</Link>
-            <Link href="/compatibility" className="text-xs text-[var(--color-ink-faint)]">나와 궁합보기</Link>
+            <Link
+              href={profile.is_self ? "/compatibility" : `/compatibility?p2=${profile.id}`}
+              className="text-xs text-[var(--color-ink-faint)]"
+            >
+              나와 궁합보기
+            </Link>
           </div>
         </div>
       }

@@ -12,6 +12,8 @@ interface Props {
   data: CompatibilityResult;
   name1: string;
   name2: string;
+  streamingNarrative?: string;
+  narrativeLoading?: boolean;
 }
 
 const DOMAIN_ICONS: Record<string, string> = {
@@ -327,7 +329,7 @@ function ElementBar({ snapshot, label }: { snapshot: PillarSnapshot; label: stri
   );
 }
 
-export default function CompatibilityResultView({ data, name1, name2 }: Props) {
+export default function CompatibilityResultView({ data, name1, name2, streamingNarrative, narrativeLoading }: Props) {
   // 신규 필드는 이전 캐시(JSONB) 에 없을 수 있으므로 안전한 기본값 적용
   const {
     total_score, label, domain_scores, description,
@@ -577,22 +579,34 @@ export default function CompatibilityResultView({ data, name1, name2 }: Props) {
       </div>
 
       {/* ── 6. AI 해석 카드 ── */}
-      {narrative && (
-        <div className="slide-card">
-          <div className="slide-card__header">
-            <SectionHeader title="까치의 종합 해석" noMargin />
+      {(() => {
+        const text = streamingNarrative ?? narrative ?? "";
+        const isLoading = narrativeLoading && !text;
+        if (!text && !narrativeLoading) return null;
+        return (
+          <div className="slide-card">
+            <div className="slide-card__header">
+              <SectionHeader title="까치의 AI 종합해석" noMargin />
+            </div>
+            <div className="divider" />
+            <div className="slide-card__body space-y-3">
+              <KkachiTip>
+                앞에서 본 데이터를 까치가 한 편의 글로 정리했어요. 강점·약점·실천 조언이 담겨 있어요.
+              </KkachiTip>
+              {isLoading ? (
+                <p className="text-sm text-[var(--color-ink-faint)] leading-relaxed">
+                  <span className="animate-pulse">까치가 글을 쓰는 중이에요 ●●●</span>
+                </p>
+              ) : (
+                <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed whitespace-pre-line">
+                  {text}
+                  {narrativeLoading && <span className="animate-pulse text-[var(--color-ink-faint)]"> ▍</span>}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="divider" />
-          <div className="slide-card__body space-y-3">
-            <KkachiTip>
-              앞에서 본 데이터를 까치가 한 편의 글로 정리했어요. 강점·약점·실천 조언이 담겨 있어요.
-            </KkachiTip>
-            <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed whitespace-pre-line">
-              {narrative}
-            </p>
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
