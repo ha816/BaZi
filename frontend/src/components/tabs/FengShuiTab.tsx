@@ -217,7 +217,13 @@ function UnluckyCard({ d }: { d: UnluckyDirection }) {
 export default function FengShuiTab({ natal, name }: Props) {
   const fs = natal.feng_shui;
 
-  if (!fs) {
+  if (
+    !fs ||
+    !fs.trigram ||
+    !Array.isArray(fs.lucky_directions) ||
+    !Array.isArray(fs.unlucky_directions) ||
+    !Array.isArray(fs.interior_tips)
+  ) {
     return (
       <div className="slide-card">
         <div className="slide-card__body">

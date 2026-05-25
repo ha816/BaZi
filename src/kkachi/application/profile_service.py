@@ -59,7 +59,7 @@ class ProfileService:
 
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
         natal, postnatal = self.saju_service.analyze(user, year)
-        result = asdict(await self.saju_service.interpret(natal, postnatal, name=profile.name))
+        result = asdict(await self.saju_service.interpret(natal, postnatal, user=user, name=profile.name))
 
         await self.analysis_port.save(profile_id, year, result)
         return result

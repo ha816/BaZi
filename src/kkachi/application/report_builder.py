@@ -403,7 +403,8 @@ class LlmReportBuilder:
 
         if f.unlucky_directions:
             lines.extend(["", "### 흉방(凶方)"])
-            lines.append(f"- {', '.join(f.unlucky_directions)}")
+            for d in f.unlucky_directions:
+                lines.append(f"- {d.kind_korean}({d.kind_han}): {d.direction} — {d.meaning}")
             if f.avoid_advice:
                 lines.append(f"> {f.avoid_advice}")
 
