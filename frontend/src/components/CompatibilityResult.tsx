@@ -1,5 +1,6 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
 import type { CompatibilityResult, DomainSignal, DomainSignalKind, PillarSnapshot } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import KkachiTip from "./KkachiTip";
@@ -594,14 +595,22 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
                 앞에서 본 데이터를 까치가 한 편의 글로 정리했어요. 강점·약점·실천 조언이 담겨 있어요.
               </KkachiTip>
               {isLoading ? (
-                <p className="text-sm text-[var(--color-ink-faint)] leading-relaxed">
-                  <span className="animate-pulse">까치가 글을 쓰는 중이에요 ●●●</span>
-                </p>
+                <div className="flex flex-col items-center gap-4 py-8">
+                  <div className="relative w-14 h-14">
+                    <div className="absolute inset-0 rounded-full border-4 border-[var(--color-border-light)]" />
+                    <div className="absolute inset-0 rounded-full border-4 border-t-[var(--color-gold)] animate-spin" />
+                  </div>
+                  <p className="text-sm text-[var(--color-ink-faint)] text-center">
+                    까치가 두 분의 인연을 풀어내고 있어요…
+                  </p>
+                </div>
               ) : (
-                <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed whitespace-pre-line">
-                  {text}
-                  {narrativeLoading && <span className="animate-pulse text-[var(--color-ink-faint)]"> ▍</span>}
-                </p>
+                <div className="prose-saju text-sm text-[var(--color-ink-light)] leading-relaxed">
+                  <ReactMarkdown>{text}</ReactMarkdown>
+                  {narrativeLoading && (
+                    <span className="animate-pulse text-[var(--color-ink-faint)]"> ▍</span>
+                  )}
+                </div>
               )}
             </div>
           </div>

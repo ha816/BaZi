@@ -59,9 +59,15 @@ export default function AiTab({ name }: Props) {
           )}
 
           {isLoading && !error && (
-            <p className="text-sm text-[var(--color-ink-faint)] leading-relaxed">
-              <span className="animate-pulse">까치가 글을 쓰는 중이에요 ●●●</span>
-            </p>
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="relative w-14 h-14">
+                <div className="absolute inset-0 rounded-full border-4 border-[var(--color-border-light)]" />
+                <div className="absolute inset-0 rounded-full border-4 border-t-[var(--color-gold)] animate-spin" />
+              </div>
+              <p className="text-sm text-[var(--color-ink-faint)] text-center">
+                까치가 사주를 풀어내고 있어요…
+              </p>
+            </div>
           )}
 
           {text && (
