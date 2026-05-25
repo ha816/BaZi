@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile, RelationType } from "@/types/analysis";
@@ -18,6 +18,14 @@ import PersonCard, { type PersonState, DEFAULT_MANUAL } from "@/components/Perso
 import { MEMBER_ID_KEY, HOUR_OPTIONS } from "@/lib/constants";
 
 export default function CompatibilityPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <CompatibilityPageInner />
+    </Suspense>
+  );
+}
+
+function CompatibilityPageInner() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [detectedCity, setDetectedCity] = useState("Seoul");
   const [person1, setPerson1] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "male" }, profileId: "" });

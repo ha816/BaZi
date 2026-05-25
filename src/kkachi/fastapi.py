@@ -1,3 +1,4 @@
+import os
 import tomllib
 from contextlib import asynccontextmanager
 
@@ -29,9 +30,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="사주팔자 분석 API", lifespan=lifespan)
 
+_cors_origins = [o.strip() for o in os.getenv("KKACHI_CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+_cors_origin_regex = os.getenv("KKACHI_CORS_ORIGIN_REGEX") or None
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_cors_origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_methods=["GET", "POST", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
