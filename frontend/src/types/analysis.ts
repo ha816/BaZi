@@ -285,12 +285,22 @@ export interface InterpretBlock {
   tips: InterpretTip[];
 }
 
+export type DomainSignalKind = "harmony" | "clash" | "sinsal" | "sipsin" | "element" | "fortune";
+
+export interface DomainSignal {
+  kind: DomainSignalKind;
+  text: string;
+}
+
 export interface CompatibilityDomainScore {
   score: number;
   level: string;
   reason: string;
-  pros?: string[];
-  cons?: string[];
+  // 캐시 호환: 이전엔 string[], 신규는 DomainSignal[]
+  pros?: Array<string | DomainSignal>;
+  cons?: Array<string | DomainSignal>;
+  narrative?: string;
+  advice?: string;
 }
 
 export interface PalmLineScores {

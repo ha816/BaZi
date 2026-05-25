@@ -9,6 +9,7 @@ import {
   listProfiles,
 } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
+import CompatibilityChat from "@/components/CompatibilityChat";
 import CompatibilityResultView from "@/components/CompatibilityResult";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PersonCard, { type PersonState, DEFAULT_MANUAL } from "@/components/PersonCard";
@@ -21,6 +22,8 @@ export default function CompatibilityPage() {
   const [person2, setPerson2] = useState<PersonState>({ mode: "manual", manual: { ...DEFAULT_MANUAL, gender: "female", birthDate: "1993-01-01" }, profileId: "" });
   const [year, setYear] = useState(new Date().getFullYear());
   const [result, setResult] = useState<CompatibilityResult | null>(null);
+  const [chatInput, setChatInput] = useState<CompatibilityInput | null>(null);
+  const [resultNames, setResultNames] = useState<{ name1: string; name2: string }>({ name1: "", name2: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,28 +61,38 @@ export default function CompatibilityPage() {
     return s.manual.name || fallback;
   };
 
+  const personToInput = (s: PersonState): PersonInput => {
+    if (s.mode === "profile" && s.profileId) {
+      const p = profiles.find((x) => x.id === s.profileId);
+      if (p) return { name: p.name, gender: p.gender, birth_dt: p.birth_dt, city: p.city };
+    }
+    return toPersonInput(s);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setLoading(true);
     setError(null);
     setResult(null);
+    setChatInput(null);
     try {
+      const input: CompatibilityInput = {
+        person1: personToInput(person1),
+        person2: personToInput(person2),
+        year,
+      };
       // 둘 다 프로필이면 /compatibility (캐시 지원), 아니면 /compatibility/direct
-      if (person1.mode === "profile" && person2.mode === "profile" && person1.profileId && person2.profileId) {
-        setResult(await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year));
-      } else {
-        const input: CompatibilityInput = {
-          person1: person1.mode === "profile" && person1.profileId
-            ? (() => { const p = profiles.find((x) => x.id === person1.profileId)!; return { name: p.name, gender: p.gender, birth_dt: p.birth_dt, city: p.city }; })()
-            : toPersonInput(person1),
-          person2: person2.mode === "profile" && person2.profileId
-            ? (() => { const p = profiles.find((x) => x.id === person2.profileId)!; return { name: p.name, gender: p.gender, birth_dt: p.birth_dt, city: p.city }; })()
-            : toPersonInput(person2),
-          year,
-        };
-        setResult(await analyzeCompatibility(input));
-      }
+      const data =
+        person1.mode === "profile" && person2.mode === "profile" && person1.profileId && person2.profileId
+          ? await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year)
+          : await analyzeCompatibility(input);
+      setResult(data);
+      setChatInput(input);
+      setResultNames({
+        name1: getName(person1, "첫 번째 분"),
+        name2: getName(person2, "두 번째 분"),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다.");
     } finally {
@@ -144,6 +157,10 @@ export default function CompatibilityPage() {
             name2={getName(person2, "두 번째 분")} />
         )}
       </div>
+
+      {result && chatInput && !loading && (
+        <CompatibilityChat input={chatInput} name1={resultNames.name1} name2={resultNames.name2} />
+      )}
     </main>
   );
 }

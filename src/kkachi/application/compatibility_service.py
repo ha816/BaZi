@@ -36,6 +36,68 @@ RELATION_DELTA = {
 SAMHAP_COMPLETION_BONUS = 12   # 삼합 완성(3-of-3) per group
 SAMHAP_COMPLETION_MARRIAGE = 15  # 결혼 도메인 가산
 
+DOMAIN_INTROS: dict[str, list[tuple[int, str]]] = {
+    "연애": [
+        (70, "감정선이 가장 자연스럽게 통하는 흐름이에요."),
+        (55, "감정 교감이 부드럽게 이어지는 사이예요."),
+        (40, "끌림은 있지만 호흡을 맞춰갈 여지가 있어요."),
+        (0,  "감정선이 엇갈리기 쉬워 천천히 다가가는 게 좋아요."),
+    ],
+    "결혼": [
+        (70, "장기 동반자로 안정적으로 어우러지는 결합이에요."),
+        (55, "함께 살아가는 호흡이 무난하게 맞춰지는 사이예요."),
+        (40, "결혼이라는 결정 앞에 노력이 더해져야 하는 흐름이에요."),
+        (0,  "결혼 영역에선 충돌 요소가 많아 거리감 관리가 필요해요."),
+    ],
+    "재물": [
+        (70, "재물 흐름이 활발하게 도는 시기예요."),
+        (55, "재물 관리가 큰 무리 없이 안정적인 흐름이에요."),
+        (40, "재물 흐름이 평이해 작은 결정도 신중함이 필요해요."),
+        (0,  "재물 영역에선 보수적 운용이 권장되는 흐름이에요."),
+    ],
+    "직업": [
+        (70, "사회적 호흡이 잘 맞아 함께 성취를 끌어내는 흐름이에요."),
+        (55, "직업·역할 면에서 무난하게 어우러지는 사이예요."),
+        (40, "사회적 방향에서 의견을 자주 맞춰야 하는 흐름이에요."),
+        (0,  "직업 영역에선 각자 영역을 분리하는 게 안전한 흐름이에요."),
+    ],
+}
+
+DOMAIN_KIND_PHRASE: dict[str, dict[str, str]] = {
+    "연애": {
+        "harmony": "감정선이 부드럽게 맞물리는 자리",
+        "clash":   "감정 기복이 끼어들기 쉬운 자리",
+        "sinsal":  "끌림의 코드가 살아 있는 자리",
+        "sipsin":  "타고난 매력·표현이 통하는 자리",
+        "element": "오행 흐름이 받쳐주는 자리",
+        "fortune": "올해 흐름이 영향을 더하는 자리",
+    },
+    "결혼": {
+        "harmony": "부부 호흡이 자연스럽게 맞는 자리",
+        "clash":   "갈등이 쌓이기 쉬운 자리",
+        "sinsal":  "위기 때 서로를 지켜주는 코드",
+        "sipsin":  "정서적 안정이 받쳐지는 자리",
+        "element": "오행이 서로의 부족을 채워주는 자리",
+        "fortune": "올해 인연 흐름이 결혼 결정을 받쳐주는 자리",
+    },
+    "재물": {
+        "harmony": "재물 호흡이 맞아 들어가는 자리",
+        "clash":   "재물 갈등이 끼어들 수 있는 자리",
+        "sinsal":  "재물 코드를 더해주는 자리",
+        "sipsin":  "재물 창출의 기질이 살아 있는 자리",
+        "element": "오행 흐름이 재물에 영향을 주는 자리",
+        "fortune": "올해 재물 흐름이 더해지는 자리",
+    },
+    "직업": {
+        "harmony": "사회적 호흡이 맞아 들어가는 자리",
+        "clash":   "역할 충돌이 끼어들 수 있는 자리",
+        "sinsal":  "전문성·신뢰의 코드가 살아 있는 자리",
+        "sipsin":  "사회적 기질이 받쳐지는 자리",
+        "element": "오행 흐름이 사회운에 영향을 주는 자리",
+        "fortune": "올해 사회 흐름이 더해지는 자리",
+    },
+}
+
 
 def _level(score: int) -> str:
     if score >= 80:
@@ -78,6 +140,74 @@ class CompatibilityService:
         result = self._compute(natal1, natal2, postnatal1, postnatal2)
         await self._inject_narrative(result, natal1, natal2)
         return asdict(result)
+
+    def build_chat_context(
+        self,
+        user1: User, user2: User, year: int,
+        name1: str = "", name2: str = "",
+    ) -> str:
+        natal1, postnatal1 = self._saju_service.analyze(user1, year)
+        natal2, postnatal2 = self._saju_service.analyze(user2, year)
+        result = self._compute(natal1, natal2, postnatal1, postnatal2)
+        return self._format_chat_context(result, natal1, natal2, user1, user2, year, name1, name2)
+
+    def _format_chat_context(
+        self,
+        result: CompatibilityResult,
+        natal1: NatalInfo, natal2: NatalInfo,
+        user1: User, user2: User, year: int,
+        name1: str, name2: str,
+    ) -> str:
+        def _person_block(label: str, user: User, natal: NatalInfo) -> str:
+            gender = "남" if user.gender.is_male else "여"
+            birth = user.birth_dt.strftime("%Y-%m-%d %H:%M")
+            pillars = " ".join(str(sb) for sb in natal.saju.pillars.values())
+            elem = " ".join(f"{o.name}{c}" for o, c in natal.element_stats.items())
+            sinsal = ", ".join(s.korean for _, s in natal.sinsal) or "없음"
+            return (
+                f"[{label}] {gender} | {birth}\n"
+                f"- 사주: {pillars} (일간 {natal.saju.stem_of_day_pillar.name})\n"
+                f"- 오행: {elem} | 주오행 {natal.my_main_element.name} | {natal.strength_label} | 용신 {natal.yongshin.name}\n"
+                f"- 신살: {sinsal}"
+            )
+
+        day = Pillar.日柱.korean
+        key_rels = [r.label for r in result.pillar_relations if r.pillar1 == day]
+        other_rels = [r.label for r in result.pillar_relations if r.pillar1 != day][:4]
+        relations_line = ", ".join(key_rels + other_rels) if (key_rels or other_rels) else "특별한 합·충 없음"
+
+        samhap_line = (
+            ", ".join(f"{c['element']}국({''.join(c['branches'])})" for c in result.samhap_completions)
+            if result.samhap_completions else "없음"
+        )
+        scores_line = " / ".join(
+            f"{k} {v.get('score', 0)}({v.get('level', '')})" for k, v in result.domain_scores.items()
+        )
+        ec = result.element_complement or {}
+        complement_parts: list[str] = []
+        if ec.get("p1_provides"):
+            complement_parts.append(f"{name1 or '첫 번째 분'}이 {','.join(ec['p1_provides'])} 보완")
+        if ec.get("p2_provides"):
+            complement_parts.append(f"{name2 or '두 번째 분'}이 {','.join(ec['p2_provides'])} 보완")
+        if ec.get("overlap_strong"):
+            complement_parts.append(f"공통 과잉: {','.join(ec['overlap_strong'])}")
+        complement_line = " / ".join(complement_parts) if complement_parts else "특이사항 없음"
+
+        return "\n".join([
+            f"[궁합 분석 {year}년]",
+            _person_block(name1 or "첫 번째 분", user1, natal1),
+            "",
+            _person_block(name2 or "두 번째 분", user2, natal2),
+            "",
+            f"[종합] {result.total_score}점 — {result.label}",
+            f"- 한줄평: {result.description}",
+            f"- 핵심 관계: {relations_line}",
+            f"- 삼합 완성: {samhap_line}",
+            f"- 오행 보완: {complement_line}",
+            f"- 함께 가진 신살: {', '.join(result.shared_sinsal) if result.shared_sinsal else '없음'}",
+            f"- 영역별: {scores_line}",
+            f"- 키 트레이트: {', '.join(result.key_traits)}",
+        ])
 
     async def analyze_compatibility(self, pid1: UUID, pid2: UUID, year: int) -> dict:
         lo, hi = (pid1, pid2) if str(pid1) < str(pid2) else (pid2, pid1)
@@ -330,168 +460,298 @@ class CompatibilityService:
         has_jae2 = any(s in (Sipsin.正財, Sipsin.偏財) for _, s in natal2.sipsin)
         has_gwan1 = any(s in (Sipsin.正官, Sipsin.偏官) for _, s in natal1.sipsin)
         has_gwan2 = any(s in (Sipsin.正官, Sipsin.偏官) for _, s in natal2.sipsin)
+        has_sik1 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal1.sipsin)
+        has_sik2 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal2.sipsin)
+        has_in1 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal1.sipsin)
+        has_in2 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal2.sipsin)
+
+        def _signal(kind: str, text: str) -> dict:
+            return {"kind": kind, "text": text}
 
         # 연애
         love = 50
-        love_pros: list[str] = []
-        love_cons: list[str] = []
+        love_pros: list[dict] = []
+        love_cons: list[dict] = []
         for r in all_branch_rels:
             if r.kind == "branch_combine":
                 love += 7
-                love_pros.append(f"{r.pillar1} 육합")
+                love_pros.append(_signal("harmony", f"{r.pillar1} 육합"))
             elif r.kind == "branch_clash":
                 love -= 7
-                love_cons.append(f"{r.pillar1} 충")
+                love_cons.append(_signal("clash", f"{r.pillar1} 충"))
             elif r.kind == "wonjin":
                 love -= 4
-                love_cons.append(f"{r.pillar1} 원진")
+                love_cons.append(_signal("clash", f"{r.pillar1} 원진"))
         if any(r.kind == "samhap" for r in pillar_relations):
             love += 8
-            love_pros.append("삼합 반합")
+            love_pros.append(_signal("harmony", "삼합 반합"))
         if "도화살" in shared_sinsal:
             love += 12
-            love_pros.append("도화살 공유 — 이성적 끌림")
-        # 식상(食傷)/연애 영역 인자: 식신·상관 보유 — 매력·표현력
-        has_sik1 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal1.sipsin)
-        has_sik2 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal2.sipsin)
+            love_pros.append(_signal("sinsal", "도화살 공유 — 이성적 끌림"))
         if has_sik1 and has_sik2:
             love += 5
-            love_pros.append("두 분 모두 식상 — 표현력·매력 풍부")
+            love_pros.append(_signal("sipsin", "두 분 모두 식상 — 표현력·매력 풍부"))
         talent_avg = avg_postnatal("재능운")
         if talent_avg >= 65:
-            love_pros.append(f"올해 재능운 양호({talent_avg:.0f})")
+            love_pros.append(_signal("fortune", f"올해 재능운 양호({talent_avg:.0f})"))
         elif talent_avg <= 35:
-            love_cons.append(f"올해 재능운 부진({talent_avg:.0f})")
+            love_cons.append(_signal("fortune", f"올해 재능운 부진({talent_avg:.0f})"))
         love += int((talent_avg - 50) * 0.2)
         love = max(0, min(100, love))
 
         # 결혼
         marriage = 45
-        marriage_pros: list[str] = []
-        marriage_cons: list[str] = []
+        marriage_pros: list[dict] = []
+        marriage_cons: list[dict] = []
         for r in day_rels:
             if r.kind in ("stem_combine", "branch_combine"):
                 marriage += 12
-                marriage_pros.append("일주 합 — 부부 합")
+                marriage_pros.append(_signal("harmony", "일주 합 — 부부 합"))
             elif r.kind == "branch_clash":
                 marriage -= 10
-                marriage_cons.append("일주 충 — 갈등 주의")
+                marriage_cons.append(_signal("clash", "일주 충 — 갈등 주의"))
             elif r.kind == "stem_clash":
                 marriage -= 8
-                marriage_cons.append("일주 천간충")
+                marriage_cons.append(_signal("clash", "일주 천간충"))
         if "천을귀인" in shared_sinsal:
             marriage += 10
-            marriage_pros.append("천을귀인 공유 — 위기에 서로 보호")
+            marriage_pros.append(_signal("sinsal", "천을귀인 공유 — 위기에 서로 보호"))
         if "월덕귀인" in shared_sinsal:
             marriage += 6
-            marriage_pros.append("월덕귀인 공유 — 평화로운 흐름")
+            marriage_pros.append(_signal("sinsal", "월덕귀인 공유 — 평화로운 흐름"))
         if samhap_completions:
             marriage += SAMHAP_COMPLETION_MARRIAGE
-            marriage_pros.append(f"삼합({samhap_completions[0]['element']}국) 완성")
+            marriage_pros.append(_signal("harmony", f"삼합({samhap_completions[0]['element']}국) 완성"))
         strongest1 = max(natal1.element_stats, key=lambda o: natal1.element_stats.get(o, 0))
         strongest2 = max(natal2.element_stats, key=lambda o: natal2.element_stats.get(o, 0))
         if strongest2.generates == natal1.yongshin:
             marriage += 8
-            marriage_pros.append(f"상대 {strongest2.name}이 내 용신({natal1.yongshin.name}) 도움")
+            marriage_pros.append(_signal("element", f"상대 {strongest2.name}이 내 용신({natal1.yongshin.name}) 도움"))
         if strongest1.generates == natal2.yongshin:
             marriage += 8
-            marriage_pros.append(f"내 {strongest1.name}이 상대 용신({natal2.yongshin.name}) 도움")
-        # 인성(印星) 보유 — 정서적 안정
-        has_in1 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal1.sipsin)
-        has_in2 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal2.sipsin)
+            marriage_pros.append(_signal("element", f"내 {strongest1.name}이 상대 용신({natal2.yongshin.name}) 도움"))
         if has_in1 and has_in2:
             marriage += 4
-            marriage_pros.append("두 분 모두 인성 — 정서적 안정")
+            marriage_pros.append(_signal("sipsin", "두 분 모두 인성 — 정서적 안정"))
         yeon_avg = avg_postnatal("인연운")
         if yeon_avg >= 65:
-            marriage_pros.append(f"올해 인연운 양호({yeon_avg:.0f})")
+            marriage_pros.append(_signal("fortune", f"올해 인연운 양호({yeon_avg:.0f})"))
         elif yeon_avg <= 35:
-            marriage_cons.append(f"올해 인연운 부진({yeon_avg:.0f})")
+            marriage_cons.append(_signal("fortune", f"올해 인연운 부진({yeon_avg:.0f})"))
         marriage += int((yeon_avg - 50) * 0.2)
         marriage = max(0, min(100, marriage))
 
         # 재물
         wealth = 45
-        wealth_pros: list[str] = []
-        wealth_cons: list[str] = []
+        wealth_pros: list[dict] = []
+        wealth_cons: list[dict] = []
         if has_jae1 and has_jae2:
             wealth += 15
-            wealth_pros.append("두 분 모두 재성(財星) 보유")
+            wealth_pros.append(_signal("sipsin", "두 분 모두 재성(財星) 보유"))
         elif has_jae1 or has_jae2:
             wealth += 8
-            wealth_pros.append("한 분 재성 보유 — 재물 주도")
+            wealth_pros.append(_signal("sipsin", "한 분 재성 보유 — 재물 주도"))
         else:
-            wealth_cons.append("양쪽 재성 부재 — 재물 흐름 약함")
-        # 식상생재(食傷生財) — 식신·상관이 있으면 재성을 키움
+            wealth_cons.append(_signal("sipsin", "양쪽 재성 부재 — 재물 흐름 약함"))
         if has_sik1 and has_sik2 and (has_jae1 or has_jae2):
             wealth += 5
-            wealth_pros.append("식상생재(食傷生財) — 재물 창출력")
+            wealth_pros.append(_signal("sipsin", "식상생재(食傷生財) — 재물 창출력"))
         for r in day_rels:
             if r.kind in ("stem_combine", "branch_combine"):
                 wealth += 5
-                wealth_pros.append("일주 합")
+                wealth_pros.append(_signal("harmony", "일주 합"))
         if element_complement.get("score", 0) >= 5:
             wealth += 5
-            wealth_pros.append("오행 보완 시너지")
+            wealth_pros.append(_signal("element", "오행 보완 시너지"))
         elif element_complement.get("overlap_strong"):
-            wealth_cons.append("오행 과잉 중복")
+            wealth_cons.append(_signal("element", "오행 과잉 중복"))
         jae_avg = avg_postnatal("재물운")
         if jae_avg >= 65:
-            wealth_pros.append(f"올해 재물운 양호({jae_avg:.0f})")
+            wealth_pros.append(_signal("fortune", f"올해 재물운 양호({jae_avg:.0f})"))
         elif jae_avg <= 35:
-            wealth_cons.append(f"올해 재물운 부진({jae_avg:.0f})")
+            wealth_cons.append(_signal("fortune", f"올해 재물운 부진({jae_avg:.0f})"))
         wealth += int((jae_avg - 50) * 0.2)
         wealth = max(0, min(100, wealth))
 
         # 직업
         career = 45
-        career_pros: list[str] = []
-        career_cons: list[str] = []
+        career_pros: list[dict] = []
+        career_cons: list[dict] = []
         if has_gwan1 and has_gwan2:
             career += 15
-            career_pros.append("두 분 모두 관성(官星) 보유")
+            career_pros.append(_signal("sipsin", "두 분 모두 관성(官星) 보유"))
         elif has_gwan1 or has_gwan2:
             career += 8
-            career_pros.append("한 분 관성 보유 — 방향 제시")
+            career_pros.append(_signal("sipsin", "한 분 관성 보유 — 방향 제시"))
         else:
-            career_cons.append("양쪽 관성 부재 — 사회적 방향성 약함")
-        # 인성+관성 = 관인상생(官印相生) 직장 안정
+            career_cons.append(_signal("sipsin", "양쪽 관성 부재 — 사회적 방향성 약함"))
         if has_in1 and has_in2 and (has_gwan1 or has_gwan2):
             career += 5
-            career_pros.append("관인상생(官印相生) — 직장 안정")
+            career_pros.append(_signal("sipsin", "관인상생(官印相生) — 직장 안정"))
         for r in wol_rels:
             if r.kind in ("stem_combine", "branch_combine"):
                 career += 6
-                career_pros.append("월주 합 — 사회 환경 조화")
+                career_pros.append(_signal("harmony", "월주 합 — 사회 환경 조화"))
             elif r.kind == "branch_clash":
                 career -= 6
-                career_cons.append("월주 충")
-        # 문창귀인 공유 — 학업·문서·전문성
+                career_cons.append(_signal("clash", "월주 충"))
         if "문창귀인" in shared_sinsal:
             career += 5
-            career_pros.append("문창귀인 공유 — 전문성 코드")
+            career_pros.append(_signal("sinsal", "문창귀인 공유 — 전문성 코드"))
         gwan_avg = avg_postnatal("관록운")
         if gwan_avg >= 65:
-            career_pros.append(f"올해 관록운 양호({gwan_avg:.0f})")
+            career_pros.append(_signal("fortune", f"올해 관록운 양호({gwan_avg:.0f})"))
         elif gwan_avg <= 35:
-            career_cons.append(f"올해 관록운 부진({gwan_avg:.0f})")
+            career_cons.append(_signal("fortune", f"올해 관록운 부진({gwan_avg:.0f})"))
         career += int((gwan_avg - 50) * 0.2)
         career = max(0, min(100, career))
 
-        def _reason(pros: list[str], cons: list[str]) -> str:
-            parts = (pros + cons)[:3]
+        def _reason(pros: list[dict], cons: list[dict]) -> str:
+            parts = [p["text"] for p in (pros + cons)[:3]]
             return ", ".join(parts) if parts else "기본 관계로 산출"
 
         return {
-            "연애": {"score": love, "level": _level(love), "reason": _reason(love_pros, love_cons),
-                    "pros": love_pros, "cons": love_cons},
-            "결혼": {"score": marriage, "level": _level(marriage), "reason": _reason(marriage_pros, marriage_cons),
-                    "pros": marriage_pros, "cons": marriage_cons},
-            "재물": {"score": wealth, "level": _level(wealth), "reason": _reason(wealth_pros, wealth_cons),
-                    "pros": wealth_pros, "cons": wealth_cons},
-            "직업": {"score": career, "level": _level(career), "reason": _reason(career_pros, career_cons),
-                    "pros": career_pros, "cons": career_cons},
+            "연애": {
+                "score": love, "level": _level(love),
+                "reason": _reason(love_pros, love_cons),
+                "pros": love_pros, "cons": love_cons,
+                "narrative": self._narrate_domain(
+                    "연애", love, love_pros, love_cons,
+                    self._advice_love(love, love_pros, love_cons),
+                ),
+            },
+            "결혼": {
+                "score": marriage, "level": _level(marriage),
+                "reason": _reason(marriage_pros, marriage_cons),
+                "pros": marriage_pros, "cons": marriage_cons,
+                "narrative": self._narrate_domain(
+                    "결혼", marriage, marriage_pros, marriage_cons,
+                    self._advice_marriage(marriage, marriage_pros, marriage_cons),
+                ),
+            },
+            "재물": {
+                "score": wealth, "level": _level(wealth),
+                "reason": _reason(wealth_pros, wealth_cons),
+                "pros": wealth_pros, "cons": wealth_cons,
+                "narrative": self._narrate_domain(
+                    "재물", wealth, wealth_pros, wealth_cons,
+                    self._advice_wealth(wealth, wealth_pros, wealth_cons),
+                ),
+            },
+            "직업": {
+                "score": career, "level": _level(career),
+                "reason": _reason(career_pros, career_cons),
+                "pros": career_pros, "cons": career_cons,
+                "narrative": self._narrate_domain(
+                    "직업", career, career_pros, career_cons,
+                    self._advice_career(career, career_pros, career_cons),
+                ),
+            },
         }
+
+    @staticmethod
+    def _narrate_domain(
+        domain: str, score: int,
+        pros: list[dict], cons: list[dict],
+        advice: str = "",
+    ) -> str:
+        intros = DOMAIN_INTROS.get(domain, [(0, "")])
+        intro = next(text for threshold, text in intros if score >= threshold)
+        kind_map = DOMAIN_KIND_PHRASE.get(domain, {})
+        parts: list[str] = [intro]
+
+        if pros:
+            top = pros[:3]
+            head = ", ".join(p["text"] for p in top)
+            kind_note = next(
+                (kind_map[p["kind"]] for p in top if p["kind"] in kind_map),
+                None,
+            )
+            if kind_note:
+                parts.append(f"{head}이 {kind_note}로 흐름을 받쳐주고 있어요.")
+            else:
+                parts.append(f"{head}이 흐름을 받쳐주고 있어요.")
+
+        if cons:
+            top = cons[:2]
+            head = ", ".join(c["text"] for c in top)
+            kind_note = next(
+                (kind_map[c["kind"]] for c in top if c["kind"] in kind_map),
+                None,
+            )
+            if kind_note:
+                parts.append(f"다만 {head}은(는) {kind_note}이라 한 번씩 챙겨보면 좋아요.")
+            else:
+                parts.append(f"다만 {head}은(는) 한 번씩 챙겨보면 좋아요.")
+
+        if advice:
+            parts.append(advice)
+
+        return " ".join(parts)
+
+    @staticmethod
+    def _has_text(items: list[dict], keyword: str) -> bool:
+        return any(keyword in it["text"] for it in items)
+
+    def _advice_love(self, score: int, pros: list[dict], cons: list[dict]) -> str:
+        if self._has_text(pros, "도화살"):
+            return "끌림이 강한 만큼 즉흥적 결정은 잠시 미루고, 약속은 글로 남겨두면 좋아요."
+        if self._has_text(cons, "충") or self._has_text(cons, "원진"):
+            return "감정이 격해질 땐 한 발 물러서서 호흡을 정리한 뒤 대화를 이어가세요."
+        if self._has_text(pros, "식상"):
+            return "표현이 풍부한 두 분이라 말보다 경청을 한 박자 늘리면 깊이가 더해져요."
+        if score >= 70:
+            return "흐름이 좋은 시기, 함께 새로운 경험을 쌓으며 추억의 결을 더하세요."
+        if score <= 40:
+            return "거리감을 두며 천천히 다가가고, 작은 친절로 신뢰를 쌓는 시기예요."
+        return "서로의 페이스를 존중하며 가볍게 즐기는 만남부터 시작해보세요."
+
+    def _advice_marriage(self, score: int, pros: list[dict], cons: list[dict]) -> str:
+        if self._has_text(pros, "일주 합"):
+            return "결이 잘 맞는 사이일수록 한쪽이 양보하는 균형이 오래가는 비결이에요."
+        if self._has_text(cons, "일주 충") or self._has_text(cons, "천간충"):
+            return "의견이 갈릴 땐 즉답을 피하고, 하루 묵힌 뒤 다시 이야기하는 룰을 정해보세요."
+        if self._has_text(pros, "천을귀인") or self._has_text(pros, "삼합"):
+            return "위기 때 서로를 지켜주는 사이예요. 평소에도 작은 위로의 표현을 아끼지 마세요."
+        if self._has_text(pros, "인성"):
+            return "정서적 안정이 강점이니 작은 일에도 감사 표현을 자주 나눠보세요."
+        if score >= 70:
+            return "장기 동반자로 잘 어울리는 흐름, 미래 계획을 함께 적어두면 더 견고해져요."
+        if score <= 40:
+            return "역할과 경계를 분명히 정해두면 충돌이 줄고 호흡이 잡혀요."
+        return "공동의 작은 규칙을 만들며 차근차근 신뢰를 쌓는 시기예요."
+
+    def _advice_wealth(self, score: int, pros: list[dict], cons: list[dict]) -> str:
+        if self._has_text(pros, "식상생재"):
+            return "둘이 함께 만드는 부수입·사업 흐름이 좋은 사주예요. 작게 시작해보세요."
+        if self._has_text(pros, "두 분 모두 재성"):
+            return "재물 코드가 같으니 공동 계좌·예산을 함께 운영하면 시너지가 커져요."
+        if self._has_text(cons, "재성 부재"):
+            return "큰 투자나 즉흥 지출은 보류하고, 둘이 함께 자산 흐름을 점검하는 게 우선이에요."
+        if self._has_text(cons, "오행 과잉"):
+            return "비슷한 기운이 강한 사주라 한쪽 분야 몰빵보단 분산이 안전해요."
+        if score >= 70:
+            return "재물 흐름이 양호한 시기, 장기 목표를 둘이 함께 설정해보세요."
+        if score <= 40:
+            return "지출 가시화부터 시작하고, 보수적 운용을 유지하는 시기예요."
+        return "공동 지출 원칙을 가볍게 정해두면 마찰을 줄일 수 있어요."
+
+    def _advice_career(self, score: int, pros: list[dict], cons: list[dict]) -> str:
+        if self._has_text(pros, "관인상생"):
+            return "함께 자기계발하면 효과가 배가되는 조합, 학습·자격증 도전을 같이 잡아보세요."
+        if self._has_text(pros, "두 분 모두 관성"):
+            return "역할과 책임을 명확히 나누면 두 분 모두의 사회적 성취가 커져요."
+        if self._has_text(cons, "관성 부재"):
+            return "방향성이 흐려질 수 있으니 멘토·외부 조언자에게 정기적으로 의견을 구해보세요."
+        if self._has_text(pros, "문창귀인"):
+            return "지식·전문성 코드가 통해요. 함께 책·세미나를 챙기는 루틴이 잘 맞아요."
+        if self._has_text(cons, "월주 충"):
+            return "주변 환경 변화가 잦을 수 있어요. 서로의 일정·우선순위를 자주 공유하세요."
+        if score >= 70:
+            return "사회적 호흡이 좋은 시기, 함께 새로운 도전을 잡아도 좋아요."
+        if score <= 40:
+            return "각자 영역을 존중하며 분업 위주로 운영하는 게 안정적이에요."
+        return "역할 분담을 점검하고, 정기적으로 진행 상황을 공유하는 루틴을 만들어보세요."
 
     def _compute_key_traits(
         self,

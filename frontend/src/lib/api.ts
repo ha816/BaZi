@@ -193,6 +193,28 @@ export async function analyzeCompatibility(
   return res.json();
 }
 
+export async function streamCompatibilityChat(
+  input: CompatibilityInput,
+  messages: { role: string; content: string }[],
+  onChunk: (accumulated: string) => void,
+): Promise<void> {
+  const res = await fetch(`${API_URL}/compatibility/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...input, messages }),
+  });
+  if (!res.ok || !res.body) return;
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let accumulated = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    accumulated += decoder.decode(value, { stream: true });
+    onChunk(accumulated);
+  }
+}
+
 export async function postFeedback(
   memberId: string,
   profileId: string,
