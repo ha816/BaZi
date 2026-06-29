@@ -18,7 +18,7 @@ export default function DaeunTimeline({ daeun }: Props) {
         return (
           <div
             key={d.ganji}
-            className={`rounded-xl px-2 py-3 text-center border transition-shadow ${
+            className={`rounded-xl px-1 py-3 text-center border transition-shadow ${
               d.is_current
                 ? "border-[var(--color-gold)] bg-[var(--color-gold-faint)] shadow-md"
                 : d.has_yongshin
@@ -26,7 +26,7 @@ export default function DaeunTimeline({ daeun }: Props) {
                 : "border-[var(--color-border-light)] bg-[var(--color-card)]"
             }`}
           >
-            <div className="text-[10px] text-[var(--color-ink-faint)] mb-1 leading-tight">
+            <div className="text-[9px] text-[var(--color-ink-faint)] mb-1 leading-tight whitespace-nowrap">
               {d.start_age}~{d.end_age}세
             </div>
             <div className="flex justify-center gap-0.5 mb-1">
@@ -46,7 +46,7 @@ export default function DaeunTimeline({ daeun }: Props) {
               </div>
             )}
             {!d.is_current && d.has_yongshin && (
-              <div className="text-[9px] font-medium mt-1.5" style={{ color: "var(--color-wood)" }}>
+              <div className="text-[9px] font-medium mt-1.5 whitespace-nowrap" style={{ color: "var(--color-wood)" }}>
                 좋은 기운
               </div>
             )}

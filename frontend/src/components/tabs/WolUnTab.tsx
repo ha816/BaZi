@@ -31,7 +31,7 @@ export default function WolUnTab({ natal, postnatal }: Props) {
           <KkachiTip>
             가까운 달의 월운을 보고 나와의 조화를 살펴보세요.
           </KkachiTip>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {months.map((m, i) => {
               const stemElInfo = getElementInfo(m.stem_element);
               const branchElInfo = getElementInfo(m.branch_element);

@@ -338,14 +338,15 @@ body {
 
 .feature-tab {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 7px 2px;
-  border-radius: 16px;
+  gap: 2px;
+  padding: 6px 1px;
+  border-radius: 14px;
   border: 1px solid var(--color-border-light);
   background: var(--color-card);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--color-ink-muted);
   cursor: pointer;
@@ -358,6 +359,7 @@ body {
     gap: 6px;
   }
   .feature-tab {
+    flex-direction: row;
     gap: 5px;
     padding: 8px 4px;
     border-radius: 20px;

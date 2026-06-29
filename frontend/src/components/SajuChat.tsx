@@ -6,12 +6,11 @@ export default function SajuChat() {
   return (
     <Link
       href="/chat"
-      className="fixed bottom-24 right-4 z-[60] h-14 rounded-full shadow-lg flex items-center gap-2 pl-3 pr-4 text-white"
+      className="fixed bottom-24 right-4 z-[60] w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl text-white"
       style={{ backgroundColor: "var(--color-gold)" }}
       aria-label="까치 상담"
     >
-      <span className="text-2xl leading-none">🐦</span>
-      <span className="text-sm font-semibold">까치 상담</span>
+      🐦
     </Link>
   );
 }

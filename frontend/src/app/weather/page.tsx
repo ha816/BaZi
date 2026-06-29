@@ -248,12 +248,12 @@ export default function WeatherPage() {
                     </div>
                     <span className="text-2xl">{m.emoji}</span>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs text-[var(--color-ink-muted)]">{conditionText}</span>
-                      <span className="text-xs text-[var(--color-ink-faint)] ml-1.5">
+                      <p className="text-xs text-[var(--color-ink-muted)] truncate">{conditionText}</p>
+                      <p className="text-xs text-[var(--color-ink-faint)] whitespace-nowrap">
                         <span className="text-[10px]">최저 </span>{day.temp_min != null ? Math.round(day.temp_min) : "--"}°
                         <span className="mx-0.5 text-[var(--color-border)]">·</span>
                         <span className="text-[10px]">최고 </span>{day.temp_max != null ? Math.round(day.temp_max) : "--"}°
-                      </span>
+                      </p>
                     </div>
                     <span className={`text-xs font-semibold ${m.color} w-10 text-right shrink-0`}>{m.label}</span>
                   </div>
