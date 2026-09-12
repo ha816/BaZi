@@ -175,9 +175,10 @@
 
 **완료 기준** 구독한 사용자에게 07:00 알림 1건, 클릭 → `/siun`. `push_subscribe` 이벤트 기준 구독률과 알림 후 `daily_view` 비율 측정.
 
-- [ ] PWA manifest·sw
-- [ ] 구독 테이블·엔드포인트
-- [ ] 발송 스크립트 + 문구 매트릭스
+- [x] PWA manifest·sw (`app/manifest.ts`, `public/sw.js`, icon-192/512)
+- [x] 구독 테이블·엔드포인트 (`push_subscriptions`, `/push/*`, `PushSubscribeButton`)
+- [x] 발송 스크립트 (`scripts/send_daily_push.py`, `POST /admin/push/send-daily` dry-run) — 문구는 아침 한 마디 재사용, 별도 매트릭스는 보류
+- [ ] 운영 스케줄 등록 (cron/launchd 07:00) + HTTPS 환경에서 실기기 수신 확인
 - [x] 홈 캡션 재구성 — 백엔드 `Fortune.headline/action/caution`(판정 요인 기반, 이름 포함) + `MorningBrief` 컴포넌트, 홈·시운·DetailView 3곳
 - [x] 스트릭 판단 — 홈에 넣지 않음 (기존 `useStreak`는 미사용 코드, 정리 후보)
 
@@ -259,7 +260,7 @@
 | R2-1 | 출생시간 모름 고지 | 🟢 | ⬜ 대기 | | | |
 | R2-2 | 세 기둥 계산 | 🔴 | ⬜ 대기 | | | R2-1 후 |
 | R3 | 타이밍 리포트 | 🟡 | ⬜ 대기 | | | 프리미엄 후보 |
-| R4 | 아침 알림 + 홈 한 문장 | 🟡 | 🟨 진행 | 2026-09-12 | | 한 문장(3c7c4e3·4d803bc) 완료, 캐시 upsert·예보 성능(bc096b2). 알림은 진행 중 |
+| R4 | 아침 알림 + 홈 한 문장 | 🟡 | 🟨 진행 | 2026-09-12 | | 한 문장·알림 코드 완료. 남은 것: VAPID 키 운영 배치, 07:00 스케줄 등록, 실기기 수신 확인 |
 | R5 | 궁합 공유 + 오늘의 궁합 | 🟡 | ⬜ 대기 | | | |
 | R6 | 까치가 한 말 다시 보기 | 🟢 | ⬜ 대기 | | | R4 이후 |
 

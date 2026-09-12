@@ -38,6 +38,8 @@ cd frontend && npx tsc --noEmit
 | `src/kkachi/resource/local.toml` | `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` | **미사용** (코드에서 참조 없음) |
 | env | `KKACHI_CORS_ORIGINS` (기본 `http://localhost:3000`), `KKACHI_CORS_ORIGIN_REGEX` | CORS |
 | env | `OLLAMA_BASE_URL` (기본 `http://localhost:11434`), `OLLAMA_MODEL` (기본 `qwen2.5:32b`) | LLM |
+| env | `KKACHI_VAPID_PUBLIC_KEY`·`KKACHI_VAPID_PRIVATE_KEY`·`KKACHI_VAPID_SUBJECT` | Web Push. 미설정이면 `/push/*` 503, 프론트 알림 버튼 숨김. **local.toml에 넣지 않는다** (`scripts/vapid_keygen.py`) |
+| env | `KKACHI_ADMIN_TOKEN` | `/admin/push/send-daily?dry_run=false` 실발송 헤더 |
 | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` (기본 `http://localhost:8000`) | 프론트 → API |
 | env | `KKACHI_DB_URL` | DB URL override — 앱(`fastapi.py`)·Alembic(`alembic/env.py`) 모두 env → local.toml → 기본값 순 |
 
@@ -58,6 +60,7 @@ BaZi/
 ├── alembic/versions/            # 8개 마이그레이션 (아래 DB 스키마 참고). env.py 는 KKACHI_DB_URL → local.toml 순으로 URL 결정
 ├── docker/docker-compose.yml    # postgres:17 + pg_isready healthcheck, db/user/pw = bazi
 ├── scripts/db.sh                # DB up/status/migrate/reset/down/logs/sql — /db 스킬이 호출
+├── scripts/send_daily_push.py   # 아침 알림 발송 (cron 07:00) · vapid_keygen.py VAPID 키 생성
 ├── .claude/skills/db/SKILL.md   # /db 스킬: 서브커맨드 선택·실패 해석·reset 확인 규칙
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
@@ -84,13 +87,14 @@ BaZi/
 │   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)
 │   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
 │   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입
+│   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
 │   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
 │   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
-│   │   │                             #   fortune, weather, payment, feedback, llm, event
+│   │   │                             #   fortune, weather, payment, feedback, llm, event, push(PushPort·PushSenderPort)
 │   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음)
 │   │   │                             #   · personality(Personality+ElementBalance) · relationship · samjae · seun · yongshin · zodiac
 │   │   ├── use_case/                 # get_saju_context · get_annual_fortune · get_weather (MCP 도구용)
@@ -106,15 +110,17 @@ BaZi/
 │       │   ├── weather_controller.py       # GET /weather
 │       │   ├── admin_controller.py         # GET /admin/feedback/summary · /admin/events/summary
 │       │   ├── event_controller.py         # POST /events (행동 이벤트, ROADMAP F0)
+│       │   ├── push_controller.py          # /push — vapid-public-key · subscriptions POST/DELETE
 │       │   └── mcp_server.py               # FastMCP "사주까치" — get_saju_context · get_annual_fortune · get_weather_element
 │       └── outer/
 │           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→경도 내부 룩업, sajupy 호출)
 │           ├── postnatal_adapter.py        # PostnatalAdapter — 세운·대운·월운·충합·영역점수(reason 포함)·삼재
 │           ├── weather_adapter.py          # Open-Meteo geocoding + forecast (past_days=14), WMO → 오행
 │           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret
+│           ├── push/webpush_adapter.py     # WebPushAdapter (pywebpush, VAPID env) — 404/410이면 구독 소멸 반환
 │           └── db/
 │               ├── models.py       # MemberModel · ProfileModel · AnalysisModel · FortuneModel · CompatibilityModel
-│               │                   #   · InterpretFeedbackModel · PaymentModel · EventModel
+│               │                   #   · InterpretFeedbackModel · PaymentModel · EventModel · PushSubscriptionModel
 │               ├── member_repo.py  # MemberRepo
 │               ├── profile_repo.py # ProfileRepo · AnalysisRepo · FortuneRepo · CompatibilityRepo · FeedbackRepo
 │               └── payment_repo.py # PaymentRepo
@@ -126,7 +132,8 @@ BaZi/
 │   │   ├── chat/page.tsx            # 까치 상담 풀스크린 챗 (sessionStorage 입력값 → /kkachi/chat)
 │   │   ├── compatibility/page.tsx   # 궁합 — PersonCard×2 · 관계 유형 · 스트리밍 종합해석 · ?p1=&p2= 딥링크
 │   │   ├── compatibility/chat/page.tsx
-│   │   ├── siun/page.tsx            # 시운(時運) — 프로필 전환, 오늘/내일/주간, 14일 전~31일 예보
+│   │   ├── siun/page.tsx            # 시운(時運) — 아침 한 마디, 알림 켜기(PushSubscribeButton), 프로필 전환, 오늘~글피, 14일 전~31일 예보
+│   │   ├── manifest.ts              # PWA 매니페스트 (/manifest.webmanifest)
 │   │   ├── weather/page.tsx         # 날씨 오행 (GPS → ipapi → Seoul), 로그인 시 용신 팁
 │   │   ├── palmistry/page.tsx       # 손금 (idle → preview → loading → result)
 │   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
@@ -137,6 +144,7 @@ BaZi/
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 (621 LOC)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운·DetailView 공용
+│   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
 │   │   ├── DailyFortune.tsx         # DetailView · WeeklyView · DailyFortunePanel
 │   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
 │   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
@@ -155,9 +163,11 @@ BaZi/
 │   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
 │   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
 │   │   ├── track.ts              # 행동 이벤트 track(name, props) — 세션 UUID + fire-and-forget
+│   │   ├── push.ts               # getPushState/subscribePush/unsubscribePush — sw.js 등록 + VAPID 구독 + 서버 저장
 │   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
 │   └── types/analysis.ts
-├── frontend/public/kkachi/       # normal/good/caution 까치, sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
+├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
+├── frontend/public/sw.js         # 서비스워커 — push 수신·클릭(/siun?src=push)만, 오프라인 캐시 없음
 ├── frontend/public/oheng/        # 오행 이미지 5종
 └── tests/
     ├── adapter/       # test_analyzer · test_fortune · test_sibi_unseong
@@ -300,6 +310,12 @@ POST /payments/prepare       { member_id, feature_type: deep_analysis|daily_fort
 POST /payments/confirm       { payment_key, order_id, amount } → Toss confirm → { success }   (프론트 결제 게이트는 제거됨)
 GET  /admin/feedback/summary → [{ tab_id, total, positive, negative, positive_rate }] 긍정률 오름차순
 POST /events                 { session_id, name(snake_case), member_id?, props? } → 202   (프론트 lib/track.ts)
+
+# 아침 알림 (prefix /push) — VAPID env 미설정 시 503
+GET    /push/vapid-public-key   → { public_key }
+POST   /push/subscriptions      { member_id, subscription:{ endpoint(https), keys:{p256dh, auth} } } → 201 (endpoint upsert)
+DELETE /push/subscriptions      { endpoint } → 204
+POST   /admin/push/send-daily   ?dry_run=true(기본)&member_id= → [{member_id, profile, title, body, status}]  실발송은 X-Admin-Token 필요
 GET  /admin/events/summary   ?days=7 → [{ name, count, sessions }]
 
 # MCP (/mcp, streamable HTTP)
@@ -376,9 +392,18 @@ erDiagram
         JSONB props
         DATETIME created_at
     }
+    push_subscriptions {
+        UUID id PK
+        UUID member_id FK
+        VARCHAR endpoint UK
+        VARCHAR p256dh
+        VARCHAR auth
+        DATETIME created_at
+    }
 
     members ||--o{ profiles : "소유"
     members ||--o{ payments : "결제"
+    members ||--o{ push_subscriptions : "알림 구독(기기)"
     profiles ||--o{ analyses : "연간 해석 캐시"
     profiles ||--o{ fortunes : "일별 운세 캐시"
     profiles ||--o{ interpret_feedbacks : "해석 피드백"
@@ -396,6 +421,7 @@ erDiagram
 | `fortunes` | `(profile_id, fortune_date)` | 날짜별 일진 캐시 (upsert) |
 | `compatibilities` | `(profile_id_1, profile_id_2, year)` | 궁합 캐시, pid1 < pid2 정규화 |
 | `payments` | `toss_order_id` | 주문 중복 방지 |
+| `push_subscriptions` | `endpoint` | 기기당 1구독 (재구독 시 upsert) |
 
 ### 캐시 전략
 - `analyses`, `fortunes`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
@@ -424,7 +450,7 @@ erDiagram
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
 | `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 선택 |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
-| `/siun` | 시운(時運) — is_self 프로필 기본, 프로필 전환, 오늘/내일/주간 탭, 날씨 배지 | 필수(비로그인 CTA) |
+| `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률 대시보드 (인증 없음) | — |
@@ -480,6 +506,13 @@ erDiagram
 - 결과 `Fortune`: total_score, level(좋은 날/평범한 날/주의가 필요한 날), domain_scores{score,level,reason}, description, tips(최대 3), weather, solar_term(24절기 — 해당일이면 팁 맨 앞에 삽입), yongshin, son_eomneun_nal(음력 끝자리 9·0), 시운 그리드(daeun/seun/wol ganji + yongshin_in_*)
 - **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운·DetailView에 표시하고, 내일·모레는 첫 "오늘"을 라벨로 치환
 - 홈·시운 화면의 까치 이미지는 `FORECAST_LEVEL_META[level]`로 선택
+
+### 아침 알림 (Web Push, ROADMAP R4)
+- 구독: `/siun`의 `PushSubscribeButton` → `lib/push.ts`가 `/sw.js` 등록 → `GET /push/vapid-public-key` → `pushManager.subscribe` → `POST /push/subscriptions`. 회원·기기(endpoint) 단위, 프로필은 발송 시 `is_self` 우선
+- 발송: `scripts/send_daily_push.py` (cron/launchd 07:00) → `PushService.send_daily` → 구독별 `FortuneService.get_fortune` → `build_push_payload`(제목=헤드라인, 본문=✦할 것/✕피할 것, url=`/siun?src=push`) → `WebPushAdapter`. 404/410이면 구독 삭제
+- 미리보기: `uv run python scripts/send_daily_push.py --dry-run` 또는 `POST /admin/push/send-daily` (dry_run 기본). 실발송 API는 `KKACHI_ADMIN_TOKEN` 헤더 필요
+- 제약: Push API는 HTTPS(또는 localhost)에서만. tailscale 베타는 `next dev --experimental-https` 필요. iOS는 홈 화면 추가(PWA)한 뒤에만 알림 허용
+- 측정: `push_subscribe`·`push_unsubscribe`·`push_click`(`?src=push` 진입) 이벤트
 
 ### 날씨 연동 (Open-Meteo, API 키 불필요)
 - 도시명 → Geocoding API → lat/lon (프로세스 내 캐시, 실패 시 Seoul) 또는 `lat/lon` 직접 전달

@@ -66,8 +66,20 @@ cd frontend && npm install && npm run dev
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama 주소 |
 | `OLLAMA_MODEL` | `qwen2.5:32b` | Ollama 모델명 |
 | `NEXT_PUBLIC_API_URL` (frontend) | `http://localhost:8000` | 프론트가 호출할 API 주소 (`frontend/.env.local`) |
+| `KKACHI_VAPID_PUBLIC_KEY` / `KKACHI_VAPID_PRIVATE_KEY` / `KKACHI_VAPID_SUBJECT` | 없음 (미설정 시 알림 UI 숨김) | Web Push(아침 알림) VAPID 키. `uv run python scripts/vapid_keygen.py mailto:you@example.com` 출력을 export |
+| `KKACHI_ADMIN_TOKEN` | 없음 | `POST /admin/push/send-daily?dry_run=false` 실발송 허용 헤더(`X-Admin-Token`) |
 
-### 5. 테스트
+### 5. 아침 알림 (Web Push)
+
+```bash
+# 1) 키 생성 후 백엔드 환경변수로 export (local.toml에 넣지 않는다)
+uv run python scripts/vapid_keygen.py mailto:you@example.com
+# 2) 프론트 /siun 에서 "알림 켜기" (HTTPS 또는 localhost 필요, 홈 화면 추가 시 iOS도 동작)
+# 3) 매일 07:00 발송 — cron 예: 0 7 * * * cd /path/BaZi && uv run python scripts/send_daily_push.py
+uv run python scripts/send_daily_push.py --dry-run      # 페이로드 미리보기
+```
+
+### 6. 테스트
 
 ```bash
 uv run pytest           # 백엔드 (55 tests)
@@ -81,7 +93,8 @@ cd frontend && npx tsc --noEmit   # 프론트 타입 체크
 | 사주 종합 해석 (만세력·용신·삼재·시운·십이지신·풍수·AI 풀이) | `/analysis` | `POST /kkachi/interpret`, `POST /members/{id}/profiles/{pid}/analyze` |
 | 까치 상담 챗 (LLM 스트리밍) | `/chat` | `POST /kkachi/chat` |
 | 궁합 (연인·친구·가족 관계 유형, AI 종합해석·챗) | `/compatibility`, `/compatibility/chat` | `POST /compatibility`, `/compatibility/direct`, `/narrative`, `/chat` |
-| 시운(時運) — 오늘·내일·주간 일진 + 날씨 오행 | `/siun`, `/` | `GET /members/{id}/profiles/{pid}/daily`, `/forecast` |
+| 시운(時運) — 아침 한 마디(헤드라인·할 것·피할 것) + 오늘·내일·주간 일진 + 날씨 오행 | `/siun`, `/` | `GET /members/{id}/profiles/{pid}/daily`, `/forecast` |
+| 아침 알림 (PWA Web Push, 07:00) | `/siun` 알림 켜기 | `/push/*`, `scripts/send_daily_push.py` |
 | 날씨 오행 (Open-Meteo) | `/weather` | `GET /weather` |
 | 손금 (MediaPipe + OpenCV) | `/palmistry` | `POST /palmistry/analyze` |
 | 회원·프로필 (이메일 식별, 최대 10 프로필) | `/join`, `/profile`, `/my` | `/members`, `/members/{id}/profiles` |
@@ -95,6 +108,7 @@ BaZi/
 ├── alembic/                 # DB 마이그레이션
 ├── docker/docker-compose.yml # postgres:17 + healthcheck
 ├── scripts/db.sh            # DB 기동·마이그레이션·상태·초기화 스크립트 (/db 스킬이 사용)
+├── scripts/send_daily_push.py · vapid_keygen.py   # 아침 알림 발송(cron) · VAPID 키 생성
 ├── docs/                    # ROADMAP.md, REFACTORING.md, frontend/screen_spec.md, research/
 ├── src/kkachi/
 │   ├── fastapi.py           # 앱 진입점 — 라우터 등록, CORS, MCP 마운트, local.toml 로드
