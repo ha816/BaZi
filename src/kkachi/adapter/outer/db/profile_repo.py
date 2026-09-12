@@ -2,13 +2,20 @@ from datetime import date, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from kkachi.adapter.outer.db.models import AnalysisModel, CompatibilityModel, FortuneModel, InterpretFeedbackModel, ProfileModel
+from kkachi.adapter.outer.db.models import (
+    AnalysisModel,
+    CompatibilityModel,
+    FortuneModel,
+    InterpretFeedbackModel,
+    ProfileModel,
+)
+from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.feedback_port import FeedbackPort, FeedbackSummary
 from kkachi.application.port.fortune_port import FortunePort
-from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.domain.compatibility import Compatibility
 from kkachi.domain.fortune import FortuneCache
@@ -124,21 +131,19 @@ class FortuneRepo(FortunePort):
         self._sf = session_factory
 
     async def save(self, profile_id: UUID, fortune_date: date, result: dict) -> FortuneCache:
-        async with self._sf() as session:
-            existing = await session.execute(
-                select(FortuneModel).where(
-                    FortuneModel.profile_id == profile_id,
-                    FortuneModel.fortune_date == fortune_date,
-                )
+        """(profile_id, fortune_date) upsert — 동시 요청이 같은 날을 재계산해도 유니크 위반 없이 마지막 값이 남는다."""
+        stmt = (
+            pg_insert(FortuneModel)
+            .values(profile_id=profile_id, fortune_date=fortune_date, result=result)
+            .on_conflict_do_update(
+                constraint="uq_fortune_profile_date",
+                set_={"result": result, "created_at": datetime.utcnow()},
             )
-            m = existing.scalar_one_or_none()
-            if m:
-                m.result = result
-            else:
-                m = FortuneModel(profile_id=profile_id, fortune_date=fortune_date, result=result)
-                session.add(m)
+            .returning(FortuneModel)
+        )
+        async with self._sf() as session:
+            m = (await session.execute(stmt)).scalar_one()
             await session.commit()
-            await session.refresh(m)
             return _to_fortune(m)
 
     async def get(self, profile_id: UUID, fortune_date: date) -> FortuneCache | None:

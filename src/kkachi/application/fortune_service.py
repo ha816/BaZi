@@ -62,6 +62,7 @@ class FortuneService:
         weather_map = await self._get_weather_map(profile.city, days=days)
 
         results = []
+        analyzed: dict[int, tuple] = {}  # 연도별 (natal, postnatal) — 사주 분석은 날짜와 무관하게 연도에만 의존
         for i in range(days):
             target = today + timedelta(days=i)
             target_str = target.isoformat()
@@ -73,7 +74,9 @@ class FortuneService:
                 results.append(cached.result)
                 continue
 
-            natal, postnatal = self._saju_service.analyze(user, target.year)
+            if target.year not in analyzed:
+                analyzed[target.year] = self._saju_service.analyze(user, target.year)
+            natal, postnatal = analyzed[target.year]
             fortune = compute_fortune(natal, target, weather, postnatal, name=profile.name)
             result = asdict(fortune)
             await self._fortune_port.save(profile_id, target, result)
