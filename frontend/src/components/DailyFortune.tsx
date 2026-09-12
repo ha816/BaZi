@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { DailyFortune, HourlyWeather } from "@/types/analysis";
 import { FORECAST_LEVEL_META } from "@/lib/elementColors";
+import MorningBrief from "./MorningBrief";
 
 function useStreak(todayDate: string): number {
   const [streak, setStreak] = useState(0);
@@ -143,11 +144,13 @@ function getDowLabel(dateStr: string) {
 }
 
 // ── 단일 날 상세 뷰 ────────────────────────────────────────────────────────
-export function DetailView({ data, hideDomainScores }: { data: DailyFortune; hideDomainScores?: boolean }) {
+export function DetailView({ data, hideDomainScores, dayLabel }: { data: DailyFortune; hideDomainScores?: boolean; dayLabel?: string }) {
   const meta = FORECAST_LEVEL_META[data.level] ?? FORECAST_LEVEL_META["평범한 날"];
 
   return (
     <div className="space-y-4">
+      <MorningBrief data={data} dayLabel={dayLabel} compact />
+
       {/* 레벨 + 날씨 */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
@@ -190,10 +193,12 @@ export function DetailView({ data, hideDomainScores }: { data: DailyFortune; hid
         </div>
       )}
 
-      {/* 설명 */}
-      <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed border-t border-[var(--color-border-light)] pt-3">
-        {data.description}
-      </p>
+      {/* 설명 — 아침 한 마디가 없는 옛 캐시일 때만 */}
+      {!data.headline && (
+        <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed border-t border-[var(--color-border-light)] pt-3">
+          {data.description}
+        </p>
+      )}
 
       {/* 팁 */}
       {data.tips.length > 0 && (
@@ -314,8 +319,8 @@ export default function DailyFortunePanel({
       </div>
 
       {/* 콘텐츠 */}
-      {tab === "오늘" && <DetailView data={today} />}
-      {tab === "내일" && tomorrow && <DetailView data={tomorrow} />}
+      {tab === "오늘" && <DetailView data={today} dayLabel="오늘" />}
+      {tab === "내일" && tomorrow && <DetailView data={tomorrow} dayLabel="내일" />}
       {tab === "주간" && <WeeklyView forecast={forecast} />}
     </div>
   );

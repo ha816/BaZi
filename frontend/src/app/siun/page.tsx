@@ -6,6 +6,7 @@ import Link from "next/link";
 import { listProfiles, getForecast } from "@/lib/api";
 import { WeeklyView } from "@/components/DailyFortune";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import MorningBrief from "@/components/MorningBrief";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import { getZodiacEmoji } from "@/lib/zodiac";
@@ -119,25 +120,30 @@ export default function SiunPage() {
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <div className="rounded-2xl border border-[var(--color-border-light)] shadow-sm overflow-hidden bg-[var(--color-card)]">
-          {/* 히어로 — 일진 + 점수 */}
+          {/* 아침 한 마디 + 일진·점수 */}
           {(() => {
             const stemEl = getElementInfo(data.day_pillar[0] ?? "");
             const heroBg = ELEMENT_META[stemEl.label]?.bg ?? "bg-[var(--color-ivory-warm)]";
             return (
-              <div className={`px-6 py-6 flex items-center gap-10 ${heroBg}`}>
-                <div className="flex flex-col flex-shrink-0 gap-0.5">
-                  <span className="text-lg font-semibold leading-none tracking-wide" style={{ color: stemEl.color }}>
-                    {toKorean(data.day_pillar)}
-                  </span>
-                  <span className="font-heading text-7xl font-bold leading-none" style={{ color: stemEl.color }}>
-                    {data.day_pillar}
-                  </span>
+              <>
+                <div className={`px-6 pt-5 pb-4 ${heroBg}`}>
+                  <MorningBrief data={data} dayLabel={label} />
                 </div>
-                <div className="flex-1 flex flex-col gap-0.5">
-                  <span className="text-lg font-semibold leading-none tracking-wide text-[var(--color-ink-muted)]">종합 운세</span>
-                  <span className="font-heading text-7xl font-bold leading-none text-[var(--color-ink)]">{data.total_score}</span>
+                <div className={`px-6 py-3 flex items-center justify-between border-y border-[var(--color-border-light)] ${heroBg}`}>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-heading text-3xl font-bold leading-none" style={{ color: stemEl.color }}>
+                      {data.day_pillar}
+                    </span>
+                    <span className="text-sm font-semibold" style={{ color: stemEl.color }}>
+                      {toKorean(data.day_pillar)}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-xs text-[var(--color-ink-muted)]">종합</span>
+                    <span className="font-heading text-3xl font-bold leading-none text-[var(--color-ink)]">{data.total_score}</span>
+                  </div>
                 </div>
-              </div>
+              </>
             );
           })()}
 

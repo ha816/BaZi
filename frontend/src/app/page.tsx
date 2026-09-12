@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { DailyFortune, DailyWeather, HourlyWeather, Profile } from "@/types/analysis";
 import { getForecast, getWeather, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
-import DailyFortunePanel from "@/components/DailyFortune";
+import MorningBrief from "@/components/MorningBrief";
 import FeedPost from "@/components/FeedPost";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
@@ -69,13 +69,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
   const meta = today ? FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"] : null;
   const el = today ? ELEMENT_META[today.day_element] ?? ELEMENT_META["土"] : ELEMENT_META["土"];
 
-  // 플로팅 키워드 추출 (상위 3개)
-  const keywords = today ? Object.entries(today.domain_scores)
-    .map(([key, val]) => ({ key, score: val.score }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
-    .map(kw => `#${kw.key}${kw.score > 80 ? "운최고" : kw.score > 60 ? "운좋음" : "운보통"}`) : [];
-
   return (
     <div id={`post-${profile.id}`}>
       <FeedPost
@@ -85,17 +78,27 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       avatarClass="bg-[var(--color-gold-faint)] text-2xl"
       caption={
         today && meta ? (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              {today.son_eomneun_nal && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
-                  👻 손없는 날
-                </span>
-              )}
-            </div>
-            <p className="text-sm">
-              {today.description.replace(new RegExp(`^${profile.name}\\s*`), "")}
-            </p>
+          <div className="space-y-2.5">
+            <MorningBrief data={today} stripName={profile.name} compact />
+            {(today.solar_term || today.weather || today.son_eomneun_nal) && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {today.solar_term && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+                    🌿 {today.solar_term}
+                  </span>
+                )}
+                {today.weather && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200">
+                    {(ELEMENT_META[today.weather.element] ?? ELEMENT_META["土"]).emoji} {today.weather.condition}
+                  </span>
+                )}
+                {today.son_eomneun_nal && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
+                    👻 손없는 날
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         ) : null
       }
@@ -131,20 +134,6 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
                 className="w-36 h-36 md:w-48 md:h-48 object-contain animate-float drop-shadow-xl"
               />
 
-              {/* 플로팅 키워드 */}
-              {keywords.map((kw, i) => (
-                <div
-                  key={kw}
-                  className={`absolute z-20 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-white/50 text-[10px] font-bold text-[var(--color-ink)] whitespace-nowrap animate-float`}
-                  style={{
-                    top: i === 0 ? '0%' : i === 1 ? '30%' : '70%',
-                    left: i === 0 ? '-5%' : i === 1 ? '85%' : '-10%',
-                    animationDelay: `${i * 0.5}s`
-                  }}
-                >
-                  {kw}
-                </div>
-              ))}
             </div>
 
             {/* 하단 정보 태그들 */}
