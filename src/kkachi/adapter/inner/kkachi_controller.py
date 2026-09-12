@@ -1,13 +1,13 @@
 from dataclasses import asdict
 from datetime import datetime
 
-from dependency_injector.wiring import inject, Provide
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.kkachi_service import KkachiService
+from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 
@@ -39,19 +39,6 @@ async def interpret(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
     return asdict(result)
-
-
-@kkachi_router.post("/report")
-@inject
-async def report(
-    req: AnalysisRequest,
-    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
-) -> dict:
-    try:
-        user = _make_user(req)
-        return await saju_svc.build_report(user, req.analysis_year, req.name)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"레포트 생성 중 오류: {e}")
 
 
 class ChatRequest(BaseModel):

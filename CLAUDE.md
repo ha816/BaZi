@@ -70,7 +70,7 @@ BaZi/
 │   │   ├── member.py / profile.py / payment.py
 │   ├── application/
 │   │   ├── kkachi_service.py         # NatalService(analyze/interpret_natal) · PostnatalService(analyze/interpret_postnatal)
-│   │   │                             #   · KkachiService(analyze/interpret/build_chat_context) · KkachiLlmService(**미배선**, build_report)
+│   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)
 │   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
 │   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰, 24절기, 손없는 날
@@ -86,9 +86,9 @@ BaZi/
 │   │   └── util/                     # util.py(year_to_ganji, branch_relation, josa…) · sipsin_meta · clash_combine_meta · zodiac_meta
 │   └── adapter/
 │       ├── inner/
-│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · report · chat · stream-report
+│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · chat · stream-report
 │       │   ├── member_controller.py        # /members
-│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·report·analyze·daily·forecast·feedback
+│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·analyze·daily·forecast·feedback
 │       │   ├── compatibility_controller.py # /compatibility — ""·direct·chat·narrative
 │       │   ├── payment_controller.py       # /payments — prepare·confirm
 │       │   ├── palmistry_controller.py     # POST /palmistry/analyze (MediaPipe 랜드마크 + OpenCV 손금선 밀도)
@@ -256,7 +256,6 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
                              → { natal: NatalResult, postnatal: PostnatalResult }
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
-POST /kkachi/report          ⚠ 현재 동작 불가 — KkachiService 에 build_report 가 없음 (KkachiLlmService 미배선). 프론트 미사용
 
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
@@ -270,7 +269,6 @@ GET    /{pid}
 PATCH  /{pid}                { name, gender, birth_dt, city }
 DELETE /{pid}                → 204 (is_self 프로필은 409)
 POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선)
-POST   /{pid}/report         ⚠ /kkachi/report 와 같은 이유로 동작 불가
 GET    /{pid}/daily          → Fortune dict (오늘, fortunes 캐시 + 날씨 없으면 재계산)
 GET    /{pid}/forecast       ?days=7&start_date=YYYY-MM-DD → Fortune[] (days 최대 35, 과거 날짜 가능)
 POST   /{pid}/feedback       { tab_id, rating } → { success }
@@ -494,7 +492,6 @@ tests/
 
 ## 알려진 이슈 / 정리 후보 (2026-09-12 기준)
 
-- `KkachiLlmService`(kkachi_service.py)가 Container에 배선되지 않아 `/kkachi/report`·`/profiles/{pid}/report`는 AttributeError → 400/500. `build_chat_context`도 `KkachiService`와 중복. 프론트는 두 엔드포인트 모두 미사용 → 삭제 또는 배선 결정 필요
 - 프론트 미사용 컴포넌트 7개: `CounselorComment`, `DetailToggle`, `FortuneSummary`, `PillarCard`, `SectionAccordion`, `SlideCarousel`, `tabs/AdviceTab`
 - `local.toml`의 `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` 키와 pyproject의 `openai` 의존성은 코드에서 참조 없음
 - `.claude/agents/developer.md`, `researcher.md`는 다른 프로젝트(광고/오가닉 최적화) 정의 — 잔존 파일

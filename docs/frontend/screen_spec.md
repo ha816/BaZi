@@ -332,7 +332,6 @@ idle → preview → loading → result
 | 우선순위 | 항목 | 대상 |
 |---------|------|------|
 | 높음 | `/admin/feedback` 접근 제어 | `/admin/feedback` |
-| 높음 | `/kkachi/report`·`/profiles/{pid}/report` 동작 불가 (KkachiLlmService 미배선) — 삭제 또는 배선 | 백엔드 |
 | 중간 | `/weather`, `/palmistry` 네비게이션 진입점 | BottomNav 또는 홈 |
 | 중간 | 손금 Otsu 임계값·운명선·신뢰도 반환 (`docs/research/palmistry_physiognomy_고도화.md`) | `/palmistry` |
 | 중간 | 비로그인 직접 입력 결과의 피드백 전송 | `ResultSlides` |

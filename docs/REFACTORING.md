@@ -72,10 +72,9 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 | `frontend/src/components/CompatibilityResult.tsx` | 621 | 점수·라더·기둥비교·신살·narrative 5개 영역 한 컴포넌트 | `components/compatibility/` 하위 섹션 분리 (NatalTab 방식) |
 | `frontend/src/types/analysis.ts` | 476 | 사주·궁합·운세·회원 타입 전부 한 파일 | 도메인별 파일 분리 검토 (import 경로 영향 큼, 낮은 우선순위) |
 | `src/kkachi/application/report_builder.py` | 448 | 6개 섹션 포맷팅 | 단일 책임 보존 결정(5/24). LLM 파이프 확장 시 재고 |
-| `src/kkachi/application/kkachi_service.py` | 396 | `KkachiLlmService` 미배선 + `build_chat_context` 중복 | 미배선 클래스 삭제 또는 Container 배선 후 중복 제거 |
 | `frontend/src/components/tabs/ZodiacTab.tsx` | 417 | 십이지신·충합·연도별 궁합 3영역 | 섹션 분리 검토 |
 
-미사용 코드 (삭제 후보): 프론트 `CounselorComment`·`DetailToggle`·`FortuneSummary`·`PillarCard`·`SectionAccordion`·`SlideCarousel`·`tabs/AdviceTab`, 백엔드 `/kkachi/report`·`/profiles/{pid}/report` 엔드포인트.
+미사용 코드 (삭제 후보): 프론트 `CounselorComment`·`DetailToggle`·`FortuneSummary`·`PillarCard`·`SectionAccordion`·`SlideCarousel`·`tabs/AdviceTab`.
 
 ## 6. PR 작성 규칙
 

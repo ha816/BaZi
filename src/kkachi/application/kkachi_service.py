@@ -1,37 +1,49 @@
 from __future__ import annotations
 
-import logging
-
 from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fengshui import FengShuiInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
+from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
 from kkachi.application.interpreter.natal import (
     core_summary as _core_summary,
+)
+from kkachi.application.interpreter.natal import (
     month_badges as _month_badges,
+)
+from kkachi.application.interpreter.natal import (
     pillar_summary as _pillar_summary,
+)
+from kkachi.application.interpreter.natal import (
     year_zodiac_narrative as _year_zodiac_narrative,
+)
+from kkachi.application.interpreter.natal import (
     year_zodiac_relations as _year_zodiac_relations,
 )
-from kkachi.application.interpreter.yongshin import find_nearest_yongshin_year as _find_nearest_yongshin_year
-from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
-from kkachi.application.interpreter.personality import ElementBalanceInterpreter, PersonalityInterpreter
+from kkachi.application.interpreter.personality import (
+    ElementBalanceInterpreter,
+    PersonalityInterpreter,
+)
 from kkachi.application.interpreter.relationship import RelationshipInterpreter
 from kkachi.application.interpreter.samjae import SamjaeInterpreter
 from kkachi.application.interpreter.seun import SeunInterpreter
 from kkachi.application.interpreter.yongshin import YongshinInterpreter
+from kkachi.application.interpreter.yongshin import (
+    find_nearest_yongshin_year as _find_nearest_yongshin_year,
+)
 from kkachi.application.interpreter.zodiac import ZodiacInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
-from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.util.sipsin_meta import enrich_sipsin
 from kkachi.application.util.util import year_to_ganji
 from kkachi.domain.ganji import JIZAN_ROLE_HANJA, OHENG_GUIDE, Branch, Stem
-from kkachi.domain.interpretation import InterpretBlock, Interpretation, NatalResult, PostnatalResult
+from kkachi.domain.interpretation import (
+    Interpretation,
+    NatalResult,
+    PostnatalResult,
+)
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
-
-_log = logging.getLogger(__name__)
 
 
 class NatalService:
@@ -192,104 +204,6 @@ class PostnatalService:
             relationships=RelationshipInterpreter()(natal, postnatal),
             advice=advice,
         )
-
-
-class KkachiLlmService:
-
-    def __init__(
-        self,
-        kkachi_svc: KkachiService,
-        llm_port: LlmPort | None = None,
-    ):
-        self._kkachi_svc = kkachi_svc
-        self._llm_port = llm_port
-
-    def build_chat_context(self, interpretation: Interpretation, user: User, name: str = "") -> str:
-        natal = interpretation.natal
-        post = interpretation.postnatal
-        gender = "남" if user.gender.is_male else "여"
-        birth = user.birth_dt.strftime("%Y-%m-%d %H:%M")
-
-        pillar_str = " ".join(natal.pillars)
-        yong = natal.yongshin_info
-        kisin = natal.kisin_info
-        elem_str = " ".join(f"{k}{v}" for k, v in natal.element_stats.items())
-
-        lines: list[str] = [
-            f"[{name or '?'} | {gender} | {birth} | {post.year}년 분석]",
-            f"사주: {pillar_str} | 일간: {natal.day_stem}{natal.day_stem_korean}({natal.day_stem_yin_yang}) | {natal.strength_label}",
-            f"오행: {elem_str} | 주오행: {natal.my_element.get('meaning', '')}",
-            f"용신: {yong.get('meaning', '')}({yong.get('name', '')}) | 기신: {kisin.get('meaning', '')}({kisin.get('name', '')})",
-        ]
-
-        if natal.personality:
-            desc = natal.personality[0].description
-            lines.append(f"\n[성격] {desc[:120]}")
-
-        _LEVEL_KOR = {"high": "좋음", "medium": "보통", "low": "주의"}
-        if post.domain_scores:
-            lines.append(f"\n[영역별 운] {post.year}년")
-            for domain, info in post.domain_scores.items():
-                score = info.get("score", 0)
-                level = _LEVEL_KOR.get(info.get("level", ""), info.get("level", ""))
-                reason = info.get("reason", "")
-                lines.append(f"{domain} {score}({level}): {reason[:60]}")
-
-        if post.samjae:
-            samjae_type = post.samjae.get("type", "")
-            sf_desc = post.samjae_fortune[0].description[:80] if post.samjae_fortune else ""
-            lines.append(f"\n[삼재] {samjae_type}: {sf_desc}")
-        else:
-            lines.append("\n[삼재] 없음")
-
-        daeun_line = "[대운] 없음"
-        if post.current_daeun:
-            d = post.current_daeun
-            daeun_sip = ""
-            if post.daeun_sipsin:
-                names = "/".join(s.get("sipsin_korean", "") for s in post.daeun_sipsin[:2])
-                daeun_sip = f" — {names}"
-            daeun_line = f"[대운] {d['ganji']}({d['start_age']}~{d['end_age']}세){daeun_sip}"
-        lines.append(daeun_line)
-
-        seun_sip = f"{post.seun_stem.get('sipsin_korean', '')}/{post.seun_branch.get('sipsin_korean', '')}"
-        seun_line = f"[세운] {post.seun_ganji} — {seun_sip}"
-        if post.seun_clashes:
-            clashes = " / ".join(c.get("narrative", "")[:40] for c in post.seun_clashes[:2])
-            seun_line += f"\n  충: {clashes}"
-        if post.seun_combines:
-            combines = " / ".join(c.get("narrative", "")[:40] for c in post.seun_combines[:2])
-            seun_line += f"\n  합: {combines}"
-        lines.append(seun_line)
-
-        if natal.zodiac and natal.zodiac.pillar_zodiacs:
-            birth_z = natal.zodiac.pillar_zodiacs[0]
-            z = birth_z.info
-            compat = "·".join(z.compatible[:3]) if z.compatible else ""
-            compat_str = f" {compat}와 잘 맞음" if compat else ""
-            lines.append(f"\n[십이지신] {z.korean}({birth_z.branch}) — {z.keyword}.{compat_str}")
-            if z.strength:
-                lines.append(f"  강점: {z.strength[:60]}")
-            if z.weakness:
-                lines.append(f"  약점: {z.weakness[:60]}")
-
-        if natal.sinsal:
-            sinsal_str = " / ".join(s.get("sinsal_korean", "") for s in natal.sinsal)
-            lines.append(f"신살: {sinsal_str}")
-
-        return "\n".join(lines)
-
-    async def build_report(self, user: User, year: int, name: str = "") -> dict[str, str]:
-        natal_info, postnatal_info = self._kkachi_svc.analyze(user, year)
-        interpretation = await self._kkachi_svc.interpret(natal_info, postnatal_info, user=user, name=name)
-        report = LlmReportBuilder().build(interpretation.natal, interpretation.postnatal, user, name)
-        result: dict[str, str] = {"report": report}
-        if self._llm_port and self._llm_port.available:
-            try:
-                result["interpretation"] = await self._llm_port.interpret(report)
-            except Exception:
-                _log.exception("Ollama interpretation failed — report only")
-        return result
 
 
 class KkachiService(InterpreterPort):
