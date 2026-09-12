@@ -89,6 +89,7 @@ BaZi/
 │   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
+│   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
@@ -159,6 +160,7 @@ BaZi/
 │   │       │                        #   · SibiUnseongSection · SinsalSection · data.ts(SIPSIN_INFO, SINSAL_INFO 등 표시 메타)
 │   │       ├── YongshinTab · SamjaeTab            # "용신·삼재" 탭
 │   │       ├── DaeunTab · SeunTab · WolUnTab · FortuneTab   # "시운(時運)" 탭
+│   │       ├── TimingTab            # "언제가 좋을까" 탭 — postnatal.timing 12칸 (R3)
 │   │       └── ZodiacTab · FengShuiTab · AiTab
 │   ├── lib/
 │   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
@@ -483,6 +485,7 @@ erDiagram
 | `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection · SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |
 | `daeun` | 시운(時運) | `DaeunTab` + `SeunTab` + `WolUnTab` + `FortuneTab`(충합, 영역별 운) |
+| `timing` | 언제가 좋을까 | `TimingTab` — 영역 6개 × 12개월 색칠, 선택 달 근거·행동 |
 | `zodiac` | 십이지신 | `ZodiacTab` |
 | `fengshui` | 풍수 | `FengShuiTab` |
 | `ai` | AI 풀이 | `AiTab` → `/kkachi/stream-report` 스트리밍 (Ollama 없으면 에러 문구) |
@@ -490,6 +493,22 @@ erDiagram
 - 맨 위 `SummaryCard`(까치 한눈에): 나·올해·이번 달·오늘·조심 다섯 줄. 6개 탭은 그 아래 "더 알아보기" 성격. `summary_view` 이벤트
 - 모든 탭 하단에 `FeedbackBar` (memberId·profileId 있을 때만 전송), 우하단 `SajuChat` FAB → `/chat`.
 - 카드 포맷: `slide-card` + `CollapsibleSectionHeader`/`SectionHeader` + divider + 본문 시작에 인트로 `KkachiTip` 필수 (`docs/REFACTORING.md §4-3`).
+
+## 타이밍 리포트 — `timing_rules.compute_timing` (ROADMAP R3)
+
+영역 6개(이직·직업 / 연애·결혼 / 이사·계약 / 시험·공부 / 투자·재물 / 건강) × 앞으로 12개월. 각 달 50점 시작, 0~100 clamp.
+
+| 요인 | 점수 |
+|------|------|
+| 월 천간·지지 십신의 영역 가중 (`_DOMAIN_SIPSIN`) | 영역별 −10 ~ +10 (예: 시험·공부 正印 +10, 투자·재물 劫財 −10) |
+| 배우자 성 — 남 재성(正財 +10·偏財 +6) / 여 관성(正官 +10·偏官 +6) | 연애·결혼만 |
+| 용신 오행 달 / 기신 오행 달 | +10 / −8 (전 영역) |
+| 월지↔내 일지 육합 / 충 | +6 (연애·결혼 +10) / −8 (이사·계약 −12) |
+| 월지가 일지 기준 역마 / 도화, 일간 기준 문창귀인 | 이사·계약 +8·이직 +4 / 연애·결혼 +6 / 시험·공부 +8 |
+
+- level: 좋음 ≥62 · 피할 ≤42 · 보통 (5명 샘플에서 좋음·피할 각 ~19%, 영역당 연 2~3달). `reason`은 실제로 작동한 요인만 나열, `tip`은 영역×level 18문장
+- `upcoming_months`는 12개월(리포트에는 6개월만, WolUnTab 4개월). 챗 컨텍스트·리포트에 `timing_digest` 한 줄 요약 주입
+- 가중치는 `timing_rules.py` 상수에만 있음 — 튜닝은 `timing_view` 이벤트와 피드백으로
 
 ## 출생시간 미상 — 세 기둥(三柱) 분석 (ROADMAP R2)
 

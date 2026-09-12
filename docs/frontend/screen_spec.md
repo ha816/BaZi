@@ -53,11 +53,12 @@ app/layout.tsx
     ├── [시간 모름] 세 기둥(三柱) 고지 배너
     ├── SummaryCard                 # 🐦 까치 한눈에 — 나(KkachiTip)·올해·이번 달·오늘·조심 (postnatal.summary)
     ├── StickySajuBar               # 4기둥 미니 표시, 클릭 시 맨 위로
-    ├── feature-tabbar (?tab=)      # natal · yongshin · daeun · zodiac · fengshui · ai
+    ├── feature-tabbar (?tab=)      # natal · yongshin · daeun · timing · zodiac · fengshui · ai
     ├── NatalTab                    # PillarSection · SipsinSection · JizanganSection · GongmangSection · SibiUnseongSection · SinsalSection
     ├── YongshinTab + SamjaeTab
     ├── DaeunTab + SeunTab + WolUnTab + FortuneTab
     │   └── DaeunTimeline · DaeunSeunTable · DomainBarChart · OhaengRelationDiagram
+    ├── TimingTab                   # 언제가 좋을까 — 영역 칩 6 · 12칸 · 선택 달 근거/행동
     ├── ZodiacTab
     ├── FengShuiTab
     ├── AiTab                       # /kkachi/stream-report 스트리밍, ReactMarkdown 렌더
