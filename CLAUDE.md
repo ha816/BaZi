@@ -77,7 +77,7 @@ BaZi/
 │   │   ├── ganji.py             # Oheng, Stem, Branch, StemBranch, Pillar, Sipsin, SibiUnseong, Gongmang,
 │   │   │                        #   StemCombine/StemClash, BranchCombine/Clash/Wonjin/Hyung/Hae/Pa, SAMHAP_GROUPS, OHENG_GUIDE
 │   │   ├── natal.py             # Jeol, Samjae, Sinsal enum · Saju · NatalInfo · DaeunPeriod · PostnatalInfo
-│   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · NatalResult · PostnatalResult · Interpretation
+│   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · Summary(한눈에 5줄) · NatalResult · PostnatalResult · Interpretation
 │   │   ├── fortune.py           # Fortune (일진 결과 + 아침 한 마디 headline/action/caution) · FortuneCache
 │   │   ├── compatibility.py     # PillarRelation · PillarSnapshot · CompatibilityResult · Compatibility
 │   │   ├── user.py              # User, Gender("male"|"female")
@@ -95,7 +95,7 @@ BaZi/
 │   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
 │   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
 │   │   │                             #   fortune, weather, payment, feedback, llm, event, push(PushPort·PushSenderPort)
-│   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음)
+│   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음 + build_summary)
 │   │   │                             #   · personality(Personality+ElementBalance) · relationship · samjae · seun · yongshin · zodiac
 │   │   ├── use_case/                 # get_saju_context · get_annual_fortune · get_weather (MCP 도구용)
 │   │   └── util/                     # util.py(year_to_ganji, branch_relation, josa…) · sipsin_meta · clash_combine_meta · zodiac_meta
@@ -139,7 +139,8 @@ BaZi/
 │   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
 │   │   └── admin/feedback/page.tsx  # 탭별 👍/👎 요약 대시보드
 │   ├── components/
-│   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — StickySajuBar + 6개 feature 탭(?tab=) + FeedbackBar + SajuChat FAB
+│   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — SummaryCard + StickySajuBar + 6개 feature 탭(?tab=) + FeedbackBar + SajuChat FAB
+│   │   ├── SummaryCard.tsx          # 까치 한눈에 — 나·올해·이번 달·오늘·조심 (postnatal.summary)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 (621 LOC)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
@@ -192,11 +193,13 @@ POST /kkachi/interpret  (로그인 불필요)
   → KkachiService.interpret(natal, postnatal, user, name)
       → NatalService.interpret_natal       → NatalResult  (narratives, personality, element_balance, feng_shui, zodiac …)
       → PostnatalService.interpret_postnatal → PostnatalResult (yongshin, fortune_by_domain, annual/major/samjae_fortune, advice …)
+      → compute_fortune(오늘) → build_summary → PostnatalResult.summary (첫 화면 다섯 줄)
       → Interpretation(natal, postnatal)
   → asdict() → JSON
 
 POST /members/{id}/profiles/{pid}/analyze
   → ProfileService.analyze_profile → analyses(profile_id, year) 캐시 우선 → 없으면 위 파이프라인 후 저장
+     캐시 히트여도 summary.today_date가 오늘이 아니면 오늘 줄만 재계산해 upsert (summary 없는 옛 캐시는 전체 재계산)
 
 POST /kkachi/stream-report  (AI 풀이 탭)
   → analyze + interpret → LlmReportBuilder.build() 마크다운 → OllamaAdapter.stream_interpret → text/plain 스트림
@@ -424,7 +427,7 @@ erDiagram
 | `push_subscriptions` | `endpoint` | 기기당 1구독 (재구독 시 upsert) |
 
 ### 캐시 전략
-- `analyses`, `fortunes`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
+- `analyses`, `fortunes`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환. `analyses`·`fortunes` 저장은 `ON CONFLICT DO UPDATE`
 - `compatibilities.profile_id_1/2`는 항상 `min(id) / max(id)` 순 저장 (A↔B 순서 무관)
 - `fortunes`는 `INSERT … ON CONFLICT DO UPDATE` 원자적 upsert. 캐시에 날씨가 없거나 `headline`(아침 한 마디)이 없으면 재계산
 - `get_forecast`는 연도별로 사주 분석 1회만 수행 (날짜별 반복 금지 — 31일 36s→1.2s)
@@ -483,6 +486,7 @@ erDiagram
 | `fengshui` | 풍수 | `FengShuiTab` |
 | `ai` | AI 풀이 | `AiTab` → `/kkachi/stream-report` 스트리밍 (Ollama 없으면 에러 문구) |
 
+- 맨 위 `SummaryCard`(까치 한눈에): 나·올해·이번 달·오늘·조심 다섯 줄. 6개 탭은 그 아래 "더 알아보기" 성격. `summary_view` 이벤트
 - 모든 탭 하단에 `FeedbackBar` (memberId·profileId 있을 때만 전송), 우하단 `SajuChat` FAB → `/chat`.
 - 카드 포맷: `slide-card` + `CollapsibleSectionHeader`/`SectionHeader` + divider + 본문 시작에 인트로 `KkachiTip` 필수 (`docs/REFACTORING.md §4-3`).
 

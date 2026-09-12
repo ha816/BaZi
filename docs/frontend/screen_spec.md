@@ -50,6 +50,7 @@ app/layout.tsx
 ├── [profile] 드롭다운 + 분석 연도
 ├── [direct] AnalysisForm           # 이름·생년월일·시간·성별 · 정밀 설정(연도) · "프로필 저장" → "분석 시작"
 └── [결과] ResultSlides
+    ├── SummaryCard                 # 🐦 까치 한눈에 — 나(KkachiTip)·올해·이번 달·오늘·조심 (postnatal.summary)
     ├── StickySajuBar               # 4기둥 미니 표시, 클릭 시 맨 위로
     ├── feature-tabbar (?tab=)      # natal · yongshin · daeun · zodiac · fengshui · ai
     ├── NatalTab                    # PillarSection · SipsinSection · JizanganSection · GongmangSection · SibiUnseongSection · SinsalSection
