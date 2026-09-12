@@ -1,8 +1,20 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    SmallInteger,
+    String,
+    UniqueConstraint,
+    text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -80,17 +92,20 @@ class InterpretFeedbackModel(Base):
     __tablename__ = "interpret_feedbacks"
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    profile_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    profile_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     tab_id: Mapped[str] = mapped_column(String(50), nullable=False)
-    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    rating: Mapped[int] = mapped_column(SmallInteger, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class PaymentModel(Base):
     __tablename__ = "payments"
+    __table_args__ = (
+        Index("ix_payments_member_feature_used", "member_id", "feature_type", postgresql_where=text("used_at IS NULL")),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    member_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("members.id", ondelete="CASCADE"), nullable=False)
+    member_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("members.id", ondelete="CASCADE"), nullable=False, index=True)
     feature_type: Mapped[str] = mapped_column(String(30), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     toss_order_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
