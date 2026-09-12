@@ -10,7 +10,11 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 from PIL import Image
 
-from kkachi.application.interpreter.hand_shape import HandShapeInterpreter, PalmLineInterpreter, classify_hand_type
+from kkachi.application.interpreter.hand_shape import (
+    HandShapeInterpreter,
+    PalmLineInterpreter,
+    classify_hand_type,
+)
 
 palmistry_router = APIRouter()
 

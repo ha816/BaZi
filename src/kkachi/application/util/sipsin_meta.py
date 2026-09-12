@@ -1,6 +1,5 @@
 from kkachi.domain.ganji import Sipsin
 
-
 _SIPSIN_KOREAN: dict[Sipsin, str] = {
     Sipsin.比肩: "비견", Sipsin.劫財: "겁재", Sipsin.食神: "식신", Sipsin.傷官: "상관",
     Sipsin.偏財: "편재", Sipsin.正財: "정재", Sipsin.偏官: "편관", Sipsin.正官: "정관",

@@ -3,11 +3,19 @@ from datetime import datetime
 
 from sajupy import calculate_saju as _sajupy_calculate
 
-from kkachi.domain.ganji import Branch, Gongmang, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
+from kkachi.application.port.saju_port import NatalPort
+from kkachi.domain.ganji import (
+    Branch,
+    Gongmang,
+    Oheng,
+    Pillar,
+    SibiUnseong,
+    Sipsin,
+    Stem,
+    StemBranch,
+)
 from kkachi.domain.natal import NatalInfo, Saju, Sinsal
 from kkachi.domain.user import User
-from kkachi.application.port.saju_port import NatalPort
-
 
 _SIBI_SINSAL_MAP: list[tuple[frozenset[Branch], dict[Branch, str]]] = [
     (frozenset({Branch.申, Branch.子, Branch.辰}), {

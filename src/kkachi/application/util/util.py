@@ -1,6 +1,14 @@
 from datetime import datetime
 
-from kkachi.domain.ganji import BRANCHES_ORDER, Branch, BranchClash, BranchCombine, BranchWonjin, SAMHAP_GROUPS, Stem
+from kkachi.domain.ganji import (
+    BRANCHES_ORDER,
+    SAMHAP_GROUPS,
+    Branch,
+    BranchClash,
+    BranchCombine,
+    BranchWonjin,
+    Stem,
+)
 
 
 def year_to_ganji(year: int) -> str:

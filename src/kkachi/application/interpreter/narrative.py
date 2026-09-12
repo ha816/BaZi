@@ -2,7 +2,6 @@ from kkachi.application.util.util import josa
 from kkachi.domain.interpretation import PostnatalResult
 from kkachi.domain.natal import NatalInfo
 
-
 _STRENGTH_DESC: dict[str, str] = {
     "신강(身強)": "타고난 에너지가 강하고 자기 주도적인 성향이에요.",
     "신약(身弱)": "주변 환경의 영향을 잘 받고 협력에서 힘을 발휘해요.",

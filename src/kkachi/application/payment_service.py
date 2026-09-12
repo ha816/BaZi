@@ -5,7 +5,6 @@ from uuid import UUID
 import httpx
 
 from kkachi.application.port.payment_port import PaymentPort
-from kkachi.domain.payment import Payment
 
 FEATURE_AMOUNTS = {
     "deep_analysis": 1900,

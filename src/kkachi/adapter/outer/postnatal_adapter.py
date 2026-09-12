@@ -20,7 +20,6 @@ from kkachi.domain.ganji import Branch, Pillar, Sipsin, Stem
 from kkachi.domain.natal import DaeunPeriod, Jeol, NatalInfo, PostnatalInfo, Samjae
 from kkachi.domain.user import User
 
-
 _SIPSIN_KO: dict[Sipsin, str] = {
     Sipsin.比肩: "비견(比肩)",
     Sipsin.劫財: "겁재(劫財)",

@@ -3,7 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from kkachi.domain.ganji import Branch, Gongmang, Oheng, Pillar, SibiUnseong, Sipsin, Stem, StemBranch
+from kkachi.domain.ganji import (
+    Branch,
+    Oheng,
+    Pillar,
+    SibiUnseong,
+    Sipsin,
+    Stem,
+    StemBranch,
+)
 
 
 class Jeol(Enum):
@@ -40,7 +48,7 @@ class Samjae(Enum):
     出三災 = "날삼재"  # 셋째해 — 삼재가 날아감
 
     @classmethod
-    def by_order(cls, index: int) -> "Samjae":
+    def by_order(cls, index: int) -> Samjae:
         return list(cls)[index]
 
     @classmethod
@@ -94,7 +102,7 @@ class Sinsal(Enum):
         return cls._SAMHAP_MAP
 
     @classmethod
-    def get_samhap(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
+    def get_samhap(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, Sinsal]]:
         """삼합 기반 신살 (역마·도화·화개·장성)."""
         for branches, mapping in cls._samhap_map():
             if day_branch in branches:
@@ -125,7 +133,7 @@ class Sinsal(Enum):
         return cls._GUIIN_MAP
 
     @classmethod
-    def get_guiin(cls, day_stem: "Stem", all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
+    def get_guiin(cls, day_stem: Stem, all_branches: list[Branch]) -> list[tuple[Branch, Sinsal]]:
         """천간 기반 귀인 (천을귀인·문창귀인)."""
         guiin_map = cls._guiin_map()
         if day_stem not in guiin_map:
@@ -138,7 +146,7 @@ class Sinsal(Enum):
         ]
 
     @classmethod
-    def get_baekho(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, "Sinsal"]]:
+    def get_baekho(cls, day_branch: Branch, all_branches: list[Branch]) -> list[tuple[Branch, Sinsal]]:
         """백호살: 일지의 충(衝) 지지가 사주에 있으면."""
         trigger = day_branch.clashes
         return [
@@ -160,7 +168,7 @@ class Sinsal(Enum):
         return cls._WOLDEOK_MAP
 
     @classmethod
-    def get_woldeok(cls, month_branch: Branch, all_stems: list["Stem"]) -> list[tuple[Branch, "Sinsal"]]:
+    def get_woldeok(cls, month_branch: Branch, all_stems: list[Stem]) -> list[tuple[Branch, Sinsal]]:
         """월덕귀인: 월지 삼합국에 따른 길신 천간이 사주 천간에 있으면."""
         for branches, target_stem in cls._woldeok_map():
             if month_branch in branches and target_stem in all_stems:
@@ -181,8 +189,8 @@ class Sinsal(Enum):
 
     @classmethod
     def get_cheondeok(
-        cls, month_branch: Branch, all_stems: list["Stem"], all_branches: list[Branch]
-    ) -> list[tuple[Branch, "Sinsal"]]:
+        cls, month_branch: Branch, all_stems: list[Stem], all_branches: list[Branch]
+    ) -> list[tuple[Branch, Sinsal]]:
         """천덕귀인: 월지에 따른 길신 글자가 사주 천간 또는 지지에 있으면."""
         target = cls._cheondeok_map().get(month_branch)
         if target is None:

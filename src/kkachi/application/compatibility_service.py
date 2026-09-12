@@ -8,12 +8,18 @@ from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.domain.compatibility import CompatibilityResult, PillarRelation, PillarSnapshot
 from kkachi.domain.ganji import (
-    SAMHAP_GROUPS, BranchHae, BranchHyung, BranchPa, BranchWonjin,
-    Oheng, Pillar, Sipsin, StemClash,
+    SAMHAP_GROUPS,
+    BranchHae,
+    BranchHyung,
+    BranchPa,
+    BranchWonjin,
+    Oheng,
+    Pillar,
+    Sipsin,
+    StemClash,
 )
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 from kkachi.domain.user import User
-
 
 RelationType = Literal["lover", "friend", "family"]
 

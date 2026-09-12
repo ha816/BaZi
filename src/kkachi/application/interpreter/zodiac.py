@@ -13,7 +13,6 @@ from kkachi.domain.interpretation import (
 )
 from kkachi.domain.natal import NatalInfo
 
-
 _PILLAR_ROLES: list[dict[str, str]] = [
     {"label": "년주(年柱)", "role": "사회적 자아", "desc": "남들이 보는 나의 대외 이미지, 사회적 첫인상"},
     {"label": "월주(月柱)", "role": "직장·부모 관계", "desc": "일과 직장, 부모 및 윗사람과의 에너지 흐름"},

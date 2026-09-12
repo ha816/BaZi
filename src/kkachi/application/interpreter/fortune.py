@@ -2,6 +2,7 @@ from kkachi.domain.ganji import Sipsin
 from kkachi.domain.interpretation import InterpretBlock, InterpretTip
 from kkachi.domain.natal import PostnatalInfo
 
+
 class FortuneInterpreter:
     def __call__(self, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         blocks = []

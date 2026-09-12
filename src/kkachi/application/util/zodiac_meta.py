@@ -1,6 +1,5 @@
 from kkachi.domain.interpretation import SamhapInfo, ZodiacInfo
 
-
 _ZODIAC_DATA: dict[str, dict] = {
     "子": {
         "korean": "쥐", "emoji": "🐭", "keyword": "지혜·적응",

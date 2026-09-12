@@ -1,9 +1,9 @@
 from datetime import datetime
 
+from kkachi.adapter.outer.natal_adapter import NatalAdapter
 from kkachi.domain.ganji import Branch, SibiUnseong, Stem
 from kkachi.domain.natal import Sinsal
 from kkachi.domain.user import Gender, User
-from kkachi.adapter.outer.natal_adapter import NatalAdapter
 
 _analyzer = NatalAdapter()
 

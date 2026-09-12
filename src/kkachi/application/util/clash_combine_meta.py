@@ -1,5 +1,4 @@
-from kkachi.domain.ganji import Branch, BranchCombine, Stem, StemCombine
-
+from kkachi.domain.ganji import Branch, Stem
 
 _PILLAR_AREA: dict[str, str] = {
     "년주": "조상·사회 영역",

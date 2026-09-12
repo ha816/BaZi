@@ -5,7 +5,6 @@ from kkachi.domain.interpretation import (
 )
 from kkachi.domain.user import Gender, User
 
-
 _PILLAR_LABELS = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"]
 _GUIDE_KEYS = [("color", "색상"), ("direction", "방향"), ("career", "직업"), ("daily", "일상")]
 

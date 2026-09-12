@@ -13,7 +13,6 @@ from kkachi.domain.ganji import Pillar
 from kkachi.domain.profile import Profile
 from kkachi.domain.user import Gender, User
 
-
 _natal_adapter = NatalAdapter()
 _postnatal_adapter = PostnatalAdapter()
 _natal_svc = NatalService(natal_port=_natal_adapter)
@@ -134,7 +133,7 @@ def test_samhap_completions_structure():
 
 def test_stem_clash_detected_for_known_pair():
     """직접 갑경(甲庚) 쌍을 만들면 stem_clash 가 잡혀야 한다."""
-    from kkachi.domain.ganji import StemClash, Stem
+    from kkachi.domain.ganji import Stem, StemClash
     assert StemClash.find(Stem.甲, Stem.庚).name == "甲庚"
     assert StemClash.find(Stem.庚, Stem.甲).name == "甲庚"
     assert StemClash.find(Stem.甲, Stem.乙) is None
