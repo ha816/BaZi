@@ -36,3 +36,6 @@ uv.lock
 
 # Claude Code runtime
 .claude/scheduled_tasks.lock
+
+# MediaPipe 모델 (README 참고해 다운로드)
+src/kkachi/resource/*.task

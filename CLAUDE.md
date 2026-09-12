@@ -54,6 +54,7 @@ BaZi/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
 │   ├── frontend/screen_spec.md  # 화면 명세
 │   ├── frontend/*/scenarios.md  # 화면별 시나리오
+│   ├── llm_samples/             # LLM 리포트 프롬프트·해석 출력 샘플
 │   └── research/                # 리서치 문서
 ├── src/kkachi/
 │   ├── fastapi.py               # 앱 + CORS + 라우터 8개 등록 + /mcp 마운트 + lifespan(local.toml 로드)
@@ -490,7 +491,5 @@ tests/
 
 ## 알려진 이슈 / 정리 후보 (2026-09-12 기준)
 
-- `local.toml`의 `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` 키와 pyproject의 `openai` 의존성은 코드에서 참조 없음
-- `.claude/agents/developer.md`, `researcher.md`는 다른 프로젝트(광고/오가닉 최적화) 정의 — 잔존 파일
-- 루트의 `markdown.md`, `interpretation_lee.md`는 LLM 리포트 샘플 — `docs/`로 이동 검토
-- `hand_landmarker.task`는 git 미추적 (7.8MB) — 배포 시 다운로드 단계 필요
+- `local.toml`의 `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` 섹션은 코드에서 참조 없음 (실제 키가 들어 있어 삭제는 사용자 결정)
+- `hand_landmarker.task`는 `.gitignore` 처리 (7.8MB) — 새 환경·배포 시 README의 다운로드 단계 필요
