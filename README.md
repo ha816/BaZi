@@ -41,9 +41,11 @@ curl -sL https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_la
 ### 3. 실행
 
 ```bash
-# DB
-docker compose -f docker/docker-compose.yml up -d
-uv run alembic upgrade head
+# DB — Colima 기동 확인 → PostgreSQL 컨테이너 → healthy 대기 → alembic upgrade head → 드리프트 점검
+bash scripts/db.sh up
+#   그 외: status | migrate "<메시지>" | reset --yes | down | logs | sql "<query>"
+#   Claude Code에서는 /db 스킬이 같은 스크립트를 감싸서 실패 해석까지 해준다
+#   (수동: docker-compose -f docker/docker-compose.yml up -d && uv run alembic upgrade head)
 
 # 백엔드 — 반드시 저장소 루트에서 실행 (local.toml을 상대경로로 읽음)
 uv run uvicorn kkachi.fastapi:app --reload --port 8000
@@ -58,6 +60,7 @@ cd frontend && npm install && npm run dev
 
 | 변수 | 기본값 | 용도 |
 |------|--------|------|
+| `KKACHI_DB_URL` | `local.toml [db].url` | DB 접속 URL override (앱·Alembic 공통) |
 | `KKACHI_CORS_ORIGINS` | `http://localhost:3000` | 허용 origin (콤마 구분) |
 | `KKACHI_CORS_ORIGIN_REGEX` | 없음 | 허용 origin 정규식 |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama 주소 |
@@ -90,7 +93,8 @@ cd frontend && npx tsc --noEmit   # 프론트 타입 체크
 ```
 BaZi/
 ├── alembic/                 # DB 마이그레이션
-├── docker/docker-compose.yml
+├── docker/docker-compose.yml # postgres:17 + healthcheck
+├── scripts/db.sh            # DB 기동·마이그레이션·상태·초기화 스크립트 (/db 스킬이 사용)
 ├── docs/                    # REFACTORING.md, frontend/screen_spec.md, research/
 ├── src/kkachi/
 │   ├── fastapi.py           # 앱 진입점 — 라우터 등록, CORS, MCP 마운트, local.toml 로드

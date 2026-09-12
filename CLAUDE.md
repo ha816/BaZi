@@ -14,9 +14,9 @@
 ## 실행
 
 ```bash
-# DB (PostgreSQL 17 — Colima 또는 OrbStack 필요)
-docker compose -f docker/docker-compose.yml up -d
-uv run alembic upgrade head
+# DB — /db 스킬 또는 scripts/db.sh (Colima 자동 기동 → 컨테이너 → healthy 대기 → alembic upgrade head → alembic check)
+bash scripts/db.sh up
+bash scripts/db.sh status | migrate "<메시지>" | reset --yes | down | logs [N] | sql "<query>"
 
 # 백엔드 — 저장소 루트에서 실행 (src/kkachi/resource/local.toml 을 상대경로로 읽음)
 uv run uvicorn kkachi.fastapi:app --reload --port 8000
@@ -39,17 +39,26 @@ cd frontend && npx tsc --noEmit
 | env | `KKACHI_CORS_ORIGINS` (기본 `http://localhost:3000`), `KKACHI_CORS_ORIGIN_REGEX` | CORS |
 | env | `OLLAMA_BASE_URL` (기본 `http://localhost:11434`), `OLLAMA_MODEL` (기본 `qwen2.5:32b`) | LLM |
 | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` (기본 `http://localhost:8000`) | 프론트 → API |
-| `alembic/env.py` | `DB_URL` 하드코딩 (`postgresql+asyncpg://bazi:bazi@localhost:5432/bazi`) | 마이그레이션 |
+| env | `KKACHI_DB_URL` | DB URL override — 앱(`fastapi.py`)·Alembic(`alembic/env.py`) 모두 env → local.toml → 기본값 순 |
 
 - `src/kkachi/resource/hand_landmarker.task` (MediaPipe 손 랜드마크 모델, 7.8MB)는 **git 미추적** — 없으면 `/palmistry/analyze` 요청 시 실패. README의 curl 명령으로 다운로드.
 - `frontend/next.config.ts`: `/api/*` → `127.0.0.1:8000` rewrite, tailscale 호스트 `allowedDevOrigins`.
+- 이 머신은 `docker compose` 플러그인이 없고 `docker-compose` 바이너리만 있음 — `scripts/db.sh`가 둘을 자동 감지하므로 스크립트를 쓴다.
+
+### DB 작업 규칙 (`/db` 스킬, `.claude/skills/db/SKILL.md`)
+- 기동·마이그레이션·상태는 `bash scripts/db.sh <cmd>` 로만 한다. 손으로 `docker-compose up` + `alembic upgrade` 를 나눠 치지 않는다.
+- 모델(`models.py`)을 바꾸면 `bash scripts/db.sh migrate "<메시지>"` → 생성된 리비전 파일 검토 → `up`. `up`·`status` 끝의 `alembic check` 가 모델↔DB 드리프트를 알려준다.
+- `reset --yes` 는 로컬 데이터 전부 삭제 — 사용자가 명시적으로 요청했을 때만.
+- 이미 적용된 리비전 파일은 수정하지 않는다 (downgrade 수정만 예외).
 
 ## 코드 구조
 
 ```
 BaZi/
-├── alembic/versions/            # 8개 마이그레이션 (아래 DB 스키마 참고)
-├── docker/docker-compose.yml    # postgres:17, db/user/pw = bazi
+├── alembic/versions/            # 8개 마이그레이션 (아래 DB 스키마 참고). env.py 는 KKACHI_DB_URL → local.toml 순으로 URL 결정
+├── docker/docker-compose.yml    # postgres:17 + pg_isready healthcheck, db/user/pw = bazi
+├── scripts/db.sh                # DB up/status/migrate/reset/down/logs/sql — /db 스킬이 호출
+├── .claude/skills/db/SKILL.md   # /db 스킬: 서브커맨드 선택·실패 해석·reset 확인 규칙
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
 │   ├── frontend/screen_spec.md  # 화면 명세
@@ -195,6 +204,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 - 테스트를 먼저 실행해서 기존 동작 확인 후 수정
 - 3개 이상 파일 변경 시 Plan 먼저
 - **리팩토링 작업 시 `docs/REFACTORING.md`를 먼저 읽을 것**
+- DB 기동·마이그레이션은 `/db` 스킬(`scripts/db.sh`)로 — 모델 변경 후 `alembic check` 드리프트 0 확인
 - API·페이지·DB 스키마를 바꾸면 이 문서의 해당 섹션도 같은 커밋에서 갱신
 
 **NEVER:**
