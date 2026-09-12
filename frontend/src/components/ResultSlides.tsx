@@ -16,6 +16,7 @@ import ZodiacTab from "./tabs/ZodiacTab";
 import FengShuiTab from "./tabs/FengShuiTab";
 import SajuChat from "./SajuChat";
 import { postFeedback } from "@/lib/api";
+import { track } from "@/lib/track";
 
 const PILLAR_LABEL_KOR = ["년", "월", "일", "시"];
 
@@ -139,7 +140,12 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
 
   useEffect(() => {
     setFeedbackKey((k) => k + 1);
-  }, [active]);
+    track("tab_view", { tab: active, has_profile: !!profileId });
+  }, [active, profileId]);
+
+  useEffect(() => {
+    track("result_view", { has_profile: !!profileId });
+  }, [profileId]);
 
   const handleTabChange = (id: FeatureId) => {
     router.replace(`${pathname}?tab=${id}`, { scroll: false });

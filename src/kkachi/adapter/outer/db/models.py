@@ -113,3 +113,17 @@ class PaymentModel(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+
+
+class EventModel(Base):
+    """행동 이벤트 로그 — ROADMAP F0. 비로그인은 session_id만, 로그인은 member_id도."""
+
+    __tablename__ = "events"
+    __table_args__ = (Index("ix_events_name_created", "name", "created_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    member_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    props: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

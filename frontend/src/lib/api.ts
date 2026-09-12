@@ -268,3 +268,13 @@ export async function getFeedbackSummary(): Promise<FeedbackSummary[]> {
   return request<FeedbackSummary[]>("/admin/feedback/summary");
 }
 
+
+export interface EventSummary {
+  name: string;
+  count: number;
+  sessions: number;
+}
+
+export async function getEventSummary(days = 7): Promise<EventSummary[]> {
+  return request<EventSummary[]>(`/admin/events/summary?days=${days}`);
+}

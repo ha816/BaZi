@@ -1,19 +1,26 @@
 from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from kkachi.adapter.outer.db.event_repo import EventRepo
 from kkachi.adapter.outer.db.member_repo import MemberRepo
 from kkachi.adapter.outer.db.payment_repo import PaymentRepo
-from kkachi.adapter.outer.db.profile_repo import AnalysisRepo, CompatibilityRepo, FeedbackRepo, FortuneRepo, ProfileRepo
+from kkachi.adapter.outer.db.profile_repo import (
+    AnalysisRepo,
+    CompatibilityRepo,
+    FeedbackRepo,
+    FortuneRepo,
+    ProfileRepo,
+)
 from kkachi.adapter.outer.llm.ollama_adapter import OllamaAdapter
 from kkachi.adapter.outer.natal_adapter import NatalAdapter
 from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
 from kkachi.adapter.outer.weather_adapter import WeatherAdapter
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.fortune_service import FortuneService
+from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
 from kkachi.application.member_service import MemberService
 from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
-from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
 
 
 class Container(containers.DeclarativeContainer):
@@ -26,6 +33,7 @@ class Container(containers.DeclarativeContainer):
             "kkachi.adapter.inner.payment_controller",
             "kkachi.adapter.inner.weather_controller",
             "kkachi.adapter.inner.admin_controller",
+            "kkachi.adapter.inner.event_controller",
         ],
     )
 
@@ -41,6 +49,7 @@ class Container(containers.DeclarativeContainer):
     analysis_repo = providers.Singleton(AnalysisRepo, session_factory=session_factory)
     feedback_repo = providers.Singleton(FeedbackRepo, session_factory=session_factory)
     payment_repo = providers.Singleton(PaymentRepo, session_factory=session_factory)
+    event_repo = providers.Singleton(EventRepo, session_factory=session_factory)
 
     # Kkachi
     natal_adapter = providers.Singleton(NatalAdapter)

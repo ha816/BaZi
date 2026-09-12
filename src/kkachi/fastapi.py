@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from kkachi.adapter.inner.admin_controller import admin_router
 from kkachi.adapter.inner.compatibility_controller import compatibility_router
+from kkachi.adapter.inner.event_controller import event_router
 from kkachi.adapter.inner.kkachi_controller import kkachi_router
 from kkachi.adapter.inner.mcp_server import init_mcp_services
 from kkachi.adapter.inner.mcp_server import mcp as mcp_server
@@ -52,4 +53,5 @@ app.include_router(payment_router)
 app.include_router(palmistry_router)
 app.include_router(weather_router)
 app.include_router(admin_router)
+app.include_router(event_router)
 app.mount("/mcp", mcp_server.streamable_http_app())

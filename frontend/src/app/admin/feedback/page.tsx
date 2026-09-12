@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getFeedbackSummary, type FeedbackSummary } from "@/lib/api";
+import { getEventSummary, getFeedbackSummary, type EventSummary, type FeedbackSummary } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const TAB_META: Record<string, { label: string; emoji: string }> = {
@@ -23,12 +23,14 @@ function rateColor(rate: number, total: number): string {
 
 export default function FeedbackAdminPage() {
   const [data, setData] = useState<FeedbackSummary[] | null>(null);
+  const [events, setEvents] = useState<EventSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getFeedbackSummary()
       .then(setData)
       .catch((e) => setError(e instanceof Error ? e.message : "불러오기 실패"));
+    getEventSummary(7).then(setEvents).catch(() => setEvents([]));
   }, []);
 
   const totalAll = data?.reduce((acc, s) => acc + s.total, 0) ?? 0;
@@ -62,6 +64,27 @@ export default function FeedbackAdminPage() {
         {data && data.length === 0 && (
           <p className="text-sm text-[var(--color-ink-muted)]">아직 누적된 피드백이 없어요.</p>
         )}
+
+        <section className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] p-5 space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-heading text-lg font-bold text-[var(--color-ink)]">최근 7일 이벤트</h2>
+            <span className="text-[10px] text-[var(--color-ink-faint)]">건수 · 세션 수</span>
+          </div>
+          {!events && <LoadingSpinner />}
+          {events && events.length === 0 && (
+            <p className="text-sm text-[var(--color-ink-muted)]">아직 이벤트가 없어요.</p>
+          )}
+          {events && events.length > 0 && (
+            <ul className="divide-y divide-[var(--color-border-light)]">
+              {events.map((e) => (
+                <li key={e.name} className="flex items-center justify-between py-2 text-sm">
+                  <span className="font-mono text-[var(--color-ink)]">{e.name}</span>
+                  <span className="text-[var(--color-ink-muted)]">{e.count} · {e.sessions}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {data && data.length > 0 && (
           <>

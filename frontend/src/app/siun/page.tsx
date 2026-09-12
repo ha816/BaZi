@@ -7,6 +7,7 @@ import { listProfiles, getForecast } from "@/lib/api";
 import { WeeklyView } from "@/components/DailyFortune";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MorningBrief from "@/components/MorningBrief";
+import { track } from "@/lib/track";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import { getZodiacEmoji } from "@/lib/zodiac";
@@ -52,6 +53,8 @@ export default function SiunPage() {
 
   useEffect(() => {
     const memberId = localStorage.getItem(MEMBER_ID_KEY);
+    const src = new URLSearchParams(window.location.search).get("src");
+    track(src === "push" ? "push_click" : "daily_view", { logged_in: !!memberId });
     if (memberId) {
       setLoggedIn(true);
       listProfiles(memberId)
@@ -372,7 +375,7 @@ export default function SiunPage() {
             {tabs.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => { setActiveTab(tab); track("daily_tab", { tab }); }}
                 className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
                   activeTab === tab
                     ? "bg-white text-[var(--color-gold)] shadow-sm"

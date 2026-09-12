@@ -11,6 +11,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { getZodiacEmoji } from "@/lib/zodiac";
+import { track } from "@/lib/track";
 
 // ── 상단 스토리 트레이 (Story Tray) ─────────────────────────────────────────
 function StoryTray({ profiles, activeId }: { profiles: Profile[]; activeId?: string | null }) {
@@ -343,8 +344,10 @@ export default function Home() {
         const sorted = [...ps].sort((a, b) => (a.is_self === b.is_self ? 0 : a.is_self ? -1 : 1));
         setProfiles(sorted);
         if (sorted.length > 0) setWeatherCity(sorted[0].city);
+        track("home_view", { logged_in: true, profiles: sorted.length });
       }).catch(() => {});
     } else {
+      track("home_view", { logged_in: false });
       detectLocation().then((loc) => { if (loc) setWeatherCity(loc.city); }).catch(() => {});
     }
   }, []);
