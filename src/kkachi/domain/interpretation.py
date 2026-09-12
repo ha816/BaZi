@@ -219,6 +219,9 @@ class PostnatalResult:
     # 이번달 십신 → 영역별 뱃지 라벨 (DomainBarChart 키와 일치)
     month_badges: dict[str, list[str]] = field(default_factory=dict)
 
+    # 영역별 12개월 타이밍 (R3) — {영역: [{year, month, ganji, ganji_korean, score, level, reason, tip}]}
+    timing: dict[str, list[dict]] = field(default_factory=dict)
+
     # 연도별 띠 관계 (4년치, 좋은 해 없으면 마지막 슬롯에 가까운 좋은 해)
     year_zodiac_relations: list[dict] = field(default_factory=list)
     year_zodiac_narrative: str = ""
@@ -242,9 +245,15 @@ class PostnatalResult:
     advice: list[InterpretBlock] = field(default_factory=list)
 
 
+# analyses 캐시 호환 버전. 응답 구조(필드 추가·의미 변경)가 바뀌면 +1 → 옛 캐시는 전체 재계산된다.
+#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)
+INTERPRETATION_VERSION = 3
+
+
 @dataclass
 class Interpretation:
     """종합 해석 결과 — 선천 + 후천."""
 
     natal: NatalResult = field(default_factory=NatalResult)
     postnatal: PostnatalResult = field(default_factory=PostnatalResult)
+    version: int = INTERPRETATION_VERSION

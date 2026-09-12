@@ -86,7 +86,7 @@ class PostnatalAdapter(PostnatalPort):
             upcoming_months=self._get_upcoming_months(),
         )
 
-    def _get_upcoming_months(self, count: int = 6) -> list[dict]:
+    def _get_upcoming_months(self, count: int = 12) -> list[dict]:
         """이번달 포함 count개월 ganji 정보 + 일간 십신 + 용신 매칭 반환."""
         yongshin = self.natal.yongshin
         day_stem = self.natal.saju.stem_of_day_pillar

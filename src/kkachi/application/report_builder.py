@@ -1,3 +1,4 @@
+from kkachi.application.timing_rules import timing_digest
 from kkachi.domain.interpretation import (
     InterpretBlock,
     NatalResult,
@@ -304,12 +305,16 @@ class LlmReportBuilder:
 
         if p.upcoming_months:
             lines.extend(["", "### 다가올 6개월 월운(月運)"])
-            for m in p.upcoming_months:
+            for m in p.upcoming_months[:6]:
                 marker = " ✨용신" if m.get("matches_yongshin") else ""
                 lines.append(
                     f"- {m['year']}년 {m['month']}월 {m['ganji']} "
                     f"(천간 {m.get('stem_element','')} / 지지 {m.get('branch_element','')}){marker}"
                 )
+
+        if p.timing:
+            lines.extend(["", "### 언제가 좋을까 — 영역별 12개월 타이밍 (룰 엔진)", "사용자가 '언제'를 물으면 아래 달을 근거로 답하세요."])
+            lines += [f"- {line}" for line in timing_digest(p.timing)]
 
         if p.domain_scores:
             lines.extend(["", "### 영역별 운세 점수"])

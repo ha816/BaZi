@@ -7,6 +7,7 @@ from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.domain.interpretation import INTERPRETATION_VERSION
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender, User
 
@@ -67,16 +68,16 @@ class ProfileService:
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
 
         cached = await self.analysis_port.get(profile_id, year)
-        summary = (cached.result.get("postnatal") or {}).get("summary") if cached else None
-        if cached and summary:
+        if cached and cached.result.get("version") == INTERPRETATION_VERSION:
             # 연도 캐시는 유효하지만 요약의 '오늘' 줄은 날짜가 지나면 낡는다 → 그 줄만 갱신
+            summary = (cached.result.get("postnatal") or {}).get("summary") or {}
             if summary.get("today_date") != date.today().isoformat():
                 natal, postnatal = self.saju_service.analyze(user, year)
                 summary.update(self.saju_service.today_summary(natal, postnatal, profile.name))
                 await self.analysis_port.save(profile_id, year, cached.result)
             return cached.result
 
-        # 캐시 없음 또는 summary 없는 옛 캐시 → 전체 재계산
+        # 캐시 없음 또는 응답 구조가 바뀐 옛 캐시(version 불일치) → 전체 재계산
         natal, postnatal = self.saju_service.analyze(user, year)
         result = asdict(await self.saju_service.interpret(natal, postnatal, user=user, name=profile.name))
         await self.analysis_port.save(profile_id, year, result)

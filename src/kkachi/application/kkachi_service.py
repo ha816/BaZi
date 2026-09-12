@@ -43,6 +43,7 @@ from kkachi.application.interpreter.yongshin import (
 from kkachi.application.interpreter.zodiac import ZodiacInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
+from kkachi.application.timing_rules import compute_timing, timing_digest
 from kkachi.application.util.sipsin_meta import enrich_sipsin
 from kkachi.application.util.util import year_to_ganji
 from kkachi.domain.ganji import JIZAN_ROLE_HANJA, OHENG_GUIDE, Branch, Stem
@@ -146,7 +147,9 @@ class PostnatalService:
     def analyze(self, user: User, natal: NatalInfo, year: int) -> PostnatalInfo:
         return self.postnatal_port.analyze(user, natal, year)
 
-    async def interpret_postnatal(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> PostnatalResult:
+    async def interpret_postnatal(
+        self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "", is_male: bool = True
+    ) -> PostnatalResult:
         current_ganji = postnatal.current_daeun.ganji if postnatal.current_daeun else None
         advice = AdviceInterpreter()(natal, postnatal)
         birth_branch_char = list(natal.saju.pillars.values())[0].branch.name
@@ -203,6 +206,7 @@ class PostnatalService:
             ),
             upcoming_months=upcoming_months,
             month_badges=month_badges_result,
+            timing=compute_timing(natal, upcoming_months, is_male=is_male),
             year_zodiac_relations=year_zodiac_rows,
             year_zodiac_narrative=_year_zodiac_narrative(year_zodiac_rows, name),
             core_summary=_core_summary(natal, postnatal, name),
@@ -240,7 +244,7 @@ class KkachiService(InterpreterPort):
         birth_year = user.birth_dt.year if user else 0
         is_male = user.gender.is_male if user else True
         natal_result = self._natal_svc.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
-        postnatal_result = await self._postnatal_svc.interpret_postnatal(natal, postnatal, name)
+        postnatal_result = await self._postnatal_svc.interpret_postnatal(natal, postnatal, name, is_male=is_male)
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
         today = compute_fortune(natal, date.today(), None, postnatal, name=name)
         postnatal_result.summary = _build_summary(natal, postnatal, name, today)
@@ -270,6 +274,8 @@ class KkachiService(InterpreterPort):
             lines.append(
                 "[한눈에] " + " / ".join(x for x in (sm.me, sm.year, sm.month, sm.today, sm.caution) if x)
             )
+        if post.timing:
+            lines.append("[언제가 좋을까 — 앞으로 12개월] " + " | ".join(timing_digest(post.timing)))
         lines += [
             f"사주: {pillar_str} | 일간: {natal.day_stem}{natal.day_stem_korean}({natal.day_stem_yin_yang}) | {natal.strength_label}",
             f"오행: {elem_str} | 주오행: {natal.my_element.get('meaning', '')}",
