@@ -99,4 +99,3 @@ POST /members/{id}/profiles/{pid}/analyze
 - [ ] 분석 연도 변경 시 결과 자동 갱신
 - [ ] 직접 입력(비로그인) 결과에서 피드백 전송 불가 — 익명 피드백 허용 여부
 - [ ] `/analysis/deep` redirect 페이지 삭제 시점
-- [ ] `tabs/AdviceTab.tsx` 미사용 — 삭제 또는 재편입 결정

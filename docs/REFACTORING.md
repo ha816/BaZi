@@ -74,8 +74,6 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 | `src/kkachi/application/report_builder.py` | 448 | 6개 섹션 포맷팅 | 단일 책임 보존 결정(5/24). LLM 파이프 확장 시 재고 |
 | `frontend/src/components/tabs/ZodiacTab.tsx` | 417 | 십이지신·충합·연도별 궁합 3영역 | 섹션 분리 검토 |
 
-미사용 코드 (삭제 후보): 프론트 `CounselorComment`·`DetailToggle`·`FortuneSummary`·`PillarCard`·`SectionAccordion`·`SlideCarousel`·`tabs/AdviceTab`.
-
 ## 6. PR 작성 규칙
 
 - 제목: `refactor: <대상> <어떻게>` 예) `refactor: NatalTab을 섹션 단위로 분할`

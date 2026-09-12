@@ -188,7 +188,7 @@ Step 2: 이름(pre-fill)·생년월일·시간·성별·도시(ipapi 자동) →
 
 **ResultSlides 탭:** 상세는 `analysis/scenarios.md` 시나리오 5.
 
-**개선 포인트:** 비로그인 직접 입력은 FeedbackBar 전송 불가(버튼만 표시). `tabs/AdviceTab.tsx` 미사용.
+**개선 포인트:** 비로그인 직접 입력은 FeedbackBar 전송 불가(버튼만 표시).
 
 ---
 
@@ -293,7 +293,6 @@ idle → preview → loading → result
 | ResultSlides / CompatibilityResult | 결과 오케스트레이터 | /analysis, /compatibility |
 | SajuChat / CompatibilityChat | 챗 FAB | 결과 화면 |
 | TermBadge / Tooltip | 용어 배지·툴팁 (glossary 연동) | 결과 탭 |
-| **미사용** CounselorComment · DetailToggle · FortuneSummary · PillarCard · SectionAccordion · SlideCarousel · tabs/AdviceTab | — | 삭제 후보 |
 
 ---
 
@@ -335,7 +334,6 @@ idle → preview → loading → result
 | 중간 | `/weather`, `/palmistry` 네비게이션 진입점 | BottomNav 또는 홈 |
 | 중간 | 손금 Otsu 임계값·운명선·신뢰도 반환 (`docs/research/palmistry_physiognomy_고도화.md`) | `/palmistry` |
 | 중간 | 비로그인 직접 입력 결과의 피드백 전송 | `ResultSlides` |
-| 낮음 | 미사용 컴포넌트 7개 삭제 | `components/` |
 | 낮음 | 홈 인라인 컴포넌트(StoryTray·FortunePost·VideoPost·WeatherPost) 파일 분리 | `app/page.tsx` |
 | 낮음 | `/analysis/deep` redirect 페이지 제거 | `app/analysis/deep` |
 | 낮음 | Join Step 2 → ProfileForm 재사용 | `/join` |

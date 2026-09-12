@@ -131,15 +131,13 @@ BaZi/
 │   │   ├── DaeunTimeline · DaeunSeunTable · DomainBarChart · ScoreBar
 │   │   ├── SectionHeader · CollapsibleSectionHeader · InlineCollapsibleHeader · InterpretSection
 │   │   ├── KkachiTip · TermBadge · Tooltip · FeedPost · BottomNav · LoadingSpinner
-│   │   ├── (미사용) CounselorComment · DetailToggle · FortuneSummary · PillarCard · SectionAccordion · SlideCarousel
 │   │   └── tabs/
 │   │       ├── NatalTab.tsx         # 만세력 — natal/ 6개 섹션 조합
 │   │       ├── natal/               # PillarSection · SipsinSection · JizanganSection · GongmangSection
 │   │       │                        #   · SibiUnseongSection · SinsalSection · data.ts(SIPSIN_INFO, SINSAL_INFO 등 표시 메타)
 │   │       ├── YongshinTab · SamjaeTab            # "용신·삼재" 탭
 │   │       ├── DaeunTab · SeunTab · WolUnTab · FortuneTab   # "시운(時運)" 탭
-│   │       ├── ZodiacTab · FengShuiTab · AiTab
-│   │       └── (미사용) AdviceTab.tsx
+│   │       └── ZodiacTab · FengShuiTab · AiTab
 │   ├── lib/
 │   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
 │   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
@@ -492,7 +490,6 @@ tests/
 
 ## 알려진 이슈 / 정리 후보 (2026-09-12 기준)
 
-- 프론트 미사용 컴포넌트 7개: `CounselorComment`, `DetailToggle`, `FortuneSummary`, `PillarCard`, `SectionAccordion`, `SlideCarousel`, `tabs/AdviceTab`
 - `local.toml`의 `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` 키와 pyproject의 `openai` 의존성은 코드에서 참조 없음
 - `.claude/agents/developer.md`, `researcher.md`는 다른 프로젝트(광고/오가닉 최적화) 정의 — 잔존 파일
 - 루트의 `markdown.md`, `interpretation_lee.md`는 LLM 리포트 샘플 — `docs/`로 이동 검토
