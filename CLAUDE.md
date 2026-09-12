@@ -61,6 +61,7 @@ BaZi/
 ├── .claude/skills/db/SKILL.md   # /db 스킬: 서브커맨드 선택·실패 해석·reset 확인 규칙
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
+│   ├── ROADMAP.md               # 제품 핵심 루프 로드맵 — 우선순위·진행 현황 (기능 추가 전 필독)
 │   ├── frontend/screen_spec.md  # 화면 명세
 │   ├── frontend/*/scenarios.md  # 화면별 시나리오
 │   ├── llm_samples/             # LLM 리포트 프롬프트·해석 출력 샘플
@@ -224,6 +225,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 ## 제품 방향 — "와, 진짜 내 얘기네?" 만들기
 
 세 축 모두 **인프라는 깔림**. 다음 단계는 품질 튜닝.
+**우선순위·진행 현황은 `docs/ROADMAP.md`가 정식 출처** (2026-09-12 핵심 루프 재정의: F0 측정 → R1 요약 카드 → R2 시간 모름 → R3 타이밍 리포트 → R4 알림 → R5 궁합 공유 → R6 연속성). 제품 기능을 추가하기 전에 ROADMAP §4·§5를 먼저 본다.
 
 ### ① 하이브리드 해석 엔진 (Rule + LLM) — 구현됨
 - Rule 엔진(Interpreter 13개) → 구조화 데이터 → `LlmReportBuilder` 마크다운 → Ollama가 자연어로 변환

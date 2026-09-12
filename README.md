@@ -10,7 +10,7 @@
 - **MCP**: FastMCP 서버를 `/mcp`에 마운트 (사주 컨텍스트·연간 운세·날씨 오행 도구 3종)
 - **아키텍처**: Hexagonal (Port & Adapter)
 
-개발 규칙·구조·API 상세는 [CLAUDE.md](CLAUDE.md), 리팩토링 규칙은 [docs/REFACTORING.md](docs/REFACTORING.md), 화면 명세는 [docs/frontend/screen_spec.md](docs/frontend/screen_spec.md) 참고.
+개발 규칙·구조·API 상세는 [CLAUDE.md](CLAUDE.md), 제품 로드맵은 [docs/ROADMAP.md](docs/ROADMAP.md), 리팩토링 규칙은 [docs/REFACTORING.md](docs/REFACTORING.md), 화면 명세는 [docs/frontend/screen_spec.md](docs/frontend/screen_spec.md) 참고.
 
 ## 빠른 시작
 
@@ -95,7 +95,7 @@ BaZi/
 ├── alembic/                 # DB 마이그레이션
 ├── docker/docker-compose.yml # postgres:17 + healthcheck
 ├── scripts/db.sh            # DB 기동·마이그레이션·상태·초기화 스크립트 (/db 스킬이 사용)
-├── docs/                    # REFACTORING.md, frontend/screen_spec.md, research/
+├── docs/                    # ROADMAP.md, REFACTORING.md, frontend/screen_spec.md, research/
 ├── src/kkachi/
 │   ├── fastapi.py           # 앱 진입점 — 라우터 등록, CORS, MCP 마운트, local.toml 로드
 │   ├── container.py         # DI 컨테이너
