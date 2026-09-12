@@ -178,7 +178,8 @@
 - [x] PWA manifest·sw (`app/manifest.ts`, `public/sw.js`, icon-192/512)
 - [x] 구독 테이블·엔드포인트 (`push_subscriptions`, `/push/*`, `PushSubscribeButton`)
 - [x] 발송 스크립트 (`scripts/send_daily_push.py`, `POST /admin/push/send-daily` dry-run) — 문구는 아침 한 마디 재사용, 별도 매트릭스는 보류
-- [ ] 운영 스케줄 등록 (cron/launchd 07:00) + HTTPS 환경에서 실기기 수신 확인
+- [x] 운영 배치 가이드 + launchd 07:00 템플릿 (`docs/DEPLOY_PUSH.md`, `deploy/launchd/`)
+- [ ] 사용자 실행: VAPID 키 생성·HTTPS 기동·launchd 등록·실기기 수신 확인 (시크릿·시스템 변경이라 수동)
 - [x] 홈 캡션 재구성 — 백엔드 `Fortune.headline/action/caution`(판정 요인 기반, 이름 포함) + `MorningBrief` 컴포넌트, 홈·시운·DetailView 3곳
 - [x] 스트릭 판단 — 홈에 넣지 않음 (기존 `useStreak`는 미사용 코드, 정리 후보)
 
@@ -260,7 +261,7 @@
 | R2-1 | 출생시간 모름 고지 | 🟢 | ✅ 완료 | 2026-09-12 | 2026-09-12 | 2차와 함께 (결과 상단 고지 + ? 타일) |
 | R2-2 | 세 기둥 계산 | 🔴 | ✅ 완료 | 2026-09-12 | 2026-09-12 | 결정: 삼주 추명(A), 강약 ±6 그대로, 궁합 時柱 쌍 제외, 대운 정오 기준 ±2개월 고지, 기존 프로필은 편집으로 전환 |
 | R3 | 타이밍 리포트 | 🟡 | ✅ 완료 | 2026-09-12 | 2026-09-12 | 룰 기반 v1. 가중치 튜닝은 timing_view·피드백으로. 프리미엄 후보 |
-| R4 | 아침 알림 + 홈 한 문장 | 🟡 | 🟨 진행 | 2026-09-12 | | 한 문장·알림 코드 완료. 남은 것: VAPID 키 운영 배치, 07:00 스케줄 등록, 실기기 수신 확인 |
+| R4 | 아침 알림 + 홈 한 문장 | 🟡 | 🟨 진행 | 2026-09-12 | | 코드·배포 가이드 완료. 남은 것: 사용자가 VAPID 키 생성·HTTPS 기동·launchd 등록·실기기 확인 (docs/DEPLOY_PUSH.md) |
 | R5 | 궁합 공유 + 오늘의 궁합 | 🟡 | ⬜ 대기 | | | |
 | R6 | 까치가 한 말 다시 보기 | 🟢 | ⬜ 대기 | | | R4 이후 |
 
