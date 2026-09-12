@@ -23,23 +23,31 @@ effort: high
 
 ```
 src/kkachi/
-├── fastapi.py               # FastAPI 앱
+├── fastapi.py               # FastAPI 앱 (라우터 8개 + /mcp 마운트, local.toml 로드)
 ├── container.py             # DI Container
-├── domain/                  # 도메인 모델 (dataclass)
+├── resource/local.toml      # DB URL · Toss 키 (값 수정 금지)
+├── domain/                  # 도메인 dataclass·enum (ganji, natal, interpretation, fortune, compatibility …)
 ├── application/
-│   ├── *_service.py         # 서비스 레이어
+│   ├── *_service.py         # KkachiService · ProfileService · FortuneService · CompatibilityService …
+│   ├── fortune_rules.py     # 일진 점수 룰
+│   ├── report_builder.py    # LLM 프롬프트용 마크다운
 │   ├── port/                # 추상 인터페이스 ABC
-│   └── interpreter/         # 9개 텍스트 해석기
+│   ├── interpreter/         # 13개 텍스트 해석기
+│   ├── use_case/            # MCP 도구용
+│   └── util/                # 간지 유틸·십신/충합/십이지신 메타
 └── adapter/
-    ├── inner/*_controller.py # HTTP 라우터
-    └── outer/db/            # DB 어댑터
+    ├── inner/*_controller.py # HTTP 라우터 (kkachi=/kkachi, member, profile, compatibility, payment, palmistry, weather, admin) + mcp_server.py
+    └── outer/               # natal/postnatal(sajupy), weather(Open-Meteo), llm/ollama, db/
 
 frontend/src/
-├── app/                     # Next.js App Router 페이지
-├── components/              # React 컴포넌트
-├── lib/api.ts               # API 호출 함수
+├── app/                     # Next.js App Router 페이지 13개 (/, /analysis, /chat, /compatibility(+/chat), /siun, /weather, /palmistry, /join, /my, /profile, /admin/feedback)
+├── components/              # React 컴포넌트 + tabs/ (결과 6탭) + tabs/natal/ (만세력 6섹션)
+├── lib/api.ts               # API 호출 함수 (스트리밍 포함)
+├── lib/ganji.ts             # 천간·지지 표시 메타 SoT — 해석 분기 금지
 └── types/analysis.ts        # TypeScript 타입
 ```
+
+정확한 파일 트리·API 스펙·DB 스키마는 항상 `CLAUDE.md`를 기준으로 한다.
 
 ## 작업 원칙
 
@@ -73,11 +81,11 @@ frontend/src/
 - `llm_해석엔진_전략.md` — LLM 하이브리드 해석 엔진 구현 전략
 - `retention_전략.md` — DAU/리텐션 향상 전략
 
-## 구현 우선순위 (제품 방향)
+## 구현 우선순위 (제품 방향) — 인프라는 모두 깔림, 이제 품질 튜닝 단계
 
-1. **하이브리드 해석 엔진** — `interpreter/` 의 AdviceInterpreter부터 LLM 변환 적용
-2. **점수 근거 시각화** — `domain_scores`에 `reason: str` 추가, 프론트 툴팁
-3. **피드백 루프** — 해석 하단 👍/👎 버튼 → DB 누적 → Interpreter 품질 측정
+1. **하이브리드 해석 엔진** — `/kkachi/stream-report`·`/kkachi/chat`·`/compatibility/narrative` 스트리밍 존재. 프롬프트·지연 튜닝
+2. **점수 근거 시각화** — `domain_scores[*].reason` 백엔드 구현됨. 프론트 툴팁/아코디언 노출 보강
+3. **피드백 루프** — FeedbackBar → `interpret_feedbacks` → `/admin/feedback` 존재. 긍정률 낮은 탭의 Interpreter부터 개선
 
 ## 주요 산출물
 

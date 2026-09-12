@@ -36,7 +36,7 @@
 5. 실패: "탈퇴 처리 중 오류가 발생했습니다." 표시, 폼 유지
 
 ### Cascade 삭제 범위
-`members` → `profiles` → `analyses` · `daily_fortunes` · `compatibilities`
+`members` → `profiles` → `analyses` · `fortunes` · `compatibilities` · `interpret_feedbacks`
 탈퇴 후 동일 이메일로 재가입 시 완전히 새 계정으로 시작.
 
 ---

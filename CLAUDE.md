@@ -1,12 +1,14 @@
-# BaZi 프로젝트 가이드
+# BaZi (사주까치) 프로젝트 가이드
 
 ## 프로젝트 개요
 
-사주팔자(四柱八字) 계산 및 오행 기반 종합 분석 웹 서비스.
+사주팔자(四柱八字) 계산 및 오행 기반 종합 해석·시운·궁합·손금·풍수 웹 서비스.
 
-- **백엔드**: Python 3.13 + FastAPI + sajupy
-- **프론트엔드**: Next.js 16 + TypeScript + Tailwind CSS
-- **아키텍처**: Hexagonal Architecture (Port & Adapter)
+- **백엔드**: Python 3.13 + FastAPI + sajupy + SQLAlchemy(asyncpg) + Alembic
+- **프론트엔드**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4
+- **LLM**: Ollama 로컬 호출 (`OllamaAdapter`, 기본 모델 `qwen2.5:32b`) — 스트리밍 AI 풀이·챗·궁합 종합해석
+- **MCP**: FastMCP 서버 `/mcp` 마운트 (도구 3종)
+- **아키텍처**: Hexagonal Architecture (Port & Adapter), dependency-injector Singleton
 - **패키지 관리**: uv (Python), npm (Node)
 
 ## 실행
@@ -14,194 +16,178 @@
 ```bash
 # DB (PostgreSQL 17 — Colima 또는 OrbStack 필요)
 docker compose -f docker/docker-compose.yml up -d
-
-# Alembic 마이그레이션
 uv run alembic upgrade head
 
-# 백엔드
+# 백엔드 — 저장소 루트에서 실행 (src/kkachi/resource/local.toml 을 상대경로로 읽음)
 uv run uvicorn kkachi.fastapi:app --reload --port 8000
 
-# 프론트엔드
+# 프론트엔드 (npm run dev 는 .next 삭제 후 기동)
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest
-uv run pytest -v
+uv run pytest            # 55 tests
+cd frontend && npx tsc --noEmit
 ```
+
+### 설정·환경변수
+
+| 위치 | 키 | 용도 |
+|------|----|------|
+| `src/kkachi/resource/local.toml` | `[db] url` | DB 접속 (`Container.config.db.url`) |
+| `src/kkachi/resource/local.toml` | `[toss] secret_key` | Toss 결제 confirm |
+| `src/kkachi/resource/local.toml` | `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` | **미사용** (코드에서 참조 없음) |
+| env | `KKACHI_CORS_ORIGINS` (기본 `http://localhost:3000`), `KKACHI_CORS_ORIGIN_REGEX` | CORS |
+| env | `OLLAMA_BASE_URL` (기본 `http://localhost:11434`), `OLLAMA_MODEL` (기본 `qwen2.5:32b`) | LLM |
+| `frontend/.env.local` | `NEXT_PUBLIC_API_URL` (기본 `http://localhost:8000`) | 프론트 → API |
+| `alembic/env.py` | `DB_URL` 하드코딩 (`postgresql+asyncpg://bazi:bazi@localhost:5432/bazi`) | 마이그레이션 |
+
+- `src/kkachi/resource/hand_landmarker.task` (MediaPipe 손 랜드마크 모델, 7.8MB)는 **git 미추적** — 없으면 `/palmistry/analyze` 요청 시 실패. README의 curl 명령으로 다운로드.
+- `frontend/next.config.ts`: `/api/*` → `127.0.0.1:8000` rewrite, tailscale 호스트 `allowedDevOrigins`.
 
 ## 코드 구조
 
 ```
 BaZi/
-├── alembic/                 # DB 마이그레이션 (루트에 위치 — alembic.ini와 같은 레벨)
-├── alembic.ini
-├── docker/
-│   └── docker-compose.yml   # 로컬 개발용 PostgreSQL 17
+├── alembic/versions/            # 8개 마이그레이션 (아래 DB 스키마 참고)
+├── docker/docker-compose.yml    # postgres:17, db/user/pw = bazi
+├── docs/
+│   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
+│   ├── frontend/screen_spec.md  # 화면 명세
+│   ├── frontend/*/scenarios.md  # 화면별 시나리오
+│   └── research/                # 리서치 문서
 ├── src/kkachi/
-├── fastapi.py               # FastAPI 앱 + CORS + 라우터 등록
-├── container.py             # DI Container (dependency-injector Singleton)
-├── domain/
-│   ├── ganji.py             # Oheng, Stem, Branch, Sipsin, SibiUnseong enum + 상수
-│   ├── natal.py             # Saju, NatalInfo, PostnatalInfo, DaeunPeriod dataclass
-│   ├── user.py              # User dataclass, Gender enum
-│   ├── interpretation.py    # NatalResult + PostnatalResult + Interpretation dataclass
-│   ├── fortune.py           # DailyFortune + Forecast + 시운 도메인
-│   ├── member.py            # Member dataclass
-│   ├── profile.py           # Profile + Analysis dataclass
-│   ├── compatibility.py     # CompatibilityResult + Compatibility dataclass
-│   └── payment.py           # Payment dataclass
-├── application/
-│   ├── kkachi_service.py         # KkachiService: analyze() + interpret() 오케스트레이션
-│   ├── member_service.py         # MemberService: create/get (이메일 중복 시 기존 반환)
-│   ├── profile_service.py        # ProfileService: analyze_profile() 캐시 우선
-│   ├── compatibility_service.py  # CompatibilityService: 오행 기반 궁합 계산 + 캐시
-│   ├── fortune_service.py        # FortuneService: 일진/시운/대운/세운 + 날씨, 예보
-│   ├── payment_service.py        # PaymentService: 결제 처리
-│   ├── report_builder.py         # 해석 결과 → 최종 리포트 포맷팅
-│   ├── port/saju_port.py             # NatalPort, PostnatalPort, InterpreterPort ABC
-│   ├── port/member_port.py           # MemberPort ABC
-│   ├── port/profile_port.py          # ProfilePort ABC
-│   ├── port/analysis_port.py         # AnalysisPort ABC
-│   ├── port/compatibility_port.py    # CompatibilityPort ABC
-│   ├── port/fortune_port.py          # FortunePort ABC (일진/시운 통합)
-│   ├── port/weather_port.py          # WeatherPort ABC
-│   ├── port/payment_port.py          # PaymentPort ABC
-│   ├── port/feedback_port.py         # FeedbackPort ABC (해석 만족도 피드백)
-│   ├── port/llm_port.py              # LlmPort ABC
-│   ├── interpreter/              # 13개 텍스트 해석기 (advice/daeun/fengshui/fortune/
-│   │                             #   hand_shape/narrative/natal/personality/relationship/
-│   │                             #   samjae/seun/yongshin/zodiac)
-│   ├── use_case/                 # get_annual_fortune, get_saju_context, get_weather
-│   └── util/util.py              # year_to_ganji 등 유틸
-└── adapter/
-    ├── inner/kkachi_controller.py          # POST /saju/basic, /saju/interpret
-    ├── inner/member_controller.py          # POST/GET /members
-    ├── inner/profile_controller.py         # /members/{id}/profiles + /analyze + /daily + /forecast
-    ├── inner/compatibility_controller.py   # POST /compatibility, POST /compatibility/direct
-    ├── inner/weather_controller.py         # GET /weather
-    ├── inner/palmistry_controller.py       # POST /palmistry (손금 분석)
-    ├── inner/payment_controller.py         # POST /payments
-    ├── inner/mcp_server.py                 # MCP 서버 엔드포인트
-    ├── outer/natal_adapter.py              # NatalAdapter + PostnatalAdapter (sajupy 연동)
-    ├── outer/weather_adapter.py            # WeatherAdapter (Open-Meteo, 7일 예보, 도시→lat/lon 지오코딩)
-    ├── outer/llm/ollama_adapter.py         # LLM 어댑터 (Ollama 로컬 호출)
-    └── outer/db/
-        ├── models.py        # MemberModel, ProfileModel, AnalysisModel, CompatibilityModel, DailyFortuneModel, PaymentModel
-        ├── member_repo.py   # MemberPort 구현
-        ├── profile_repo.py  # ProfilePort + AnalysisPort + CompatibilityRepo + DailyFortuneRepo 구현
-        └── payment_repo.py  # PaymentPort 구현
-
-frontend/src/
-├── app/
-│   ├── page.tsx              # 메인 페이지 (직접 입력 / 프로필 선택 분석, IP 위치 자동 감지)
-│   ├── analysis/
-│   │   ├── page.tsx          # 무료 분석 — POST /saju/basic → FreeResultSlides
-│   │   └── deep/page.tsx     # 심층(프리미엄) 분석 — 로그인 필수, sessionStorage 입력값 사용
-│   ├── compatibility/        # 궁합 페이지 (프로필 선택 or 직접 입력)
-│   ├── my/                   # 계정 설정 (정보·로그아웃·탈퇴)
-│   ├── join/                 # 로그인/회원가입
-│   ├── profile/              # 프로필 관리 (추가·삭제)
-│   ├── siun/                 # 시운(時運) — 오늘/내일/주간 탭
-│   ├── weather/              # 날씨 + 오행 매핑
-│   ├── palmistry/            # 손금 (MediaPipe)
-│   └── payment/              # checkout / success / fail
-├── components/
-│   ├── AnalysisForm.tsx      # 사주 입력 폼 — 이름+성별+생년월일+경도, 프로필 저장 버튼, 정밀 설정 collapsible
-│   ├── SectionHeader.tsx              # 섹션 헤더 공통 (emoji + 제목 + 무료/프리미엄 뱃지)
-│   ├── CollapsibleSectionHeader.tsx   # 접고 펼치는 섹션 헤더
-│   ├── InlineCollapsibleHeader.tsx    # 인라인용 접기 헤더
-│   ├── SectionAccordion.tsx           # 아코디언 그룹
-│   ├── ResultSlides.tsx      # 심층 분석 결과 — 탭 오케스트레이터, name prop 포함
-│   ├── SlideCarousel.tsx     # 슬라이드 캐러셀
-│   ├── KkachiTip.tsx         # 까치 마스코트 말풍선
-│   ├── CounselorComment.tsx  # 상담사 코멘트 박스
-│   ├── ElementRadar.tsx      # 오행 분포 — CSS 가로 바 차트
-│   ├── OhengAnalysis.tsx     # 오행 분석 카드
-│   ├── OhaengRelationDiagram.tsx # 오행 상생/상극 다이어그램
-│   ├── PillarCard.tsx        # 기둥(년/월/일/시) 단일 카드
-│   ├── PillarDetail.tsx      # 사주팔자 그리드 (pillar_summary 포함)
-│   ├── PillarOhengGrid.tsx   # 팔자 + 오행 통합 그리드
-│   ├── DaeunSeunTable.tsx    # 대운·세운 표
-│   ├── DaeunTimeline.tsx     # 대운 타임라인
-│   ├── DomainBarChart.tsx    # 도메인 점수 바 차트
-│   ├── FortuneSummary.tsx    # 운세 요약 카드
-│   ├── DailyFortune.tsx      # 오늘/내일/주간 운세 패널 (날씨 배지 포함)
-│   ├── CompatibilityResult.tsx
-│   ├── PersonCard.tsx        # 인물 카드 (궁합용)
-│   ├── ProfileCard.tsx       # 프로필 카드
-│   ├── ProfileForm.tsx       # 프로필 입력 폼
-│   ├── ScoreBar.tsx          # 점수 바 컴포넌트
-│   ├── InterpretSection.tsx  # 해석 섹션 wrapper
-│   ├── DetailToggle.tsx      # 더보기 토글
-│   ├── TermBadge.tsx         # 용어 배지 (툴팁 연동)
-│   ├── Tooltip.tsx           # 공통 툴팁
-│   ├── FeedPost.tsx          # 홈 피드 카드
-│   ├── BottomNav.tsx         # 하단 네비게이션
-│   ├── SajuChat.tsx          # 사주 챗 (LLM 인터페이스)
-│   └── LoadingSpinner.tsx
-│   └── tabs/
-│       ├── NatalTab.tsx        # 사주팔자 탭 — 팔자·오행·십신·십이운성·신살
-│       ├── PersonalityTab.tsx  # (placeholder — 현재 NatalTab으로 통합 검토 중)
-│       ├── FortuneTab.tsx      # 올해운세 탭
-│       ├── DaeunTab.tsx        # 대운흐름 탭
-│       ├── SeunTab.tsx         # 세운(年運) 탭
-│       ├── WolUnTab.tsx        # 월운(月運) 탭
-│       ├── YongshinTab.tsx     # 용신(用神) 탭
-│       ├── SamjaeTab.tsx       # 삼재 탭
-│       ├── FengShuiTab.tsx     # 풍수(팔택풍수) 탭
-│       ├── AdviceTab.tsx       # 종합조언 탭
-│       ├── ZodiacTab.tsx       # 12지신 탭
-│       └── AiTab.tsx           # AI 해석 탭
-├── lib/
-│   ├── api.ts                # API 호출 함수 전체 (getBasicChart 포함)
-│   ├── ganji.ts              # 천간·지지 메타 단일 SoT (프론트엔드)
-│   ├── elementColors.ts      # 오행별 색상 매핑
-│   ├── zodiac.ts             # 12지신 메타
-│   ├── glossary.ts           # 용어 사전 (TermBadge 연동)
-│   ├── constants.ts          # 공통 상수
-│   └── location.ts           # ipapi.co 기반 IP 위치 감지
-└── types/analysis.ts         # TypeScript 타입 정의 (NatalResult.pillar_summary 포함)
-
-frontend/public/kkachi/
-├── normal_kkachi_00.png      # 기본 까치 (KkachiTip에 사용)
-├── seven_sinsal.png          # 7가지 신살 까치 원본 스프라이트
-├── sinsal_역마살.png          # 신살별 까치 이미지 (seven_sinsal.png에서 분리)
-├── sinsal_도화살.png
-├── sinsal_화개살.png
-├── sinsal_천을귀인.png
-├── sinsal_문창귀인.png
-├── sinsal_백호살.png
-└── sinsal_장성살.png
+│   ├── fastapi.py               # 앱 + CORS + 라우터 8개 등록 + /mcp 마운트 + lifespan(local.toml 로드)
+│   ├── container.py             # DI Container — Repo·Adapter·Service Singleton
+│   ├── resource/                # local.toml, hand_landmarker.task
+│   ├── domain/
+│   │   ├── ganji.py             # Oheng, Stem, Branch, StemBranch, Pillar, Sipsin, SibiUnseong, Gongmang,
+│   │   │                        #   StemCombine/StemClash, BranchCombine/Clash/Wonjin/Hyung/Hae/Pa, SAMHAP_GROUPS, OHENG_GUIDE
+│   │   ├── natal.py             # Jeol, Samjae, Sinsal enum · Saju · NatalInfo · DaeunPeriod · PostnatalInfo
+│   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · NatalResult · PostnatalResult · Interpretation
+│   │   ├── fortune.py           # Fortune (일진 결과) · FortuneCache
+│   │   ├── compatibility.py     # PillarRelation · PillarSnapshot · CompatibilityResult · Compatibility
+│   │   ├── user.py              # User, Gender("male"|"female")
+│   │   ├── member.py / profile.py / payment.py
+│   ├── application/
+│   │   ├── kkachi_service.py         # NatalService(analyze/interpret_natal) · PostnatalService(analyze/interpret_postnatal)
+│   │   │                             #   · KkachiService(analyze/interpret/build_chat_context) · KkachiLlmService(**미배선**, build_report)
+│   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
+│   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입
+│   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰, 24절기, 손없는 날
+│   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
+│   │   ├── member_service.py         # 이메일 중복 시 기존 반환
+│   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
+│   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
+│   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
+│   │   │                             #   fortune, weather, payment, feedback, llm
+│   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음)
+│   │   │                             #   · personality(Personality+ElementBalance) · relationship · samjae · seun · yongshin · zodiac
+│   │   ├── use_case/                 # get_saju_context · get_annual_fortune · get_weather (MCP 도구용)
+│   │   └── util/                     # util.py(year_to_ganji, branch_relation, josa…) · sipsin_meta · clash_combine_meta · zodiac_meta
+│   └── adapter/
+│       ├── inner/
+│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · report · chat · stream-report
+│       │   ├── member_controller.py        # /members
+│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·report·analyze·daily·forecast·feedback
+│       │   ├── compatibility_controller.py # /compatibility — ""·direct·chat·narrative
+│       │   ├── payment_controller.py       # /payments — prepare·confirm
+│       │   ├── palmistry_controller.py     # POST /palmistry/analyze (MediaPipe 랜드마크 + OpenCV 손금선 밀도)
+│       │   ├── weather_controller.py       # GET /weather
+│       │   ├── admin_controller.py         # GET /admin/feedback/summary
+│       │   └── mcp_server.py               # FastMCP "사주까치" — get_saju_context · get_annual_fortune · get_weather_element
+│       └── outer/
+│           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→경도 내부 룩업, sajupy 호출)
+│           ├── postnatal_adapter.py        # PostnatalAdapter — 세운·대운·월운·충합·영역점수(reason 포함)·삼재
+│           ├── weather_adapter.py          # Open-Meteo geocoding + forecast (past_days=14), WMO → 오행
+│           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret
+│           └── db/
+│               ├── models.py       # MemberModel · ProfileModel · AnalysisModel · FortuneModel · CompatibilityModel
+│               │                   #   · InterpretFeedbackModel · PaymentModel
+│               ├── member_repo.py  # MemberRepo
+│               ├── profile_repo.py # ProfileRepo · AnalysisRepo · FortuneRepo · CompatibilityRepo · FeedbackRepo
+│               └── payment_repo.py # PaymentRepo
+├── frontend/src/
+│   ├── app/
+│   │   ├── page.tsx                 # 홈 — 날짜 헤더 · StoryTray · 프로필별 FortunePost(7일 예보) · VideoPost
+│   │   ├── analysis/page.tsx        # 사주 분석 — 프로필 선택 / 직접 입력 → ResultSlides (로그인 불필요)
+│   │   ├── analysis/deep/page.tsx   # /analysis 로 redirect 만 함 (구 심층 분석 경로 호환)
+│   │   ├── chat/page.tsx            # 까치 상담 풀스크린 챗 (sessionStorage 입력값 → /kkachi/chat)
+│   │   ├── compatibility/page.tsx   # 궁합 — PersonCard×2 · 관계 유형 · 스트리밍 종합해석 · ?p1=&p2= 딥링크
+│   │   ├── compatibility/chat/page.tsx
+│   │   ├── siun/page.tsx            # 시운(時運) — 프로필 전환, 오늘/내일/주간, 14일 전~31일 예보
+│   │   ├── weather/page.tsx         # 날씨 오행 (GPS → ipapi → Seoul), 로그인 시 용신 팁
+│   │   ├── palmistry/page.tsx       # 손금 (idle → preview → loading → result)
+│   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
+│   │   └── admin/feedback/page.tsx  # 탭별 👍/👎 요약 대시보드
+│   ├── components/
+│   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — StickySajuBar + 6개 feature 탭(?tab=) + FeedbackBar + SajuChat FAB
+│   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출)
+│   │   ├── CompatibilityResult.tsx  # 궁합 결과 (621 LOC)
+│   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
+│   │   ├── DailyFortune.tsx         # DetailView · WeeklyView · DailyFortunePanel
+│   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
+│   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
+│   │   ├── OhengPairDiagram · PillarPairDiagram   # 궁합 비교 다이어그램
+│   │   ├── DaeunTimeline · DaeunSeunTable · DomainBarChart · ScoreBar
+│   │   ├── SectionHeader · CollapsibleSectionHeader · InlineCollapsibleHeader · InterpretSection
+│   │   ├── KkachiTip · TermBadge · Tooltip · FeedPost · BottomNav · LoadingSpinner
+│   │   ├── (미사용) CounselorComment · DetailToggle · FortuneSummary · PillarCard · SectionAccordion · SlideCarousel
+│   │   └── tabs/
+│   │       ├── NatalTab.tsx         # 만세력 — natal/ 6개 섹션 조합
+│   │       ├── natal/               # PillarSection · SipsinSection · JizanganSection · GongmangSection
+│   │       │                        #   · SibiUnseongSection · SinsalSection · data.ts(SIPSIN_INFO, SINSAL_INFO 등 표시 메타)
+│   │       ├── YongshinTab · SamjaeTab            # "용신·삼재" 탭
+│   │       ├── DaeunTab · SeunTab · WolUnTab · FortuneTab   # "시운(時運)" 탭
+│   │       ├── ZodiacTab · FengShuiTab · AiTab
+│   │       └── (미사용) AdviceTab.tsx
+│   ├── lib/
+│   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
+│   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
+│   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
+│   └── types/analysis.ts
+├── frontend/public/kkachi/       # normal/good/caution 까치, sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
+├── frontend/public/oheng/        # 오행 이미지 5종
+└── tests/
+    ├── adapter/       # test_analyzer · test_fortune · test_sibi_unseong
+    └── application/   # test_interpret · test_compatibility
 ```
 
 ## 아키텍처 원칙
 
-- **Hexagonal Architecture**: 도메인 로직은 외부 의존성과 분리
-- **Port & Adapter**: 추상 인터페이스(Port) → 구현체(Adapter)
-- **DI**: dependency-injector Singleton, @inject로 주입
-- **dataclass 직렬화**: schema 레이어 없이 `asdict()`로 직접 JSON 변환
+- **Hexagonal Architecture**: 도메인 로직은 외부 의존성과 분리. `domain/`에서 sajupy·sqlalchemy import 금지
+- **Port & Adapter**: 추상 인터페이스(Port ABC) → 구현체(Adapter). Application이 Adapter를 직접 import 금지 (Container 경유)
+- **DI**: dependency-injector Singleton, 컨트롤러에서 `@inject` + `Depends(Provide[Container.xxx])`
+- **dataclass 직렬화**: schema 레이어 없이 `asdict()`로 직접 JSON 변환 (컨트롤러 요청 모델만 Pydantic)
+- **컨트롤러는 thin**: 검증·HTTP 변환만. 예외: 챗/스트리밍 컨트롤러가 `svc._llm_port`에 직접 접근 중
 
 ## 데이터 흐름
 
 ```
-POST /saju/basic  (무료 — 팔자·오행·십이지신)
-  → KkachiService.basic_analyze(user, year)
-      → NatalAdapter → NatalInfo
-      → pillars, element_stats, my_element, year_branch, zodiac_relation 반환
-  → JSON 응답
+POST /kkachi/interpret  (로그인 불필요)
+  → KkachiService.analyze(user, year)
+      → NatalAdapter.analyze     → NatalInfo   (간지, 오행, 강약, 용신, 십신, 십이운성, 신살, 지장간, 십이신살, 공망)
+      → PostnatalAdapter.analyze → PostnatalInfo (세운, 대운, 월운 6개월, 충합, 영역점수+reason, 삼재)
+  → KkachiService.interpret(natal, postnatal, user, name)
+      → NatalService.interpret_natal       → NatalResult  (narratives, personality, element_balance, feng_shui, zodiac …)
+      → PostnatalService.interpret_postnatal → PostnatalResult (yongshin, fortune_by_domain, annual/major/samjae_fortune, advice …)
+      → Interpretation(natal, postnatal)
+  → asdict() → JSON
 
-POST /saju/interpret  (심층 — 로그인 필요)
-  → KkachiService.analyze()
-      → NatalAdapter → NatalInfo (간지, 오행, 강약, 용신, 십신, 십이운성, 신살, 풍수, 12지신)
-      → PostnatalAdapter → PostnatalInfo (세운, 대운, 월운, 시운, 삼재, 충합, 영역점수)
-  → KkachiService.interpret()
-      → 13개 Interpreter → Interpretation (최종 결과)
-      → ReportBuilder → 최종 포맷팅
-  → asdict() → JSON 응답
+POST /members/{id}/profiles/{pid}/analyze
+  → ProfileService.analyze_profile → analyses(profile_id, year) 캐시 우선 → 없으면 위 파이프라인 후 저장
+
+POST /kkachi/stream-report  (AI 풀이 탭)
+  → analyze + interpret → LlmReportBuilder.build() 마크다운 → OllamaAdapter.stream_interpret → text/plain 스트림
+
+POST /kkachi/chat  (까치 상담)
+  → analyze + interpret → KkachiService.build_chat_context() → system prompt → OllamaAdapter.stream_chat
+
+GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
+  → FortuneService.get_forecast → 날짜별 fortunes 캐시 확인 → compute_fortune(natal, date, weather, postnatal) → upsert
 ```
 
-> 최근 이관: 시운(時運)·대운·세운·월운, 풍수(팔택풍수), 12지신 해석 로직은 모두 백엔드로 이관됨.
-> 프론트엔드의 `lib/ganji.ts`는 표시용 메타(이름/색상)에만 사용 — 해석 분기 금지.
+- 시운(時運)·대운·세운·월운, 풍수(팔택풍수), 십이지신, 신살 해석 텍스트는 **모두 백엔드**에서 생성.
+- 프론트 `lib/ganji.ts`·`tabs/natal/data.ts`는 표시용 메타(이름/색상/한 줄 태그라인)만 — 해석 분기 금지.
 
 ## Always / Never
 
@@ -210,11 +196,12 @@ POST /saju/interpret  (심층 — 로그인 필요)
 - 테스트를 먼저 실행해서 기존 동작 확인 후 수정
 - 3개 이상 파일 변경 시 Plan 먼저
 - **리팩토링 작업 시 `docs/REFACTORING.md`를 먼저 읽을 것**
+- API·페이지·DB 스키마를 바꾸면 이 문서의 해당 섹션도 같은 커밋에서 갱신
 
 **NEVER:**
 - `git push --force`
 - `rm -rf`
-- `.env` 파일 수정 또는 외부 전송
+- `.env` 파일·`local.toml`의 실제 키 값 수정 또는 외부 전송
 
 ## Anti-bloat rules
 
@@ -227,34 +214,23 @@ POST /saju/interpret  (심층 — 로그인 필요)
 
 ## 제품 방향 — "와, 진짜 내 얘기네?" 만들기
 
-단순 운세 표시를 넘어 사용자가 공감하게 만드는 3가지 핵심 방향.
+세 축 모두 **인프라는 깔림**. 다음 단계는 품질 튜닝.
 
-### ① 하이브리드 해석 엔진 (Rule + LLM)
-현재 Interpreter들의 출력(Raw Data)을 LLM 컨텍스트로 주입해 자연어 품질을 높인다.
+### ① 하이브리드 해석 엔진 (Rule + LLM) — 구현됨
+- Rule 엔진(Interpreter 13개) → 구조화 데이터 → `LlmReportBuilder` 마크다운 → Ollama가 자연어로 변환
+- 진입점: AI 풀이 탭(`/kkachi/stream-report`), 까치 상담(`/kkachi/chat`), 궁합 종합해석(`/compatibility/narrative`)·궁합 챗
+- LLM은 해석 생성기가 아닌 **언어 변환기**. 한국어 강제·225자 제한·"사주에 따르면" 금지 규칙이 시스템 프롬프트에 있음
+- 다음: 프롬프트 품질, 응답 지연(`num_predict` 500/700, `keep_alive` 10m) 튜닝
 
-전략:
-> "이 사용자는 火가 4개인 신강 사주야. 올해는 水운이 들어와서 충(衝)이 발생해.
->  이 데이터를 바탕으로 30대 직장인에게 조언하듯 부드럽게 설명해줘"
+### ② 점수 근거 시각화 (Domain Scores) — 백엔드 구현됨
+- `PostnatalAdapter._get_domain_scores` → `{score, level, reason}` (reason = 세운·대운 십신 근거 문장)
+- 일진도 `compute_fortune` → `domain_scores[*].reason`
+- 다음: 프론트 툴팁/아코디언 노출 보강
 
-- Rule 엔진(현재) → 구조화된 데이터 생성
-- LLM → 데이터를 받아 개인화된 자연어로 변환
-- LLM은 해석 생성기가 아닌 **언어 변환기** 역할
-
-### ② 점수 근거 시각화 (Domain Scores)
-domain_scores의 점수가 **왜** 나왔는지 근거를 툴팁으로 제공 → 신뢰도 급상승.
-
-예시:
-> 재물운 80점인 이유 → 대운에서 정재(正財)가 들어오고 일지와 합(合)이 되기 때문
-
-- 각 도메인 점수에 `reason: str` 필드 추가
-- 프론트엔드 툴팁/아코디언으로 노출
-
-### ③ 피드백 루프 (Feedback Loop)
-해석 하단 "이 해석이 잘 맞나요?" 버튼 → RDB에 누적 → 해석기 품질 튜닝.
-
-- 어떤 Interpreter가 만족도 높은지 측정
-- 낮은 해석기부터 우선 개선
-- 장기적으로 LLM fine-tuning 데이터로 활용
+### ③ 피드백 루프 (Feedback Loop) — 구현됨
+- `ResultSlides` 하단 FeedbackBar 👍/👎 → `POST .../feedback {tab_id, rating}` → `interpret_feedbacks`
+- `/admin/feedback` 대시보드가 긍정률 낮은 탭 순으로 정렬
+- 다음: 낮은 탭의 Interpreter부터 개선
 
 ## 코딩 컨벤션
 
@@ -267,32 +243,55 @@ domain_scores의 점수가 **왜** 나왔는지 근거를 툴팁으로 제공 �
 - async 우선 (FastAPI 파이프라인 전체)
 - 상수는 사용처 가까이 위치 (constant.py 분리 안 함)
 - **클래스 메서드 순서**: public 메서드 상단, private(`_`) 메서드 하단
+- UI 텍스트 레이블은 **한글(한자)** 병기 — 예) 용신(用神), 신강(身強)
+- ruff: line-length 100, select E/F/I/UP (E501 무시). `.claude/hooks/lint.sh`가 Write/Edit 시 자동 실행
 
 ## API 스펙
 
+`gender`는 항상 `"male" | "female"`. 응답은 dataclass `asdict()` 그대로.
+
 ```
-POST /saju/basic
-  Request:  { birth_dt: datetime, gender: "M"|"F", city: str, longitude?: float, year: int }
-  Response: { pillars, day_stem, element_stats, my_element, year_branch, zodiac_relation }
+# 사주 해석 (kkachi_controller, prefix /kkachi)
+POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul", longitude?, name="" }
+                             → { natal: NatalResult, postnatal: PostnatalResult }
+POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
+POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
+POST /kkachi/report          ⚠ 현재 동작 불가 — KkachiService 에 build_report 가 없음 (KkachiLlmService 미배선). 프론트 미사용
 
-POST /saju/interpret
-  Request:  { birth_dt: datetime, gender: "M"|"F", analysis_year: int, city: str }
-  Response: { natal: NatalResult, postnatal: PostnatalResult }
+# 회원
+POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
+GET    /members/{id}
+DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
 
-POST   /members                                              # 생성 (이메일 중복 시 기존 반환)
-GET    /members/{member_id}
+# 프로필 (prefix /members/{member_id}/profiles)
+POST   ""                    { name, gender, birth_dt, city="Seoul", is_self=false } → 201 (10개 초과 시 400)
+GET    ""                    → Profile[]
+GET    /{pid}
+PATCH  /{pid}                { name, gender, birth_dt, city }
+DELETE /{pid}                → 204 (is_self 프로필은 409)
+POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선)
+POST   /{pid}/report         ⚠ /kkachi/report 와 같은 이유로 동작 불가
+GET    /{pid}/daily          → Fortune dict (오늘, fortunes 캐시 + 날씨 없으면 재계산)
+GET    /{pid}/forecast       ?days=7&start_date=YYYY-MM-DD → Fortune[] (days 최대 35, 과거 날짜 가능)
+POST   /{pid}/feedback       { tab_id, rating } → { success }
 
-POST   /members/{member_id}/profiles
-GET    /members/{member_id}/profiles
-GET    /members/{member_id}/profiles/{profile_id}
-DELETE /members/{member_id}/profiles/{profile_id}
-POST   /members/{member_id}/profiles/{profile_id}/analyze   # { year: int } → 캐시 우선 반환
+# 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
+POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
+POST /compatibility/direct   { person1:{name,gender,birth_dt,city}, person2, year, relation_type } → stateless
+POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
+POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 
-POST   /compatibility         # { profile_id_1, profile_id_2, year } → 캐시 우선 반환
-POST   /compatibility/direct  # { person1: {name,gender,birth_dt,city}, person2, year } → stateless
+# 기타
+GET  /weather                ?city=Seoul&days=7&lat&lon → DailyWeather[] (days 최대 14, 응답에 과거 14일 포함)
+POST /palmistry/analyze      multipart image → { hand_element, hand_type_korean, finger_ratio, aspect_ratio, line_scores{heart,head,life}, blocks[] }
+POST /payments/prepare       { member_id, feature_type: deep_analysis|daily_fortune|compatibility } → { order_id, amount, feature_type, order_name }
+POST /payments/confirm       { payment_key, order_id, amount } → Toss confirm → { success }   (프론트 결제 게이트는 제거됨)
+GET  /admin/feedback/summary → [{ tab_id, total, positive, negative, positive_rate }] 긍정률 오름차순
 
-GET    /members/{member_id}/profiles/{profile_id}/daily     # 오늘 운세 (캐시 우선)
-GET    /members/{member_id}/profiles/{profile_id}/forecast  # ?days=7 (기본 7일, 최대 14일)
+# MCP (/mcp, streamable HTTP)
+get_saju_context(birth_dt, gender, year, city, name) → str (~600자 요약)
+get_annual_fortune(...)                                → dict (영역점수·세운·삼재·대운·충합)
+get_weather_element(city)                              → dict (condition, element, temperature)
 ```
 
 ## DB 스키마
@@ -312,6 +311,7 @@ erDiagram
         VARCHAR gender
         DATETIME birth_dt
         VARCHAR city
+        BOOLEAN is_self
         DATETIME created_at
     }
     analyses {
@@ -321,7 +321,7 @@ erDiagram
         JSONB result
         DATETIME created_at
     }
-    daily_fortunes {
+    fortunes {
         UUID id PK
         UUID profile_id FK
         DATE fortune_date
@@ -336,26 +336,50 @@ erDiagram
         JSONB result
         DATETIME created_at
     }
+    interpret_feedbacks {
+        UUID id PK
+        UUID profile_id FK
+        VARCHAR tab_id
+        SMALLINT rating
+        DATETIME created_at
+    }
+    payments {
+        UUID id PK
+        UUID member_id FK
+        VARCHAR feature_type
+        INT amount
+        VARCHAR toss_order_id UK
+        VARCHAR toss_payment_key
+        VARCHAR status
+        DATETIME used_at
+        DATETIME created_at
+    }
 
     members ||--o{ profiles : "소유"
-    profiles ||--o{ analyses : "연간 운세 캐시"
-    profiles ||--o{ daily_fortunes : "일별 운세 캐시"
+    members ||--o{ payments : "결제"
+    profiles ||--o{ analyses : "연간 해석 캐시"
+    profiles ||--o{ fortunes : "일별 운세 캐시"
+    profiles ||--o{ interpret_feedbacks : "해석 피드백"
     profiles ||--o{ compatibilities : "profile_id_1"
     profiles ||--o{ compatibilities : "profile_id_2"
 ```
 
+> `fortunes`는 `daily_fortunes`에서 rename됨 (`150d31f50d94`). `is_self`, `interpret_feedbacks`, `payments`는 이후 마이그레이션 추가.
+
 ### 유니크 제약
 | 테이블 | 유니크 키 | 목적 |
 |--------|----------|------|
-| `members` | `email` | 이메일 중복 방지 |
-| `analyses` | `(profile_id, year)` | 연도별 캐시 |
-| `daily_fortunes` | `(profile_id, fortune_date)` | 날짜별 캐시 (upsert) |
+| `members` | `email` | 이메일 중복 방지 (비밀번호 없음, 이메일이 식별자) |
+| `analyses` | `(profile_id, year)` | 연도별 해석 캐시 |
+| `fortunes` | `(profile_id, fortune_date)` | 날짜별 일진 캐시 (upsert) |
 | `compatibilities` | `(profile_id_1, profile_id_2, year)` | 궁합 캐시, pid1 < pid2 정규화 |
+| `payments` | `toss_order_id` | 주문 중복 방지 |
 
 ### 캐시 전략
-- `analyses`, `daily_fortunes`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
+- `analyses`, `fortunes`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
 - `compatibilities.profile_id_1/2`는 항상 `min(id) / max(id)` 순 저장 (A↔B 순서 무관)
-- `daily_fortunes`는 날씨 포함 여부 확인 후 upsert (날씨 없이 캐시된 경우 날씨 추가 재계산)
+- `fortunes`는 날씨 포함 여부 확인 후 upsert (날씨 없이 캐시된 경우 날씨 붙여 재계산)
+- 프로필·회원 삭제 시 캐시는 FK cascade로 함께 삭제
 
 ## 서비스명 — 사주까치
 
@@ -366,97 +390,113 @@ erDiagram
 
 ## 프론트엔드 페이지
 
-| 경로 | 설명 |
-|------|------|
-| `/` | 비로그인: 랜딩 + 기초 사주 분석(팔자·오행 분포 무료) / 로그인: 대시보드(프로필별 오늘 운세) |
-| `/join` | 회원가입 / 로그인 (이메일 기반, 완료 후 `/profile` redirect) |
-| `/my` | 계정 설정 — 정보 확인 · 로그아웃 · **회원 탈퇴** (이메일 확인 후 cascade 삭제) |
-| `/profile` | 프로필 관리 — 추가 / 삭제 (비로그인 시 `/join` redirect) |
-| `/analysis` | 사주 분석 — 프로필 선택 or 직접 입력 (무료) → `/analysis/deep` (심층) |
-| `/compatibility` | 궁합 — 프로필 선택 or 직접 입력, 둘 다 프로필이면 캐시 적용 |
-| `/siun` | 시운(時運) — 오늘/내일/주간 탭, 날씨 배지 포함 |
-| `/weather` | 날씨 + 오행 매핑 |
-| `/palmistry` | 손금 분석 (MediaPipe + OpenCV) |
-| `/payment/{checkout\|success\|fail}` | 결제 플로우 |
+| 경로 | 설명 | 로그인 |
+|------|------|--------|
+| `/` | 비로그인: 날짜 헤더 + 소개 영상 / 로그인: StoryTray + 프로필별 오늘 운세 FortunePost(7일 예보, 손없는 날 배지) + 영상 | 선택 |
+| `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/` | — |
+| `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
+| `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지) | 필수 |
+| `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
+| `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
+| `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 선택 |
+| `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
+| `/siun` | 시운(時運) — is_self 프로필 기본, 프로필 전환, 오늘/내일/주간 탭, 날씨 배지 | 필수(비로그인 CTA) |
+| `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
+| `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
+| `/admin/feedback` | 탭별 👍/👎 긍정률 대시보드 (인증 없음) | — |
 
-### 비로그인 결과 공개 정책
-- `/analysis`: `POST /saju/basic`으로 팔자·오행분포·십이지신(十二支神) 무료 공개
-- 블러 CTA → "심층분석 시작하기" → `/analysis/deep`
-- `/analysis/deep`: `localStorage["kkachi_member_id"]` 없으면 `/join` redirect, `sessionStorage["kkachi_analysis_input"]` 없으면 `/analysis` redirect
+- **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
+- `/weather`, `/palmistry`, `/admin/feedback`은 네비게이션에 연결되어 있지 않음 — URL 직접 진입만 가능.
+- 로그인 상태는 `localStorage["kkachi_member_id"]` (`MEMBER_ID_KEY`)로 판단. 비밀번호 없음.
+- 페이지 진입 시 `ipapi.co`로 IP 위치 감지 → city(+ longitude) 자동 입력. `longitude`는 UI 비노출로 `User.longitude` → sajupy 직접 전달.
 
-### 입력 흐름
-- `AnalysisForm`: 이름+성별 | 생년월일+경도(자동) | "정밀 설정" collapsible(분석연도)
-- 프로필 저장 버튼 → 이름 입력 시 활성화 → 저장 후 "분석 시작" 활성화
-- `longitude`는 IP 위치 감지로 자동 주입, UI에 노출하지 않음 (`User.longitude` → sajupy 직접 전달, Nominatim 우회)
+### 분석 입력 흐름 (`/analysis`)
+- **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. **"프로필 저장" 버튼을 먼저 눌러야 "분석 시작" 활성화** (로그인 시 실제 `POST /profiles`, 비로그인 시 확인 단계 역할). → `POST /kkachi/interpret`
+- **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시)
+- 성공 시 `sessionStorage`에 저장 → 재진입 시 자동 재분석, `/chat`·AI 풀이 탭이 재사용
 
-- `localStorage["kkachi_member_id"]`로 로그인 상태 유지
-- 페이지 진입 시 `ipapi.co`로 IP 위치 자동 감지 → longitude + city 자동 입력
+### sessionStorage 키
+| 키 | 저장 | 사용 |
+|----|------|------|
+| `kkachi_analysis_input` | `/analysis` | `/analysis` 재진입, `/chat`, `AiTab` |
+| `kkachi_analysis_name` | `/analysis` | 위와 동일 (KkachiTip `{name}님` 개인화) |
+| `kkachi_profile_input` | `/analysis` 프로필 모드 | `{memberId, profileId, year}` → FeedbackBar가 profileId 필요 |
+| `kkachi_compat_input` / `kkachi_compat_names` | `/compatibility` | `/compatibility/chat` |
 
-## 오늘의 운세 설계
+### ResultSlides 탭 구성 (`?tab=`)
+| id | 라벨 | 컴포넌트 |
+|----|------|---------|
+| `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection · SibiUnseongSection · SinsalSection |
+| `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |
+| `daeun` | 시운(時運) | `DaeunTab` + `SeunTab` + `WolUnTab` + `FortuneTab`(충합, 영역별 운) |
+| `zodiac` | 십이지신 | `ZodiacTab` |
+| `fengshui` | 풍수 | `FengShuiTab` |
+| `ai` | AI 풀이 | `AiTab` → `/kkachi/stream-report` 스트리밍 (Ollama 없으면 에러 문구) |
 
-### 점수 계산 (base 50 + 보정)
+- 모든 탭 하단에 `FeedbackBar` (memberId·profileId 있을 때만 전송), 우하단 `SajuChat` FAB → `/chat`.
+- 카드 포맷: `slide-card` + `CollapsibleSectionHeader`/`SectionHeader` + divider + 본문 시작에 인트로 `KkachiTip` 필수 (`docs/REFACTORING.md §4-3`).
+
+## 오늘의 운세(일진) 설계 — `fortune_rules.compute_fortune`
+
+### 점수 계산 (base 50 + 보정, 0~100 clamp)
 | 조건 | 점수 |
 |------|------|
 | 오늘 일간 오행 = 용신 | +25 |
 | 오늘 일간이 용신을 生 | +15 |
+| 오늘 일간이 용신을 剋 (또는 용신이 일간을 剋) | -15 |
 | 오늘 일지와 내 일지 육합 | +15 |
+| 오늘 일지와 내 일지 충 | -15 |
 | 오늘 오행이 내 주 오행을 生 | +10 |
 | 길신 십신 (食神/正財/正官/正印) | +8 |
+| 흉신 십신 (偏官/劫財) | -8 |
 | 날씨 오행 = 용신 | +10 |
 | 날씨 오행이 용신을 生 | +5 |
-| 흉신 십신 (偏官/劫財) | -8 |
-| 오늘 일지와 내 일지 충 | -15 |
-| 오늘 일간이 용신을 剋 | -15 |
 | 날씨 오행이 용신을 剋 | -8 |
 
-### 날씨 연동 (Open-Meteo)
-- API 키 불필요, 전세계 커버
-- 도시명 → Open-Meteo Geocoding API → lat/lon (프로세스 내 캐시)
-- WMO 날씨 코드 → 오행: 맑음=火, 구름많음=土, 흐림=金, 비/눈=水, 강풍=木
-- 7일 예보 한번에 fetch → 각 날짜에 날씨 주입
+- 결과 `Fortune`: total_score, level(좋은 날/평범한 날/주의가 필요한 날), domain_scores{score,level,reason}, description, tips(최대 3), weather, solar_term(24절기 — 해당일이면 팁 맨 앞에 삽입), yongshin, son_eomneun_nal(음력 끝자리 9·0), 시운 그리드(daeun/seun/wol ganji + yongshin_in_*)
+- 홈·시운 화면의 까치 이미지는 `FORECAST_LEVEL_META[level]`로 선택
 
-## NatalTab 설계 원칙
+### 날씨 연동 (Open-Meteo, API 키 불필요)
+- 도시명 → Geocoding API → lat/lon (프로세스 내 캐시, 실패 시 Seoul) 또는 `lat/lon` 직접 전달
+- `past_days=14` + `forecast_days≤16` 한 번에 fetch → 날짜별 맵으로 각 일진에 주입 (시운의 과거 날짜용)
+- WMO 코드 → 오행: 맑음(0·1)=火, 구름많음(2)=土, 흐림(3)=金, 안개(45·48)=土, 비·눈·소나기·뇌우=水. **木 매핑은 없음**
+- 시간별은 0·3·6·9·12·15·18·21시만 추출
 
-### 카드 구성 (위→아래)
-1. **정체성 요약 배너** — 일간 타일 + 오행/강약/용신 pill
-2. **나의 사주팔자** — PillarDetail + pillar_summary(백엔드 생성 1문장)
-3. **오행 분포** — ElementRadar
-4. **십신(十神) 구성** — 일간 기준 배너 + `grid-cols-2` 카드(×count 배지) + KkachiTip
-5. **십이운성(十二運星)** — 일간 기준 배너 + 4단계(성장기→번영기→수렴기→태동기) × `grid-cols-3` + KkachiTip×2
-6. **신살(神殺)** — 보유한 신살만 `grid-cols-2` 카드 + 까치 이미지 + 콤보/백호살 KkachiTip
+## 만세력(NatalTab) 설계 원칙
 
-### 십이운성 표시 방식
-- 4단계를 항상 전부 표시, 해당하는 것만 불투명 / 없는 것은 `opacity: 0.35`
-- 각 단계 내 `grid-cols-3` (성장기 3종, 번영기 3종, 수렴기 3종, 태동기 3종)
-- KkachiTip 두 개: ① 각 기둥별 운성 나열 ② 전체 에너지 요약
+`tabs/natal/` 섹션 6개. 각 섹션은 데이터가 있을 때만 렌더.
 
-### 신살 카드 설계
-- `SINSAL_INFO`: 7종 × `{ hanja, tagline, desc, color, bg, border }`
-- `SINSAL_COMBOS`: 5가지 시너지 조합 메시지
-- 보유한 신살만 렌더 (없는 것 LOCKED 표시 안 함)
-- 이미지: `/kkachi/sinsal_{이름}.png` — 없으면 `normal_kkachi_00.png` 폴백
-- 백호살 보유 시 리프레이밍 KkachiTip 자동 표시
-- 2개 이상 보유 시 해당 콤보 KkachiTip 표시
+1. **사주팔자(四柱八字)** `PillarSection` — 팔자 그리드 + 오행 분포 + `pillar_summary`(백엔드 1문장)
+2. **십신(十神)** `SipsinSection` — 일간 기준 배너 + 카드(`SIPSIN_INFO`, 이미지 `sipsin/sipsin_{한글}.png`)
+3. **지장간(地藏干)** `JizanganSection` — 기둥별 지장간·비중·역할(여기/중기/정기)
+4. **공망(空亡)** `GongmangSection` — 공망 기둥만 표시
+5. **십이운성(十二運星)** `SibiUnseongSection` — 4단계(`UNSEONG_PHASE`) 항상 표시, 해당 없는 것은 흐리게, 이미지 `sibi_unseong/*.png`
+6. **신살(神殺)** `SinsalSection` — 십이신살 + 보유 신살 카드(`SINSAL_INFO` 9종: 도화·역마·화개·천을귀인·문창귀인·장성·백호·천덕귀인·월덕귀인), 콤보 `SINSAL_COMBOS`, 이미지 `sinsal/sinsal_{한글}.png` (없으면 `normal_kkachi_00.png` 폴백)
 
-### 백엔드 변경사항
-- `NatalResult.pillar_summary: str` — SajuService가 오행 분포 기반 1문장 생성
-- `_get_sibi_unseong()` 반환값: 간지 문자열 → "년주/월주/일주/시주" 한글 레이블
-- 신살 7종: 驛馬·桃花·華蓋·天乙貴人·文昌貴人·白虎殺·將星
-
-### 이름 개인화
-- `sessionStorage["kkachi_analysis_name"]` → deep/page.tsx에서 읽어 ResultSlides → 각 탭 prop으로 전달
-- KkachiTip 내 서술문에 `{name}님은~` 형태로 사용
+- 백엔드 `_get_sibi_unseong()` 반환 라벨: "년주/월주/일주/시주"
+- 이름 개인화: `sessionStorage["kkachi_analysis_name"]` → `/analysis` → `ResultSlides name` → 각 탭 prop → KkachiTip `{name}님은~`
 
 ## 테스트
 
 ```
 tests/
 ├── adapter/
-│   ├── test_analyzer.py      # 선천 분석 (강약, 용신, 십신)
-│   ├── test_fortune.py       # 영역별 운세
-│   └── test_sibi_unseong.py  # 십이운성
+│   ├── test_analyzer.py        # 선천 분석 (강약, 용신, 십신)
+│   ├── test_fortune.py         # 세운·대운·충합
+│   └── test_sibi_unseong.py    # 십이운성·신살
 └── application/
-    └── test_interpret.py     # 종합 해석 통합 테스트
+    ├── test_interpret.py       # 종합 해석 통합 테스트
+    └── test_compatibility.py   # 궁합 점수·관계·삼합·캐시·관계유형
 ```
 
-> 시운/풍수/12지신 백엔드 이관 후 회귀 테스트가 부족함 — 신규 작성 시 우선 영역.
+> 미커버 영역: `fortune_rules.compute_fortune`(일진 점수), 풍수·십이지신 Interpreter, 컨트롤러 레벨 테스트. 신규 작성 시 우선.
+
+## 알려진 이슈 / 정리 후보 (2026-09-12 기준)
+
+- `KkachiLlmService`(kkachi_service.py)가 Container에 배선되지 않아 `/kkachi/report`·`/profiles/{pid}/report`는 AttributeError → 400/500. `build_chat_context`도 `KkachiService`와 중복. 프론트는 두 엔드포인트 모두 미사용 → 삭제 또는 배선 결정 필요
+- 프론트 미사용 컴포넌트 7개: `CounselorComment`, `DetailToggle`, `FortuneSummary`, `PillarCard`, `SectionAccordion`, `SlideCarousel`, `tabs/AdviceTab`
+- `local.toml`의 `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` 키와 pyproject의 `openai` 의존성은 코드에서 참조 없음
+- `.claude/agents/developer.md`, `researcher.md`는 다른 프로젝트(광고/오가닉 최적화) 정의 — 잔존 파일
+- 루트의 `markdown.md`, `interpretation_lee.md`는 LLM 리포트 샘플 — `docs/`로 이동 검토
+- `hand_landmarker.task`는 git 미추적 (7.8MB) — 배포 시 다운로드 단계 필요

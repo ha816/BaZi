@@ -78,7 +78,7 @@
 4. API 실패 시 버튼 원상복구 (에러 메시지 없음 — 현재 미구현)
 
 ### 주의
-- 삭제된 프로필에 연결된 `analyses`, `daily_fortunes`, `compatibilities`는 DB cascade 삭제
+- 삭제된 프로필에 연결된 `analyses`, `fortunes`, `compatibilities`, `interpret_feedbacks`는 DB cascade 삭제
 
 ---
 
