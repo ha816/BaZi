@@ -34,6 +34,7 @@ class LlmReportBuilder:
         sections = [
             self._intro(),
             self._user_section(user, name, postnatal.year),
+            self._summary_section(postnatal),
             self._manseryeok_section(natal),
             self._yongshin_samjae_section(natal, postnatal),
             self._siun_section(postnatal),
@@ -88,6 +89,20 @@ class LlmReportBuilder:
             f"- 생년월일시: {birth}\n"
             f"- 분석 연도: {year}년"
         )
+
+    def _summary_section(self, p: PostnatalResult) -> str:
+        if not p.summary:
+            return ""
+        sm = p.summary
+        rows = [("나", sm.me), ("올해", sm.year), ("이번 달", sm.month), ("오늘", sm.today), ("조심", sm.caution)]
+        lines = [
+            "## 까치 한눈에 (룰 엔진 다섯 줄 요약)",
+            "",
+            "사용자는 결과 화면 맨 위에서 아래 다섯 줄을 먼저 봅니다. 통합 해석의 첫 문단은 이 결론과 어긋나지 않아야 하며, 같은 말을 반복하지 말고 근거와 행동을 덧붙이세요.",
+            "",
+        ]
+        lines += [f"- {label}: {text}" for label, text in rows if text]
+        return "\n".join(lines)
 
     def _manseryeok_section(self, n: NatalResult) -> str:
         lines = ["## 만세력(萬歲曆) — 사주팔자 8글자", ""]

@@ -90,11 +90,16 @@ class AnalysisRepo(AnalysisPort):
         self._sf = session_factory
 
     async def save(self, profile_id: UUID, year: int, result: dict) -> Analysis:
+        """(profile_id, year) upsert — 요약 '오늘' 줄 갱신처럼 같은 키를 다시 저장해도 안전."""
+        stmt = (
+            pg_insert(AnalysisModel)
+            .values(profile_id=profile_id, year=year, result=result)
+            .on_conflict_do_update(constraint="uq_analyses_profile_year", set_={"result": result})
+            .returning(AnalysisModel)
+        )
         async with self._sf() as session:
-            a = AnalysisModel(profile_id=profile_id, year=year, result=result)
-            session.add(a)
+            a = (await session.execute(stmt)).scalar_one()
             await session.commit()
-            await session.refresh(a)
             return _to_analysis(a)
 
     async def get(self, profile_id: UUID, year: int) -> Analysis | None:

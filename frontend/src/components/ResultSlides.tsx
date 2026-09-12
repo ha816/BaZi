@@ -15,6 +15,7 @@ import AiTab from "./tabs/AiTab";
 import ZodiacTab from "./tabs/ZodiacTab";
 import FengShuiTab from "./tabs/FengShuiTab";
 import SajuChat from "./SajuChat";
+import SummaryCard from "./SummaryCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
 
@@ -156,6 +157,8 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
 
   return (
     <div className="space-y-4">
+      {postnatal.summary && <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} />}
+
       <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2 space-y-1.5">
         <StickySajuBar natal={natal} />
         <div className="feature-tabbar">

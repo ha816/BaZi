@@ -220,6 +220,15 @@ export interface ZodiacResult {
   samhap: SamhapInfo | null;
 }
 
+export interface Summary {
+  me: string;
+  year: string;
+  month: string;
+  today: string;
+  caution: string;
+  today_date: string;
+}
+
 export interface PostnatalResult {
   year: number;
   seun_ganji: string;
@@ -252,6 +261,7 @@ export interface PostnatalResult {
   year_zodiac_narrative: string;
   core_summary: string;
   llm_interpretation: string;
+  summary?: Summary | null;
   yongshin: InterpretBlock[];
   fortune_by_domain: InterpretBlock[];
   annual_fortune: InterpretBlock[];

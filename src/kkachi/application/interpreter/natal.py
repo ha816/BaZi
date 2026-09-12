@@ -1,9 +1,11 @@
 from dataclasses import asdict
 
-from kkachi.application.util.sipsin_meta import sipsin_domain, sipsin_label
+from kkachi.application.util.sipsin_meta import sipsin_domain, sipsin_label, sipsin_timing_meaning
 from kkachi.application.util.util import branch_relation, josa, year_to_branch_char, year_to_ganji
 from kkachi.application.util.zodiac_meta import zodiac_info
-from kkachi.domain.ganji import BRANCH_ANIMAL, Branch, Sipsin
+from kkachi.domain.fortune import Fortune
+from kkachi.domain.ganji import BRANCH_ANIMAL, OHENG_GUIDE, Branch, Sipsin, Stem
+from kkachi.domain.interpretation import Summary
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
 
@@ -186,3 +188,83 @@ def zodiac_relation(birth_branch: Branch, year: int) -> str:
     if rel == "삼합":
         return f"올해({label})와 삼합이 맞아요. 좋은 기운이 따릅니다."
     return f"올해({label})와 특별한 충·합은 없어요. 꾸준히 나아가기 좋은 해예요."
+
+
+def _polite(text: str) -> str:
+    """'~습니다.' 체를 카드 톤인 '~어요.' 체로. Oheng.personality 5문장에 맞춘 최소 규칙."""
+    return text.replace("합니다.", "해요.").replace("납니다.", "나요.").replace("습니다.", "어요.")
+
+
+def _ganji_korean(ganji: str) -> str:
+    return Stem.from_char(ganji[0]).korean + Branch.from_char(ganji[1]).korean
+
+
+def today_line(fortune: Fortune) -> str:
+    """아침 한 마디 헤드라인에서 '{name}님, ' 접두를 뗀다 (카드 첫 줄이 이미 이름을 말함)."""
+    head = fortune.headline or fortune.description
+    return head.split("님, ", 1)[1] if "님, " in head[:12] else head
+
+
+def build_summary(natal: NatalInfo, postnatal: PostnatalInfo, name: str, today: Fortune | None) -> Summary:
+    """결과 첫 화면 다섯 줄. 각 줄은 이미 있는 룰 엔진 데이터에서 조립하며 LLM을 쓰지 않는다."""
+    day_stem = natal.saju.stem_of_day_pillar
+    my_el = natal.my_main_element
+    yong = natal.yongshin
+    kisin = yong.overcome_by
+    prefix = f"{name}님은" if name else "이 사주는"
+
+    me = (
+        f"{prefix} {day_stem.korean}({day_stem.name}) 일간, {my_el.meaning}({my_el.name}) 기운이 중심인 "
+        f"{natal.strength_label} 사주예요. {_polite(my_el.personality)}"
+    )
+
+    seun_ganji = year_to_ganji(postnatal.year)
+    _, seun_sipsin = postnatal.seun_stem
+    year = (
+        f"올해 {postnatal.year}년 {seun_ganji}({_ganji_korean(seun_ganji)}){josa(_ganji_korean(seun_ganji), '은', '는')} {sipsin_label(seun_sipsin)} 해예요. "
+        f"{sipsin_timing_meaning(seun_sipsin)}"
+    )
+    if postnatal.yongshin_in_seun:
+        year += f" 용신 {yong.meaning}({yong.name}) 기운도 함께 들어와 큰 흐름이 좋아요."
+
+    months = postnatal.upcoming_months or []
+    if months:
+        cur = months[0]
+        domains = list(month_badges(months))
+        m_kor = _ganji_korean(cur["ganji"])
+        if domains:
+            month = f"이번 달 {cur['month']}월 {cur['ganji']}({m_kor}){josa(m_kor, '은', '는')} {'·'.join(domains)} 기운이 살아요."
+        else:
+            month = f"이번 달 {cur['month']}월 {cur['ganji']}({m_kor}){josa(m_kor, '은', '는')} 튀는 기운 없이 잔잔해요."
+        if cur.get("matches_yongshin"):
+            month += " 용신 달이라 흐름이 가벼워요."
+    else:
+        month = ""
+
+    if postnatal.seun_clashes:
+        c = postnatal.seun_clashes[0]
+        caution = (
+            f"올해 세운 {c['incoming_korean']}({c['incoming']})이 {c['pillar']} {c['target_korean']}({c['target']})과 "
+            f"충(衝)이에요. {c['area_label']}에서 갑작스런 변화에 대비하세요."
+        )
+    elif postnatal.daeun_clashes:
+        c = postnatal.daeun_clashes[0]
+        caution = (
+            f"현재 대운이 {c['pillar']} {c['target_korean']}({c['target']})과 충(衝)이에요. "
+            f"{c['area_label']}은 서두르지 말고 다지는 시기예요."
+        )
+    else:
+        guide = OHENG_GUIDE[kisin]
+        caution = (
+            f"기신 {kisin.meaning}({kisin.name}) 기운은 멀리하세요. "
+            f"{guide['color']} 계열과 {guide['direction']} 방향은 줄이는 게 좋아요."
+        )
+
+    return Summary(
+        me=me,
+        year=year,
+        month=month,
+        today=today_line(today) if today else "",
+        caution=caution,
+        today_date=today.date if today else "",
+    )

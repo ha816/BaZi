@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+from datetime import date
+
+from kkachi.application.fortune_rules import compute_fortune
 from kkachi.application.interpreter.advice import AdviceInterpreter
 from kkachi.application.interpreter.daeun import DaeunInterpreter
 from kkachi.application.interpreter.fengshui import FengShuiInterpreter
 from kkachi.application.interpreter.fortune import FortuneInterpreter
 from kkachi.application.interpreter.narrative import NatalNarrativeInterpreter, build_yongshin_tip
+from kkachi.application.interpreter.natal import (
+    build_summary as _build_summary,
+)
 from kkachi.application.interpreter.natal import (
     core_summary as _core_summary,
 )
@@ -13,6 +19,9 @@ from kkachi.application.interpreter.natal import (
 )
 from kkachi.application.interpreter.natal import (
     pillar_summary as _pillar_summary,
+)
+from kkachi.application.interpreter.natal import (
+    today_line as _today_line,
 )
 from kkachi.application.interpreter.natal import (
     year_zodiac_narrative as _year_zodiac_narrative,
@@ -232,7 +241,14 @@ class KkachiService(InterpreterPort):
         natal_result = self._natal_svc.interpret_natal(natal, birth_year=birth_year, is_male=is_male, name=name)
         postnatal_result = await self._postnatal_svc.interpret_postnatal(natal, postnatal, name)
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
+        today = compute_fortune(natal, date.today(), None, postnatal, name=name)
+        postnatal_result.summary = _build_summary(natal, postnatal, name, today)
         return Interpretation(natal=natal_result, postnatal=postnatal_result)
+
+    def today_summary(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> dict[str, str]:
+        """analyses 연도 캐시에 든 summary의 '오늘' 줄만 갱신할 때 쓴다."""
+        today = compute_fortune(natal, date.today(), None, postnatal, name=name)
+        return {"today": _today_line(today), "today_date": today.date}
 
     def build_chat_context(self, interpretation: Interpretation, user: User, name: str = "") -> str:
         natal = interpretation.natal
@@ -247,6 +263,13 @@ class KkachiService(InterpreterPort):
 
         lines: list[str] = [
             f"[{name or '?'} | {gender} | {birth} | {post.year}년 분석]",
+        ]
+        if post.summary:
+            sm = post.summary
+            lines.append(
+                "[한눈에] " + " / ".join(x for x in (sm.me, sm.year, sm.month, sm.today, sm.caution) if x)
+            )
+        lines += [
             f"사주: {pillar_str} | 일간: {natal.day_stem}{natal.day_stem_korean}({natal.day_stem_yin_yang}) | {natal.strength_label}",
             f"오행: {elem_str} | 주오행: {natal.my_element.get('meaning', '')}",
             f"용신: {yong.get('meaning', '')}({yong.get('name', '')}) | 기신: {kisin.get('meaning', '')}({kisin.get('name', '')})",

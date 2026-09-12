@@ -141,3 +141,28 @@ def test_relationships_always_has_content():
     assert len(result.relationships) > 0
     text = _block_text(result.relationships)
     assert len(text) > 20
+
+
+def test_summary_has_five_lines_in_card_tone():
+    post = _make_postnatal_result()
+    sm = post.summary
+    assert sm is not None
+    for field in ("me", "year", "month", "today", "caution", "today_date"):
+        assert getattr(sm, field), f"summary.{field} 비어 있음"
+    assert sm.me.startswith("이 사주는 ")  # name 없이 호출
+    assert "습니다" not in sm.me
+    assert "올해 2026년" in sm.year and "해예요" in sm.year
+    assert sm.month.startswith("이번 달 ") and "월 " in sm.month
+    assert not sm.today.startswith("님")
+    assert all(len(getattr(sm, f)) <= 160 for f in ("me", "year", "month", "today", "caution"))
+
+
+def test_summary_uses_name_when_given():
+    user = User(name="승민", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
+    natal, postnatal = _service.analyze(user, 2026)
+    result = asyncio.run(_service.interpret(natal, postnatal, user=user, name="승민"))
+    sm = result.postnatal.summary
+    assert sm.me.startswith("승민님은 ")
+    assert "승민님, " not in sm.today
+    refreshed = _service.today_summary(natal, postnatal, "승민")
+    assert refreshed["today"] == sm.today and refreshed["today_date"] == sm.today_date

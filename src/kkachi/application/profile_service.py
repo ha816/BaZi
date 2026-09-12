@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from kkachi.application.kkachi_service import KkachiService
@@ -49,17 +49,23 @@ class ProfileService:
         return await self.analysis_port.list_by_profile(profile_id)
 
     async def analyze_profile(self, profile_id: UUID, year: int, member_id: UUID | None = None) -> dict:
-        cached = await self.analysis_port.get(profile_id, year)
-        if cached:
-            return cached.result
-
         profile = await self.profile_port.get(profile_id)
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
-
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
+
+        cached = await self.analysis_port.get(profile_id, year)
+        summary = (cached.result.get("postnatal") or {}).get("summary") if cached else None
+        if cached and summary:
+            # 연도 캐시는 유효하지만 요약의 '오늘' 줄은 날짜가 지나면 낡는다 → 그 줄만 갱신
+            if summary.get("today_date") != date.today().isoformat():
+                natal, postnatal = self.saju_service.analyze(user, year)
+                summary.update(self.saju_service.today_summary(natal, postnatal, profile.name))
+                await self.analysis_port.save(profile_id, year, cached.result)
+            return cached.result
+
+        # 캐시 없음 또는 summary 없는 옛 캐시 → 전체 재계산
         natal, postnatal = self.saju_service.analyze(user, year)
         result = asdict(await self.saju_service.interpret(natal, postnatal, user=user, name=profile.name))
-
         await self.analysis_port.save(profile_id, year, result)
         return result

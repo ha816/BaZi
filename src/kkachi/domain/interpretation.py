@@ -119,6 +119,18 @@ class ZodiacResult:
 
 
 @dataclass
+class Summary:
+    """결과 첫 화면 "까치 한눈에" 다섯 줄 (ROADMAP R1). 각 줄 1~2문장."""
+
+    me: str = ""          # 나 — 일간·주오행·강약·기질
+    year: str = ""        # 올해 — 세운 십신의 시기 의미 (+용신 여부)
+    month: str = ""       # 이번 달 — 월운 십신이 살리는 영역 (+용신 여부)
+    today: str = ""       # 오늘 — 아침 한 마디 헤드라인 (이름 접두 제거)
+    caution: str = ""     # 조심 — 세운 충 → 대운 충 → 기신 순
+    today_date: str = ""  # today 줄의 기준일 (ISO). analyses 캐시 히트 시 다르면 오늘 줄만 갱신
+
+
+@dataclass
 class NatalResult:
     """선천 분석 결과 — 생년월일로 고정되는 값."""
 
@@ -213,6 +225,9 @@ class PostnatalResult:
 
     # LLM 통합 해석 (Ollama 사용 가능할 때만 채워짐)
     llm_interpretation: str = ""
+
+    # 결과 첫 화면 다섯 줄 요약 (R1)
+    summary: Summary | None = None
 
     # 텍스트 해석
     yongshin: list[InterpretBlock] = field(default_factory=list)
