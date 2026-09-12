@@ -79,6 +79,8 @@ uv run python scripts/vapid_keygen.py mailto:you@example.com
 uv run python scripts/send_daily_push.py --dry-run      # 페이로드 미리보기
 ```
 
+운영 배치(HTTPS 기동·launchd 07:00 등록·폰 구독) 전체 절차는 [docs/DEPLOY_PUSH.md](docs/DEPLOY_PUSH.md) 참고.
+
 ### 6. 테스트
 
 ```bash
