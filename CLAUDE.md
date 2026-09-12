@@ -76,11 +76,11 @@ BaZi/
 │   ├── domain/
 │   │   ├── ganji.py             # Oheng, Stem, Branch, StemBranch, Pillar, Sipsin, SibiUnseong, Gongmang,
 │   │   │                        #   StemCombine/StemClash, BranchCombine/Clash/Wonjin/Hyung/Hae/Pa, SAMHAP_GROUPS, OHENG_GUIDE
-│   │   ├── natal.py             # Jeol, Samjae, Sinsal enum · Saju · NatalInfo · DaeunPeriod · PostnatalInfo
+│   │   ├── natal.py             # Jeol, Samjae, Sinsal enum · Saju(hour=None이면 세 기둥) · NatalInfo · DaeunPeriod · PostnatalInfo
 │   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · Summary(한눈에 5줄) · NatalResult · PostnatalResult · Interpretation
 │   │   ├── fortune.py           # Fortune (일진 결과 + 아침 한 마디 headline/action/caution) · FortuneCache
 │   │   ├── compatibility.py     # PillarRelation · PillarSnapshot · CompatibilityResult · Compatibility
-│   │   ├── user.py              # User, Gender("male"|"female")
+│   │   ├── user.py              # User(hour_unknown 포함), Gender("male"|"female")
 │   │   ├── member.py / profile.py / payment.py
 │   ├── application/
 │   │   ├── kkachi_service.py         # NatalService(analyze/interpret_natal) · PostnatalService(analyze/interpret_postnatal)
@@ -279,7 +279,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 
 ```
 # 사주 해석 (kkachi_controller, prefix /kkachi)
-POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul", longitude?, name="" }
+POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul", longitude?, name="", hour_unknown=false }
                              → { natal: NatalResult, postnatal: PostnatalResult }
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
@@ -290,10 +290,10 @@ GET    /members/{id}
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
 
 # 프로필 (prefix /members/{member_id}/profiles)
-POST   ""                    { name, gender, birth_dt, city="Seoul", is_self=false } → 201 (10개 초과 시 400)
+POST   ""                    { name, gender, birth_dt, city="Seoul", is_self=false, birth_hour_unknown=false } → 201 (10개 초과 시 400)
 GET    ""                    → Profile[]
 GET    /{pid}
-PATCH  /{pid}                { name, gender, birth_dt, city }
+PATCH  /{pid}                { name, gender, birth_dt, city, birth_hour_unknown } — 출생정보 변경 시 analyses·fortunes 캐시 삭제
 DELETE /{pid}                → 204 (is_self 프로필은 409)
 POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선)
 GET    /{pid}/daily          → Fortune dict (오늘, fortunes 캐시 + 날씨 없으면 재계산)
@@ -302,7 +302,7 @@ POST   /{pid}/feedback       { tab_id, rating } → { success }
 
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
-POST /compatibility/direct   { person1:{name,gender,birth_dt,city}, person2, year, relation_type } → stateless
+POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 
@@ -345,6 +345,7 @@ erDiagram
         DATETIME birth_dt
         VARCHAR city
         BOOLEAN is_self
+        BOOLEAN birth_hour_unknown
         DATETIME created_at
     }
     analyses {
@@ -489,6 +490,14 @@ erDiagram
 - 맨 위 `SummaryCard`(까치 한눈에): 나·올해·이번 달·오늘·조심 다섯 줄. 6개 탭은 그 아래 "더 알아보기" 성격. `summary_view` 이벤트
 - 모든 탭 하단에 `FeedbackBar` (memberId·profileId 있을 때만 전송), 우하단 `SajuChat` FAB → `/chat`.
 - 카드 포맷: `slide-card` + `CollapsibleSectionHeader`/`SectionHeader` + divider + 본문 시작에 인트로 `KkachiTip` 필수 (`docs/REFACTORING.md §4-3`).
+
+## 출생시간 미상 — 세 기둥(三柱) 분석 (ROADMAP R2)
+
+- 입력: 시간 "모르겠어요" → `AnalysisInput.hour_unknown` / `profiles.birth_hour_unknown`. birth_dt는 여전히 정오(12:00)로 저장되며 sajupy 계산에만 쓰인다(자시 경계 회피 → 일주 안전)
+- 계산: `cal_saju(include_hour=False)` → `Saju.hour=None` → `pillars` 3개. 오행(6글자)·강약(부호 판정이라 임계 불변, 게이지 ±6)·용신·십신·십이운성·지장간·십이신살·공망·충합이 자동으로 세 기둥 기준. 궁합은 한쪽만 미상이어도 時柱 쌍 제외(가중치 재분배 없음). 대운 기산은 정오 기준(±2개월 오차 고지)
+- 출력: `NatalResult.hour_unknown`, `PillarSnapshot.hour_unknown`. 프론트는 결과 상단 고지, `PillarDetail` 시주 자리 "?" 타일, natal 섹션 3열, 궁합 비교표 "?" 셀
+- 기존 프로필: "모르겠어요"와 오시(午)가 모두 12:00으로 저장돼 있어 일괄 전환 불가 → 전부 "시간 있음", 편집에서 전환. 프로필 수정 시 analyses·fortunes 캐시 삭제
+- 리포트/LLM: 만세력 섹션에 세 기둥 고지 → 시주 영역 언급 금지 지시
 
 ## 오늘의 운세(일진) 설계 — `fortune_rules.compute_fortune`
 

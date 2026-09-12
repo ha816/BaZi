@@ -115,7 +115,7 @@
 - `AnalysisInput`·프로필에 `hour_unknown: bool` 플래그(프론트·sessionStorage). "모르겠어요" 선택 시 결과 상단 배지 "출생시간 미입력 — 시주(時柱)는 정오 기준 추정이에요" + `PillarSection` 시주 칸 흐리게 + 시주 유래 십신·신살에 표시.
 - `HOUR_OPTIONS`가 `lib/constants.ts`와 `AnalysisForm.tsx`에 중복 정의됨 → constants 하나로 통일 (REFACTORING §4-1).
 
-**2차 — 세 기둥 계산 (🔴)**
+**2차 — 세 기둥 계산 (🔴)** — 2026-09-12 결정 사항: 삼주 추명 채택. 시간대 구간 선택(C)은 후속 옵션으로 보류.
 - `User.hour_unknown` → `Saju.hour: StemBranch | None`. `NatalAdapter`의 `_get_oheng/_get_sipsin/_get_sibi_unseong/_get_jizan_gan/_get_sibi_sinsal/_get_sinsal`·공망, `PostnatalAdapter` 충합, `fortune_rules`가 `pillars` 4개를 전제하므로 시주 없는 경로 추가. 강약(`_get_strength`)은 6글자 기준으로 임계 재조정.
 - DB: `profiles.birth_hour_unknown` (`/db migrate`), `ProfileCreateRequest/Response`, `ProfileModel`. `analyses` 캐시 키는 (profile_id, year)라 플래그 변경 시 재계산 필요 → 캐시 무효화 규칙.
 - 프론트 입력 3곳(`AnalysisForm`, `ProfileForm`, `join`) + `PersonCard`(궁합).
@@ -124,11 +124,11 @@
 
 **완료 기준** 1차: 배지·흐림 표시. 2차: 시간 모름 입력 시 팔자 6글자, 십신·신살 목록에 시주 항목 없음, 55개 테스트 + 3주 테스트 통과, `alembic check` 드리프트 0.
 
-- [ ] 1차 고지 배지 + 시주 흐림
-- [ ] `HOUR_OPTIONS` 단일화
-- [ ] 2차 `Saju.hour` optional + 어댑터 분기
-- [ ] `birth_hour_unknown` 컬럼·마이그레이션·캐시 무효화
-- [ ] 3주 테스트
+- [x] 고지 — 결과 상단 세 기둥 안내 + 팔자 그리드 시주 자리 "?" 타일 (1차 '정오 추정 배지'는 건너뛰고 바로 2차로)
+- [x] `HOUR_OPTIONS` 단일화 (`AnalysisForm` 로컬 사본 제거)
+- [x] `Saju.hour` optional → `pillars` 3개, 오행·십신·운성·신살·공망·충합 자동 6글자 기준. 궁합은 時柱 쌍 제외
+- [x] `profiles.birth_hour_unknown` (8c34a7ac4f2a) · 프로필 수정 시 analyses·fortunes 캐시 삭제
+- [x] 3주 테스트 6건 (`tests/adapter/test_three_pillars.py`, 궁합 1건)
 
 ### R3. 타이밍 리포트 — "언제가 좋을까" 🟡
 
@@ -257,8 +257,8 @@
 |---|---|---|---|---|---|---|
 | F0 | 측정 기반 (이벤트 로깅) | 🟢 | ✅ 완료 | 2026-09-12 | 2026-09-12 | 0169fff. 이벤트 6종, admin 표 |
 | R1 | 첫 화면 요약 카드 | 🟢 | 🟨 진행 | 2026-09-12 | | 코드 완료. 남은 것: §6 지인 5명 관찰 1회 |
-| R2-1 | 출생시간 모름 고지 | 🟢 | ⬜ 대기 | | | |
-| R2-2 | 세 기둥 계산 | 🔴 | ⬜ 대기 | | | R2-1 후 |
+| R2-1 | 출생시간 모름 고지 | 🟢 | ✅ 완료 | 2026-09-12 | 2026-09-12 | 2차와 함께 (결과 상단 고지 + ? 타일) |
+| R2-2 | 세 기둥 계산 | 🔴 | ✅ 완료 | 2026-09-12 | 2026-09-12 | 결정: 삼주 추명(A), 강약 ±6 그대로, 궁합 時柱 쌍 제외, 대운 정오 기준 ±2개월 고지, 기존 프로필은 편집으로 전환 |
 | R3 | 타이밍 리포트 | 🟡 | ⬜ 대기 | | | 프리미엄 후보 |
 | R4 | 아침 알림 + 홈 한 문장 | 🟡 | 🟨 진행 | 2026-09-12 | | 한 문장·알림 코드 완료. 남은 것: VAPID 키 운영 배치, 07:00 스케줄 등록, 실기기 수신 확인 |
 | R5 | 궁합 공유 + 오늘의 궁합 | 🟡 | ⬜ 대기 | | | |

@@ -50,6 +50,7 @@ app/layout.tsx
 ├── [profile] 드롭다운 + 분석 연도
 ├── [direct] AnalysisForm           # 이름·생년월일·시간·성별 · 정밀 설정(연도) · "프로필 저장" → "분석 시작"
 └── [결과] ResultSlides
+    ├── [시간 모름] 세 기둥(三柱) 고지 배너
     ├── SummaryCard                 # 🐦 까치 한눈에 — 나(KkachiTip)·올해·이번 달·오늘·조심 (postnatal.summary)
     ├── StickySajuBar               # 4기둥 미니 표시, 클릭 시 맨 위로
     ├── feature-tabbar (?tab=)      # natal · yongshin · daeun · zodiac · fengshui · ai
@@ -188,6 +189,8 @@ Step 2: 이름(pre-fill)·생년월일·시간·성별·도시(ipapi 자동) →
 ```
 
 **ResultSlides 탭:** 상세는 `analysis/scenarios.md` 시나리오 5.
+
+**출생시간 모름:** "모르겠어요" 선택 시 `hour_unknown` → 시주 없이 세 기둥으로 분석. 결과 상단 고지, 팔자 그리드 시주 자리 "?" 타일.
 
 **개선 포인트:** 비로그인 직접 입력은 FeedbackBar 전송 불가(버튼만 표시).
 
