@@ -75,7 +75,7 @@ BaZi/
 │   │   │                        #   StemCombine/StemClash, BranchCombine/Clash/Wonjin/Hyung/Hae/Pa, SAMHAP_GROUPS, OHENG_GUIDE
 │   │   ├── natal.py             # Jeol, Samjae, Sinsal enum · Saju · NatalInfo · DaeunPeriod · PostnatalInfo
 │   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · NatalResult · PostnatalResult · Interpretation
-│   │   ├── fortune.py           # Fortune (일진 결과) · FortuneCache
+│   │   ├── fortune.py           # Fortune (일진 결과 + 아침 한 마디 headline/action/caution) · FortuneCache
 │   │   ├── compatibility.py     # PillarRelation · PillarSnapshot · CompatibilityResult · Compatibility
 │   │   ├── user.py              # User, Gender("male"|"female")
 │   │   ├── member.py / profile.py / payment.py
@@ -84,13 +84,13 @@ BaZi/
 │   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)
 │   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
 │   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입
-│   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰, 24절기, 손없는 날
+│   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
 │   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
 │   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
-│   │   │                             #   fortune, weather, payment, feedback, llm
+│   │   │                             #   fortune, weather, payment, feedback, llm, event
 │   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음)
 │   │   │                             #   · personality(Personality+ElementBalance) · relationship · samjae · seun · yongshin · zodiac
 │   │   ├── use_case/                 # get_saju_context · get_annual_fortune · get_weather (MCP 도구용)
@@ -104,7 +104,8 @@ BaZi/
 │       │   ├── payment_controller.py       # /payments — prepare·confirm
 │       │   ├── palmistry_controller.py     # POST /palmistry/analyze (MediaPipe 랜드마크 + OpenCV 손금선 밀도)
 │       │   ├── weather_controller.py       # GET /weather
-│       │   ├── admin_controller.py         # GET /admin/feedback/summary
+│       │   ├── admin_controller.py         # GET /admin/feedback/summary · /admin/events/summary
+│       │   ├── event_controller.py         # POST /events (행동 이벤트, ROADMAP F0)
 │       │   └── mcp_server.py               # FastMCP "사주까치" — get_saju_context · get_annual_fortune · get_weather_element
 │       └── outer/
 │           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→경도 내부 룩업, sajupy 호출)
@@ -113,7 +114,7 @@ BaZi/
 │           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret
 │           └── db/
 │               ├── models.py       # MemberModel · ProfileModel · AnalysisModel · FortuneModel · CompatibilityModel
-│               │                   #   · InterpretFeedbackModel · PaymentModel
+│               │                   #   · InterpretFeedbackModel · PaymentModel · EventModel
 │               ├── member_repo.py  # MemberRepo
 │               ├── profile_repo.py # ProfileRepo · AnalysisRepo · FortuneRepo · CompatibilityRepo · FeedbackRepo
 │               └── payment_repo.py # PaymentRepo
@@ -135,6 +136,7 @@ BaZi/
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 (621 LOC)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
+│   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운·DetailView 공용
 │   │   ├── DailyFortune.tsx         # DetailView · WeeklyView · DailyFortunePanel
 │   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
 │   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
@@ -152,6 +154,7 @@ BaZi/
 │   ├── lib/
 │   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
 │   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
+│   │   ├── track.ts              # 행동 이벤트 track(name, props) — 세션 UUID + fire-and-forget
 │   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
 │   └── types/analysis.ts
 ├── frontend/public/kkachi/       # normal/good/caution 까치, sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
@@ -296,6 +299,8 @@ POST /palmistry/analyze      multipart image → { hand_element, hand_type_korea
 POST /payments/prepare       { member_id, feature_type: deep_analysis|daily_fortune|compatibility } → { order_id, amount, feature_type, order_name }
 POST /payments/confirm       { payment_key, order_id, amount } → Toss confirm → { success }   (프론트 결제 게이트는 제거됨)
 GET  /admin/feedback/summary → [{ tab_id, total, positive, negative, positive_rate }] 긍정률 오름차순
+POST /events                 { session_id, name(snake_case), member_id?, props? } → 202   (프론트 lib/track.ts)
+GET  /admin/events/summary   ?days=7 → [{ name, count, sessions }]
 
 # MCP (/mcp, streamable HTTP)
 get_saju_context(birth_dt, gender, year, city, name) → str (~600자 요약)
@@ -363,6 +368,14 @@ erDiagram
         DATETIME used_at
         DATETIME created_at
     }
+    events {
+        UUID id PK
+        VARCHAR session_id
+        UUID member_id
+        VARCHAR name
+        JSONB props
+        DATETIME created_at
+    }
 
     members ||--o{ profiles : "소유"
     members ||--o{ payments : "결제"
@@ -373,7 +386,7 @@ erDiagram
     profiles ||--o{ compatibilities : "profile_id_2"
 ```
 
-> `fortunes`는 `daily_fortunes`에서 rename됨 (`150d31f50d94`). `is_self`, `interpret_feedbacks`, `payments`는 이후 마이그레이션 추가.
+> `fortunes`는 `daily_fortunes`에서 rename됨 (`150d31f50d94`). `is_self`, `interpret_feedbacks`, `payments`, `events`(6317ec46c55b)는 이후 마이그레이션 추가. `events.member_id`는 FK 없음(비로그인 세션 포함).
 
 ### 유니크 제약
 | 테이블 | 유니크 키 | 목적 |
@@ -387,7 +400,8 @@ erDiagram
 ### 캐시 전략
 - `analyses`, `fortunes`, `compatibilities`는 캐시 테이블 — 동일 입력이면 재계산 없이 반환
 - `compatibilities.profile_id_1/2`는 항상 `min(id) / max(id)` 순 저장 (A↔B 순서 무관)
-- `fortunes`는 날씨 포함 여부 확인 후 upsert (날씨 없이 캐시된 경우 날씨 붙여 재계산)
+- `fortunes`는 `INSERT … ON CONFLICT DO UPDATE` 원자적 upsert. 캐시에 날씨가 없거나 `headline`(아침 한 마디)이 없으면 재계산
+- `get_forecast`는 연도별로 사주 분석 1회만 수행 (날짜별 반복 금지 — 31일 36s→1.2s)
 - 프로필·회원 삭제 시 캐시는 FK cascade로 함께 삭제
 
 ## 서비스명 — 사주까치
@@ -464,6 +478,7 @@ erDiagram
 | 날씨 오행이 용신을 剋 | -8 |
 
 - 결과 `Fortune`: total_score, level(좋은 날/평범한 날/주의가 필요한 날), domain_scores{score,level,reason}, description, tips(최대 3), weather, solar_term(24절기 — 해당일이면 팁 맨 앞에 삽입), yongshin, son_eomneun_nal(음력 끝자리 9·0), 시운 그리드(daeun/seun/wol ganji + yongshin_in_*)
+- **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운·DetailView에 표시하고, 내일·모레는 첫 "오늘"을 라벨로 치환
 - 홈·시운 화면의 까치 이미지는 `FORECAST_LEVEL_META[level]`로 선택
 
 ### 날씨 연동 (Open-Meteo, API 키 불필요)
