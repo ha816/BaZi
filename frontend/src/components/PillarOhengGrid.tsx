@@ -12,8 +12,8 @@ export default function PillarOhengGrid({ natal }: Props) {
     <div className="grid grid-cols-4 gap-3">
       {[3, 2, 1, 0].map((origI, i) => {
         const pillar = natal.pillars[origI] ?? "";
-        const stem = pillar[0] ?? "";
-        const branch = pillar[1] ?? "";
+        const stem = pillar[0] ?? "?";
+        const branch = pillar[1] ?? "?";
         const stemEl = natal.pillar_elements?.[origI]?.stem_element ?? "";
         const branchEl = natal.pillar_elements?.[origI]?.branch_element ?? "";
         const stemInfo = stemEl ? getElementInfo(stemEl) : null;

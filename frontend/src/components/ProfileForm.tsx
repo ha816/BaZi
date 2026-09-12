@@ -31,6 +31,7 @@ export default function ProfileForm({ memberId, onSuccess, onCancel, defaultCity
         name: name.trim(),
         gender,
         birth_dt: `${birthDate}T${hourOpt?.time ?? "12:00"}:00`,
+        birth_hour_unknown: selectedHour === "",
         city,
       };
       const profile = await createProfile(memberId, data);

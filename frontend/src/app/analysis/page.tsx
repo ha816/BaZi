@@ -73,9 +73,9 @@ export default function AnalysisPage() {
     }
   }, []);
 
-  const handleSaveProfile = async (n: string, gender: "male" | "female", birth_dt: string, city: string) => {
+  const handleSaveProfile = async (n: string, gender: "male" | "female", birth_dt: string, city: string, birthHourUnknown: boolean) => {
     if (!memberId) return;
-    await createProfile(memberId, { name: n, gender, birth_dt, city });
+    await createProfile(memberId, { name: n, gender, birth_dt, city, birth_hour_unknown: birthHourUnknown });
     listProfiles(memberId).then(setProfiles).catch(() => {});
   };
 
@@ -107,7 +107,7 @@ export default function AnalysisPage() {
       const data = await analyzeProfileChart(memberId, selectedProfileId, profileYear);
       sessionStorage.setItem("kkachi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year: profileYear }));
       if (profile) {
-        const input: AnalysisInput = { birth_dt: profile.birth_dt, gender: profile.gender, analysis_year: profileYear, city: profile.city };
+        const input: AnalysisInput = { birth_dt: profile.birth_dt, gender: profile.gender, analysis_year: profileYear, city: profile.city, hour_unknown: profile.birth_hour_unknown };
         sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
         sessionStorage.setItem("kkachi_analysis_name", profile.name);
         setName(profile.name);
@@ -200,7 +200,7 @@ export default function AnalysisPage() {
                 >
                   {profiles.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {hourToSiLabel(new Date(p.birth_dt).getHours())} · {p.gender === "male" ? "남" : "여"})
+                      {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {p.birth_hour_unknown ? "시간 모름" : hourToSiLabel(new Date(p.birth_dt).getHours())} · {p.gender === "male" ? "남" : "여"})
                     </option>
                   ))}
                 </select>

@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function GongmangSection({ natal }: Props) {
+  const pillarIdx = natal.hour_unknown ? [2, 1, 0] : [3, 2, 1, 0];
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="공망(空亡)">
@@ -21,8 +22,8 @@ export default function GongmangSection({ natal }: Props) {
         <KkachiTip>
           60갑자에서 짝이 없는 지지가 <strong className="text-[var(--color-ink)]">공망(空亡)</strong>이에요. 그 영역의 기운이 비어 있어 약해 보이지만, <strong className="text-[var(--color-ink)]">집착을 내려놓을수록 잘 풀리는</strong> 자리입니다.
         </KkachiTip>
-        <div className="grid grid-cols-4 gap-2">
-          {[3, 2, 1, 0].map((origI) => {
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${pillarIdx.length}, minmax(0, 1fr))` }}>
+          {pillarIdx.map((origI) => {
             const isGongmang = natal.gongmang[origI];
             return (
               <div key={origI} className="rounded-xl border text-center px-2 py-3"

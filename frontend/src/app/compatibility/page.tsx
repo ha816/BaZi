@@ -75,6 +75,7 @@ function CompatibilityPageInner() {
       gender: s.manual.gender,
       birth_dt: `${s.manual.birthDate}T${hourOpt?.time ?? "12:00"}:00`,
       city: s.manual.city || detectedCity,
+      hour_unknown: s.manual.selectedHour === "",
     };
   };
 
@@ -89,7 +90,7 @@ function CompatibilityPageInner() {
   const personToInput = (s: PersonState): PersonInput => {
     if (s.mode === "profile" && s.profileId) {
       const p = profiles.find((x) => x.id === s.profileId);
-      if (p) return { name: p.name, gender: p.gender, birth_dt: p.birth_dt, city: p.city };
+      if (p) return { name: p.name, gender: p.gender, birth_dt: p.birth_dt, city: p.city, hour_unknown: p.birth_hour_unknown };
     }
     return toPersonInput(s);
   };

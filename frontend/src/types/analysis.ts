@@ -112,6 +112,7 @@ export interface NatalResult {
   sibi_sinsal: string[];
   gongmang: boolean[];
   pillar_summary: string;
+  hour_unknown?: boolean; // 시주 없음 — pillars·sipsin·sibi_unseong 등이 3개
   narratives: {
     pillar_tip: string;
     ohaeng_tip: string;
@@ -282,6 +283,7 @@ export interface AnalysisInput {
   analysis_year: number;
   city?: string;
   longitude?: number;
+  hour_unknown?: boolean; // 출생시간 미상 → 세 기둥(三柱) 분석
 }
 
 export interface InterpretTip {
@@ -355,6 +357,7 @@ export interface PillarSnapshot {
   my_main_element: string;
   strength_label: string;
   yongshin: string;
+  hour_unknown?: boolean;
 }
 
 export interface ElementComplement {
@@ -398,6 +401,7 @@ export interface PersonInput {
   gender: "male" | "female";
   birth_dt: string;
   city: string;
+  hour_unknown?: boolean;
 }
 
 export interface CompatibilityInput {
@@ -422,6 +426,7 @@ export interface Profile {
   birth_dt: string;
   city: string;
   is_self: boolean;
+  birth_hour_unknown: boolean;
   created_at: string;
 }
 
@@ -431,6 +436,7 @@ export interface ProfileCreateInput {
   birth_dt: string;
   city: string;
   is_self?: boolean;
+  birth_hour_unknown?: boolean;
 }
 
 export interface ProfileUpdateInput {
@@ -438,6 +444,7 @@ export interface ProfileUpdateInput {
   gender: "male" | "female";
   birth_dt: string;
   city: string;
+  birth_hour_unknown?: boolean;
 }
 
 export interface DailyDomainScore {

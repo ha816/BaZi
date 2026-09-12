@@ -38,7 +38,7 @@ export default function ProfileCard({ profile, memberId, onDelete, onUpdate }: P
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(profile.name);
   const [editBirthDate, setEditBirthDate] = useState(_dateFromDatetime(profile.birth_dt));
-  const [editHour, setEditHour] = useState(_hourFromDatetime(profile.birth_dt));
+  const [editHour, setEditHour] = useState(profile.birth_hour_unknown ? "" : _hourFromDatetime(profile.birth_dt));
   const [editGender, setEditGender] = useState<"male" | "female">(profile.gender);
   const [editCity, setEditCity] = useState(profile.city);
   const [editLoading, setEditLoading] = useState(false);
@@ -65,6 +65,7 @@ export default function ProfileCard({ profile, memberId, onDelete, onUpdate }: P
         name: editName.trim(),
         gender: editGender,
         birth_dt: `${editBirthDate}T${hourOpt?.time ?? "12:00"}:00`,
+        birth_hour_unknown: editHour === "",
         city: editCity,
       };
       const updated = await updateProfile(memberId, profile.id, data);

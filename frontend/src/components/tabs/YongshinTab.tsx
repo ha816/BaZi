@@ -30,7 +30,8 @@ export default function YongshinTab({ natal, postnatal }: Props) {
   const kisinName = natal.kisin_info.name;
   const kisinInfo = kisinName ? getElementInfo(kisinName) : null;
   const guide = natal.yongshin_guide;
-  const strengthPct = Math.min(100, Math.max(0, 50 + (natal.strength_value / STRENGTH_MAX) * 50));
+  const strengthMax = natal.hour_unknown ? 6 : STRENGTH_MAX; // 세 기둥이면 6글자 기준 ±6
+  const strengthPct = Math.min(100, Math.max(0, 50 + (natal.strength_value / strengthMax) * 50));
   const strengthColor =
     natal.strength_label === "신강(身強)"
       ? "var(--color-fire)"
@@ -104,11 +105,11 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                   />
                 </div>
                 <div className="flex justify-between text-[10px] mt-1.5">
-                  <span className="text-[var(--color-water)]">신약(身弱) −8</span>
+                  <span className="text-[var(--color-water)]">신약(身弱) −{strengthMax}</span>
                   <span className="font-semibold" style={{ color: strengthColor }}>
                     {natal.strength_value > 0 ? `+${natal.strength_value}` : natal.strength_value} · {natal.strength_label}
                   </span>
-                  <span className="text-[var(--color-fire)]">+8 신강(身強)</span>
+                  <span className="text-[var(--color-fire)]">+{strengthMax} 신강(身強){natal.hour_unknown ? " · 세 기둥 기준" : ""}</span>
                 </div>
               </div>
 

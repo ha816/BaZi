@@ -47,6 +47,22 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
           const stemInfo = stemEl ? getElementInfo(stemEl) : null;
           const branchInfo = branchEl ? getElementInfo(branchEl) : null;
           const isDayPillar = highlightDayStem && origI === 2;
+          if (!pillar) {
+            // 출생시간 미상 → 시주(時柱) 자리를 비워 두고 왜 비었는지 보여준다
+            return (
+              <div key={i} className="rounded-xl text-center border border-dashed flex flex-col"
+                style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-ivory-warm)" }}>
+                <div className="px-1.5 md:px-3 py-2 md:py-3 border-b border-dashed" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="text-xs md:text-sm font-medium text-[var(--color-ink-muted)] leading-tight">{PILLAR_LABELS[origI]}</div>
+                  <div className="text-[10px] md:text-xs text-[var(--color-ink-faint)] leading-tight">시간 모름</div>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center gap-2 py-4 text-[var(--color-ink-faint)]">
+                  <span className="font-heading text-2xl md:text-4xl font-bold">?</span>
+                  <span className="text-[10px] leading-snug px-1">시간을 알면<br />{PILLAR_SUB[origI]} 운을<br />볼 수 있어요</span>
+                </div>
+              </div>
+            );
+          }
           return (
             <div
               key={i}

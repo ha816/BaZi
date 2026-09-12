@@ -401,6 +401,11 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
               </div>
             )}
 
+            {(pillar1_snapshot.hour_unknown || pillar2_snapshot.hour_unknown) && (
+              <p className="text-[11px] text-[var(--color-ink-muted)] rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-ivory-warm)] px-3 py-2">
+                🕰️ {pillar1_snapshot.hour_unknown && pillar2_snapshot.hour_unknown ? "두 분 모두" : pillar1_snapshot.hour_unknown ? `${name1}님의` : `${name2}님의`} 출생시간이 없어 시주(時柱) 비교는 뺐어요. 세 기둥 기준 점수예요.
+              </p>
+            )}
             <PillarPairDiagram
               p1={pillar1_snapshot}
               p2={pillar2_snapshot}

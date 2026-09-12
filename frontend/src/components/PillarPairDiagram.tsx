@@ -195,6 +195,14 @@ interface Props {
 }
 
 function PersonCell({ pillar }: { pillar: string }) {
+  if (!pillar) {
+    return (
+      <div className="flex flex-col items-center leading-tight text-[var(--color-ink-faint)]">
+        <span className="font-heading text-sm md:text-base font-bold">?</span>
+        <span className="text-[9px]">시간 모름</span>
+      </div>
+    );
+  }
   const stem = pillar[0] ?? "";
   const branch = pillar[1] ?? "";
   const stemColor = getElementInfo(STEM_ELEMENT[stem] ?? "").color;

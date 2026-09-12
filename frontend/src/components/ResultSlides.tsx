@@ -46,11 +46,11 @@ function StickySajuBar({ natal }: { natal: NatalResult }) {
                   : undefined}>
                 <span className="font-heading text-[13px] font-bold leading-none"
                   style={{ color: isDay ? meInfo.color : "var(--color-ink-muted)" }}>
-                  {pillar[0] ?? ""}
+                  {pillar[0] ?? "?"}
                 </span>
                 <span className="font-heading text-[13px] leading-none mt-1"
                   style={{ color: isDay ? meInfo.color : "var(--color-ink-muted)" }}>
-                  {pillar[1] ?? ""}
+                  {pillar[1] ?? "?"}
                 </span>
               </div>
             </div>
@@ -157,6 +157,12 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
 
   return (
     <div className="space-y-4">
+      {natal.hour_unknown && (
+        <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-ivory-warm)] px-4 py-3 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+          <span className="font-semibold text-[var(--color-ink)]">🕰️ 출생시간을 몰라 세 기둥(三柱), 여섯 글자로 봤어요.</span>{" "}
+          시주(時柱)가 빠져 자녀·말년 영역은 보이지 않고, 대운 시작 나이는 ±2개월 오차가 있을 수 있어요. 시간을 알게 되면 프로필에서 고쳐 주세요.
+        </div>
+      )}
       {postnatal.summary && <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} />}
 
       <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2 space-y-1.5">

@@ -2,30 +2,16 @@
 
 import { useState } from "react";
 import type { AnalysisInput } from "@/types/analysis";
+import { HOUR_OPTIONS } from "@/lib/constants";
 
 interface Props {
   onSubmit: (input: AnalysisInput, name: string) => void;
-  onSave?: (name: string, gender: "male" | "female", birth_dt: string, city: string) => Promise<void>;
+  onSave?: (name: string, gender: "male" | "female", birth_dt: string, city: string, birthHourUnknown: boolean) => Promise<void>;
   loading: boolean;
   defaultCity?: string;
   defaultLongitude?: number;
 }
 
-const HOUR_OPTIONS = [
-  { value: "", label: "모르겠어요", time: "12:00" },
-  { value: "23", label: "자시 (子) 23:00 ~ 01:00", time: "00:00" },
-  { value: "01", label: "축시 (丑) 01:00 ~ 03:00", time: "02:00" },
-  { value: "03", label: "인시 (寅) 03:00 ~ 05:00", time: "04:00" },
-  { value: "05", label: "묘시 (卯) 05:00 ~ 07:00", time: "06:00" },
-  { value: "07", label: "진시 (辰) 07:00 ~ 09:00", time: "08:00" },
-  { value: "09", label: "사시 (巳) 09:00 ~ 11:00", time: "10:00" },
-  { value: "11", label: "오시 (午) 11:00 ~ 13:00", time: "12:00" },
-  { value: "13", label: "미시 (未) 13:00 ~ 15:00", time: "14:00" },
-  { value: "15", label: "신시 (申) 15:00 ~ 17:00", time: "16:00" },
-  { value: "17", label: "유시 (酉) 17:00 ~ 19:00", time: "18:00" },
-  { value: "19", label: "술시 (戌) 19:00 ~ 21:00", time: "20:00" },
-  { value: "21", label: "해시 (亥) 21:00 ~ 23:00", time: "22:00" },
-];
 
 export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, defaultLongitude }: Props) {
   const [name, setName] = useState("");
@@ -57,7 +43,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
       try {
         const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
         const time = hourOpt?.time ?? "12:00";
-        await onSave(name.trim(), gender, `${birthDate}T${time}:00`, defaultCity ?? "Seoul");
+        await onSave(name.trim(), gender, `${birthDate}T${time}:00`, defaultCity ?? "Seoul", selectedHour === "");
       } finally {
         setSaving(false);
       }
@@ -77,6 +63,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
       analysis_year: analysisYear,
       city: defaultCity ?? "Seoul",
       longitude: lon,
+      hour_unknown: selectedHour === "",
     }, name);
   };
 

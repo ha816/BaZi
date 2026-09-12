@@ -69,6 +69,7 @@ export default function JoinPage() {
         birth_dt: `${birthDate}T${hourOpt?.time ?? "12:00"}:00`,
         city,
         is_self: true,
+        birth_hour_unknown: selectedHour === "",
       };
       await createProfile(memberId, data);
       router.push("/");

@@ -11,6 +11,7 @@ interface Props {
 }
 
 export default function JizanganSection({ natal }: Props) {
+  const pillarIdx = natal.hour_unknown ? [2, 1, 0] : [3, 2, 1, 0];
   const [bonkiOpen, setBonkiOpen] = useState(false);
 
   const heavenlyStems = natal.pillars.map((p) => p[0]);
@@ -88,15 +89,12 @@ export default function JizanganSection({ natal }: Props) {
                 <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
                   <colgroup>
                     <col style={{ width: "72px" }} />
-                    <col />
-                    <col />
-                    <col />
-                    <col />
+                    {pillarIdx.map((i) => <col key={i} />)}
                   </colgroup>
                   <thead>
                     <tr style={{ backgroundColor: "var(--color-ivory)" }}>
                       <th className="text-[10px] font-medium text-[var(--color-ink-faint)] py-1.5 px-2"></th>
-                      {[3, 2, 1, 0].map((origI) => {
+                      {pillarIdx.map((origI) => {
                         const isDayPillar = origI === 2;
                         return (
                           <th key={origI} className="text-[10px] font-semibold py-1.5 px-2"
@@ -123,7 +121,7 @@ export default function JizanganSection({ natal }: Props) {
                               : { color: "var(--color-ink-faint)" }}>
                             {role}{roleHanja && `(${roleHanja})`}
                           </td>
-                          {[3, 2, 1, 0].map((origI) => {
+                          {pillarIdx.map((origI) => {
                             const item = natal.jizan_gan[origI]?.find((it) => it.role === role);
                             const isDayPillar = origI === 2;
                             const isExposed = !!item && heavenlyStems.includes(item.stem);

@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function SinsalSection({ natal }: Props) {
+  const pillarIdx = natal.hour_unknown ? [2, 1, 0] : [3, 2, 1, 0];
   const myMap = natal.sinsal.reduce<Record<string, string[]>>((acc, s) => {
     if (!acc[s.sinsal_korean]) acc[s.sinsal_korean] = [];
     acc[s.sinsal_korean].push(s.branch);
@@ -36,8 +37,8 @@ export default function SinsalSection({ natal }: Props) {
         {hasSibiSinsal && (
           <div className="space-y-3">
             <p className="text-[10px] font-semibold text-[var(--color-ink-muted)]">십이신살(十二神殺)</p>
-            <div className="grid grid-cols-4 gap-2">
-              {[3, 2, 1, 0].map((origI) => {
+            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${pillarIdx.length}, minmax(0, 1fr))` }}>
+              {pillarIdx.map((origI) => {
                 const sinsalName = natal.sibi_sinsal[origI] || "";
                 const info = SIBI_SINSAL_INFO[sinsalName];
                 return (
