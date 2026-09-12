@@ -1,13 +1,14 @@
+import re
 from datetime import date
 
 from lunardate import LunarDate
 from sajupy import calculate_saju as _sajupy_calculate
 
-from kkachi.application.util.util import year_to_ganji
+from kkachi.application.util.sipsin_meta import sipsin_korean
+from kkachi.application.util.util import josa, year_to_ganji
 from kkachi.domain.fortune import Fortune
-from kkachi.domain.ganji import Branch, Oheng, Pillar, Sipsin, StemBranch
+from kkachi.domain.ganji import OHENG_GUIDE, Branch, Oheng, Pillar, Sipsin, StemBranch
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
-
 
 # 24절기 — (월, 일): (절기명, 오행, 특별 팁)
 # 날짜는 연도별로 ±1일 차이가 있으나 MVP에서는 대표 날짜 사용
@@ -95,7 +96,60 @@ def _get_day_stembrach(today: date) -> StemBranch:
     return StemBranch.from_text(result["day_pillar"])
 
 
-def compute_fortune(natal: NatalInfo, today: date, weather: dict | None = None, postnatal: PostnatalInfo | None = None) -> Fortune:
+_GOOD_SIPSIN_ACTION: dict[Sipsin, str] = {
+    Sipsin.食神: "아이디어를 말로 꺼내세요. 표현이 통하는 날이에요.",
+    Sipsin.正財: "지출을 정리하고 저축 계획을 손보세요.",
+    Sipsin.正官: "보고·계약처럼 공식적인 일을 오늘 처리하세요.",
+    Sipsin.正印: "공부·문서·배움에 시간을 쓰세요.",
+}
+
+_BAD_SIPSIN_CAUTION: dict[Sipsin, str] = {
+    Sipsin.偏官: "윗사람·규칙과 부딪히기 쉬워요. 한 박자 늦게 반응하세요.",
+    Sipsin.劫財: "지갑이 새기 쉬운 날이에요. 충동 지출을 조심하세요.",
+}
+
+
+def _domain_short(sipsin: Sipsin) -> str:
+    """'재능·표현·식복' → '재능·표현' (앞 두 단어)."""
+    return "·".join(sipsin.domain.split("·")[:2])
+
+
+def _condition_label(condition: str) -> str:
+    """'대체로 맑음 21°C' → '대체로 맑음'."""
+    return re.sub(r"\s*-?\d+(\.\d+)?°C$", "", condition).strip() or "오늘 날씨"
+
+
+def _make_brief(factors: list[tuple[int, str, str, str]], name: str, son_nal: bool) -> tuple[str, str, str]:
+    """판정 요인 목록 → (headline, action, caution). 가장 큰 요인이 헤드라인, 동점이면 흉 우선.
+    흉이 헤드라인이면 action도 그 요인의 것을 써서 "계약하세요/계약 미루세요" 같은 모순을 막는다."""
+    prefix = f"{name}님, " if name else ""
+    if not factors:
+        action = "손없는 날이니 이사·계약·개업 같은 일을 하기 좋아요." if son_nal else "루틴을 지키고 미뤄둔 작은 일 하나를 끝내세요."
+        return prefix + "오늘은 튀는 기운 없이 잔잔한 날이에요.", action, ""
+
+    top = max(factors, key=lambda f: (abs(f[0]), f[0] < 0))
+    positives = [f for f in factors if f[0] > 0 and f[2]]
+    negatives = [f for f in factors if f[0] < 0 and f[3]]
+
+    if top[0] < 0 and top[2]:
+        action = top[2]
+    elif positives:
+        action = max(positives, key=lambda f: f[0])[2]
+    elif son_nal and not negatives:
+        action = "손없는 날이니 이사·계약·개업 같은 일을 하기 좋아요."
+    else:
+        action = next((f[2] for f in factors if f[2]), "예정된 일만 차분히 처리하세요.")
+    caution = min(negatives, key=lambda f: f[0])[3] if negatives else ""
+    return prefix + top[1], action, caution
+
+
+def compute_fortune(
+    natal: NatalInfo,
+    today: date,
+    weather: dict | None = None,
+    postnatal: PostnatalInfo | None = None,
+    name: str = "",
+) -> Fortune:
     day_sb = _get_day_stembrach(today)
     day_stem = day_sb.stem
     day_branch = day_sb.branch
@@ -112,51 +166,94 @@ def compute_fortune(natal: NatalInfo, today: date, weather: dict | None = None, 
 
     raw = 50
     reasons = []
+    factors: list[tuple[int, str, str, str]] = []  # (delta, headline, action, caution)
+    yong = natal.yongshin
+    me = natal.my_main_element
 
     # 용신 판정
-    if day_element == natal.yongshin:
+    if day_element == yong:
         raw += 25
-        reasons.append(f"오늘 일간({day_stem.name})이 용신({natal.yongshin.name}) 오행")
-    elif day_element.generates == natal.yongshin:
+        reasons.append(f"오늘 일간({day_stem.name})이 용신({yong.name}) 오행")
+        factors.append((25,
+            f"오늘은 용신 {yong.name}({yong.meaning}) 기운이 그대로 들어오는 날이에요.",
+            "미뤄둔 시작이 있다면 오늘 첫걸음을 떼세요.", ""))
+    elif day_element.generates == yong:
         raw += 15
-        reasons.append(f"오늘 일간이 용신을 生함")
-    elif day_element.overcomes == natal.yongshin or natal.yongshin.overcomes == day_element:
+        reasons.append("오늘 일간이 용신을 生함")
+        factors.append((15,
+            f"오늘 일진이 용신 {yong.name}({yong.meaning}) 기운을 살려주는 날이에요.",
+            f"{OHENG_GUIDE[yong]['color'].split('·')[0]} 계열 소품 하나를 곁에 두세요.", ""))
+    elif day_element.overcomes == yong or yong.overcomes == day_element:
         raw -= 15
-        reasons.append(f"오늘 일간이 용신을 剋함")
+        reasons.append("오늘 일간이 용신을 剋함")
+        factors.append((-15,
+            f"오늘 일진이 용신 {yong.name}({yong.meaning}) 기운을 누르는 날이에요.",
+            "오늘은 새 일보다 마무리와 정리에 집중하세요.",
+            "큰 결정과 새 계약은 하루 미루세요."))
 
     # 일지 합/충
     if branch_combine:
         raw += 15
         reasons.append("오늘 일지와 내 일지가 육합(六合)")
+        factors.append((15,
+            f"오늘 일진 {day_branch.korean}({day_branch.name}){josa(day_branch.korean, '이', '가')} "
+            f"내 일지 {my_branch.korean}({my_branch.name}){josa(my_branch.korean, '과', '와')} 육합(六合)하는 날이에요.",
+            "먼저 연락하세요. 사람이 힘이 되는 날이에요.", ""))
     if branch_clash:
         raw -= 15
         reasons.append("오늘 일지와 내 일지가 충(衝)")
+        factors.append((-15,
+            f"오늘 일진 {day_branch.korean}({day_branch.name}){josa(day_branch.korean, '이', '가')} "
+            f"내 일지 {my_branch.korean}({my_branch.name}){josa(my_branch.korean, '과', '와')} 충(衝)하는 날이에요.",
+            "예정된 일만 차분히 처리하세요.",
+            "이동·계약·다툼은 피하고, 약속은 한 번 더 확인하세요."))
 
     # 오행 생조
-    if day_element.generates == natal.my_main_element:
+    if day_element.generates == me:
         raw += 10
-        reasons.append(f"오늘 오행이 내 주 오행을 生함")
+        reasons.append("오늘 오행이 내 주 오행을 生함")
+        factors.append((10,
+            f"오늘 {day_element.meaning} 기운이 내 {me.meaning} 기운을 밀어주는 날이에요.",
+            "체력이 붙는 날이니 몸 쓰는 일을 앞에 두세요.", ""))
 
     # 십신
     if today_sipsin_stem in GOOD_SIPSIN:
         raw += 8
         reasons.append(f"일간 십신 {today_sipsin_stem.name} 길신")
+        factors.append((8,
+            f"오늘 일진이 {sipsin_korean(today_sipsin_stem)}({today_sipsin_stem.name}) 자리에 들어와 "
+            f"{_domain_short(today_sipsin_stem)} 기운이 살아요.",
+            _GOOD_SIPSIN_ACTION[today_sipsin_stem], ""))
     elif today_sipsin_stem in BAD_SIPSIN:
         raw -= 8
         reasons.append(f"일간 십신 {today_sipsin_stem.name} 흉신")
+        factors.append((-8,
+            f"오늘 일진이 {sipsin_korean(today_sipsin_stem)}({today_sipsin_stem.name}) 자리라 "
+            f"{_domain_short(today_sipsin_stem)} 쪽에 마찰이 생기기 쉬운 날이에요.",
+            "", _BAD_SIPSIN_CAUTION[today_sipsin_stem]))
 
     # 날씨 오행 보정
     if weather:
         weather_el = Oheng[weather["element"]]
-        if weather_el == natal.yongshin:
+        cond = _condition_label(weather.get("condition", ""))
+        if weather_el == yong:
             raw += 10
             reasons.append(f"날씨({weather['condition']})가 용신 오행과 일치")
-        elif weather_el.generates == natal.yongshin:
+            factors.append((10,
+                f"날씨({cond})까지 용신 {yong.name}({yong.meaning}) 기운과 맞는 날이에요.",
+                "밖으로 나가 오늘 날씨의 기운을 직접 받으세요.", ""))
+        elif weather_el.generates == yong:
             raw += 5
-            reasons.append(f"날씨가 용신을 生함")
-        elif weather_el.overcomes == natal.yongshin:
+            reasons.append("날씨가 용신을 生함")
+            factors.append((5,
+                "오늘 날씨가 용신 기운을 북돋아 주는 날이에요.",
+                "잠깐이라도 바깥 공기를 쐬면 기운이 돌아요.", ""))
+        elif weather_el.overcomes == yong:
             raw -= 8
             reasons.append(f"날씨({weather['condition']})가 용신을 剋함")
+            factors.append((-8,
+                f"날씨({cond})가 용신 {yong.name}({yong.meaning}) 기운을 누르는 날이에요.",
+                "", "날씨 기운이 용신을 누르니 실내에서 컨디션을 지키세요."))
 
     total_score = max(0, min(100, raw))
 
@@ -171,11 +268,12 @@ def compute_fortune(natal: NatalInfo, today: date, weather: dict | None = None, 
     solar_term_info = _get_solar_term(today)
     solar_term_name: str | None = None
     if solar_term_info:
-        name, st_element, st_tip = solar_term_info
-        solar_term_name = name
-        tips = [f"오늘은 {name}입니다. {st_tip}", *tips][:3]
+        st_name, st_element, st_tip = solar_term_info
+        solar_term_name = st_name
+        tips = [f"오늘은 {st_name}입니다. {st_tip}", *tips][:3]
 
     son_nal = _is_son_eomneun_nal(today)
+    headline, action, caution = _make_brief(factors, name, son_nal)
 
     daeun_ganji = postnatal.current_daeun.ganji if postnatal and postnatal.current_daeun else None
     seun_ganji = year_to_ganji(today.year) if postnatal is None else year_to_ganji(postnatal.year)
@@ -205,6 +303,9 @@ def compute_fortune(natal: NatalInfo, today: date, weather: dict | None = None, 
         yongshin_in_seun=yongshin_in_seun,
         yongshin_in_wol=yongshin_in_wol,
         yongshin_in_il=yongshin_in_il,
+        headline=headline,
+        action=action,
+        caution=caution,
     )
 
 
@@ -303,7 +404,7 @@ def _make_description(
     elif score >= 40:
         parts.append(f"오늘은 무난한 {el_name}의 기운으로 평범하게 흘러가는 날입니다.")
         if reasons:
-            parts.append(f"특별한 길흉보다는 꾸준함이 힘이 되는 하루입니다.")
+            parts.append("특별한 길흉보다는 꾸준함이 힘이 되는 하루입니다.")
     else:
         parts.append(f"오늘은 {el_name}의 기운이 내 사주와 다소 충돌하는 날입니다.")
         if branch_clash:
@@ -339,9 +440,12 @@ _WEATHER_TIPS: dict[tuple[str, str], str] = {
 
 
 def _score_tier(score: int) -> str:
-    if score >= 85: return "high"
-    if score >= 70: return "mid"
-    if score >= 40: return "low"
+    if score >= 85:
+        return "high"
+    if score >= 70:
+        return "mid"
+    if score >= 40:
+        return "low"
     return "caution"
 
 

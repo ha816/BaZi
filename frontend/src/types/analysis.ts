@@ -473,4 +473,8 @@ export interface DailyFortune {
   yongshin_in_seun?: boolean;
   yongshin_in_wol?: boolean;
   yongshin_in_il?: boolean;
+  // 아침 한 마디 (백엔드 fortune_rules._make_brief)
+  headline?: string;
+  action?: string;
+  caution?: string;
 }

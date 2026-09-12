@@ -24,6 +24,10 @@ class Fortune:
     yongshin_in_seun: bool = False
     yongshin_in_wol: bool = False
     yongshin_in_il: bool = False
+    # 아침 한 마디 — 점수 구간이 아니라 판정 요인에서 생성 (홈·시운 첫 화면·푸시 문구)
+    headline: str = ""      # 왜 이런 날인지 한 줄 (이름 포함)
+    action: str = ""        # 오늘 할 것 하나
+    caution: str = ""       # 피할 것 하나 (없으면 빈 문자열)
 
 
 @dataclass

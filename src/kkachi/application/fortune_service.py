@@ -28,8 +28,8 @@ class FortuneService:
             today = date.today()
 
         cached = await self._fortune_port.get(profile_id, today)
-        # 날씨 어댑터가 있는데 캐시에 날씨가 없으면 재계산
-        if cached and (self._weather is None or cached.result.get("weather") is not None):
+        # 날씨 어댑터가 있는데 캐시에 날씨가 없거나, 아침 한 마디(headline)가 없는 옛 캐시면 재계산
+        if cached and cached.result.get("headline") and (self._weather is None or cached.result.get("weather") is not None):
             return cached.result
 
         profile = await self._profile_port.get(profile_id)
@@ -41,7 +41,7 @@ class FortuneService:
         weather_map = await self._get_weather_map(profile.city, days=1)
         weather = weather_map.get(today.isoformat())
 
-        fortune = compute_fortune(natal, today, weather, postnatal)
+        fortune = compute_fortune(natal, today, weather, postnatal, name=profile.name)
         result = asdict(fortune)
         await self._fortune_port.save(profile_id, today, result)
         return result
@@ -68,13 +68,13 @@ class FortuneService:
             weather = weather_map.get(target_str)
 
             cached = await self._fortune_port.get(profile_id, target)
-            # 캐시 재사용 조건: 날씨 데이터 있거나, 날씨 어댑터 없거나, 캐시에 이미 날씨 있음
-            if cached and (weather is None or cached.result.get("weather") is not None):
+            # 캐시 재사용 조건: headline 있고 (오늘 날씨가 없거나 캐시에 이미 날씨 있음)
+            if cached and cached.result.get("headline") and (weather is None or cached.result.get("weather") is not None):
                 results.append(cached.result)
                 continue
 
             natal, postnatal = self._saju_service.analyze(user, target.year)
-            fortune = compute_fortune(natal, target, weather, postnatal)
+            fortune = compute_fortune(natal, target, weather, postnatal, name=profile.name)
             result = asdict(fortune)
             await self._fortune_port.save(profile_id, target, result)
             results.append(result)
