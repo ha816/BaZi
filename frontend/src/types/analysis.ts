@@ -230,6 +230,17 @@ export interface Summary {
   today_date: string;
 }
 
+export interface TimingMonth {
+  year: number;
+  month: number;
+  ganji: string;
+  ganji_korean: string;
+  score: number;
+  level: "좋음" | "보통" | "피할";
+  reason: string;
+  tip: string;
+}
+
 export interface PostnatalResult {
   year: number;
   seun_ganji: string;
@@ -258,6 +269,7 @@ export interface PostnatalResult {
     matches_yongshin: boolean;
   }>;
   month_badges: Record<string, string[]>;
+  timing?: Record<string, TimingMonth[]>; // 영역별 12개월 (R3)
   year_zodiac_relations: Array<{ year: number; ganji: string; branch: string; kor: string; relation: string; desc: string; info: ZodiacInfo }>;
   year_zodiac_narrative: string;
   core_summary: string;

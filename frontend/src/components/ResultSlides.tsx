@@ -14,6 +14,7 @@ import SamjaeTab from "./tabs/SamjaeTab";
 import AiTab from "./tabs/AiTab";
 import ZodiacTab from "./tabs/ZodiacTab";
 import FengShuiTab from "./tabs/FengShuiTab";
+import TimingTab from "./tabs/TimingTab";
 import SajuChat from "./SajuChat";
 import SummaryCard from "./SummaryCard";
 import { postFeedback } from "@/lib/api";
@@ -65,6 +66,7 @@ const FEATURE_TABS = [
   { id: "natal",    emoji: "🌱", label: "만세력" },
   { id: "yongshin", emoji: "🔮", label: "용신·삼재" },
   { id: "daeun",    emoji: "🌊", label: "시운(時運)" },
+  { id: "timing",   emoji: "🗓️", label: "언제가 좋을까" },
   { id: "zodiac",   emoji: "🐾", label: "십이지신" },
   { id: "fengshui", emoji: "🧭", label: "풍수" },
   { id: "ai",       emoji: "✨", label: "AI 풀이" },
@@ -199,6 +201,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
             <SamjaeTab {...tabProps} />
           </div>
         )}
+        {active === "timing"   && <TimingTab       {...tabProps} />}
         {active === "ai"       && <AiTab           {...tabProps} />}
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 

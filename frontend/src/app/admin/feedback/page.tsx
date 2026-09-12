@@ -9,6 +9,7 @@ const TAB_META: Record<string, { label: string; emoji: string }> = {
   natal:    { label: "만세력",      emoji: "🌱" },
   yongshin: { label: "용신·삼재",   emoji: "🔮" },
   daeun:    { label: "시운(時運)",  emoji: "🌊" },
+  timing:   { label: "언제가 좋을까", emoji: "🗓️" },
   zodiac:   { label: "십이지신",    emoji: "🐾" },
   fengshui: { label: "풍수",        emoji: "🧭" },
   ai:       { label: "AI 풀이",     emoji: "✨" },
