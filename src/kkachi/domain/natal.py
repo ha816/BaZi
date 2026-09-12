@@ -203,15 +203,20 @@ class Sinsal(Enum):
 
 
 class Saju:
-    """사주(四柱) - 네 기둥의 간지 조합. 순수 도메인 모델."""
+    """사주(四柱) - 네 기둥의 간지 조합. 순수 도메인 모델.
 
-    def __init__(self, year: StemBranch, month: StemBranch, day: StemBranch, hour: StemBranch):
+    출생시간을 모르면 hour=None → 시주(時柱) 없이 세 기둥(三柱)만 가진다.
+    pillars 순회가 3개가 되므로 오행·십신·십이운성·신살·공망·충합이 자동으로 6글자 기준이 된다.
+    """
+
+    def __init__(self, year: StemBranch, month: StemBranch, day: StemBranch, hour: StemBranch | None):
         self._pillars: dict[Pillar, StemBranch] = {
             Pillar.年柱: year,
             Pillar.月柱: month,
             Pillar.日柱: day,
-            Pillar.時柱: hour,
         }
+        if hour is not None:
+            self._pillars[Pillar.時柱] = hour
 
     def __getitem__(self, pillar: Pillar) -> StemBranch:
         return self._pillars[pillar]
@@ -219,6 +224,11 @@ class Saju:
     @property
     def pillars(self) -> dict[Pillar, StemBranch]:
         return self._pillars
+
+    @property
+    def hour_unknown(self) -> bool:
+        """시주 없음 (출생시간 미상)."""
+        return Pillar.時柱 not in self._pillars
 
     @property
     def stem_of_day_pillar(self) -> Stem:

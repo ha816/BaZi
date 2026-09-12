@@ -19,6 +19,7 @@ class Profile:
     city: str
     created_at: datetime
     is_self: bool = False
+    birth_hour_unknown: bool = False  # 출생시간 미상 → 세 기둥 분석
 
 
 @dataclass

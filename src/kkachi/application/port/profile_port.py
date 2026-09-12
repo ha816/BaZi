@@ -8,7 +8,10 @@ from kkachi.domain.user import Gender
 
 class ProfilePort(ABC):
     @abstractmethod
-    async def create(self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str, is_self: bool = False) -> Profile: ...
+    async def create(
+        self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str,
+        is_self: bool = False, birth_hour_unknown: bool = False,
+    ) -> Profile: ...
 
     @abstractmethod
     async def get(self, profile_id: UUID) -> Profile | None: ...
@@ -20,4 +23,7 @@ class ProfilePort(ABC):
     async def delete(self, profile_id: UUID) -> None: ...
 
     @abstractmethod
-    async def update(self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str) -> Profile: ...
+    async def update(
+        self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str,
+        birth_hour_unknown: bool = False,
+    ) -> Profile: ...

@@ -43,6 +43,7 @@ class ProfileModel(Base):
     birth_dt: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False, default="Seoul")
     is_self: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    birth_hour_unknown: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     member: Mapped["MemberModel"] = relationship(back_populates="profiles")

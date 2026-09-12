@@ -52,7 +52,7 @@ class NatalAdapter(NatalPort):
     day_stem: Stem
 
     def analyze(self, user: User) -> NatalInfo:
-        self.saju = cal_saju(user.birth_dt, city=user.city, longitude=user.longitude)
+        self.saju = cal_saju(user.birth_dt, city=user.city, longitude=user.longitude, include_hour=not user.hour_unknown)
         self.day_stem = self.saju.stem_of_day_pillar
 
         stats = self._get_oheng()
@@ -182,8 +182,13 @@ def cal_saju(
     city: str = "Seoul",
     longitude: float | None = None,
     use_solar_time: bool = True,
+    include_hour: bool = True,
 ) -> Saju:
-    """sajupy를 호출하여 도메인 Saju 객체를 생성한다."""
+    """sajupy를 호출하여 도메인 Saju 객체를 생성한다.
+
+    sajupy는 시각이 필수라 미상이어도 birth_dt(프론트 기본 정오)로 계산하고, include_hour=False면 시주만 버린다.
+    정오 기준이면 자시(子時) 경계에 걸리지 않아 일주(日柱)는 안전하다.
+    """
     resolved_city, resolved_lon = _resolve_longitude(city, longitude)
     result = _sajupy_calculate(
         year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
@@ -196,5 +201,5 @@ def cal_saju(
         year=StemBranch.from_text(result["year_pillar"]),
         month=StemBranch.from_text(result["month_pillar"]),
         day=StemBranch.from_text(result["day_pillar"]),
-        hour=StemBranch.from_text(result["hour_pillar"]),
+        hour=StemBranch.from_text(result["hour_pillar"]) if include_hour else None,
     )

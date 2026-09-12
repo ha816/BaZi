@@ -106,6 +106,8 @@ class LlmReportBuilder:
 
     def _manseryeok_section(self, n: NatalResult) -> str:
         lines = ["## 만세력(萬歲曆) — 사주팔자 8글자", ""]
+        if n.hour_unknown:
+            lines += ["> 출생시간 미상 — 시주(時柱)를 제외한 세 기둥(三柱) 6글자 기준입니다. 자녀·말년(시주) 영역은 언급하지 말고, 시간을 알면 더 볼 수 있다고 한 번만 안내하세요.", ""]
         lines.append("### 4기둥(四柱)")
         for i, p in enumerate(n.pillars):
             stem, branch = (p[0], p[1]) if len(p) >= 2 else ("", "")

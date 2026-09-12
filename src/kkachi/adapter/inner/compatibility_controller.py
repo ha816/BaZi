@@ -21,11 +21,12 @@ class PersonInput(BaseModel):
     gender: str  # "male" | "female"
     birth_dt: datetime
     city: str = "Seoul"
+    hour_unknown: bool = False
 
 
 def _to_user(p: PersonInput) -> User:
     gender = Gender.MALE if p.gender == "male" else Gender.FEMALE
-    return User(name=p.name, gender=gender, birth_dt=p.birth_dt, city=p.city)
+    return User(name=p.name, gender=gender, birth_dt=p.birth_dt, city=p.city, hour_unknown=p.hour_unknown)
 
 
 class CompatibilityRequest(BaseModel):

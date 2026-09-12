@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -33,6 +33,7 @@ def _to_profile(m: ProfileModel) -> Profile:
         city=m.city,
         created_at=m.created_at,
         is_self=m.is_self,
+        birth_hour_unknown=m.birth_hour_unknown,
     )
 
 
@@ -44,9 +45,9 @@ class ProfileRepo(ProfilePort):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]):
         self._sf = session_factory
 
-    async def create(self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str, is_self: bool = False) -> Profile:
+    async def create(self, member_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str, is_self: bool = False, birth_hour_unknown: bool = False) -> Profile:
         async with self._sf() as session:
-            p = ProfileModel(member_id=member_id, name=name, gender=gender.value, birth_dt=birth_dt, city=city, is_self=is_self)
+            p = ProfileModel(member_id=member_id, name=name, gender=gender.value, birth_dt=birth_dt, city=city, is_self=is_self, birth_hour_unknown=birth_hour_unknown)
             session.add(p)
             await session.commit()
             await session.refresh(p)
@@ -71,7 +72,7 @@ class ProfileRepo(ProfilePort):
                 await session.delete(p)
                 await session.commit()
 
-    async def update(self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str) -> Profile:
+    async def update(self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str, birth_hour_unknown: bool = False) -> Profile:
         async with self._sf() as session:
             p = await session.get(ProfileModel, profile_id)
             if p is None:
@@ -80,6 +81,7 @@ class ProfileRepo(ProfilePort):
             p.gender = gender.value
             p.birth_dt = birth_dt
             p.city = city
+            p.birth_hour_unknown = birth_hour_unknown
             await session.commit()
             await session.refresh(p)
             return _to_profile(p)
@@ -112,6 +114,11 @@ class AnalysisRepo(AnalysisPort):
             )
             a = result.scalar_one_or_none()
             return _to_analysis(a) if a else None
+
+    async def delete_by_profile(self, profile_id: UUID) -> None:
+        async with self._sf() as session:
+            await session.execute(delete(AnalysisModel).where(AnalysisModel.profile_id == profile_id))
+            await session.commit()
 
     async def list_by_profile(self, profile_id: UUID) -> list[Analysis]:
         async with self._sf() as session:
@@ -150,6 +157,11 @@ class FortuneRepo(FortunePort):
             m = (await session.execute(stmt)).scalar_one()
             await session.commit()
             return _to_fortune(m)
+
+    async def delete_by_profile(self, profile_id: UUID) -> None:
+        async with self._sf() as session:
+            await session.execute(delete(FortuneModel).where(FortuneModel.profile_id == profile_id))
+            await session.commit()
 
     async def get(self, profile_id: UUID, fortune_date: date) -> FortuneCache | None:
         async with self._sf() as session:

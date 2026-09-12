@@ -22,6 +22,7 @@ class PillarSnapshot:
     my_main_element: str                # "火"
     strength_label: str                 # "신강(身強)"
     yongshin: str                       # "水"
+    hour_unknown: bool = False          # 시주 없음 (세 기둥)
 
 
 @dataclass

@@ -121,6 +121,7 @@ class NatalService:
             sibi_sinsal=natal.sibi_sinsal,
             gongmang=natal.gongmang,
             pillar_summary=_pillar_summary(natal),
+            hour_unknown=natal.saju.hour_unknown,
             narratives=NatalNarrativeInterpreter()(natal, name),
             personality=PersonalityInterpreter()(natal),
             element_balance=ElementBalanceInterpreter()(natal),

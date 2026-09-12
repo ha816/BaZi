@@ -170,6 +170,9 @@ class NatalResult:
     # 팔자 요약
     pillar_summary: str = ""
 
+    # 출생시간 미상 → 시주 제외 세 기둥(三柱) 기준 (pillars·sipsin·sibi_unseong 등이 3개)
+    hour_unknown: bool = False
+
     # 카드별 동적 풀이 텍스트 (사주별로 합성)
     narratives: dict[str, str] = field(default_factory=dict)
 

@@ -11,3 +11,7 @@ class FortunePort(ABC):
 
     @abstractmethod
     async def get(self, profile_id: UUID, fortune_date: date) -> FortuneCache | None: ...
+
+    @abstractmethod
+    async def delete_by_profile(self, profile_id: UUID) -> None:
+        """프로필 출생정보가 바뀌면 일진 캐시를 모두 비운다."""

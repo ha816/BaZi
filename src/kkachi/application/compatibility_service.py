@@ -405,8 +405,8 @@ class CompatibilityService:
         if profile2 is None:
             raise ValueError(f"Profile {pid2} not found")
 
-        user1 = User(name=profile1.name, gender=profile1.gender, birth_dt=profile1.birth_dt, city=profile1.city)
-        user2 = User(name=profile2.name, gender=profile2.gender, birth_dt=profile2.birth_dt, city=profile2.city)
+        user1 = User(name=profile1.name, gender=profile1.gender, birth_dt=profile1.birth_dt, city=profile1.city, hour_unknown=profile1.birth_hour_unknown)
+        user2 = User(name=profile2.name, gender=profile2.gender, birth_dt=profile2.birth_dt, city=profile2.city, hour_unknown=profile2.birth_hour_unknown)
 
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
@@ -487,14 +487,18 @@ class CompatibilityService:
             my_main_element=natal.my_main_element.name,
             strength_label=natal.strength_label,
             yongshin=natal.yongshin.name,
+            hour_unknown=natal.saju.hour_unknown,
         )
 
     def _compute_pillar_relations(
         self, natal1: NatalInfo, natal2: NatalInfo
     ) -> list[PillarRelation]:
-        """같은 기둥(年-年, 月-月, 日-日, 時-時) 4쌍에 대해 7관계 + 반합 검출."""
+        """같은 기둥(年-年, 月-月, 日-日, 時-時) 4쌍에 대해 7관계 + 반합 검출.
+        한쪽이라도 출생시간 미상이면 時-時 쌍은 건너뛴다 (근거 없는 점수를 만들지 않음)."""
         relations: list[PillarRelation] = []
         for p in Pillar:
+            if p not in natal1.saju.pillars or p not in natal2.saju.pillars:
+                continue
             sb1 = natal1.saju[p]
             sb2 = natal2.saju[p]
             k = p.korean
@@ -559,8 +563,8 @@ class CompatibilityService:
         self, natal1: NatalInfo, natal2: NatalInfo,
     ) -> list[dict]:
         """두 사람의 8지지를 합쳐 삼합국이 완성되는 경우만 반환 (한쪽 단독 완성 제외)."""
-        b1 = {natal1.saju[p].branch.name for p in Pillar}
-        b2 = {natal2.saju[p].branch.name for p in Pillar}
+        b1 = {sb.branch.name for sb in natal1.saju.pillars.values()}
+        b2 = {sb.branch.name for sb in natal2.saju.pillars.values()}
         completions: list[dict] = []
         for group, result_el in SAMHAP_GROUPS:
             in_p1 = group & b1

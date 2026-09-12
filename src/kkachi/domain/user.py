@@ -21,6 +21,7 @@ class User:
     birth_dt: datetime
     city: str = "Seoul"
     longitude: float | None = None
+    hour_unknown: bool = False  # 출생시간 미상 → 시주(時柱) 제외, 세 기둥(三柱)으로 분석
 
     def age(self, base_year: int | None = None) -> int:
         """한국 나이를 계산한다."""

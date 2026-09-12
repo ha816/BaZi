@@ -36,7 +36,7 @@ class FortuneService:
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
-        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
+        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
         natal, postnatal = self._saju_service.analyze(user, today.year)
         weather_map = await self._get_weather_map(profile.city, days=1)
         weather = weather_map.get(today.isoformat())
@@ -56,7 +56,7 @@ class FortuneService:
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
-        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city)
+        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
         # Note: Weather adapter currently only fetches future data.
         # For past dates, weather_map will be empty for those dates.
         weather_map = await self._get_weather_map(profile.city, days=days)

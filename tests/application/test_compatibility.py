@@ -267,3 +267,14 @@ def test_relation_type_changes_labels_and_narrative():
 
     # 총평 라벨도 관계 유형별로 다른 어휘 사용
     assert lover["label"] != friend["label"] or lover["label"] != family["label"]
+
+
+def test_hour_unknown_side_skips_time_pillar_pair():
+    svc = _service()
+    u1 = _user(1990, 5, 15, 10, Gender.MALE, "남자")
+    u2 = User(name="여자", gender=Gender.FEMALE, birth_dt=datetime(1992, 8, 20, 12, 0), hour_unknown=True)
+    result = asyncio.run(svc.compute_direct(u1, u2, 2026))
+    assert all(r["pillar1"] != "시주" for r in result["pillar_relations"])
+    assert len(result["pillar2_snapshot"]["pillars"]) == 3 and result["pillar2_snapshot"]["hour_unknown"] is True
+    assert len(result["pillar1_snapshot"]["pillars"]) == 4 and result["pillar1_snapshot"]["hour_unknown"] is False
+    assert 0 <= result["total_score"] <= 100

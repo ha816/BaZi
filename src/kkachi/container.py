@@ -54,6 +54,7 @@ class Container(containers.DeclarativeContainer):
     feedback_repo = providers.Singleton(FeedbackRepo, session_factory=session_factory)
     payment_repo = providers.Singleton(PaymentRepo, session_factory=session_factory)
     event_repo = providers.Singleton(EventRepo, session_factory=session_factory)
+    fortune_repo = providers.Singleton(FortuneRepo, session_factory=session_factory)
 
     # Kkachi
     natal_adapter = providers.Singleton(NatalAdapter)
@@ -86,6 +87,7 @@ class Container(containers.DeclarativeContainer):
         analysis_port=analysis_repo,
         saju_service=kkachi_service,
         payment_port=payment_repo,
+        fortune_port=fortune_repo,
     )
     compatibility_repo = providers.Singleton(CompatibilityRepo, session_factory=session_factory)
     compatibility_service = providers.Singleton(
@@ -96,7 +98,6 @@ class Container(containers.DeclarativeContainer):
         llm_port=ollama_adapter,
     )
     weather_adapter = providers.Singleton(WeatherAdapter)
-    fortune_repo = providers.Singleton(FortuneRepo, session_factory=session_factory)
     fortune_service = providers.Singleton(
         FortuneService,
         profile_port=profile_repo,

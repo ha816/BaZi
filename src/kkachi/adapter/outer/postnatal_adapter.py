@@ -149,7 +149,7 @@ class PostnatalAdapter(PostnatalPort):
         incoming = Branch.from_char(ganji[1])
         return [
             enrich_clash(target=sb.branch, incoming=incoming, pillar=pillar_type.korean)
-            for pillar_type, sb in zip(Pillar, self.natal.saju.pillars.values())
+            for pillar_type, sb in self.natal.saju.pillars.items()
             if incoming.clashes == sb.branch
         ]
 
@@ -157,7 +157,7 @@ class PostnatalAdapter(PostnatalPort):
         incoming_stem = Stem.from_char(ganji[0])
         incoming_branch = Branch.from_char(ganji[1])
         results: list[dict] = []
-        for pillar_type, sb in zip(Pillar, list(self.natal.saju.pillars.values())):
+        for pillar_type, sb in self.natal.saju.pillars.items():
             if incoming_stem.combines == sb.stem:
                 results.append(enrich_stem_combine(
                     target=sb.stem, incoming=incoming_stem, pillar=pillar_type.korean,

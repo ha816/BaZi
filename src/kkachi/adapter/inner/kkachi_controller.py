@@ -20,10 +20,11 @@ class AnalysisRequest(BaseModel):
     city: str = "Seoul"
     longitude: float | None = None
     name: str = ""
+    hour_unknown: bool = False
 
 
 def _make_user(req: AnalysisRequest) -> User:
-    return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city, longitude=req.longitude)
+    return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city, longitude=req.longitude, hour_unknown=req.hour_unknown)
 
 
 @kkachi_router.post("/interpret")
@@ -47,6 +48,7 @@ class ChatRequest(BaseModel):
     analysis_year: int = 2026
     city: str = "Seoul"
     name: str = ""
+    hour_unknown: bool = False
     messages: list[dict]  # [{"role": "user"|"assistant", "content": "..."}]
 
 
@@ -69,7 +71,7 @@ async def chat(
     req: ChatRequest,
     saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> StreamingResponse:
-    user = User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city)
+    user = User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city, hour_unknown=req.hour_unknown)
     natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
     interpretation = await saju_svc.interpret(natal_info, postnatal_info, user=user, name=req.name)
     context = saju_svc.build_chat_context(interpretation, user, req.name)

@@ -20,6 +20,7 @@ class ProfileCreateRequest(BaseModel):
     birth_dt: datetime
     city: str = "Seoul"
     is_self: bool = False
+    birth_hour_unknown: bool = False
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -27,6 +28,7 @@ class ProfileUpdateRequest(BaseModel):
     gender: Gender
     birth_dt: datetime
     city: str
+    birth_hour_unknown: bool = False
 
 
 class ProfileResponse(BaseModel):
@@ -37,6 +39,7 @@ class ProfileResponse(BaseModel):
     birth_dt: datetime
     city: str
     is_self: bool
+    birth_hour_unknown: bool
     created_at: datetime
 
 
@@ -52,7 +55,10 @@ async def create_profile(
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> ProfileResponse:
     try:
-        profile = await svc.create_profile(member_id, req.name, req.gender, req.birth_dt, req.city, is_self=req.is_self)
+        profile = await svc.create_profile(
+            member_id, req.name, req.gender, req.birth_dt, req.city,
+            is_self=req.is_self, birth_hour_unknown=req.birth_hour_unknown,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return ProfileResponse(**vars(profile))
@@ -90,7 +96,9 @@ async def update_profile(
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> ProfileResponse:
     try:
-        profile = await svc.update_profile(profile_id, req.name, req.gender, req.birth_dt, req.city)
+        profile = await svc.update_profile(
+            profile_id, req.name, req.gender, req.birth_dt, req.city, birth_hour_unknown=req.birth_hour_unknown,
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     return ProfileResponse(**vars(profile))
