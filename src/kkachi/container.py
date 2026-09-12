@@ -11,9 +11,11 @@ from kkachi.adapter.outer.db.profile_repo import (
     FortuneRepo,
     ProfileRepo,
 )
+from kkachi.adapter.outer.db.push_repo import PushRepo
 from kkachi.adapter.outer.llm.ollama_adapter import OllamaAdapter
 from kkachi.adapter.outer.natal_adapter import NatalAdapter
 from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
+from kkachi.adapter.outer.push.webpush_adapter import WebPushAdapter
 from kkachi.adapter.outer.weather_adapter import WeatherAdapter
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.fortune_service import FortuneService
@@ -21,6 +23,7 @@ from kkachi.application.kkachi_service import KkachiService, NatalService, Postn
 from kkachi.application.member_service import MemberService
 from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
+from kkachi.application.push_service import PushService
 
 
 class Container(containers.DeclarativeContainer):
@@ -34,6 +37,7 @@ class Container(containers.DeclarativeContainer):
             "kkachi.adapter.inner.weather_controller",
             "kkachi.adapter.inner.admin_controller",
             "kkachi.adapter.inner.event_controller",
+            "kkachi.adapter.inner.push_controller",
         ],
     )
 
@@ -99,4 +103,13 @@ class Container(containers.DeclarativeContainer):
         fortune_port=fortune_repo,
         saju_service=kkachi_service,
         weather_adapter=weather_adapter,
+    )
+    push_repo = providers.Singleton(PushRepo, session_factory=session_factory)
+    webpush_adapter = providers.Singleton(WebPushAdapter)
+    push_service = providers.Singleton(
+        PushService,
+        push_port=push_repo,
+        sender=webpush_adapter,
+        profile_port=profile_repo,
+        fortune_service=fortune_service,
     )

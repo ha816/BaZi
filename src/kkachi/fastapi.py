@@ -15,6 +15,7 @@ from kkachi.adapter.inner.member_controller import member_router
 from kkachi.adapter.inner.palmistry_controller import palmistry_router
 from kkachi.adapter.inner.payment_controller import payment_router
 from kkachi.adapter.inner.profile_controller import profile_router
+from kkachi.adapter.inner.push_controller import push_router
 from kkachi.adapter.inner.weather_controller import weather_router
 from kkachi.container import Container
 
@@ -54,4 +55,5 @@ app.include_router(palmistry_router)
 app.include_router(weather_router)
 app.include_router(admin_router)
 app.include_router(event_router)
+app.include_router(push_router)
 app.mount("/mcp", mcp_server.streamable_http_app())

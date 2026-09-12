@@ -7,6 +7,7 @@ import { listProfiles, getForecast } from "@/lib/api";
 import { WeeklyView } from "@/components/DailyFortune";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MorningBrief from "@/components/MorningBrief";
+import PushSubscribeButton from "@/components/PushSubscribeButton";
 import { track } from "@/lib/track";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
@@ -357,6 +358,9 @@ export default function SiunPage() {
             </div>
           </div>
         )}
+
+        {/* 아침 알림 켜기 */}
+        {!loading && loggedIn && profile && <PushSubscribeButton />}
 
         {/* 비로그인 */}
         {!loading && !loggedIn && (

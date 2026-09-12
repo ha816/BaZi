@@ -278,3 +278,26 @@ export interface EventSummary {
 export async function getEventSummary(days = 7): Promise<EventSummary[]> {
   return request<EventSummary[]>(`/admin/events/summary?days=${days}`);
 }
+
+export async function getVapidPublicKey(): Promise<{ public_key: string }> {
+  return request<{ public_key: string }>("/push/vapid-public-key");
+}
+
+export async function savePushSubscription(
+  memberId: string,
+  subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
+): Promise<void> {
+  await request<{ success: boolean }>("/push/subscriptions", {
+    method: "POST",
+    body: JSON.stringify({ member_id: memberId, subscription }),
+  });
+}
+
+export async function deletePushSubscription(endpoint: string): Promise<void> {
+  const res = await fetch(`${API_URL}/push/subscriptions`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ endpoint }),
+  });
+  if (!res.ok) throw new Error("구독 해제 실패");
+}
