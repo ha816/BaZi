@@ -50,17 +50,17 @@ const IconPerson = () => (
 
 const TABS_LOGGED_IN = [
   { href: "/", label: "홈", icon: <IconHome /> },
+  { href: "/siun", label: "시운", icon: <IconSun /> },
   { href: "/analysis", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
-  { href: "/siun", label: "시운", icon: <IconSun /> },
   { href: "/my", label: "계정", icon: <IconPerson /> },
 ];
 
 const TABS_GUEST = [
   { href: "/", label: "홈", icon: <IconHome /> },
+  { href: "/siun", label: "시운", icon: <IconSun /> },
   { href: "/analysis", label: "분석", icon: <IconStar /> },
   { href: "/compatibility", label: "궁합", icon: <IconHeart /> },
-  { href: "/siun", label: "시운", icon: <IconSun /> },
   { href: "/join", label: "로그인", icon: <IconPerson /> },
 ];
 
