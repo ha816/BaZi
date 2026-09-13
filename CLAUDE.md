@@ -91,6 +91,7 @@ BaZi/
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
+│   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
 │   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
@@ -307,6 +308,10 @@ POST /compatibility          { profile_id_1, profile_id_2, year, relation_type }
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
+POST /compatibility/invites  { person1, relation_type } → { invite_id }  (초대자 정보 저장, 30일 TTL)
+GET  /compatibility/invites/{id}          → { name, relation_type }  (민감정보 제외)
+POST /compatibility/invites/{id}/resolve  { person2, year } → CompatibilityResult
+GET  /compatibility/daily    ?member_id&p1&p2 → { date, day_pillar, score, level, headline }  (오늘의 궁합, 소유자 검증)
 
 # 기타
 GET  /weather                ?city=Seoul&days=7&lat&lon → DailyWeather[] (days 최대 14, 응답에 과거 14일 포함)
@@ -405,6 +410,12 @@ erDiagram
         VARCHAR p256dh
         VARCHAR auth
         DATETIME created_at
+    }
+    compat_invites {
+        UUID id PK
+        JSONB payload
+        DATETIME created_at
+        DATETIME expires_at
     }
 
     members ||--o{ profiles : "소유"
