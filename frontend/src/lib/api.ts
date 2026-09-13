@@ -7,9 +7,11 @@ import type {
   DailyWeather,
   Member,
   PalmistryResult,
+  PersonInput,
   Profile,
   ProfileCreateInput,
   ProfileUpdateInput,
+  RelationType,
 } from "@/types/analysis";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -300,4 +302,34 @@ export async function deletePushSubscription(endpoint: string): Promise<void> {
     body: JSON.stringify({ endpoint }),
   });
   if (!res.ok) throw new Error("구독 해제 실패");
+}
+
+export interface DailyCompat {
+  date: string;
+  day_pillar: string;
+  score: number;
+  level: string;
+  headline: string;
+}
+
+export async function getDailyCompat(memberId: string, p1: string, p2: string): Promise<DailyCompat> {
+  return request<DailyCompat>(`/compatibility/daily?member_id=${memberId}&p1=${p1}&p2=${p2}`);
+}
+
+export async function createCompatInvite(person1: PersonInput, relationType: RelationType): Promise<{ invite_id: string }> {
+  return request<{ invite_id: string }>("/compatibility/invites", {
+    method: "POST",
+    body: JSON.stringify({ person1, relation_type: relationType }),
+  });
+}
+
+export async function getCompatInvite(inviteId: string): Promise<{ name: string; relation_type: RelationType }> {
+  return request<{ name: string; relation_type: RelationType }>(`/compatibility/invites/${inviteId}`);
+}
+
+export async function resolveCompatInvite(inviteId: string, person2: PersonInput, year: number): Promise<CompatibilityResult> {
+  return request<CompatibilityResult>(`/compatibility/invites/${inviteId}/resolve`, {
+    method: "POST",
+    body: JSON.stringify({ person2, year }),
+  });
 }

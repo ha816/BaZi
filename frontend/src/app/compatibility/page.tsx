@@ -7,10 +7,14 @@ import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile, Rel
 import {
   analyzeCompatibility,
   analyzeCompatibilityByProfiles,
+  createCompatInvite,
+  getCompatInvite,
   listProfiles,
+  resolveCompatInvite,
   streamCompatibilityNarrative,
 } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
+import { track } from "@/lib/track";
 import CompatibilityChat from "@/components/CompatibilityChat";
 import CompatibilityResultView from "@/components/CompatibilityResult";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -40,6 +44,10 @@ function CompatibilityPageInner() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const narrativeAbortRef = useRef<AbortController | null>(null);
+  const [inviteId, setInviteId] = useState<string | null>(null);
+  const [inviterName, setInviterName] = useState<string>("");
+  const [shareUrl, setShareUrl] = useState<string>("");
+  const [shareBusy, setShareBusy] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -66,6 +74,19 @@ function CompatibilityPageInner() {
       setPerson1((s) => ({ ...s, mode: "profile", profileId: p1.id }));
       if (p2) setPerson2((s) => ({ ...s, mode: "profile", profileId: p2.id }));
     }).catch(() => {});
+  }, [searchParams]);
+
+  useEffect(() => {
+    const inv = searchParams.get("invite");
+    if (!inv) return;
+    getCompatInvite(inv)
+      .then((info) => {
+        setInviteId(inv);
+        setInviterName(info.name);
+        setRelationType(info.relation_type);
+        setPerson2((s) => ({ ...s, mode: "manual" }));
+      })
+      .catch(() => setError("초대 링크가 만료되었거나 존재하지 않습니다."));
   }, [searchParams]);
 
   const toPersonInput = (s: PersonState): PersonInput => {
@@ -112,15 +133,17 @@ function CompatibilityPageInner() {
         year,
         relation_type: relationType,
       };
-      // 둘 다 프로필이면 /compatibility (캐시 지원), 아니면 /compatibility/direct
-      const data =
-        person1.mode === "profile" && person2.mode === "profile" && person1.profileId && person2.profileId
+      // 초대로 들어왔으면 초대자 정보와 합쳐 resolve, 아니면 기존 경로
+      const data = inviteId
+        ? await resolveCompatInvite(inviteId, personToInput(person2), year)
+        : person1.mode === "profile" && person2.mode === "profile" && person1.profileId && person2.profileId
           ? await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year, relationType)
           : await analyzeCompatibility(input);
       setResult(data);
+      if (inviteId) track("compat_invite_result", { via: "invite" });
       setChatInput(input);
       const names = {
-        name1: getName(person1, "첫 번째 분"),
+        name1: inviteId ? (inviterName || "초대한 분") : getName(person1, "첫 번째 분"),
         name2: getName(person2, "두 번째 분"),
       };
       setResultNames(names);
@@ -139,6 +162,24 @@ function CompatibilityPageInner() {
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShareLink = async () => {
+    setShareBusy(true);
+    try {
+      const { invite_id } = await createCompatInvite(personToInput(person1), relationType);
+      const url = `${window.location.origin}/compatibility?invite=${invite_id}`;
+      setShareUrl(url);
+      track("share_click", { channel: "invite" });
+      try {
+        if (navigator.share) await navigator.share({ title: "사주까치 궁합", text: `${getName(person1, "제")} 사주로 궁합 볼래요?`, url });
+        else await navigator.clipboard.writeText(url);
+      } catch { /* 사용자가 공유 취소 */ }
+    } catch {
+      setError("공유 링크 생성에 실패했어요.");
+    } finally {
+      setShareBusy(false);
     }
   };
 
@@ -167,15 +208,25 @@ function CompatibilityPageInner() {
           onSubmit={handleSubmit}
           className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-6"
         >
-          <div className="flex flex-col md:flex-row gap-4">
-            <PersonCard label="첫 번째 분" state={person1} profiles={profiles}
-              onChange={(patch) => setPerson1((s) => ({ ...s, ...patch }))} />
-            <div className="flex items-center justify-center flex-shrink-0 text-2xl text-[var(--color-gold-light)]">♥</div>
-            <PersonCard label="두 번째 분" state={person2} profiles={profiles}
-              onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
-          </div>
+          {inviteId ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-3 text-sm text-[var(--color-ink)]">
+                💌 <strong>{inviterName || "초대한 분"}</strong>님이 궁합을 보고 싶어 해요. 아래에 내 정보만 넣으면 두 분의 궁합을 볼 수 있어요.
+              </div>
+              <PersonCard label="내 정보" state={person2} profiles={profiles}
+                onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row gap-4">
+              <PersonCard label="첫 번째 분" state={person1} profiles={profiles}
+                onChange={(patch) => setPerson1((s) => ({ ...s, ...patch }))} />
+              <div className="flex items-center justify-center flex-shrink-0 text-2xl text-[var(--color-gold-light)]">♥</div>
+              <PersonCard label="두 번째 분" state={person2} profiles={profiles}
+                onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
+            </div>
+          )}
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" hidden={!!inviteId}>
             <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
             <div className="flex gap-2">
               {([
@@ -221,11 +272,26 @@ function CompatibilityPageInner() {
         )}
 
         {result && !loading && (
-          <CompatibilityResultView data={result}
-            name1={getName(person1, "첫 번째 분")}
-            name2={getName(person2, "두 번째 분")}
-            streamingNarrative={narrative}
-            narrativeLoading={narrativeLoading} />
+          <>
+            <CompatibilityResultView data={result}
+              name1={resultNames.name1 || getName(person1, "첫 번째 분")}
+              name2={resultNames.name2 || getName(person2, "두 번째 분")}
+              streamingNarrative={narrative}
+              narrativeLoading={narrativeLoading} />
+            {!inviteId && (
+              <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-5 space-y-2 text-center">
+                <p className="text-sm font-semibold text-[var(--color-ink)]">💌 상대에게 링크를 보내 궁합을 함께 봐요</p>
+                <p className="text-xs text-[var(--color-ink-muted)]">{getName(person1, "첫 번째 분")}님 정보로 링크를 만들어요. 상대는 자기 정보만 넣으면 돼요.</p>
+                <button type="button" onClick={handleShareLink} disabled={shareBusy}
+                  className="mt-1 px-5 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-sm font-semibold disabled:opacity-50">
+                  {shareBusy ? "만드는 중..." : "궁합 공유 링크 만들기"}
+                </button>
+                {shareUrl && (
+                  <p className="text-[11px] text-[var(--color-ink-faint)] break-all pt-1">{shareUrl}</p>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

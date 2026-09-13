@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { DailyFortune, DailyWeather, HourlyWeather, Profile } from "@/types/analysis";
-import { getForecast, getWeather, listProfiles } from "@/lib/api";
+import { getDailyCompat, getForecast, getWeather, listProfiles, type DailyCompat } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import MorningBrief from "@/components/MorningBrief";
 import FeedPost from "@/components/FeedPost";
@@ -55,9 +55,10 @@ function StoryTray({ profiles, activeId }: { profiles: Profile[]; activeId?: str
 }
 
 // ── 운세 포스트 (로그인, 프로필별) ─────────────────────────────────────────
-function FortunePost({ profile, memberId }: { profile: Profile; memberId: string }) {
+function FortunePost({ profile, memberId, selfId }: { profile: Profile; memberId: string; selfId?: string }) {
   const [forecast, setForecast] = useState<DailyFortune[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dailyCompat, setDailyCompat] = useState<DailyCompat | null>(null);
 
   useEffect(() => {
     getForecast(memberId, profile.id, 7)
@@ -65,6 +66,13 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [memberId, profile.id]);
+
+  useEffect(() => {
+    // 나 프로필이 따로 있고 이 포스트가 그 대상이 아니면, 오늘 나와의 궁합을 배지로
+    if (selfId && selfId !== profile.id) {
+      getDailyCompat(memberId, selfId, profile.id).then(setDailyCompat).catch(() => {});
+    }
+  }, [memberId, selfId, profile.id]);
 
   const today = forecast?.[0];
   const meta = today ? FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"] : null;
@@ -97,6 +105,14 @@ function FortunePost({ profile, memberId }: { profile: Profile; memberId: string
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
                     👻 손없는 날
                   </span>
+                )}
+                {dailyCompat && (
+                  <Link
+                    href={`/compatibility?p2=${profile.id}`}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-rose-50 text-rose-700 border-rose-200"
+                  >
+                    💞 오늘 나와 {dailyCompat.score}점
+                  </Link>
                 )}
               </div>
             )}
@@ -372,7 +388,7 @@ export default function Home() {
           {/* 로그인: 운세 포스트 */}
           {memberId && profiles.length === 0 && <EmptyProfilePost />}
           {memberId && profiles.map((p) => (
-            <FortunePost key={p.id} profile={p} memberId={memberId} />
+            <FortunePost key={p.id} profile={p} memberId={memberId} selfId={profiles.find((x) => x.is_self)?.id} />
           ))}
 
           {/* 항상: 서비스 영상 포스트 */}
