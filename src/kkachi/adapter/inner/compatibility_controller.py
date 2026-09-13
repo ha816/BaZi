@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
@@ -7,7 +7,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from kkachi.application.compatibility_daily import compute_daily_compat
 from kkachi.application.compatibility_service import CompatibilityService
+from kkachi.application.kkachi_service import KkachiService
+from kkachi.application.port.profile_port import ProfilePort
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 
@@ -136,3 +139,91 @@ async def compatibility_narrative(
                 yield chunk
 
     return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
+
+
+class InviteCreateRequest(BaseModel):
+    person1: PersonInput
+    relation_type: RelationTypeStr = "lover"
+
+
+@compatibility_router.post("/invites", status_code=201)
+@inject
+async def create_invite(
+    req: InviteCreateRequest,
+    invite_repo=Depends(Provide[Container.invite_repo]),
+) -> dict:
+    """초대자 정보를 저장하고 invite id 반환. 상대는 /compatibility?invite=<id> 로 열어 자기 정보만 넣는다."""
+    payload = {
+        "name": req.person1.name,
+        "gender": req.person1.gender,
+        "birth_dt": req.person1.birth_dt.isoformat(),
+        "city": req.person1.city,
+        "hour_unknown": req.person1.hour_unknown,
+        "relation_type": req.relation_type,
+    }
+    invite_id = await invite_repo.create(payload)
+    return {"invite_id": str(invite_id)}
+
+
+@compatibility_router.get("/invites/{invite_id}")
+@inject
+async def get_invite(
+    invite_id: UUID,
+    invite_repo=Depends(Provide[Container.invite_repo]),
+) -> dict:
+    """초대자 표시 정보만 반환 (생년월일·도시 등 민감정보는 제외)."""
+    payload = await invite_repo.get(invite_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="초대 링크가 만료되었거나 존재하지 않습니다.")
+    return {"name": payload["name"], "relation_type": payload["relation_type"]}
+
+
+class InviteResolveRequest(BaseModel):
+    person2: PersonInput
+    year: int
+
+
+@compatibility_router.post("/invites/{invite_id}/resolve")
+@inject
+async def resolve_invite(
+    invite_id: UUID,
+    req: InviteResolveRequest,
+    invite_repo=Depends(Provide[Container.invite_repo]),
+    svc: CompatibilityService = Depends(Provide[Container.compatibility_service]),
+) -> dict:
+    """상대가 자기 정보를 넣으면 초대자 정보와 합쳐 궁합 결과 반환."""
+    payload = await invite_repo.get(invite_id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="초대 링크가 만료되었거나 존재하지 않습니다.")
+    user1 = User(
+        name=payload["name"],
+        gender=Gender.MALE if payload["gender"] == "male" else Gender.FEMALE,
+        birth_dt=datetime.fromisoformat(payload["birth_dt"]),
+        city=payload["city"],
+        hour_unknown=payload.get("hour_unknown", False),
+    )
+    user2 = _to_user(req.person2)
+    return await svc.compute_direct(user1, user2, req.year, payload["relation_type"])
+
+
+@compatibility_router.get("/daily")
+@inject
+async def daily_compat(
+    member_id: UUID,
+    p1: UUID,
+    p2: UUID,
+    profile_port: ProfilePort = Depends(Provide[Container.profile_repo]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
+) -> dict:
+    """두 프로필의 오늘 궁합 한 줄. 홈 피드 배지용."""
+    prof1 = await profile_port.get(p1)
+    prof2 = await profile_port.get(p2)
+    if prof1 is None or prof2 is None:
+        raise HTTPException(status_code=404, detail="프로필을 찾을 수 없습니다.")
+    if prof1.member_id != member_id or prof2.member_id != member_id:
+        raise HTTPException(status_code=403, detail="본인 프로필만 조회할 수 있습니다.")
+    u1 = User(name=prof1.name, gender=prof1.gender, birth_dt=prof1.birth_dt, city=prof1.city, hour_unknown=prof1.birth_hour_unknown)
+    u2 = User(name=prof2.name, gender=prof2.gender, birth_dt=prof2.birth_dt, city=prof2.city, hour_unknown=prof2.birth_hour_unknown)
+    natal1, _ = saju_svc.analyze(u1, date.today().year)
+    natal2, _ = saju_svc.analyze(u2, date.today().year)
+    return compute_daily_compat(natal1, natal2, date.today(), prof1.name, prof2.name)

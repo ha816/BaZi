@@ -278,3 +278,15 @@ def test_hour_unknown_side_skips_time_pillar_pair():
     assert len(result["pillar2_snapshot"]["pillars"]) == 3 and result["pillar2_snapshot"]["hour_unknown"] is True
     assert len(result["pillar1_snapshot"]["pillars"]) == 4 and result["pillar1_snapshot"]["hour_unknown"] is False
     assert 0 <= result["total_score"] <= 100
+
+
+def test_daily_compat_shape_and_bounds():
+    from datetime import date
+
+    from kkachi.application.compatibility_daily import compute_daily_compat
+    n1 = _natal_adapter.analyze(_user(1990, 5, 15, 10, Gender.MALE, "A"))
+    n2 = _natal_adapter.analyze(_user(1992, 8, 20, 14, Gender.FEMALE, "B"))
+    r = compute_daily_compat(n1, n2, date(2026, 9, 13), "A", "B")
+    assert 0 <= r["score"] <= 100
+    assert r["level"] in {"좋음", "보통", "주의"}
+    assert r["headline"] and len(r["day_pillar"]) == 2

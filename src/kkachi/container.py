@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from kkachi.adapter.outer.db.event_repo import EventRepo
+from kkachi.adapter.outer.db.invite_repo import InviteRepo
 from kkachi.adapter.outer.db.member_repo import MemberRepo
 from kkachi.adapter.outer.db.payment_repo import PaymentRepo
 from kkachi.adapter.outer.db.profile_repo import (
@@ -54,6 +55,7 @@ class Container(containers.DeclarativeContainer):
     feedback_repo = providers.Singleton(FeedbackRepo, session_factory=session_factory)
     payment_repo = providers.Singleton(PaymentRepo, session_factory=session_factory)
     event_repo = providers.Singleton(EventRepo, session_factory=session_factory)
+    invite_repo = providers.Singleton(InviteRepo, session_factory=session_factory)
     fortune_repo = providers.Singleton(FortuneRepo, session_factory=session_factory)
 
     # Kkachi

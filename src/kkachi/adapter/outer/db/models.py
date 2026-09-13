@@ -141,3 +141,15 @@ class PushSubscriptionModel(Base):
     p256dh: Mapped[str] = mapped_column(String(255), nullable=False)
     auth: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class CompatInviteModel(Base):
+    """궁합 초대 링크 — 초대자 정보(payload)를 담고, 상대가 열어 자기 정보만 넣어 결과를 본다.
+    생년월일은 URL에 싣지 않고 이 행에만 저장한다."""
+
+    __tablename__ = "compat_invites"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)  # {name, gender, birth_dt, city, hour_unknown, relation_type}
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
