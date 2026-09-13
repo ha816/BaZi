@@ -21,6 +21,7 @@ import SummaryCard from "./SummaryCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
 
+// 한 줄에 6개까지, 넘으면 아랫줄로 (globals.css .feature-tabbar). 순서 = 노출 순서.
 const FEATURE_TABS = [
   { id: "summary",  emoji: "🐦", label: "한눈에" },
   { id: "natal",    emoji: "🌱", label: "만세력" },

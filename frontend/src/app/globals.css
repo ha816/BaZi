@@ -331,7 +331,7 @@ body {
 /* Feature tab bar — 심층분석 기능 탭 */
 .feature-tabbar {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 탭 9개 → 모바일은 5+4 두 줄 */
+  grid-template-columns: repeat(6, 1fr); /* 한 줄 6개, 넘으면 아랫줄 (탭 9개 → 6+3) */
   gap: 4px;
   padding-bottom: 8px;
 }
@@ -356,7 +356,7 @@ body {
 
 @media (min-width: 640px) {
   .feature-tabbar {
-    grid-template-columns: repeat(9, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 6px;
   }
   .feature-tab {
