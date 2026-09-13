@@ -142,3 +142,17 @@ def timing_digest(timing: dict[str, list[dict]]) -> list[str]:
         avoid = [f"{x['month']}월" for x in months if x["level"] == "피할"]
         lines.append(f"{domain}: 좋음 {'·'.join(good) or '없음'} / 피할 {'·'.join(avoid) or '없음'}")
     return lines
+
+
+def timing_highlight(timing: dict[str, list[dict]]) -> str:
+    """한눈에 허브용 택시 한 줄 — 좋은 달이 있는 영역 몇 개만 골라 요약."""
+    picks: list[str] = []
+    for domain, months in timing.items():
+        good = [f"{m['month']}월" for m in months if m["level"] == "좋음"]
+        if good:
+            picks.append(f"{domain} {'·'.join(good[:3])}")
+        if len(picks) >= 3:
+            break
+    if not picks:
+        return "앞으로 12개월엔 크게 밀어주는 달이 도드라지진 않아요. 무난한 달에 차분히 진행하세요."
+    return "좋은 달 — " + ", ".join(picks) + " 등. 영역별 12개월 흐름을 눌러 확인해 보세요."

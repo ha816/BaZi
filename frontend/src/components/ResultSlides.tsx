@@ -2,8 +2,7 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import type { AnalysisResult, NatalResult } from "@/types/analysis";
-import { getElementInfo } from "@/lib/elementColors";
+import type { AnalysisResult } from "@/types/analysis";
 import NatalTab from "./tabs/NatalTab";
 import YongshinTab from "./tabs/YongshinTab";
 import WolUnTab from "./tabs/WolUnTab";
@@ -15,58 +14,20 @@ import AiTab from "./tabs/AiTab";
 import ZodiacTab from "./tabs/ZodiacTab";
 import FengShuiTab from "./tabs/FengShuiTab";
 import TimingTab from "./tabs/TimingTab";
+import EnergyTab from "./tabs/EnergyTab";
+import DomainFortuneSection from "./tabs/DomainFortuneSection";
 import SajuChat from "./SajuChat";
 import SummaryCard from "./SummaryCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
 
-const PILLAR_LABEL_KOR = ["년", "월", "일", "시"];
-
-function StickySajuBar({ natal }: { natal: NatalResult }) {
-  const meInfo = getElementInfo(natal.my_element.name);
-  return (
-    <button
-      type="button"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="w-full"
-      aria-label="페이지 맨 위로"
-    >
-      <div className="flex items-center justify-center gap-2.5 rounded-lg px-3 py-1.5 bg-[var(--color-card)] border border-[var(--color-border-light)]">
-        {[3, 2, 1, 0].map((i) => {
-          const pillar = natal.pillars[i] ?? "";
-          const isDay = i === 2;
-          return (
-            <div key={i} className="flex flex-col items-center">
-              <span className="text-[8px] font-semibold mb-0.5"
-                style={{ color: isDay ? meInfo.color : "var(--color-ink-faint)" }}>
-                {PILLAR_LABEL_KOR[i]}
-              </span>
-              <div className="flex flex-col items-center px-1.5 py-0.5 rounded"
-                style={isDay
-                  ? { backgroundColor: meInfo.bgColor, border: `1px solid ${meInfo.borderColor}` }
-                  : undefined}>
-                <span className="font-heading text-[13px] font-bold leading-none"
-                  style={{ color: isDay ? meInfo.color : "var(--color-ink-muted)" }}>
-                  {pillar[0] ?? "?"}
-                </span>
-                <span className="font-heading text-[13px] leading-none mt-1"
-                  style={{ color: isDay ? meInfo.color : "var(--color-ink-muted)" }}>
-                  {pillar[1] ?? "?"}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </button>
-  );
-}
-
 const FEATURE_TABS = [
+  { id: "summary",  emoji: "🐦", label: "한눈에" },
   { id: "natal",    emoji: "🌱", label: "만세력" },
+  { id: "energy",   emoji: "⭐", label: "신살·운성" },
   { id: "yongshin", emoji: "🔮", label: "용신·삼재" },
+  { id: "timing",   emoji: "🗓️", label: "택시(擇時)" },
   { id: "daeun",    emoji: "🌊", label: "시운(時運)" },
-  { id: "timing",   emoji: "🗓️", label: "언제가 좋을까" },
   { id: "zodiac",   emoji: "🐾", label: "십이지신" },
   { id: "fengshui", emoji: "🧭", label: "풍수" },
   { id: "ai",       emoji: "✨", label: "AI 풀이" },
@@ -137,7 +98,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
   const pathname = usePathname();
 
   const tabParam = searchParams.get("tab");
-  const active: FeatureId = (FEATURE_TABS.find((t) => t.id === tabParam)?.id) ?? "natal";
+  const active: FeatureId = (FEATURE_TABS.find((t) => t.id === tabParam)?.id) ?? "summary";
 
   const [feedbackKey, setFeedbackKey] = useState(0);
 
@@ -165,10 +126,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
           시주(時柱)가 빠져 자녀·말년 영역은 보이지 않고, 대운 시작 나이는 ±2개월 오차가 있을 수 있어요. 시간을 알게 되면 프로필에서 고쳐 주세요.
         </div>
       )}
-      {postnatal.summary && <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} />}
-
-      <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2 space-y-1.5">
-        <StickySajuBar natal={natal} />
+      <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">
         <div className="feature-tabbar">
           {FEATURE_TABS.map((tab) => (
             <button
@@ -185,7 +143,17 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
       </div>
 
       <div>
+        {active === "summary" && postnatal.summary && (
+          <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} onNavigate={(t) => handleTabChange(t as FeatureId)} />
+        )}
+        {active === "timing"  && (
+          <div className="space-y-4">
+            <TimingTab {...tabProps} />
+            <DomainFortuneSection postnatal={postnatal} />
+          </div>
+        )}
         {active === "natal"   && <NatalTab       {...tabProps} />}
+        {active === "energy"  && <EnergyTab      {...tabProps} />}
         {active === "zodiac"  && <ZodiacTab      {...tabProps} />}
         {active === "daeun"   && (
           <div className="space-y-4">
@@ -201,7 +169,6 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
             <SamjaeTab {...tabProps} />
           </div>
         )}
-        {active === "timing"   && <TimingTab       {...tabProps} />}
         {active === "ai"       && <AiTab           {...tabProps} />}
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 

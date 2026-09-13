@@ -43,7 +43,7 @@ from kkachi.application.interpreter.yongshin import (
 from kkachi.application.interpreter.zodiac import ZodiacInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
-from kkachi.application.timing_rules import compute_timing, timing_digest
+from kkachi.application.timing_rules import compute_timing, timing_digest, timing_highlight
 from kkachi.application.util.sipsin_meta import enrich_sipsin
 from kkachi.application.util.util import year_to_ganji
 from kkachi.domain.ganji import JIZAN_ROLE_HANJA, OHENG_GUIDE, Branch, Stem
@@ -247,7 +247,8 @@ class KkachiService(InterpreterPort):
         postnatal_result = await self._postnatal_svc.interpret_postnatal(natal, postnatal, name, is_male=is_male)
         natal_result.narratives["yongshin_tip"] = build_yongshin_tip(natal, postnatal_result)
         today = compute_fortune(natal, date.today(), None, postnatal, name=name)
-        postnatal_result.summary = _build_summary(natal, postnatal, name, today)
+        postnatal_result.summary = _build_summary(natal, postnatal, name, today, feng_shui=natal_result.feng_shui)
+        postnatal_result.summary.timing = timing_highlight(postnatal_result.timing)
         return Interpretation(natal=natal_result, postnatal=postnatal_result)
 
     def today_summary(self, natal: NatalInfo, postnatal: PostnatalInfo, name: str = "") -> dict[str, str]:
@@ -272,7 +273,7 @@ class KkachiService(InterpreterPort):
         if post.summary:
             sm = post.summary
             lines.append(
-                "[한눈에] " + " / ".join(x for x in (sm.me, sm.year, sm.month, sm.today, sm.caution) if x)
+                "[한눈에] " + " / ".join(x for x in (sm.me, sm.energy, sm.yongshin, sm.year, sm.month, sm.today, sm.caution, sm.zodiac, sm.fengshui) if x)
             )
         if post.timing:
             lines.append("[언제가 좋을까 — 앞으로 12개월] " + " | ".join(timing_digest(post.timing)))

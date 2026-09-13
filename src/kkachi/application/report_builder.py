@@ -95,7 +95,7 @@ class LlmReportBuilder:
         if not p.summary:
             return ""
         sm = p.summary
-        rows = [("나", sm.me), ("올해", sm.year), ("이번 달", sm.month), ("오늘", sm.today), ("조심", sm.caution)]
+        rows = [("나", sm.me), ("신살·운성", sm.energy), ("용신·삼재", sm.yongshin), ("택시(擇時)", sm.timing), ("올해", sm.year), ("이번 달", sm.month), ("오늘", sm.today), ("조심", sm.caution), ("십이지신", sm.zodiac), ("풍수", sm.fengshui)]
         lines = [
             "## 까치 한눈에 (룰 엔진 다섯 줄 요약)",
             "",

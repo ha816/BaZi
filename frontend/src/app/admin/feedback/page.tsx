@@ -6,10 +6,12 @@ import { getEventSummary, getFeedbackSummary, type EventSummary, type FeedbackSu
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const TAB_META: Record<string, { label: string; emoji: string }> = {
+  summary:  { label: "한눈에",      emoji: "🐦" },
   natal:    { label: "만세력",      emoji: "🌱" },
+  energy:   { label: "신살·운성",   emoji: "⭐" },
   yongshin: { label: "용신·삼재",   emoji: "🔮" },
   daeun:    { label: "시운(時運)",  emoji: "🌊" },
-  timing:   { label: "언제가 좋을까", emoji: "🗓️" },
+  timing:   { label: "택시(擇時)",   emoji: "🗓️" },
   zodiac:   { label: "십이지신",    emoji: "🐾" },
   fengshui: { label: "풍수",        emoji: "🧭" },
   ai:       { label: "AI 풀이",     emoji: "✨" },

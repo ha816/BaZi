@@ -128,6 +128,11 @@ class Summary:
     today: str = ""       # 오늘 — 아침 한 마디 헤드라인 (이름 접두 제거)
     caution: str = ""     # 조심 — 세운 충 → 대운 충 → 기신 순
     today_date: str = ""  # today 줄의 기준일 (ISO). analyses 캐시 히트 시 다르면 오늘 줄만 갱신
+    energy: str = ""     # 신살·운성 — 보유 신살 (→ 신살·운성 탭)
+    timing: str = ""     # 택시(擇時) — 영역별 좋은 달 요약 (→ 택시 탭)
+    yongshin: str = ""    # 용신·삼재 — 용신 오행 처방 + 삼재 여부 (→ 용신·삼재 탭)
+    zodiac: str = ""      # 십이지신 — 띠 + 올해 띠 관계 (→ 십이지신 탭)
+    fengshui: str = ""    # 풍수 — 동/서사택 + 길방위 (→ 풍수 탭)
 
 
 @dataclass
@@ -246,8 +251,8 @@ class PostnatalResult:
 
 
 # analyses 캐시 호환 버전. 응답 구조(필드 추가·의미 변경)가 바뀌면 +1 → 옛 캐시는 전체 재계산된다.
-#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)
-INTERPRETATION_VERSION = 3
+#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)  4: summary에 용신·십이지신·풍수 줄 추가  5: me 문구 '님의 사주는'  6: me에 사주팔자 네 기둥 낭독  7: summary.energy(신살·운성)  8: summary.timing(택시)
+INTERPRETATION_VERSION = 8
 
 
 @dataclass

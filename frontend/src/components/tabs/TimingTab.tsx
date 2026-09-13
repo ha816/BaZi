@@ -22,6 +22,19 @@ const DOMAIN_EMOJI: Record<string, string> = {
   "이직·직업": "💼", "연애·결혼": "💞", "이사·계약": "🏠", "시험·공부": "📚", "투자·재물": "💰", "건강": "🌿",
 };
 
+/** 연도가 섞이지 않게 연도별로 묶는다. 예: "26년 9·12월, 27년 3월" */
+function fmtMonths(list: TimingMonth[]): string {
+  const byYear = new Map<number, number[]>();
+  for (const m of list) {
+    const ms = byYear.get(m.year) ?? [];
+    ms.push(m.month);
+    byYear.set(m.year, ms);
+  }
+  return [...byYear.entries()]
+    .map(([year, ms]) => `${String(year).slice(2)}년 ${ms.join("·")}월`)
+    .join(", ");
+}
+
 export default function TimingTab({ postnatal, name }: Props) {
   const timing = postnatal.timing ?? {};
   const domains = Object.keys(timing);
@@ -77,9 +90,9 @@ export default function TimingTab({ postnatal, name }: Props) {
           {/* 한 줄 요약 */}
           <p className="text-sm text-[var(--color-ink)] leading-snug">
             {good.length > 0
-              ? <>{DOMAIN_EMOJI[domain]} <strong>{domain}</strong>은 <strong className="text-emerald-700">{good.map((m) => `${m.month}월`).join("·")}</strong>이 밀어주는 달이에요.</>
+              ? <>{DOMAIN_EMOJI[domain]} <strong>{domain}</strong>은 <strong className="text-emerald-700">{fmtMonths(good)}</strong>이 밀어주는 달이에요.</>
               : <>{DOMAIN_EMOJI[domain]} <strong>{domain}</strong>은 앞으로 열두 달 중 확 밀어주는 달은 없어요. 무난한 달을 골라 차분히 진행하세요.</>}
-            {avoid.length > 0 && <> <span className="text-rose-700">{avoid.map((m) => `${m.month}월`).join("·")}</span>은 늦추는 게 좋아요.</>}
+            {avoid.length > 0 && <> <span className="text-rose-700">{fmtMonths(avoid)}</span>은 늦추는 게 좋아요.</>}
           </p>
 
           {/* 12칸 */}
@@ -92,7 +105,7 @@ export default function TimingTab({ postnatal, name }: Props) {
                 <button key={`${m.year}-${m.month}`} type="button" onClick={() => setSelected(i)}
                   className={`rounded-xl border px-1 py-2 flex flex-col items-center gap-0.5 transition-shadow ${st.bg} ${st.border} ${isSel ? "ring-2 ring-[var(--color-gold)]" : ""}`}>
                   <span className={`text-[10px] font-semibold ${st.text}`}>
-                    {showYear && <span className="opacity-60 mr-0.5">{String(m.year).slice(2)}·</span>}{m.month}월
+                    {showYear && <span className="opacity-60 mr-0.5">{String(m.year).slice(2)}년</span>}{m.month}월
                   </span>
                   <span className="font-heading text-sm font-bold text-[var(--color-ink)] leading-none">{m.ganji}</span>
                   <span className="text-[9px] text-[var(--color-ink-faint)]">{m.ganji_korean}</span>

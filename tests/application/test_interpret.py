@@ -162,7 +162,7 @@ def test_summary_uses_name_when_given():
     natal, postnatal = _service.analyze(user, 2026)
     result = asyncio.run(_service.interpret(natal, postnatal, user=user, name="승민"))
     sm = result.postnatal.summary
-    assert sm.me.startswith("승민님은 ")
+    assert sm.me.startswith("승민님의 사주는 ")
     assert "승민님, " not in sm.today
     refreshed = _service.today_summary(natal, postnatal, "승민")
     assert refreshed["today"] == sm.today and refreshed["today_date"] == sm.today_date

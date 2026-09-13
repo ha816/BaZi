@@ -4,8 +4,8 @@ from kkachi.application.util.sipsin_meta import sipsin_domain, sipsin_label, sip
 from kkachi.application.util.util import branch_relation, josa, year_to_branch_char, year_to_ganji
 from kkachi.application.util.zodiac_meta import zodiac_info
 from kkachi.domain.fortune import Fortune
-from kkachi.domain.ganji import BRANCH_ANIMAL, OHENG_GUIDE, Branch, Sipsin, Stem
-from kkachi.domain.interpretation import Summary
+from kkachi.domain.ganji import BRANCH_ANIMAL, OHENG_GUIDE, Branch, Pillar, Sipsin, Stem
+from kkachi.domain.interpretation import FengShuiResult, Summary
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
 
 
@@ -205,17 +205,27 @@ def today_line(fortune: Fortune) -> str:
     return head.split("님, ", 1)[1] if "님, " in head[:12] else head
 
 
-def build_summary(natal: NatalInfo, postnatal: PostnatalInfo, name: str, today: Fortune | None) -> Summary:
-    """결과 첫 화면 다섯 줄. 각 줄은 이미 있는 룰 엔진 데이터에서 조립하며 LLM을 쓰지 않는다."""
+def build_summary(
+    natal: NatalInfo, postnatal: PostnatalInfo, name: str, today: Fortune | None,
+    feng_shui: FengShuiResult | None = None,
+) -> Summary:
+    """결과 첫 화면 요약. 각 줄은 이미 있는 룰 엔진 데이터에서 조립하며 LLM을 쓰지 않는다.
+    한눈에 탭이 만세력·용신삼재·시운·십이지신·풍수로 진입하는 허브가 되도록 영역별 한 줄을 담는다."""
     day_stem = natal.saju.stem_of_day_pillar
     my_el = natal.my_main_element
     yong = natal.yongshin
     kisin = yong.overcome_by
-    prefix = f"{name}님은" if name else "이 사주는"
+    prefix = f"{name}님의 사주는" if name else "이 사주는"
 
+    recite = "·".join(
+        f"{sb.stem.korean}{sb.branch.korean}({sb.stem.name}{sb.branch.name})"
+        for sb in natal.saju.pillars.values()
+    )
+    count_word = "세" if natal.saju.hour_unknown else "네"
     me = (
-        f"{prefix} {day_stem.korean}({day_stem.name}) 일간, {my_el.meaning}({my_el.name}) 기운이 중심인 "
-        f"{natal.strength_label} 사주예요. {_polite(my_el.personality)}"
+        f"{prefix} {recite} {count_word} 기둥이에요. "
+        f"{day_stem.korean}({day_stem.name}) 일간, {my_el.meaning}({my_el.name}) 기운이 중심인 "
+        f"{natal.strength_label} 사주로 {_polite(my_el.personality)}"
     )
 
     seun_ganji = year_to_ganji(postnatal.year)
@@ -260,6 +270,31 @@ def build_summary(natal: NatalInfo, postnatal: PostnatalInfo, name: str, today: 
             f"{guide['color']} 계열과 {guide['direction']} 방향은 줄이는 게 좋아요."
         )
 
+    sinsal_names = list(dict.fromkeys(s.korean for _, s in natal.sinsal))
+    if sinsal_names:
+        joined = "·".join(sinsal_names)
+        energy = f"{joined}{josa(sinsal_names[-1], '을', '를')} 지녔어요. 특별한 기운이라 잘 살리면 나만의 강점이 돼요."
+    else:
+        energy = "뚜렷한 신살은 없어요. 십이운성으로 인생 시기별 에너지 흐름을 볼 수 있어요."
+
+    yong_guide = OHENG_GUIDE[yong]
+    yongshin = (
+        f"용신은 {yong.meaning}({yong.name}) — {yong_guide['color']} 색과 {yong_guide['direction']} 방향을 가까이 두면 흐름이 가벼워져요."
+    )
+    if postnatal.samjae:
+        yongshin += f" 올해는 {postnatal.samjae.get('type', '')} 흐름이라 내실 다지기에 좋아요."
+    else:
+        yongshin += " 올해는 삼재(三災) 시기가 아니에요."
+
+    year_branch = natal.saju.pillars[Pillar.年柱].branch
+    animal = BRANCH_ANIMAL.get(year_branch.name, year_branch.name)
+    zodiac = f"{animal}띠예요. {zodiac_relation(year_branch, postnatal.year)}"
+
+    fengshui = ""
+    if feng_shui is not None:
+        dirs = "·".join(d.direction for d in feng_shui.lucky_directions[:2])
+        fengshui = f"{feng_shui.group} — 책상·잠자리를 {dirs}쪽으로 두면 기운이 살아요." if dirs else feng_shui.group
+
     return Summary(
         me=me,
         year=year,
@@ -267,4 +302,8 @@ def build_summary(natal: NatalInfo, postnatal: PostnatalInfo, name: str, today: 
         today=today_line(today) if today else "",
         caution=caution,
         today_date=today.date if today else "",
+        energy=energy,
+        yongshin=yongshin,
+        zodiac=zodiac,
+        fengshui=fengshui,
     )

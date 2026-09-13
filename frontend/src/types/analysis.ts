@@ -228,6 +228,11 @@ export interface Summary {
   today: string;
   caution: string;
   today_date: string;
+  energy: string;
+  timing: string;
+  yongshin: string;
+  zodiac: string;
+  fengshui: string;
 }
 
 export interface TimingMonth {
