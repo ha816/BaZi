@@ -64,7 +64,7 @@ class RelationshipInterpreter:
                 f"중요한 계약·보증·동업은 신중하게 검토한 뒤 결정하세요."
             )
 
-        return [InterpretBlock(description=l) for l in lines]
+        return [InterpretBlock(description=line) for line in lines]
 
 
 PILLAR_MEANING: dict[str, str] = {

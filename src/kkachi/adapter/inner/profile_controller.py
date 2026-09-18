@@ -9,6 +9,7 @@ from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
 from kkachi.container import Container
+from kkachi.domain.profile import Profile
 from kkachi.domain.user import Gender
 
 profile_router = APIRouter(prefix="/members/{member_id}/profiles", tags=["profiles"])
@@ -47,6 +48,14 @@ class AnalyzeRequest(BaseModel):
     year: int = 2026
 
 
+async def _owned_profile(svc: ProfileService, member_id: UUID, profile_id: UUID) -> Profile:
+    """URL의 member_id가 소유한 프로필만 통과. 남의 프로필은 존재 여부를 숨기고 404 (IDOR 방지)."""
+    profile = await svc.get_profile(profile_id)
+    if profile is None or profile.member_id != member_id:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+
 @profile_router.post("", response_model=ProfileResponse, status_code=201)
 @inject
 async def create_profile(
@@ -81,9 +90,7 @@ async def get_profile(
     profile_id: UUID,
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> ProfileResponse:
-    profile = await svc.get_profile(profile_id)
-    if profile is None:
-        raise HTTPException(status_code=404, detail="Profile not found")
+    profile = await _owned_profile(svc, member_id, profile_id)
     return ProfileResponse(**vars(profile))
 
 
@@ -95,6 +102,7 @@ async def update_profile(
     req: ProfileUpdateRequest,
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> ProfileResponse:
+    await _owned_profile(svc, member_id, profile_id)
     try:
         profile = await svc.update_profile(
             profile_id, req.name, req.gender, req.birth_dt, req.city, birth_hour_unknown=req.birth_hour_unknown,
@@ -111,8 +119,8 @@ async def delete_profile(
     profile_id: UUID,
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> None:
-    profile = await svc.get_profile(profile_id)
-    if profile and profile.is_self:
+    profile = await _owned_profile(svc, member_id, profile_id)
+    if profile.is_self:
         raise HTTPException(status_code=409, detail="자기 자신 프로필은 삭제할 수 없습니다.")
     await svc.delete_profile(profile_id)
 
@@ -125,6 +133,7 @@ async def analyze_profile(
     req: AnalyzeRequest,
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> dict:
+    await _owned_profile(svc, member_id, profile_id)
     try:
         return await svc.analyze_profile(profile_id, req.year, member_id=member_id)
     except ValueError as e:
@@ -137,7 +146,9 @@ async def get_fortune(
     member_id: UUID,
     profile_id: UUID,
     svc: FortuneService = Depends(Provide[Container.fortune_service]),
+    profiles: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> dict:
+    await _owned_profile(profiles, member_id, profile_id)
     try:
         return await svc.get_fortune(profile_id)
     except ValueError as e:
@@ -152,7 +163,9 @@ async def get_forecast(
     days: int = 7,
     start_date: str | None = None,
     svc: FortuneService = Depends(Provide[Container.fortune_service]),
+    profiles: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> list[dict]:
+    await _owned_profile(profiles, member_id, profile_id)
     try:
         start = datetime.fromisoformat(start_date).date() if start_date else None
         return await svc.get_forecast(profile_id, days=min(days, 35), start_date=start)
@@ -168,6 +181,7 @@ async def list_analyses(
     svc: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> list[dict]:
     """캐시된 연도별 해석 목록 — '지난 연도 분석 다시 보기' (ROADMAP R6)."""
+    await _owned_profile(svc, member_id, profile_id)
     return [{"year": a.year, "created_at": a.created_at.isoformat()} for a in await svc.list_analyses(profile_id)]
 
 
@@ -183,7 +197,9 @@ async def post_feedback(
     profile_id: UUID,
     req: FeedbackRequest,
     repo: FeedbackPort = Depends(Provide[Container.feedback_repo]),
+    profiles: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> dict:
+    await _owned_profile(profiles, member_id, profile_id)
     await repo.save(profile_id, req.tab_id, req.rating)
     return {"success": True}
 
@@ -195,6 +211,8 @@ async def list_feedback(
     profile_id: UUID,
     prefix: str = "daily:",
     repo: FeedbackPort = Depends(Provide[Container.feedback_repo]),
+    profiles: ProfileService = Depends(Provide[Container.profile_service]),
 ) -> dict[str, int]:
     """prefix로 시작하는 tab_id → rating. 지난 7일 '맞았어요?' 표시에 쓴다 (ROADMAP R6)."""
+    await _owned_profile(profiles, member_id, profile_id)
     return await repo.list_by_profile(profile_id, prefix)

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 
-class Gender(str, Enum):
-    """성별. str을 상속하여 JSON 직렬화/Pydantic 호환을 지원한다."""
+class Gender(StrEnum):
+    """성별. StrEnum이라 JSON 직렬화·Pydantic·문자열 비교가 그대로 된다."""
     MALE = "male"
     FEMALE = "female"
 

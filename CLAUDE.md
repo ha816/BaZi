@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 79 tests
+uv run pytest            # 83 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -150,9 +150,8 @@ BaZi/
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 (621 LOC)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
-│   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운·DetailView 공용
+│   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
-│   │   ├── DailyFortune.tsx         # DetailView · WeeklyView · DailyFortunePanel
 │   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
 │   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
 │   │   ├── OhengPairDiagram · PillarPairDiagram   # 궁합 비교 다이어그램
@@ -171,6 +170,7 @@ BaZi/
 │   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
 │   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
 │   │   ├── track.ts              # 행동 이벤트 track(name, props) — 세션 UUID + fire-and-forget
+│   │   ├── useStorageValue.ts    # localStorage/sessionStorage를 hydration-safe하게 읽는 훅(useSyncExternalStore) + parseStored — 마운트 effect 안 setState 금지
 │   │   ├── push.ts               # getPushState/subscribePush/unsubscribePush — sw.js 등록 + VAPID 구독 + 서버 저장
 │   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
 │   └── types/analysis.ts
@@ -297,7 +297,7 @@ POST   /members              { name, email } → 201 Member (이메일 중복 �
 GET    /members/{id}
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
 
-# 프로필 (prefix /members/{member_id}/profiles)
+# 프로필 (prefix /members/{member_id}/profiles) — /{pid} 경로는 모두 소유자 검증: profile.member_id ≠ URL member_id 이면 404 (IDOR 방지)
 POST   ""                    { name, gender, birth_dt, city="Seoul", is_self=false, birth_hour_unknown=false } → 201 (10개 초과 시 400)
 GET    ""                    → Profile[]
 GET    /{pid}
@@ -334,6 +334,7 @@ POST   /push/subscriptions      { member_id, subscription:{ endpoint(https), key
 DELETE /push/subscriptions      { endpoint } → 204
 POST   /admin/push/send-daily   ?dry_run=true(기본)&member_id= → [{member_id, profile, title, body, status}]  실발송은 X-Admin-Token 필요
 GET  /admin/events/summary   ?days=7 → [{ name, count, sessions }]
+# /admin/* 전체: 서버에 KKACHI_ADMIN_TOKEN이 설정돼 있으면 X-Admin-Token 헤더 일치 필수(401). 미설정(로컬 개발)이면 열림
 
 # MCP (/mcp, streamable HTTP)
 get_saju_context(birth_dt, gender, year, city, name) → str (~600자 요약)
@@ -477,7 +478,7 @@ erDiagram
 | `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 지난주(지난 7일 아침 한 마디 + "맞았어요?" 👍/👎, R6)·오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
-| `/admin/feedback` | 탭별 👍/👎 긍정률 대시보드 (인증 없음) | — |
+| `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
 - `/weather`, `/palmistry`, `/admin/feedback`은 네비게이션에 연결되어 있지 않음 — URL 직접 진입만 가능.
@@ -554,7 +555,7 @@ erDiagram
 | 날씨 오행이 용신을 剋 | -8 |
 
 - 결과 `Fortune`: total_score, level(좋은 날/평범한 날/주의가 필요한 날), domain_scores{score,level,reason}, description, tips(최대 3), weather, solar_term(24절기 — 해당일이면 팁 맨 앞에 삽입), yongshin, son_eomneun_nal(음력 끝자리 9·0), 시운 그리드(daeun/seun/wol ganji + yongshin_in_*)
-- **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운·DetailView에 표시하고, 내일·모레는 첫 "오늘"을 라벨로 치환
+- **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운에 표시하고, 내일·모레·지난주("이날")는 첫 "오늘"을 라벨로 치환
 - 홈·시운 화면의 까치 이미지는 `FORECAST_LEVEL_META[level]`로 선택
 
 ### 아침 알림 (Web Push, ROADMAP R4)
@@ -589,15 +590,21 @@ erDiagram
 ```
 tests/
 ├── adapter/
-│   ├── test_analyzer.py        # 선천 분석 (강약, 용신, 십신)
-│   ├── test_fortune.py         # 세운·대운·충합
-│   └── test_sibi_unseong.py    # 십이운성·신살
+│   ├── test_analyzer.py            # 선천 분석 (강약, 용신, 십신)
+│   ├── test_fortune.py             # 세운·대운·충합
+│   ├── test_sibi_unseong.py        # 십이운성·신살
+│   ├── test_three_pillars.py       # 출생시간 미상 세 기둥(R2)
+│   └── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
 └── application/
     ├── test_interpret.py       # 종합 해석 통합 테스트
-    └── test_compatibility.py   # 궁합 점수·관계·삼합·캐시·관계유형
+    ├── test_compatibility.py   # 궁합 점수·관계·삼합·캐시·관계유형
+    ├── test_fortune_rules.py   # 일진 점수·아침 한 마디
+    ├── test_timing_rules.py    # 타이밍 리포트(R3)
+    └── test_push_service.py    # 푸시 페이로드
 ```
 
-> 미커버 영역: `fortune_rules.compute_fortune`(일진 점수), 풍수·십이지신 Interpreter, 컨트롤러 레벨 테스트. 신규 작성 시 우선.
+> 컨트롤러 테스트 패턴: `Container()`를 만들어 `container.<provider>.override(providers.Object(fake))` 후 `TestClient(app)`를 `with` 없이 쓰면 lifespan(DB)이 돌지 않는다. 끝나면 `container.unwire()`.
+> 미커버 영역: 풍수·십이지신 Interpreter, 궁합·푸시 컨트롤러. 신규 작성 시 우선.
 
 ## 알려진 이슈 / 정리 후보 (2026-09-12 기준)
 

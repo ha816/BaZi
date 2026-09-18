@@ -883,14 +883,18 @@ class CompatibilityService:
         relation_type: RelationType,
     ) -> str:
         if relation_type == "lover":
-            if domain == "연애": return self._advice_love(score, pros, cons)
-            if domain == "결혼": return self._advice_marriage(score, pros, cons)
-            if domain == "재물": return self._advice_wealth(score, pros, cons)
-            if domain == "직업": return self._advice_career(score, pros, cons)
-            return ""
+            advice = {
+                "연애": self._advice_love,
+                "결혼": self._advice_marriage,
+                "재물": self._advice_wealth,
+                "직업": self._advice_career,
+            }.get(domain)
+            return advice(score, pros, cons) if advice else ""
         tiers = GENERIC_ADVICE_BY_REL[relation_type]
-        if score >= 70: return tiers["high"]
-        if score <= 40: return tiers["low"]
+        if score >= 70:
+            return tiers["high"]
+        if score <= 40:
+            return tiers["low"]
         return tiers["mid"]
 
     def _advice_love(self, score: int, pros: list[dict], cons: list[dict]) -> str:

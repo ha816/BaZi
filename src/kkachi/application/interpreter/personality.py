@@ -24,7 +24,7 @@ class PersonalityInterpreter:
                 seen.add(sinsal.korean)
                 lines.append(f"특히 {sinsal.korean}이 있어 {sinsal.meaning} 성향이 두드러집니다.")
 
-        return [InterpretBlock(description=l) for l in lines]
+        return [InterpretBlock(description=line) for line in lines]
 
 
 class ElementBalanceInterpreter:
@@ -65,7 +65,7 @@ class ElementBalanceInterpreter:
                 "다섯 기운이 균형을 이루고 있어 어떤 환경에서든 안정적으로 적응할 수 있습니다."
             )
 
-        return [InterpretBlock(description=l) for l in lines]
+        return [InterpretBlock(description=line) for line in lines]
 
 
 OHENG_METAPHOR: dict[Oheng, str] = {

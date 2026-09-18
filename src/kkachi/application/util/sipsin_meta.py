@@ -90,11 +90,15 @@ def sipsin_strength_modifier(sipsin: Sipsin, strength: int) -> int:
     is_strong = strength > 2
     is_weak = strength < -2
     if is_strong:
-        if sipsin in _DRAIN_SIPSIN: return +2
-        if sipsin in _HELP_SIPSIN:  return -1
+        if sipsin in _DRAIN_SIPSIN:
+            return +2
+        if sipsin in _HELP_SIPSIN:
+            return -1
     if is_weak:
-        if sipsin in _HELP_SIPSIN:  return +2
-        if sipsin in _DRAIN_SIPSIN: return -1
+        if sipsin in _HELP_SIPSIN:
+            return +2
+        if sipsin in _DRAIN_SIPSIN:
+            return -1
     return 0
 
 

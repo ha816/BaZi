@@ -12,7 +12,7 @@
 
 베타는 launchd 5+1개로 돈다: `com.kkachi.db`(scripts/db.sh up) · `backend`(:8000) · `frontend`(next start :3000) · `caddy`(:8080, /api→8000, /→3000) · `backup`(04:00) · `daily-push`(07:00). 외부는 Tailscale Funnel → :8080. 운영 치트시트는 `~/kkachi/README.md`.
 
-- VAPID 키: `~/kkachi/vapid.env` (권한 600, `export KKACHI_VAPID_*` 3줄). backend·daily-push plist가 `bash -c 'source … && exec …'`로 읽는다. **plist·local.toml·git에 넣지 않는다.**
+- VAPID 키: `~/kkachi/vapid.env` (권한 600, `export KKACHI_VAPID_*` 3줄 + `KKACHI_ADMIN_TOKEN` — `/admin/*`·실발송 API 토큰). backend·daily-push plist가 `bash -c 'source … && exec …'`로 읽는다. **plist·local.toml·git에 넣지 않는다.**
 - 코드 반영: `bash scripts/deploy.sh` (프론트 빌드 → backend·frontend 재기동 → 헬스체크). `npm run dev`는 `.next`를 지워 베타 프론트를 죽이므로 같은 디렉터리에서 병행하지 않는다.
 - 남은 확인: 폰에서 `https://al03044198.tail48dbe2.ts.net/siun` → (iOS는 홈 화면 추가 후) "알림 켜기" → 다음 날 07:00 수신. 즉시 테스트는 아래 3단계.
 

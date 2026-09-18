@@ -64,4 +64,4 @@ class YongshinInterpreter:
                 f"내실을 다지는 데 집중하는 것이 지혜로운 선택입니다."
             )
 
-        return [InterpretBlock(description=l) for l in lines]
+        return [InterpretBlock(description=line) for line in lines]

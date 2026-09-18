@@ -277,8 +277,29 @@ export interface FeedbackSummary {
   positive_rate: number;
 }
 
+const ADMIN_TOKEN_KEY = "kkachi_admin_token";
+
+/** /admin/* 호출용. 서버에 KKACHI_ADMIN_TOKEN이 있으면 401 → 토큰을 물어 localStorage에 두고 재시도. */
+async function adminRequest<T>(path: string): Promise<T> {
+  const attempt = () => {
+    let token: string | null = null;
+    try { token = localStorage.getItem(ADMIN_TOKEN_KEY); } catch { /* ignore */ }
+    return fetch(`${API_URL}${path}`, { headers: token ? { "X-Admin-Token": token } : {} });
+  };
+  let res = await attempt();
+  if (res.status === 401) {
+    const entered = window.prompt("관리자 토큰을 입력하세요 (KKACHI_ADMIN_TOKEN)");
+    if (entered) {
+      try { localStorage.setItem(ADMIN_TOKEN_KEY, entered.trim()); } catch { /* ignore */ }
+      res = await attempt();
+    }
+  }
+  if (!res.ok) throw new Error(res.status === 401 ? "관리자 토큰이 맞지 않아요." : await res.text());
+  return res.json();
+}
+
 export async function getFeedbackSummary(): Promise<FeedbackSummary[]> {
-  return request<FeedbackSummary[]>("/admin/feedback/summary");
+  return adminRequest<FeedbackSummary[]>("/admin/feedback/summary");
 }
 
 
@@ -289,7 +310,7 @@ export interface EventSummary {
 }
 
 export async function getEventSummary(days = 7): Promise<EventSummary[]> {
-  return request<EventSummary[]>(`/admin/events/summary?days=${days}`);
+  return adminRequest<EventSummary[]>(`/admin/events/summary?days=${days}`);
 }
 
 export async function getVapidPublicKey(): Promise<{ public_key: string }> {
