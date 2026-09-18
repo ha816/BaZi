@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { NatalResult, PostnatalResult } from "@/types/analysis";
 import { streamAiInterpretation } from "@/lib/api";
+import { useStorageValue } from "@/lib/useStorageValue";
 import SectionHeader from "@/components/SectionHeader";
 import KkachiTip from "@/components/KkachiTip";
 
@@ -13,30 +14,24 @@ interface Props {
 }
 
 export default function AiTab({ name }: Props) {
+  const inputRaw = useStorageValue("kkachi_analysis_input", "session");
+  const storedName = useStorageValue("kkachi_analysis_name", "session");
   const [text, setText] = useState("");
-  const [streaming, setStreaming] = useState(true);
-  const [error, setError] = useState(false);
+  const [done, setDone] = useState(false);
+  const [failed, setFailed] = useState(false);
   const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
+    // 하이드레이션 전(null)·입력 없음("")·이미 시작한 경우는 건너뛴다
+    if (!inputRaw || started.current) return;
     started.current = true;
+    streamAiInterpretation(JSON.parse(inputRaw), name ?? storedName ?? "", setText)
+      .catch(() => setFailed(true))
+      .finally(() => setDone(true));
+  }, [inputRaw, storedName, name]);
 
-    const inputRaw = sessionStorage.getItem("kkachi_analysis_input");
-    const sessionName = name ?? sessionStorage.getItem("kkachi_analysis_name") ?? "";
-    if (!inputRaw) {
-      setError(true);
-      setStreaming(false);
-      return;
-    }
-
-    streamAiInterpretation(JSON.parse(inputRaw), sessionName, (accumulated) => {
-      setText(accumulated);
-    })
-      .catch(() => setError(true))
-      .finally(() => setStreaming(false));
-  }, [name]);
-
+  const error = failed || inputRaw === "";
+  const streaming = inputRaw === null || (!!inputRaw && !done);
   const isLoading = streaming && !text;
 
   return (

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { streamChat } from "@/lib/api";
+import { parseStored, useStorageValue } from "@/lib/useStorageValue";
 import type { AnalysisInput } from "@/types/analysis";
 
 interface Message {
@@ -13,21 +14,14 @@ interface Message {
 
 export default function ChatPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [input, setInput] = useState<AnalysisInput | null>(null);
+  const name = useStorageValue("kkachi_analysis_name", "session") ?? "";
+  const rawInput = useStorageValue("kkachi_analysis_input", "session");
+  const input = useMemo(() => parseStored<AnalysisInput>(rawInput), [rawInput]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    setName(sessionStorage.getItem("kkachi_analysis_name") ?? "");
-    const raw = sessionStorage.getItem("kkachi_analysis_input");
-    if (raw) {
-      try { setInput(JSON.parse(raw)); } catch { /* ignore */ }
-    }
-  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -101,10 +101,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
   const tabParam = searchParams.get("tab");
   const active: FeatureId = (FEATURE_TABS.find((t) => t.id === tabParam)?.id) ?? "summary";
 
-  const [feedbackKey, setFeedbackKey] = useState(0);
-
   useEffect(() => {
-    setFeedbackKey((k) => k + 1);
     track("tab_view", { tab: active, has_profile: !!profileId });
   }, [active, profileId]);
 
@@ -174,7 +171,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 
         <FeedbackBar
-          key={feedbackKey}
+          key={`${active}:${profileId ?? ""}`}
           tabId={active}
           memberId={memberId}
           profileId={profileId}

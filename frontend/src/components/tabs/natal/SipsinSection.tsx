@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useStorageValue } from "@/lib/useStorageValue";
 import type { NatalResult } from "@/types/analysis";
 import KkachiTip from "@/components/KkachiTip";
 import { SIPSIN_INFO, SIPSIN_CATEGORIES } from "./data";
@@ -10,15 +11,13 @@ interface Props {
 }
 
 export default function SipsinSection({ natal }: Props) {
-  const [sipsinOpen, setSipsinOpen] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem("kkachi_concept_sipsin") === "open") setSipsinOpen(true);
-  }, []);
+  const stored = useStorageValue("kkachi_concept_sipsin");
+  const [override, setOverride] = useState<boolean | null>(null);
+  const sipsinOpen = override ?? stored === "open";
 
   const toggleSipsin = () => {
     const next = !sipsinOpen;
-    setSipsinOpen(next);
+    setOverride(next);
     localStorage.setItem("kkachi_concept_sipsin", next ? "open" : "closed");
   };
 

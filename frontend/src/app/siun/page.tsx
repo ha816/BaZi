@@ -9,9 +9,10 @@ import MorningBrief from "@/components/MorningBrief";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
 import { track } from "@/lib/track";
 import { MEMBER_ID_KEY } from "@/lib/constants";
+import { useStorageValue } from "@/lib/useStorageValue";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import { getZodiacEmoji } from "@/lib/zodiac";
-import type { DailyFortune, Profile, HourlyWeather } from "@/types/analysis";
+import type { DailyDomainScore, DailyFortune, Profile, HourlyWeather } from "@/types/analysis";
 
 const DOMAIN_LABELS: Record<string, string> = {
   직업운: "직업운", 재물운: "재물운", 건강운: "건강운", 애정운: "애정운", 학업운: "학업운",
@@ -34,64 +35,52 @@ function toKorean(ganji: string | null | undefined) {
   return ganji.split("").map((c) => GANJI_KO[c] ?? c).join("");
 }
 
-function dayLabel(dateStr: string, idx: number) {
-  if (idx === 0) return "오늘";
-  if (idx === 1) return "내일";
-  if (idx === 2) return "모레";
-  const d = new Date(dateStr);
-  return ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
-}
-
 export default function SiunPage() {
   const [forecast, setForecast] = useState<DailyFortune[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [forecastLoading, setForecastLoading] = useState(false);
+  const storedMember = useStorageValue(MEMBER_ID_KEY);
+  const memberId = storedMember || null;
+  const loggedIn = !!memberId;
+  // 로딩은 effect 안 setState 대신 "무엇까지 불러왔나"로 파생한다
+  const [profilesLoaded, setProfilesLoaded] = useState(false);
+  const [forecastFor, setForecastFor] = useState<string | null>(null);
+  const loading = storedMember === null || (loggedIn && !profilesLoaded);
+  const forecastLoading = !!profile && forecastFor !== profile.id;
   const [activeTab, setActiveTab] = useState("오늘");
   // 지난 7일 "맞았어요?" — tab_id "daily:YYYY-MM-DD" → 1(맞음)/0(아님)
   const [reviews, setReviews] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const memberId = localStorage.getItem(MEMBER_ID_KEY);
+    if (storedMember === null) return; // 하이드레이션 전
     const src = new URLSearchParams(window.location.search).get("src");
-    track(src === "push" ? "push_click" : "daily_view", { logged_in: !!memberId });
-    if (memberId) {
-      setLoggedIn(true);
-      listProfiles(memberId)
-        .then((ps) => {
-          const sorted = [...ps].sort((a, b) => (a.is_self === b.is_self ? 0 : a.is_self ? -1 : 1));
-          setProfiles(sorted);
-          const self = sorted.find((p) => p.is_self) ?? sorted[0] ?? null;
-          setProfile(self);
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, []);
+    track(src === "push" ? "push_click" : "daily_view", { logged_in: !!storedMember });
+    if (!storedMember) return;
+    listProfiles(storedMember)
+      .then((ps) => {
+        const sorted = [...ps].sort((a, b) => (a.is_self === b.is_self ? 0 : a.is_self ? -1 : 1));
+        setProfiles(sorted);
+        setProfile(sorted.find((p) => p.is_self) ?? sorted[0] ?? null);
+      })
+      .catch(() => {})
+      .finally(() => setProfilesLoaded(true));
+  }, [storedMember]);
 
   useEffect(() => {
-    const memberId = localStorage.getItem(MEMBER_ID_KEY);
-    if (memberId && profile) {
-      setForecastLoading(true);
-      const start = new Date();
-      start.setDate(start.getDate() - 14);
-      const startStr = start.toLocaleDateString("en-CA");
-      getForecast(memberId, profile.id, 31, startStr)
-        .then((f) => { if (f) setForecast(f); })
-        .catch(() => {})
-        .finally(() => setForecastLoading(false));
-      getFeedbackMap(memberId, profile.id, "daily:")
-        .then(setReviews)
-        .catch(() => setReviews({}));
-    }
-  }, [profile]);
+    if (!memberId || !profile) return;
+    const start = new Date();
+    start.setDate(start.getDate() - 14);
+    const startStr = start.toLocaleDateString("en-CA");
+    Promise.all([
+      getForecast(memberId, profile.id, 31, startStr),
+      getFeedbackMap(memberId, profile.id, "daily:").catch(() => ({} as Record<string, number>)),
+    ])
+      .then(([f, r]) => { if (f) setForecast(f); setReviews(r); })
+      .catch(() => {})
+      .finally(() => setForecastFor(profile.id));
+  }, [memberId, profile]);
 
   const rateDay = (date: string, rating: number) => {
-    const memberId = localStorage.getItem(MEMBER_ID_KEY);
     if (!memberId || !profile) return;
     const tabId = `daily:${date}`;
     setReviews((r) => ({ ...r, [tabId]: rating }));
@@ -200,7 +189,7 @@ export default function SiunPage() {
             {/* 영역별 점수 */}
             {Object.keys(data.domain_scores).length > 0 && (
               <div className="grid grid-cols-2 gap-2">
-                {Object.entries(data.domain_scores).map(([key, ds]: [string, any]) => (
+                {Object.entries(data.domain_scores).map(([key, ds]: [string, DailyDomainScore]) => (
                   <div key={key} className="space-y-1">
                     <div className="flex justify-between text-xs">
                       <span className="text-[var(--color-ink-light)]">{DOMAIN_LABELS[key] ?? key}</span>

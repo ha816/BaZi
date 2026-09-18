@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import { MEMBER_ID_KEY } from "@/lib/constants";
+import { useStorageValue } from "@/lib/useStorageValue";
 
 const IconHome = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -66,18 +66,12 @@ const TABS_GUEST = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const storedMember = useStorageValue(MEMBER_ID_KEY);
 
-  useEffect(() => {
-    setLoggedIn(!!localStorage.getItem(MEMBER_ID_KEY));
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
+  if (storedMember === null) return null; // 하이드레이션 전 — 로그인 여부를 아직 모름
   if (pathname === "/chat" || pathname === "/compatibility/chat") return null;
 
-  const tabs = loggedIn ? TABS_LOGGED_IN : TABS_GUEST;
+  const tabs = storedMember ? TABS_LOGGED_IN : TABS_GUEST;
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-50 bg-[var(--color-card)] border-t border-[var(--color-border-light)] flex">

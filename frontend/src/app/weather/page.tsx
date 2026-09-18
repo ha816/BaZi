@@ -6,6 +6,7 @@ import { listProfiles, getDailyFortune } from "@/lib/api";
 import KkachiTip from "@/components/KkachiTip";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY } from "@/lib/constants";
+import { useStorageValue } from "@/lib/useStorageValue";
 import { ELEMENT_META } from "@/lib/elementColors";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -53,14 +54,14 @@ export default function WeatherPage() {
   const [displayCity, setDisplayCity] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [days, setDays] = useState<DayWeather[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
+  // 마지막으로 불러온 위치 키 — 현재 키와 다르면 로딩 중 (effect 안 setLoading 대체)
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const memberId = useStorageValue(MEMBER_ID_KEY) || null;
+  const loggedIn = !!memberId;
   const [yongshin, setYongshin] = useState<string | null>(null);
 
   useEffect(() => {
-    const memberId = localStorage.getItem(MEMBER_ID_KEY);
     if (!memberId) return;
-    setLoggedIn(true);
     listProfiles(memberId)
       .then((profiles) => {
         const self = profiles.find((p) => p.is_self) ?? profiles[0];
@@ -69,7 +70,7 @@ export default function WeatherPage() {
       })
       .then((f) => { if (f?.yongshin) setYongshin(f.yongshin); })
       .catch(() => {});
-  }, []);
+  }, [memberId]);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && "geolocation" in navigator) {
@@ -93,8 +94,10 @@ export default function WeatherPage() {
     }
   }, []);
 
+  const fetchKey = coords ? `${coords.lat},${coords.lon}` : city;
+  const loading = loadedKey !== fetchKey;
+
   useEffect(() => {
-    setLoading(true);
     const params = new URLSearchParams({ days: "14" });
     if (coords) {
       params.set("lat", String(coords.lat));
@@ -106,8 +109,8 @@ export default function WeatherPage() {
       .then((r) => r.json())
       .then((data) => setDays(Array.isArray(data) ? data : (data.days ?? [])))
       .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [city, coords]);
+      .finally(() => setLoadedKey(fetchKey));
+  }, [city, coords, fetchKey]);
 
   const meta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 

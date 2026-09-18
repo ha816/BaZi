@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { streamCompatibilityChat } from "@/lib/api";
+import { parseStored, useStorageValue } from "@/lib/useStorageValue";
 import type { CompatibilityInput } from "@/types/analysis";
 
 interface Message {
@@ -13,24 +14,15 @@ interface Message {
 
 export default function CompatibilityChatPage() {
   const router = useRouter();
-  const [input, setInput] = useState<CompatibilityInput | null>(null);
-  const [names, setNames] = useState<{ name1: string; name2: string }>({ name1: "", name2: "" });
+  const rawInput = useStorageValue("kkachi_compat_input", "session");
+  const rawNames = useStorageValue("kkachi_compat_names", "session");
+  const input = useMemo(() => parseStored<CompatibilityInput>(rawInput), [rawInput]);
+  const names = useMemo(() => parseStored<{ name1: string; name2: string }>(rawNames) ?? { name1: "", name2: "" }, [rawNames]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const rawInput = sessionStorage.getItem("kkachi_compat_input");
-    const rawNames = sessionStorage.getItem("kkachi_compat_names");
-    if (rawInput) {
-      try { setInput(JSON.parse(rawInput)); } catch { /* ignore */ }
-    }
-    if (rawNames) {
-      try { setNames(JSON.parse(rawNames)); } catch { /* ignore */ }
-    }
-  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

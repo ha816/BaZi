@@ -7,6 +7,7 @@ import type { Profile } from "@/types/analysis";
 import { listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import { MEMBER_ID_KEY } from "@/lib/constants";
+import { useStorageValue } from "@/lib/useStorageValue";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import ProfileForm from "@/components/ProfileForm";
 import ProfileCard from "@/components/ProfileCard";
@@ -15,7 +16,8 @@ const MAX_PROFILES = 10;
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [memberId, setMemberId] = useState<string | null>(null);
+  const storedMember = useStorageValue(MEMBER_ID_KEY);
+  const memberId = storedMember || null;
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -26,14 +28,13 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    const id = localStorage.getItem(MEMBER_ID_KEY);
-    if (!id) { router.replace("/join"); return; }
-    setMemberId(id);
-    listProfiles(id)
+    if (storedMember === null) return; // 하이드레이션 전
+    if (!storedMember) { router.replace("/join"); return; }
+    listProfiles(storedMember)
       .then(setProfiles)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [router]);
+  }, [storedMember, router]);
 
   if (loading) {
     return (

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useStorageValue } from "@/lib/useStorageValue";
 import type { NatalResult } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
 import PillarDetail from "@/components/PillarDetail";
@@ -14,15 +15,13 @@ interface Props {
 
 export default function PillarSection({ natal }: Props) {
   const meInfo = getElementInfo(natal.my_element.name);
-  const [sajuOpen, setSajuOpen] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem("kkachi_concept_saju") === "open") setSajuOpen(true);
-  }, []);
+  const stored = useStorageValue("kkachi_concept_saju");
+  const [override, setOverride] = useState<boolean | null>(null);
+  const sajuOpen = override ?? stored === "open";
 
   const toggleSaju = () => {
     const next = !sajuOpen;
-    setSajuOpen(next);
+    setOverride(next);
     localStorage.setItem("kkachi_concept_saju", next ? "open" : "closed");
   };
 
