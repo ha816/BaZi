@@ -3,8 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { listProfiles, getForecast } from "@/lib/api";
-import { WeeklyView } from "@/components/DailyFortune";
+import { listProfiles, getForecast, getFeedbackMap, postFeedback } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MorningBrief from "@/components/MorningBrief";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
@@ -51,6 +50,8 @@ export default function SiunPage() {
   const [loading, setLoading] = useState(true);
   const [forecastLoading, setForecastLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("오늘");
+  // 지난 7일 "맞았어요?" — tab_id "daily:YYYY-MM-DD" → 1(맞음)/0(아님)
+  const [reviews, setReviews] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const memberId = localStorage.getItem(MEMBER_ID_KEY);
@@ -83,8 +84,20 @@ export default function SiunPage() {
         .then((f) => { if (f) setForecast(f); })
         .catch(() => {})
         .finally(() => setForecastLoading(false));
+      getFeedbackMap(memberId, profile.id, "daily:")
+        .then(setReviews)
+        .catch(() => setReviews({}));
     }
   }, [profile]);
+
+  const rateDay = (date: string, rating: number) => {
+    const memberId = localStorage.getItem(MEMBER_ID_KEY);
+    if (!memberId || !profile) return;
+    const tabId = `daily:${date}`;
+    setReviews((r) => ({ ...r, [tabId]: rating }));
+    track("daily_review_rate", { rating, date });
+    postFeedback(memberId, profile.id, tabId, rating).catch(() => {});
+  };
 
   const todayStr = new Date().toLocaleDateString("en-CA");
   const todayIdx = forecast.findIndex(f => f.date === todayStr);
@@ -93,6 +106,10 @@ export default function SiunPage() {
   const tmrFortune = todayIdx !== -1 && todayIdx + 1 < forecast.length ? forecast[todayIdx+1] : null;
   const datFortune = todayIdx !== -1 && todayIdx + 2 < forecast.length ? forecast[todayIdx+2] : null;
   const sahFortune = todayIdx !== -1 && todayIdx + 3 < forecast.length ? forecast[todayIdx+3] : null;
+  // 지난 7일 — 최근 날짜가 위로
+  const pastWeek = todayIdx > 0 ? forecast.slice(Math.max(0, todayIdx - 7), todayIdx).reverse() : [];
+  const ratedCount = pastWeek.filter((d) => reviews[`daily:${d.date}`] !== undefined).length;
+  const hitCount = pastWeek.filter((d) => reviews[`daily:${d.date}`] === 1).length;
 
   const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
@@ -319,7 +336,68 @@ export default function SiunPage() {
     );
   };
 
-  const tabs = ["오늘", "내일", "모레", "글피"];
+  const renderPastWeek = () => (
+    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-5 py-4 space-y-1">
+        <p className="font-heading text-base font-semibold text-[var(--color-ink)]">까치가 한 말, 맞았나요?</p>
+        <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
+          지난 7일의 아침 한 마디를 돌아보고 맞았는지 표시해 주세요.
+          {ratedCount > 0 && <> 표시한 {ratedCount}일 중 <span className="font-semibold text-[var(--color-gold)]">{hitCount}일</span>이 맞았어요.</>}
+        </p>
+      </div>
+
+      {pastWeek.length === 0 && (
+        <p className="py-8 text-center text-sm text-[var(--color-ink-faint)]">아직 돌아볼 지난 일진이 없어요.</p>
+      )}
+
+      {pastWeek.map((day) => {
+        const d = new Date(day.date + "T12:00:00");
+        const dateLabel = `${d.getMonth() + 1}/${d.getDate()} (${["일", "월", "화", "수", "목", "금", "토"][d.getDay()]})`;
+        const stemEl = getElementInfo(day.day_pillar[0] ?? "");
+        const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
+        const rating = reviews[`daily:${day.date}`];
+        return (
+          <div key={day.date} className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-5 py-4 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-baseline gap-2 min-w-0">
+                <span className="text-xs font-bold text-[var(--color-ink-faint)] shrink-0">{dateLabel}</span>
+                <span className="font-heading text-lg font-bold leading-none" style={{ color: stemEl.color }}>{day.day_pillar}</span>
+                <span className="text-[11px] text-[var(--color-ink-faint)]">{toKorean(day.day_pillar)}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-base">{lMeta.icon}</span>
+                <span className="text-sm font-black text-[var(--color-ink)]">{day.total_score}</span>
+              </div>
+            </div>
+            <MorningBrief data={day} dayLabel="이날" stripName={profile?.name} compact />
+            <div className="flex items-center justify-between gap-2 border-t border-[var(--color-border-light)] pt-3">
+              <span className="text-xs text-[var(--color-ink-muted)]">{rating === undefined ? "맞았어요?" : rating === 1 ? "맞았다고 표시했어요" : "아니었다고 표시했어요"}</span>
+              <div className="flex gap-1.5">
+                {[{ v: 1, icon: "👍", label: "맞았어요" }, { v: 0, icon: "👎", label: "아니에요" }].map(({ v, icon, label }) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => rateDay(day.date, v)}
+                    aria-pressed={rating === v}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                      rating === v
+                        ? "border-[var(--color-gold)] bg-[var(--color-gold-light)]/20 text-[var(--color-gold)]"
+                        : "border-[var(--color-border-light)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                    }`}
+                  >
+                    <span>{icon}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const tabs = ["지난주", "오늘", "내일", "모레", "글피"];
 
   return (
     <main className="min-h-screen py-6 px-4 pb-24">
@@ -398,6 +476,7 @@ export default function SiunPage() {
           </div>
         )}
 
+        {!loading && !forecastLoading && loggedIn && activeTab === "지난주" && renderPastWeek()}
         {!loading && !forecastLoading && loggedIn && activeTab === "오늘" && todayFortune && renderDailyContent(todayFortune, "오늘")}
         {!loading && !forecastLoading && loggedIn && activeTab === "내일" && tmrFortune && renderDailyContent(tmrFortune, "내일")}
         {!loading && !forecastLoading && loggedIn && activeTab === "모레" && datFortune && renderDailyContent(datFortune, "모레")}

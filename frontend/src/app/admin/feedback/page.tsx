@@ -15,6 +15,7 @@ const TAB_META: Record<string, { label: string; emoji: string }> = {
   zodiac:   { label: "십이지신",    emoji: "🐾" },
   fengshui: { label: "풍수",        emoji: "🧭" },
   ai:       { label: "AI 풀이",     emoji: "✨" },
+  daily:    { label: "일진 맞았어요?", emoji: "📅" },
 };
 
 function rateColor(rate: number, total: number): string {

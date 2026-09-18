@@ -221,15 +221,29 @@ class FeedbackRepo(FeedbackPort):
             session.add(f)
             await session.commit()
 
+    async def list_by_profile(self, profile_id: UUID, prefix: str) -> dict[str, int]:
+        async with self._sf() as session:
+            rows = await session.execute(
+                select(InterpretFeedbackModel.tab_id, InterpretFeedbackModel.rating)
+                .where(
+                    InterpretFeedbackModel.profile_id == profile_id,
+                    InterpretFeedbackModel.tab_id.startswith(prefix),
+                )
+                .order_by(InterpretFeedbackModel.created_at)
+            )
+            return {tab_id: rating for tab_id, rating in rows}  # 같은 날을 다시 누르면 마지막 값이 남는다
+
     async def summary(self) -> list[FeedbackSummary]:
+        # 'daily:2026-09-17'처럼 날짜가 붙은 tab_id는 ':' 앞부분('daily')으로 묶어 집계
+        group_key = func.split_part(InterpretFeedbackModel.tab_id, ":", 1)
         async with self._sf() as session:
             stmt = (
                 select(
-                    InterpretFeedbackModel.tab_id,
+                    group_key.label("tab_id"),
                     func.count().label("total"),
                     func.sum(InterpretFeedbackModel.rating).label("positive"),
                 )
-                .group_by(InterpretFeedbackModel.tab_id)
+                .group_by(group_key)
             )
             rows = (await session.execute(stmt)).all()
             return [

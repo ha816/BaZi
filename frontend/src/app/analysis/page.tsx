@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
-import { analyzeChart, analyzeProfileChart, createProfile, listProfiles } from "@/lib/api";
+import { analyzeChart, analyzeProfileChart, createProfile, listAnalysisYears, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import ResultSlides from "@/components/ResultSlides";
@@ -20,6 +20,8 @@ export default function AnalysisPage() {
   const [mode, setMode] = useState<"direct" | "profile">("direct");
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [profileYear, setProfileYear] = useState(new Date().getFullYear());
+  // 선택한 프로필에 저장된 연도별 해석 — "지난 연도 분석 다시 보기" (ROADMAP R6)
+  const [cachedYears, setCachedYears] = useState<number[]>([]);
   const [detectedCity, setDetectedCity] = useState<string | undefined>();
   const [detectedLongitude, setDetectedLongitude] = useState<number | undefined>();
 
@@ -73,6 +75,11 @@ export default function AnalysisPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (!memberId || !selectedProfileId) { setCachedYears([]); return; }
+    listAnalysisYears(memberId, selectedProfileId).then(setCachedYears).catch(() => setCachedYears([]));
+  }, [memberId, selectedProfileId]);
+
   const handleSaveProfile = async (n: string, gender: "male" | "female", birth_dt: string, city: string, birthHourUnknown: boolean) => {
     if (!memberId) return;
     await createProfile(memberId, { name: n, gender, birth_dt, city, birth_hour_unknown: birthHourUnknown });
@@ -97,17 +104,18 @@ export default function AnalysisPage() {
     }
   };
 
-  const handleProfileSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const runProfileAnalysis = async (year: number) => {
     if (!memberId || !selectedProfileId) return;
+    setProfileYear(year);
     setLoading(true);
     setError(null);
     try {
       const profile = profiles.find((p) => p.id === selectedProfileId);
-      const data = await analyzeProfileChart(memberId, selectedProfileId, profileYear);
-      sessionStorage.setItem("kkachi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year: profileYear }));
+      const data = await analyzeProfileChart(memberId, selectedProfileId, year);
+      sessionStorage.setItem("kkachi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year }));
+      setCachedYears((ys) => (ys.includes(year) ? ys : [...ys, year].sort((a, b) => b - a)));
       if (profile) {
-        const input: AnalysisInput = { birth_dt: profile.birth_dt, gender: profile.gender, analysis_year: profileYear, city: profile.city, hour_unknown: profile.birth_hour_unknown };
+        const input: AnalysisInput = { birth_dt: profile.birth_dt, gender: profile.gender, analysis_year: year, city: profile.city, hour_unknown: profile.birth_hour_unknown };
         sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
         sessionStorage.setItem("kkachi_analysis_name", profile.name);
         setName(profile.name);
@@ -120,6 +128,13 @@ export default function AnalysisPage() {
       setLoading(false);
     }
   };
+
+  const handleProfileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runProfileAnalysis(profileYear);
+  };
+
+  const otherYears = cachedYears.filter((y) => y !== profileYear);
 
   if (result && !loading) {
     return (
@@ -137,6 +152,22 @@ export default function AnalysisPage() {
               다시 입력
             </button>
           </header>
+          {profileId && otherYears.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-[var(--color-ink-faint)]">지난 연도 다시 보기</span>
+              {otherYears.map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  onClick={() => runProfileAnalysis(y)}
+                  className="px-3 py-1 rounded-full border border-[var(--color-border-light)] text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] hover:border-[var(--color-gold)] transition-colors"
+                >
+                  {y}년
+                </button>
+              ))}
+              <span className="px-3 py-1 rounded-full bg-[var(--color-gold-light)]/20 text-[var(--color-gold)] font-semibold">{profileYear}년 보는 중</span>
+            </div>
+          )}
           <Suspense fallback={<LoadingSpinner />}>
             <ResultSlides data={result} name={name} memberId={memberId} profileId={profileId} />
           </Suspense>
@@ -217,6 +248,21 @@ export default function AnalysisPage() {
                 />
               </label>
             </div>
+            {otherYears.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="text-[var(--color-ink-faint)]">저장된 지난 분석</span>
+                {otherYears.map((y) => (
+                  <button
+                    key={y}
+                    type="button"
+                    onClick={() => runProfileAnalysis(y)}
+                    className="px-3 py-1 rounded-full border border-[var(--color-border-light)] text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] hover:border-[var(--color-gold)] transition-colors"
+                  >
+                    {y}년 다시 보기
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               type="submit"
               disabled={loading}

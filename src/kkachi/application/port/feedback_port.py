@@ -17,4 +17,8 @@ class FeedbackPort(ABC):
     async def save(self, profile_id: UUID, tab_id: str, rating: int) -> None: ...
 
     @abstractmethod
+    async def list_by_profile(self, profile_id: UUID, prefix: str) -> dict[str, int]:
+        """prefix로 시작하는 tab_id → 가장 최근 rating. 일진 '맞았어요?'(daily:YYYY-MM-DD) 표시용."""
+
+    @abstractmethod
     async def summary(self) -> list[FeedbackSummary]: ...

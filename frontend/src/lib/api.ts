@@ -258,6 +258,17 @@ export async function postFeedback(
   );
 }
 
+export async function getFeedbackMap(memberId: string, profileId: string, prefix = "daily:"): Promise<Record<string, number>> {
+  return request<Record<string, number>>(
+    `/members/${memberId}/profiles/${profileId}/feedback?prefix=${encodeURIComponent(prefix)}`
+  );
+}
+
+export async function listAnalysisYears(memberId: string, profileId: string): Promise<number[]> {
+  const rows = await request<{ year: number; created_at: string }[]>(`/members/${memberId}/profiles/${profileId}/analyses`);
+  return rows.map((r) => r.year);
+}
+
 export interface FeedbackSummary {
   tab_id: string;
   total: number;

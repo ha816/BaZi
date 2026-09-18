@@ -160,6 +160,17 @@ async def get_forecast(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@profile_router.get("/{profile_id}/analyses")
+@inject
+async def list_analyses(
+    member_id: UUID,
+    profile_id: UUID,
+    svc: ProfileService = Depends(Provide[Container.profile_service]),
+) -> list[dict]:
+    """캐시된 연도별 해석 목록 — '지난 연도 분석 다시 보기' (ROADMAP R6)."""
+    return [{"year": a.year, "created_at": a.created_at.isoformat()} for a in await svc.list_analyses(profile_id)]
+
+
 class FeedbackRequest(BaseModel):
     tab_id: str
     rating: int
@@ -175,3 +186,15 @@ async def post_feedback(
 ) -> dict:
     await repo.save(profile_id, req.tab_id, req.rating)
     return {"success": True}
+
+
+@profile_router.get("/{profile_id}/feedback")
+@inject
+async def list_feedback(
+    member_id: UUID,
+    profile_id: UUID,
+    prefix: str = "daily:",
+    repo: FeedbackPort = Depends(Provide[Container.feedback_repo]),
+) -> dict[str, int]:
+    """prefix로 시작하는 tab_id → rating. 지난 7일 '맞았어요?' 표시에 쓴다 (ROADMAP R6)."""
+    return await repo.list_by_profile(profile_id, prefix)

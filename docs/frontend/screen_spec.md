@@ -83,10 +83,12 @@ app/layout.tsx
 /siun
 ├── [비로그인] CTA
 ├── 프로필 전환 (is_self 우선)
-├── 탭: 오늘 | 내일 | 주간
-│   ├── DailyFortune.DetailView     # 총점·레벨·일진·영역별 점수·팁·날씨 배지·시운 그리드
-│   └── DailyFortune.WeeklyView
-└── 좋은 시간대(시운 타임라인)
+├── PushSubscribeButton             # 아침 알림 켜기/끄기
+├── 탭: 지난주 | 오늘 | 내일 | 모레 | 글피
+│   ├── 지난주                       # 지난 7일 카드 — 날짜·일진·점수 + MorningBrief + "맞았어요?" 👍/👎 (R6)
+│   └── 일진 카드                    # MorningBrief 히어로 → 일진·종합 → 대운/세운/월운 그리드 → 영역별 점수 → 배지·팁
+├── 이 시간대가 좋아요 (오늘만, 시간별 오행 × 용신)
+└── 주간 시운 (7일 요약)
 
 /weather
 ├── 위치 표시 + 도시 검색 (GPS → ipapi → Seoul)
@@ -234,8 +236,9 @@ PersonCard × 2 (프로필/직접) + 관계 유형(lover|friend|family) + 연도
 
 - `listProfiles` → is_self 우선, 프로필 전환 UI
 - `getForecast(memberId, profileId, 31, today-14d)` → 과거 14일 + 미래 포함 31일 (백엔드 `days` 최대 35)
-- 탭: 오늘 · 내일 · 주간(`WeeklyView`)
-- 일진 카드: 총점·레벨·일진 간지(한글 변환)·영역별 점수·팁·날씨 배지·절기·손없는 날·시운 그리드(대운/세운/월운/일운 용신 여부)
+- 탭: 지난주 · 오늘 · 내일 · 모레 · 글피
+- 지난주(R6): 지난 7일을 최근순으로 카드 나열. 각 카드 = 날짜·일진·점수 + `MorningBrief`(첫 "오늘"→"이날") + "맞았어요?" 👍/👎. 누르면 `POST …/feedback {tab_id:"daily:YYYY-MM-DD"}`, 진입 시 `GET …/feedback?prefix=daily:`로 이미 표시한 값 복원. 상단에 "표시한 N일 중 M일이 맞았어요"
+- 일진 카드: 아침 한 마디·총점·레벨·일진 간지(한글 변환)·영역별 점수·팁·날씨 배지·절기·손없는 날·시운 그리드(대운/세운/월운 용신 여부)
 
 ---
 
@@ -292,7 +295,7 @@ idle → preview → loading → result
 | ElementRadar / OhengAnalysis / PillarOhengGrid / PillarDetail / OhaengRelationDiagram | 오행·팔자 시각화 | NatalTab, DaeunTab |
 | OhengPairDiagram / PillarPairDiagram | 두 사주 비교 | CompatibilityResult |
 | DaeunTimeline / DaeunSeunTable | 대운·세운 | DaeunTab |
-| DailyFortune (DetailView · WeeklyView · Panel) | 일진 패널 | /siun, 홈 |
+| MorningBrief | 아침 한 마디(헤드라인·할 것·피할 것) | 홈, /siun |
 | FeedPost | 피드 카드 레이아웃 | 홈 |
 | PersonCard / ProfileCard / ProfileForm | 입력·프로필 | 궁합, 프로필 |
 | ResultSlides / CompatibilityResult | 결과 오케스트레이터 | /analysis, /compatibility |

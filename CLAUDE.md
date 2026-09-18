@@ -105,7 +105,7 @@ BaZi/
 │       ├── inner/
 │       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · chat · stream-report
 │       │   ├── member_controller.py        # /members
-│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·analyze·daily·forecast·feedback
+│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·analyze·analyses·daily·forecast·feedback(POST/GET)
 │       │   ├── compatibility_controller.py # /compatibility — ""·direct·chat·narrative
 │       │   ├── payment_controller.py       # /payments — prepare·confirm
 │       │   ├── palmistry_controller.py     # POST /palmistry/analyze (MediaPipe 랜드마크 + OpenCV 손금선 밀도)
@@ -134,7 +134,7 @@ BaZi/
 │   │   ├── chat/page.tsx            # 까치 상담 풀스크린 챗 (sessionStorage 입력값 → /kkachi/chat)
 │   │   ├── compatibility/page.tsx   # 궁합 — PersonCard×2 · 관계 유형 · 스트리밍 종합해석 · ?p1=&p2= 딥링크
 │   │   ├── compatibility/chat/page.tsx
-│   │   ├── siun/page.tsx            # 시운(時運) — 아침 한 마디, 알림 켜기(PushSubscribeButton), 프로필 전환, 오늘~글피, 14일 전~31일 예보
+│   │   ├── siun/page.tsx            # 시운(時運) — 아침 한 마디, 알림 켜기(PushSubscribeButton), 프로필 전환, 지난주(맞았어요? 👍/👎)·오늘~글피, 14일 전~31일 예보
 │   │   ├── manifest.ts              # PWA 매니페스트 (/manifest.webmanifest)
 │   │   ├── weather/page.tsx         # 날씨 오행 (GPS → ipapi → Seoul), 로그인 시 용신 팁
 │   │   ├── palmistry/page.tsx       # 손금 (idle → preview → loading → result)
@@ -259,6 +259,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 
 ### ③ 피드백 루프 (Feedback Loop) — 구현됨
 - `ResultSlides` 하단 FeedbackBar 👍/👎 → `POST .../feedback {tab_id, rating}` → `interpret_feedbacks`
+- 시운 "지난주" 탭의 일진 회고("맞았어요?")도 같은 테이블에 `tab_id="daily:YYYY-MM-DD"`로 저장. 대시보드에서는 `daily` 한 줄로 집계 (R6)
 - `/admin/feedback` 대시보드가 긍정률 낮은 탭 순으로 정렬
 - 다음: 낮은 탭의 Interpreter부터 개선
 
@@ -299,9 +300,11 @@ GET    /{pid}
 PATCH  /{pid}                { name, gender, birth_dt, city, birth_hour_unknown } — 출생정보 변경 시 analyses·fortunes 캐시 삭제
 DELETE /{pid}                → 204 (is_self 프로필은 409)
 POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선)
+GET    /{pid}/analyses       → [{ year, created_at }]  캐시된 연도 목록 — "지난 연도 다시 보기" (R6)
 GET    /{pid}/daily          → Fortune dict (오늘, fortunes 캐시 + 날씨 없으면 재계산)
 GET    /{pid}/forecast       ?days=7&start_date=YYYY-MM-DD → Fortune[] (days 최대 35, 과거 날짜 가능)
-POST   /{pid}/feedback       { tab_id, rating } → { success }
+POST   /{pid}/feedback       { tab_id, rating } → { success }   (일진 회고는 tab_id="daily:YYYY-MM-DD")
+GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_id는 마지막 값)
 
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
@@ -318,7 +321,7 @@ GET  /weather                ?city=Seoul&days=7&lat&lon → DailyWeather[] (days
 POST /palmistry/analyze      multipart image → { hand_element, hand_type_korean, finger_ratio, aspect_ratio, line_scores{heart,head,life}, blocks[] }
 POST /payments/prepare       { member_id, feature_type: deep_analysis|daily_fortune|compatibility } → { order_id, amount, feature_type, order_name }
 POST /payments/confirm       { payment_key, order_id, amount } → Toss confirm → { success }   (프론트 결제 게이트는 제거됨)
-GET  /admin/feedback/summary → [{ tab_id, total, positive, negative, positive_rate }] 긍정률 오름차순
+GET  /admin/feedback/summary → [{ tab_id, total, positive, negative, positive_rate }] 긍정률 오름차순. tab_id는 ':' 앞까지로 묶음(daily:* → daily)
 POST /events                 { session_id, name(snake_case), member_id?, props? } → 202   (프론트 lib/track.ts)
 
 # 아침 알림 (prefix /push) — VAPID env 미설정 시 503
@@ -467,7 +470,7 @@ erDiagram
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
 | `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 선택 |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
-| `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
+| `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 지난주(지난 7일 아침 한 마디 + "맞았어요?" 👍/👎, R6)·오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률 대시보드 (인증 없음) | — |
@@ -479,7 +482,7 @@ erDiagram
 
 ### 분석 입력 흐름 (`/analysis`)
 - **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. **"프로필 저장" 버튼을 먼저 눌러야 "분석 시작" 활성화** (로그인 시 실제 `POST /profiles`, 비로그인 시 확인 단계 역할). → `POST /kkachi/interpret`
-- **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시)
+- **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시). `GET …/analyses`로 받은 저장된 연도는 폼·결과 상단에 "지난 연도 다시 보기" 칩 (R6)
 - 성공 시 `sessionStorage`에 저장 → 재진입 시 자동 재분석, `/chat`·AI 풀이 탭이 재사용
 
 ### sessionStorage 키
