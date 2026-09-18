@@ -25,8 +25,11 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 55 tests
+uv run pytest            # 79 tests
 cd frontend && npx tsc --noEmit
+
+# 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
+bash scripts/deploy.sh   # 프론트 production 빌드 → backend·frontend 재기동 → 헬스체크. 상세 docs/DEPLOY_PUSH.md, ~/kkachi/README.md
 ```
 
 ### 설정·환경변수
@@ -45,7 +48,8 @@ cd frontend && npx tsc --noEmit
 
 - `src/kkachi/resource/hand_landmarker.task` (MediaPipe 손 랜드마크 모델, 7.8MB)는 **git 미추적** — 없으면 `/palmistry/analyze` 요청 시 실패. README의 curl 명령으로 다운로드.
 - `frontend/next.config.ts`: `/api/*` → `127.0.0.1:8000` rewrite, tailscale 호스트 `allowedDevOrigins`.
-- 이 머신은 `docker compose` 플러그인이 없고 `docker-compose` 바이너리만 있음 — `scripts/db.sh`가 둘을 자동 감지하므로 스크립트를 쓴다.
+- 이 머신은 `docker compose` 플러그인이 없고 `docker-compose` 바이너리만 있음 — `scripts/db.sh`가 둘을 자동 감지하므로 스크립트를 쓴다. launchd `com.kkachi.db`·`~/bin/kkachi-pg-backup.sh`도 같은 이유로 db.sh/자동 감지를 쓴다 (2026-09-18 수정).
+- 베타 프론트는 `next start`(production 빌드)로 떠 있다. `npm run dev`가 `.next`를 지우므로 베타를 살려둔 채 개발하려면 다른 포트·다른 체크아웃에서 하거나, 끝나고 `bash scripts/deploy.sh`로 다시 빌드한다.
 
 ### DB 작업 규칙 (`/db` 스킬, `.claude/skills/db/SKILL.md`)
 - 기동·마이그레이션·상태는 `bash scripts/db.sh <cmd>` 로만 한다. 손으로 `docker-compose up` + `alembic upgrade` 를 나눠 치지 않는다.
@@ -60,7 +64,7 @@ BaZi/
 ├── alembic/versions/            # 8개 마이그레이션 (아래 DB 스키마 참고). env.py 는 KKACHI_DB_URL → local.toml 순으로 URL 결정
 ├── docker/docker-compose.yml    # postgres:17 + pg_isready healthcheck, db/user/pw = bazi
 ├── scripts/db.sh                # DB up/status/migrate/reset/down/logs/sql — /db 스킬이 호출
-├── scripts/send_daily_push.py   # 아침 알림 발송 (cron 07:00) · vapid_keygen.py VAPID 키 생성
+├── scripts/send_daily_push.py   # 아침 알림 발송 (launchd 07:00) · vapid_keygen.py VAPID 키 생성 · deploy.sh 베타 반영(빌드+재기동)
 ├── .claude/skills/db/SKILL.md   # /db 스킬: 서브커맨드 선택·실패 해석·reset 확인 규칙
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표

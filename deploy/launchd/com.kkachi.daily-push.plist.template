@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  매일 07:00 아침 알림 발송 (ROADMAP R4). 설치 방법은 docs/DEPLOY_PUSH.md 참고.
+  VAPID 키는 plist(644)에 두지 않고 __VAPID_ENV__ 파일(600, `export KKACHI_VAPID_*=...` 3줄)에서 source 한다.
+  __PLACEHOLDER__ 를 실제 값으로 바꾼 뒤 ~/Library/LaunchAgents/ 로 복사하고 launchctl bootstrap.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.kkachi.daily-push</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-c</string>
+    <string>source __VAPID_ENV__ &amp;&amp; exec __UV_PATH__ run python scripts/send_daily_push.py</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__PROJECT_DIR__</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin</string>
+  </dict>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>7</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/kkachi/daily-push.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/kkachi/daily-push.err.log</string>
+</dict>
+</plist>
