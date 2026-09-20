@@ -94,3 +94,12 @@ def test_solar_term_tip_is_first_and_name_param_does_not_leak():
     assert f.solar_term == "입춘(立春)"
     assert f.tips[0].startswith("오늘은 입춘(立春)입니다.")
     assert f.headline.startswith("승민님, ")
+
+
+def test_day_pillar_never_geocodes(monkeypatch):
+    def _boom(*args, **kwargs):
+        raise AssertionError("외부 지오코딩(Nominatim) 호출 금지")
+
+    monkeypatch.setattr("geopy.geocoders.Nominatim.geocode", _boom)
+
+    assert compute_fortune(NATAL, START).level in LEVELS

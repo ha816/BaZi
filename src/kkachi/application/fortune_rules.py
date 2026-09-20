@@ -91,7 +91,7 @@ def _level_domain(score: int) -> str:
 def _get_day_stembrach(today: date) -> StemBranch:
     result = _sajupy_calculate(
         year=today.year, month=today.month, day=today.day,
-        hour=12, minute=0, city="Seoul",
+        hour=12, minute=0, use_solar_time=False,
     )
     return StemBranch.from_text(result["day_pillar"])
 

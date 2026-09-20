@@ -77,3 +77,15 @@ def test_pillars_property():
     assert len(info.saju.pillars.values()) == 4
     assert all(len(str(p)) == 2 for p in info.saju.pillars.values())
     assert sum(info.element_stats.values()) == 8
+
+
+def test_unknown_city_never_geocodes(monkeypatch):
+    def _boom(*args, **kwargs):
+        raise AssertionError("외부 지오코딩(Nominatim) 호출 금지")
+
+    monkeypatch.setattr("geopy.geocoders.Nominatim.geocode", _boom)
+    user = User(name="테스트", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30), city="Songpa-gu")
+
+    info = analyze(user)
+
+    assert [str(p) for p in info.saju.pillars.values()] == ["庚午", "丙戌", "戊申", "己未"]

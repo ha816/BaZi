@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 83 tests
+uv run pytest            # 85 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영

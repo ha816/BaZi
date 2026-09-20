@@ -167,14 +167,14 @@ _CITY_LONGITUDE: dict[str, float] = {
 }
 
 
-def _resolve_longitude(city: str, longitude: float | None) -> tuple[str | None, float | None]:
-    """longitude가 없으면 내부 룩업으로 해결, 그것도 없으면 city 문자열 그대로 반환."""
+def _resolve_longitude(city: str, longitude: float | None) -> float:
+    """longitude가 없으면 내부 룩업, 그것도 없으면 서울 경도.
+
+    sajupy에 city를 넘기면 Nominatim을 동기 호출해 이벤트 루프를 막고 429로 멈추므로 항상 경도만 넘긴다.
+    """
     if longitude is not None:
-        return None, longitude
-    resolved = _CITY_LONGITUDE.get(city.strip().lower())
-    if resolved is not None:
-        return None, resolved
-    return city, None
+        return longitude
+    return _CITY_LONGITUDE.get(city.strip().lower(), _CITY_LONGITUDE["seoul"])
 
 
 def cal_saju(
@@ -189,12 +189,10 @@ def cal_saju(
     sajupy는 시각이 필수라 미상이어도 birth_dt(프론트 기본 정오)로 계산하고, include_hour=False면 시주만 버린다.
     정오 기준이면 자시(子時) 경계에 걸리지 않아 일주(日柱)는 안전하다.
     """
-    resolved_city, resolved_lon = _resolve_longitude(city, longitude)
     result = _sajupy_calculate(
         year=birth_dt.year, month=birth_dt.month, day=birth_dt.day,
         hour=birth_dt.hour, minute=birth_dt.minute,
-        city=resolved_city,
-        longitude=resolved_lon,
+        longitude=_resolve_longitude(city, longitude),
         use_solar_time=use_solar_time,
     )
     return Saju(
