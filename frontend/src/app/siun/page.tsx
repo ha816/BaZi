@@ -1,6 +1,7 @@
 // Optimized Siun Timeline
 "use client";
 
+import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoginRequired from "@/components/LoginRequired";
 import { useEffect, useState } from "react";
@@ -431,6 +432,18 @@ export default function SiunPage() {
         {/* 비로그인 */}
         {!loading && !loggedIn && (
           <LoginRequired message="로그인하면 나만의 오늘 운세를 볼 수 있어요" next="/siun" />
+        )}
+
+        {/* 로그인했지만 프로필 없음 → 기본 프로필 등록 안내 */}
+        {!loading && loggedIn && profiles.length === 0 && (
+          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-8 flex flex-col items-center gap-4 text-center">
+            <p className="text-5xl">🪶</p>
+            <p className="text-base font-semibold text-[var(--color-ink)]">기본 프로필이 아직 없어요</p>
+            <p className="text-sm text-[var(--color-ink-muted)]">나의 사주를 등록하면 매일 아침 한 마디를 볼 수 있어요.</p>
+            <Link href="/profile" className="px-6 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-sm font-semibold">
+              기본 프로필 등록하기
+            </Link>
+          </div>
         )}
 
         {/* 탭 바 */}

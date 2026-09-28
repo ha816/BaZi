@@ -361,16 +361,16 @@ function EmptyProfilePost() {
       name="사주까치"
       handle="sajukkachi"
       avatarChar="까"
-      caption="프로필을 등록하면 매일 오늘의 운세를 피드에서 바로 확인할 수 있어요. 🌟"
+      caption="기본 프로필이 아직 없어요. 나의 사주를 등록하면 매일 아침 한 마디를 피드에서 바로 볼 수 있어요. 🌟"
       actions={
         <Link href="/profile" className="block text-center py-2.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors">
-          프로필 추가하기
+          기본 프로필 등록하기
         </Link>
       }
     >
       <div className="px-4 py-8 bg-[var(--color-ivory-warm)] text-center">
         <p className="font-heading text-4xl mb-2">🪶</p>
-        <p className="text-sm text-[var(--color-ink-faint)]">아직 등록된 프로필이 없어요</p>
+        <p className="text-sm text-[var(--color-ink-faint)]">첫 프로필이 곧 기본 프로필(나)이 돼요</p>
       </div>
     </FeedPost>
   );

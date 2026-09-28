@@ -22,6 +22,9 @@ class FakeProfileService:
     async def get_profile(self, profile_id):
         return PROFILE if profile_id == PROFILE.id else None
 
+    async def set_self_profile(self, member_id, profile_id):
+        return Profile(**{**vars(PROFILE), "is_self": True})
+
     async def list_analyses(self, profile_id):
         return [Analysis(id=uuid4(), profile_id=profile_id, year=y, result={}, created_at=datetime(2026, 1, 1)) for y in (2026, 2025)]
 
@@ -86,3 +89,9 @@ def test_admin_requires_token_only_when_configured(client, monkeypatch):
     assert client.get("/admin/feedback/summary").status_code == 401
     assert client.get("/admin/feedback/summary", headers={"X-Admin-Token": "wrong"}).status_code == 401
     assert client.get("/admin/feedback/summary", headers={"X-Admin-Token": "secret"}).status_code == 200
+
+
+def test_set_self_profile_is_owner_only(client):
+    res = client.post(f"/members/{OWNER}/profiles/{PROFILE.id}/set-self")
+    assert res.status_code == 200 and res.json()["is_self"] is True
+    assert client.post(f"/members/{STRANGER}/profiles/{PROFILE.id}/set-self").status_code == 404

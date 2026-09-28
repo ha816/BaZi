@@ -24,6 +24,9 @@ class _FakeProfilePort(ProfilePort):
     def __init__(self, profiles: dict[UUID, Profile]):
         self._profiles = profiles
 
+    async def set_self(self, member_id, profile_id):
+        raise NotImplementedError
+
     async def create(self, member_id, name, gender, birth_dt, city, is_self=False):
         pid = uuid4()
         p = Profile(id=pid, member_id=member_id, name=name, gender=gender, birth_dt=birth_dt, city=city, created_at=datetime.now(), is_self=is_self)

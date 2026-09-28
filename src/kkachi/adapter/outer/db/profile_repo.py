@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -82,6 +82,19 @@ class ProfileRepo(ProfilePort):
             p.birth_dt = birth_dt
             p.city = city
             p.birth_hour_unknown = birth_hour_unknown
+            await session.commit()
+            await session.refresh(p)
+            return _to_profile(p)
+
+    async def set_self(self, member_id: UUID, profile_id: UUID) -> Profile:
+        async with self._sf() as session:
+            p = await session.get(ProfileModel, profile_id)
+            if p is None or p.member_id != member_id:
+                raise ValueError(f"Profile {profile_id} not found")
+            await session.execute(
+                update(ProfileModel).where(ProfileModel.member_id == member_id).values(is_self=False)
+            )
+            p.is_self = True
             await session.commit()
             await session.refresh(p)
             return _to_profile(p)

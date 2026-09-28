@@ -163,7 +163,7 @@ BaZi/
 │   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
 │   │   ├── OhengPairDiagram · PillarPairDiagram   # 궁합 비교 다이어그램
 │   │   ├── DaeunTimeline · DaeunSeunTable · DomainBarChart · ScoreBar
-│   │   ├── LoginRequired.tsx        # 로그인 필수 페이지의 비로그인 안내 카드 (시운·궁합) → /join?next=
+│   │   ├── LoginRequired.tsx        # 로그인 필수 페이지의 비로그인 안내 카드 (시운·궁합) → /join (복귀 경로는 lib/loginNext)
 │   │   ├── PageHeader.tsx           # 페이지 제목 줄 공통(제목 2xl·설명 sm·우측 액션). 페이지 틀은 globals.css .page/.page__inner (홈·챗 제외)
 │   │   ├── SectionHeader · CollapsibleSectionHeader · InlineCollapsibleHeader · InterpretSection
 │   │   ├── KkachiTip · TermBadge · Tooltip · FeedPost · BottomNav · LoadingSpinner
@@ -316,6 +316,7 @@ GET    /{pid}
 PATCH  /{pid}                { name, gender, birth_dt, city, birth_hour_unknown } — 출생정보 변경 시 analyses·fortunes 캐시 삭제
 DELETE /{pid}                → 204 (is_self 프로필은 409)
 POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선)
+POST   /{pid}/set-self       → Profile  기본 프로필(나) 지정 — 같은 회원의 다른 프로필은 is_self=false (캐시 유지)
 GET    /{pid}/analyses       → [{ year, created_at }]  캐시된 연도 목록 — "지난 연도 다시 보기" (R6)
 GET    /{pid}/daily          → Fortune dict (오늘, fortunes 캐시 + 날씨 없으면 재계산)
 GET    /{pid}/forecast       ?days=7&start_date=YYYY-MM-DD → Fortune[] (days 최대 35, 과거 날짜 가능)
@@ -484,13 +485,13 @@ erDiagram
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
 | `/` | 비로그인: 날짜 헤더 + **QuickStartPost**("30초 만에 내 사주 보기" — `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis`로 이동해 자동 분석) + 소개 영상 / 로그인: StoryTray + 프로필별 오늘 운세 FortunePost(7일 예보, 손없는 날 배지) + 영상 | 선택 |
-| `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. `?next=`가 있으면 로그인 후 그 경로로 | — |
+| `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
-| `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지) | 필수 |
+| `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join?next=`, 초대 링크는 `?invite=` 유지) |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -501,7 +502,8 @@ erDiagram
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
 - `/weather`, `/palmistry`, `/admin/feedback`은 네비게이션에 연결되어 있지 않음 — URL 직접 진입만 가능.
 - 로그인 상태는 `localStorage["kkachi_member_id"]` (`MEMBER_ID_KEY`)로 판단. 비밀번호 없음.
-- **로그인 정책** (2026-09-28): 비로그인은 홈 퀵스타트·`/analysis` 직접 입력·공유 카드 `/s/[id]`·날씨·손금·가입만. **시운·궁합은 로그인 필수** — 비로그인이면 `LoginRequired` 카드(`/join?next=원래 경로`, 궁합 초대 링크는 `?invite=` 포함). 계정·프로필은 `/join` redirect. 새 기능이 개인 데이터를 쓰면 같은 카드를 쓴다.
+- **기본 프로필** = `is_self` 프로필. **첫 프로필은 자동으로 기본**이 되고(요청 플래그와 무관), 지워서 하나만 남으면 그것이 자동으로 기본이 된다. 프로필이 없으면 기본 프로필도 없고 홈·분석·시운·프로필 화면이 "기본 프로필 등록"을 안내한다. `/profile`의 "기본으로"로 바꿀 수 있다. 홈 정렬·시운 기본·분석 프로필 선택 기본·궁합 첫 번째 분 기본이 모두 이 프로필이다 (따로 고르면 그것을 쓴다).
+- **로그인 정책** (2026-09-28): 비로그인은 홈 퀵스타트·`/analysis` 직접 입력·공유 카드 `/s/[id]`·날씨·손금·가입만. **시운·궁합은 로그인 필수** — 비로그인이면 `LoginRequired` 카드 → `/join`. 돌아올 경로는 URL이 아니라 sessionStorage `kkachi_login_next`(`lib/loginNext.ts`, 궁합 초대 링크는 `?invite=` 포함)에 두고 가입 페이지가 로그인 직후 한 번 꺼내 쓴다. 계정·프로필은 `/join` redirect. 새 기능이 개인 데이터를 쓰면 같은 카드를 쓴다.
 - 페이지 진입 시 `ipapi.co`로 IP 위치 감지 → city(+ longitude) 자동 입력. `longitude`는 UI 비노출로 `User.longitude` → sajupy 직접 전달.
 
 ### 분석 입력 흐름 (`/analysis`)
@@ -531,6 +533,7 @@ erDiagram
 | `kkachi_analysis_name` | `/analysis` | 위와 동일 (KkachiTip `{name}님` 개인화) |
 | `kkachi_profile_input` | `/analysis` 프로필 모드 | `{memberId, profileId, year}` → FeedbackBar가 profileId 필요 |
 | `kkachi_compat_input` / `kkachi_compat_names` | `/compatibility` | `/compatibility/chat` |
+| `kkachi_login_next` | `LoginRequired`·분석 폼 캡션 (`lib/loginNext.ts`) | `/join`이 로그인 직후 한 번 꺼내 그 경로로 이동 후 삭제 |
 
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |

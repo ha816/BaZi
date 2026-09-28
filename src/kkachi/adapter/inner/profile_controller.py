@@ -112,6 +112,22 @@ async def update_profile(
     return ProfileResponse(**vars(profile))
 
 
+@profile_router.post("/{profile_id}/set-self", response_model=ProfileResponse)
+@inject
+async def set_self_profile(
+    member_id: UUID,
+    profile_id: UUID,
+    svc: ProfileService = Depends(Provide[Container.profile_service]),
+) -> ProfileResponse:
+    """이 프로필을 기본 프로필(나)로. 같은 회원의 다른 프로필은 해제된다."""
+    await _owned_profile(svc, member_id, profile_id)
+    try:
+        profile = await svc.set_self_profile(member_id, profile_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return ProfileResponse(**vars(profile))
+
+
 @profile_router.delete("/{profile_id}", status_code=204)
 @inject
 async def delete_profile(

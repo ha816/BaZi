@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { AnalysisInput } from "@/types/analysis";
 import { HOUR_OPTIONS } from "@/lib/constants";
+import { setLoginNext } from "@/lib/loginNext";
 
 const SIGNUP_HINT = "로그인하면 여러 프로필을 저장해 두고 바로 불러올 수 있어요";
 
@@ -224,7 +225,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
       {!canSave && (
         <p className="text-[11px] text-center text-[var(--color-ink-faint)]">
           {SIGNUP_HINT}.{" "}
-          <Link href="/join?next=%2Fanalysis" className="underline underline-offset-2 text-[var(--color-gold)]">가입하기 →</Link>
+          <Link href="/join" onClick={() => setLoginNext("/analysis")} className="underline underline-offset-2 text-[var(--color-gold)]">가입하기 →</Link>
         </p>
       )}
       </>

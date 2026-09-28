@@ -34,8 +34,9 @@ class ProfileService:
         existing = await self.profile_port.list_by_member(member_id)
         if len(existing) >= 10:
             raise ValueError("프로필은 최대 10개까지 저장할 수 있습니다.")
+        # 첫 프로필은 자동으로 기본 프로필(나). 프로필이 하나면 그것이 곧 기본이다
         return await self.profile_port.create(
-            member_id, name, gender, birth_dt, city, is_self=is_self, birth_hour_unknown=birth_hour_unknown,
+            member_id, name, gender, birth_dt, city, is_self=is_self or not existing, birth_hour_unknown=birth_hour_unknown,
         )
 
     async def get_profile(self, profile_id: UUID) -> Profile | None:
@@ -45,7 +46,13 @@ class ProfileService:
         return await self.profile_port.list_by_member(member_id)
 
     async def delete_profile(self, profile_id: UUID) -> None:
+        profile = await self.profile_port.get(profile_id)
         await self.profile_port.delete(profile_id)
+        # 지우고 하나만 남으면 그것이 기본 프로필(나)이 된다
+        if profile is not None:
+            remaining = await self.profile_port.list_by_member(profile.member_id)
+            if len(remaining) == 1 and not remaining[0].is_self:
+                await self.profile_port.set_self(profile.member_id, remaining[0].id)
 
     async def update_profile(
         self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str,
@@ -57,6 +64,10 @@ class ProfileService:
         if self._fortune_port is not None:
             await self._fortune_port.delete_by_profile(profile_id)
         return updated
+
+    async def set_self_profile(self, member_id: UUID, profile_id: UUID) -> Profile:
+        """기본 프로필(나) 지정 — 분석·궁합·시운·홈이 별도 선택 없으면 이 프로필을 쓴다. 캐시는 그대로."""
+        return await self.profile_port.set_self(member_id, profile_id)
 
     async def list_analyses(self, profile_id: UUID) -> list[Analysis]:
         return await self.analysis_port.list_by_profile(profile_id)

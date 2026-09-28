@@ -7,12 +7,7 @@ import type { ProfileCreateInput } from "@/types/analysis";
 import { createOrGetMember, listProfiles, createProfile } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import { MEMBER_ID_KEY, HOUR_OPTIONS, INPUT_CLASS } from "@/lib/constants";
-
-// 로그인 필수 페이지(시운·궁합)에서 온 경우 ?next= 로 되돌아간다. 상대 경로만 허용(open redirect 방지)
-function nextPath(): string {
-  const next = new URLSearchParams(window.location.search).get("next") ?? "";
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
-}
+import { takeLoginNext } from "@/lib/loginNext";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -49,7 +44,7 @@ export default function JoinPage() {
       localStorage.setItem(MEMBER_ID_KEY, member.id);
       const existing = await listProfiles(member.id);
       if (existing.length > 0) {
-        router.push(nextPath());
+        router.push(takeLoginNext());
       } else {
         setMemberId(member.id);
         setProfileName(name.trim());
@@ -78,7 +73,7 @@ export default function JoinPage() {
         birth_hour_unknown: selectedHour === "",
       };
       await createProfile(memberId, data);
-      router.push(nextPath());
+      router.push(takeLoginNext());
     } catch {
       setProfileError("프로필 등록에 실패했습니다.");
     } finally {

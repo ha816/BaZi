@@ -46,7 +46,7 @@ export default function AnalysisPage() {
         setProfiles(ps);
         if (ps.length > 0) {
           setMode("profile");
-          setSelectedProfileId(ps[0].id);
+          setSelectedProfileId((ps.find((p) => p.is_self) ?? ps[0]).id); // 기본 프로필(나) 우선
         }
       }).catch(() => {});
     }
@@ -214,9 +214,9 @@ export default function AnalysisPage() {
         {/* 프로필 없음 안내 */}
         {memberId && mode === "profile" && profiles.length === 0 && (
           <div className="text-center py-10 text-sm text-[var(--color-ink-faint)] space-y-3">
-            <p>저장된 프로필이 없습니다.</p>
+            <p>기본 프로필이 아직 없어요. 나의 사주를 등록해 주세요.</p>
             <a href="/profile" className="inline-block text-sm text-[var(--color-gold)] hover:opacity-70 transition-opacity">
-              프로필 추가하기 →
+              기본 프로필 등록하기 →
             </a>
           </div>
         )}

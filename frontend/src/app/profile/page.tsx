@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Profile } from "@/types/analysis";
-import { listProfiles } from "@/lib/api";
+import { listProfiles, setSelfProfile } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { useStorageValue } from "@/lib/useStorageValue";
@@ -90,11 +90,14 @@ export default function ProfilePage() {
 
           {profiles.length === 0 && !showForm && (
             <div className="text-center py-12 text-[var(--color-ink-faint)] text-sm">
-              아직 저장된 프로필이 없습니다.<br />
-              나와 소중한 분들의 사주를 등록해보세요.
+              기본 프로필이 아직 없어요.<br />
+              먼저 나의 사주를 등록해 주세요. 첫 프로필이 곧 기본 프로필(나)이 돼요.
             </div>
           )}
 
+          {profiles.length > 0 && (
+            <p className="text-[11px] text-[var(--color-ink-faint)]">&quot;나&quot; 표시가 기본 프로필이에요. 분석·궁합·시운에서 따로 고르지 않으면 이 프로필로 봐요.</p>
+          )}
           <div className="space-y-3">
             {profiles.map((p) => (
               <ProfileCard
@@ -103,6 +106,7 @@ export default function ProfilePage() {
                 memberId={memberId!}
                 onDelete={(id) => setProfiles((prev) => prev.filter((x) => x.id !== id))}
                 onUpdate={(updated) => setProfiles((prev) => prev.map((x) => x.id === updated.id ? updated : x))}
+                onSetSelf={() => setSelfProfile(memberId!, p.id).then(() => listProfiles(memberId!)).then(setProfiles).catch(() => {})}
               />
             ))}
           </div>

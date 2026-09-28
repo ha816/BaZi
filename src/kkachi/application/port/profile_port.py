@@ -23,6 +23,10 @@ class ProfilePort(ABC):
     async def delete(self, profile_id: UUID) -> None: ...
 
     @abstractmethod
+    async def set_self(self, member_id: UUID, profile_id: UUID) -> Profile:
+        """이 프로필을 회원의 기본 프로필(나)로. 같은 회원의 다른 프로필은 is_self=False."""
+
+    @abstractmethod
     async def update(
         self, profile_id: UUID, name: str, gender: Gender, birth_dt: datetime, city: str,
         birth_hour_unknown: bool = False,

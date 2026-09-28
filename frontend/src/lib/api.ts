@@ -373,3 +373,8 @@ export async function createShare(input: AnalysisInput, name: string): Promise<{
     body: JSON.stringify({ ...input, name }),
   });
 }
+
+/** 이 프로필을 기본 프로필(나)로 — 같은 회원의 다른 프로필은 해제. 목록은 다시 불러온다 */
+export async function setSelfProfile(memberId: string, profileId: string): Promise<Profile> {
+  return request<Profile>(`/members/${memberId}/profiles/${profileId}/set-self`, { method: "POST" });
+}

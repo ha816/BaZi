@@ -30,9 +30,11 @@ interface Props {
   memberId: string;
   onDelete: (id: string) => void;
   onUpdate: (updated: Profile) => void;
+  /** 기본 프로필(나)로 지정 — 부모가 API 호출 후 목록을 다시 불러온다 */
+  onSetSelf: () => void;
 }
 
-export default function ProfileCard({ profile, memberId, onDelete, onUpdate }: Props) {
+export default function ProfileCard({ profile, memberId, onDelete, onUpdate, onSetSelf }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -159,6 +161,12 @@ export default function ProfileCard({ profile, memberId, onDelete, onUpdate }: P
         </p>
       </div>
       <div className="flex items-center gap-2">
+        {!profile.is_self && !confirming && (
+          <button onClick={onSetSelf} title="분석·궁합·시운에서 먼저 선택되는 프로필로"
+            className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors px-2 py-1">
+            기본으로
+          </button>
+        )}
         {!confirming && (
           <button onClick={() => setEditing(true)}
             className="text-xs text-[var(--color-gold)] hover:opacity-70 transition-opacity px-2 py-1">
