@@ -211,7 +211,7 @@
 - `fortunes` 테이블에 과거 일진이 이미 캐시됨(시운 화면이 14일 전부터 조회). `/siun`에 "지난 7일" 스와이프 + 각 날 "맞았어요? 👍/👎" → `interpret_feedbacks`에 `tab_id="daily:YYYY-MM-DD"`로 저장(스키마 변경 없음).
 - `analyses` 연도별 캐시 → "지난 연도 분석 다시 보기" 링크.
 
-- [x] 지난 7일 뷰 — `/siun` "지난주" 탭, 최근순 카드(날짜·일진·점수·아침 한 마디)
+- [x] 지난 7일 뷰 — `/siun` "지난주" 탭, 최근순 카드(날짜·일진·점수·아침 한 마디) → **2026-09-28 노출 보류** (탭 목록에서만 제거, 코드 유지)
 - [x] 일진 피드백 — "맞았어요?" 👍/👎 → `interpret_feedbacks(tab_id="daily:YYYY-MM-DD")`, `GET …/feedback?prefix=` 로 복원, admin은 `daily` 한 줄로 롤업
 - [x] 지난 연도 링크 — `GET …/analyses` → `/analysis` 프로필 폼·결과 상단 "지난 연도 다시 보기" 칩
 - [ ] 측정: `daily_tab{tab:지난주}` 비율, `daily_review_rate` 👍 비율 관찰

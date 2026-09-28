@@ -145,7 +145,7 @@ export default function AnalysisPage() {
 
   if (result && !loading) {
     return (
-      <main className="page">
+      <main className="page page--center">
         <div className="page__inner">
           <PageHeader
             title="사주 분석"
@@ -187,7 +187,7 @@ export default function AnalysisPage() {
   }
 
   return (
-    <main className="page">
+    <main className="page page--center">
       <div className="page__inner">
 
         <PageHeader title="사주 분석" description="타고난 사주와 올해의 운세를 풀어드립니다." />

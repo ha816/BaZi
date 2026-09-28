@@ -387,10 +387,11 @@ export default function SiunPage() {
     </div>
   );
 
-  const tabs = ["지난주", "오늘", "내일", "모레", "글피"];
+  // "지난주" 탭은 노출 보류(2026-09-28) — renderPastWeek·"맞았어요?" 피드백 코드는 그대로. 다시 켜려면 맨 앞에 추가
+  const tabs = ["오늘", "내일", "모레", "글피"];
 
   return (
-    <main className="page">
+    <main className="page page--center">
       <div className="page__inner">
         {/* 헤더 */}
         <PageHeader title="시운(時運)" description="시시각각 바뀌는 나의 운을 날씨의 기운과 함께 풀어드립니다." />

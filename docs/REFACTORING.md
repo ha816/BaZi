@@ -56,7 +56,7 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 
 자세한 시각 가이드는 `docs/frontend/screen_spec.md` 참고.
 
-**페이지 틀도 하나다** (2026-09-28): 홈·풀스크린 챗을 뺀 모든 페이지는 `<main className="page"><div className="page__inner">` + `<PageHeader title description actions />`. 페이지마다 제목 크기·여백·너비를 따로 정하지 않는다. "← 홈으로" 링크는 하단 탭이 대신하므로 두지 않는다.
+**페이지 틀도 하나다** (2026-09-28): 홈·풀스크린 챗을 뺀 모든 페이지는 `<main className="page"><div className="page__inner">` + `<PageHeader title description actions />`. 시운·분석·궁합·가입은 `page page--center`(세로 가운데). 페이지마다 제목 크기·여백·너비를 따로 정하지 않는다. "← 홈으로" 링크는 하단 탭이 대신하므로 두지 않는다.
 
 ### 4-4. Hexagonal 경계 준수
 - 도메인 dataclass (`src/kkachi/domain/`) 에서 외부 라이브러리(sajupy, sqlalchemy) import 금지

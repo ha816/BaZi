@@ -151,10 +151,12 @@ export default function JoinPage() {
                     key={g}
                     type="button"
                     onClick={() => setGender(g)}
-                    className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
-                      gender === g
-                        ? "bg-[var(--color-ink)] text-[var(--color-ivory)]"
-                        : "bg-white text-[var(--color-ink-muted)] border border-[var(--color-border)]"
+                    className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all border ${
+                      gender !== g
+                        ? "bg-white text-[var(--color-ink-muted)] border-[var(--color-border)]"
+                        : g === "male"
+                          ? "bg-blue-100 text-blue-600 border-blue-300"
+                          : "bg-pink-100 text-pink-500 border-pink-300"
                     }`}
                   >
                     {g === "male" ? "남성" : "여성"}

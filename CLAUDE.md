@@ -492,7 +492,7 @@ erDiagram
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
 | `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join?next=`, 초대 링크는 `?invite=` 유지) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
-| `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 지난주(지난 7일 아침 한 마디 + "맞았어요?" 👍/👎, R6)·오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
+| `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
 | `/s/[id]` | 결과 공유 카드 랜딩 — 이름·팔자(오행색)·오행 분포·신살·한눈에 5줄 + "나도 30초 만에" CTA(`/`). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |

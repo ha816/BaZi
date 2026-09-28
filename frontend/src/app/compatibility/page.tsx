@@ -193,7 +193,7 @@ function CompatibilityPageInner() {
   }, []);
 
   return (
-    <main className="page">
+    <main className="page page--center">
       <div className="page__inner">
         <PageHeader title="사주 궁합" description="두 사람의 사주로 인간 관계 궁합을 풀어드립니다." />
 
