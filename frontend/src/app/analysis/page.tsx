@@ -3,7 +3,7 @@
 import PageHeader from "@/components/PageHeader";
 import { useEffect, useState, Suspense } from "react";
 import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
-import { analyzeChart, analyzeProfileChart, createProfile, listAnalysisYears, listProfiles } from "@/lib/api";
+import { analyzeChart, analyzeProfileChart, createProfile, createShare, listAnalysisYears, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import ResultSlides from "@/components/ResultSlides";
@@ -152,7 +152,13 @@ export default function AnalysisPage() {
             description="타고난 사주와 올해의 운세를 풀어드립니다."
             actions={
               <>
-                {lastInput && <ShareButton input={lastInput} name={name} />}
+                {lastInput && (
+                  <ShareButton
+                    create={() => createShare(lastInput, name)}
+                    title={`${name ? `${name}님` : "나"}의 사주 카드`}
+                    text={`${name ? `${name}님` : "나"}의 사주, 사주까치가 이렇게 봤어요. 나도 30초 만에 →`}
+                  />
+                )}
                 <button
                   onClick={() => { setResult(null); setError(null); }}
                   className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"

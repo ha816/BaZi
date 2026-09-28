@@ -16,6 +16,7 @@ from kkachi.domain.ganji import (
     Oheng,
     Pillar,
     Sipsin,
+    Stem,
     StemClash,
 )
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
@@ -281,6 +282,31 @@ def _label_for(score: int, rel: RelationType) -> str:
         if score >= threshold:
             return text
     return TOTAL_LABEL_BY_REL[rel][-1][1]
+
+
+_RELATION_LABEL = {"lover": "연인", "friend": "친구", "family": "가족"}
+
+
+def build_compat_share_card(name1: str, name2: str, relation_type: str, result: dict) -> dict:
+    """궁합 공유 카드(/s/{id}, kind="compat") 스냅샷 — 점수·라벨·영역 점수·특징만. 생년월일 없음."""
+    def day(snapshot: dict | None) -> dict:
+        ds = (snapshot or {}).get("day_stem", "")
+        return {"stem": ds, "korean": Stem.from_char(ds).korean if ds else "", "element": (snapshot or {}).get("my_main_element", "")}
+    return {
+        "kind": "compat",
+        "name1": name1,
+        "name2": name2,
+        "relation_type": relation_type,
+        "relation_label": _RELATION_LABEL.get(relation_type, "연인"),
+        "total_score": result["total_score"],
+        "label": result.get("label", ""),
+        "description": result.get("description", ""),
+        "domain_scores": {k: {"score": v.get("score", 0), "level": v.get("level", "")} for k, v in (result.get("domain_scores") or {}).items()},
+        "key_traits": (result.get("key_traits") or [])[:3],
+        "shared_sinsal": (result.get("shared_sinsal") or [])[:3],
+        "p1": day(result.get("pillar1_snapshot")),
+        "p2": day(result.get("pillar2_snapshot")),
+    }
 
 
 class CompatibilityService:

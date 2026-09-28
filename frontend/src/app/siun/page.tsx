@@ -4,8 +4,9 @@
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoginRequired from "@/components/LoginRequired";
+import ShareButton from "@/components/ShareButton";
 import { useEffect, useState } from "react";
-import { listProfiles, getForecast, getFeedbackMap, postFeedback } from "@/lib/api";
+import { listProfiles, getForecast, getFeedbackMap, postFeedback, createDailyShare } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MorningBrief from "@/components/MorningBrief";
 import PushSubscribeButton from "@/components/PushSubscribeButton";
@@ -395,7 +396,22 @@ export default function SiunPage() {
     <main className="page page--center">
       <div className="page__inner">
         {/* 헤더 */}
-        <PageHeader title="시운(時運)" description="시시각각 바뀌는 나의 운을 날씨의 기운과 함께 풀어드립니다." />
+        <PageHeader
+          title="시운(時運)"
+          description="시시각각 바뀌는 나의 운을 날씨의 기운과 함께 풀어드립니다."
+          actions={
+            !loading && loggedIn && memberId && profile ? (
+              <ShareButton
+                key={profile.id}
+                label={profile.is_self ? "나의 시운 공유" : `${profile.name}의 시운 공유`}
+                create={() => createDailyShare(memberId, profile.id)}
+                title={`${profile.is_self ? "나" : `${profile.name}님`}의 오늘 시운`}
+                text="오늘 하루 기운, 사주까치가 이렇게 봤어요. 나도 30초 만에 →"
+                channel="daily"
+              />
+            ) : undefined
+          }
+        />
 
         {loading && <LoadingSpinner />}
 

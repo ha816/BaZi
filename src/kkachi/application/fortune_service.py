@@ -7,7 +7,38 @@ from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.port.weather_port import WeatherPort
+from kkachi.domain.ganji import Branch, Stem
+from kkachi.domain.profile import Profile
 from kkachi.domain.user import User
+
+
+def build_daily_share_card(name: str, is_self: bool, fortune: dict) -> dict:
+    """시운 공유 카드(/s/{id}, kind="daily") 스냅샷 — 오늘 일진·아침 한 마디·날씨만. 생년월일 없음."""
+    dp = fortune.get("day_pillar", "")
+    korean = Stem.from_char(dp[0]).korean + Branch.from_char(dp[1]).korean if len(dp) == 2 else ""
+    headline = fortune.get("headline", "")
+    if headline.startswith(f"{name}님, "):
+        headline = headline[len(name) + 3:]
+    w = fortune.get("weather") or None
+    return {
+        "kind": "daily",
+        "name": name,
+        "is_self": is_self,
+        "date": fortune["date"],
+        "day_pillar": dp,
+        "day_pillar_korean": korean,
+        "day_element": fortune.get("day_element", ""),
+        "total_score": fortune["total_score"],
+        "level": fortune["level"],
+        "headline": headline,
+        "action": fortune.get("action", ""),
+        "caution": fortune.get("caution", ""),
+        "tips": (fortune.get("tips") or [])[:2],
+        "weather": {"condition": w.get("condition"), "element": w.get("element"), "temperature": w.get("temperature")} if w else None,
+        "solar_term": fortune.get("solar_term"),
+        "son_eomneun_nal": bool(fortune.get("son_eomneun_nal")),
+        "yongshin": fortune.get("yongshin"),
+    }
 
 
 class FortuneService:
@@ -45,6 +76,11 @@ class FortuneService:
         result = asdict(fortune)
         await self._fortune_port.save(profile_id, today, result)
         return result
+
+    async def daily_share_card(self, profile: Profile) -> dict:
+        """오늘 시운 공유 카드 — get_fortune(캐시 우선) 결과를 카드 스냅샷으로."""
+        fortune = await self.get_fortune(profile.id)
+        return build_daily_share_card(profile.name, profile.is_self, fortune)
 
     async def get_forecast(self, profile_id: UUID, days: int = 7, start_date: date | None = None) -> list[dict]:
         if start_date is None:

@@ -29,6 +29,24 @@ class FakeProfileService:
         return [Analysis(id=uuid4(), profile_id=profile_id, year=y, result={}, created_at=datetime(2026, 1, 1)) for y in (2026, 2025)]
 
 
+class FakeFortuneService:
+    async def daily_share_card(self, profile):
+        return {"kind": "daily", "name": profile.name, "date": "2026-09-28", "total_score": 70, "level": "좋은 날"}
+
+
+class FakeShareRepo:
+    def __init__(self):
+        self.rows: dict = {}
+
+    async def create(self, payload):
+        sid = uuid4()
+        self.rows[sid] = payload
+        return sid
+
+    async def get(self, share_id):
+        return self.rows.get(share_id)
+
+
 class FakeFeedbackRepo:
     def __init__(self):
         self.saved: list[tuple] = []
@@ -50,6 +68,8 @@ def client():
     fb = FakeFeedbackRepo()
     container.profile_service.override(providers.Object(FakeProfileService()))
     container.feedback_repo.override(providers.Object(fb))
+    container.fortune_service.override(providers.Object(FakeFortuneService()))
+    container.share_repo.override(providers.Object(FakeShareRepo()))
     c = TestClient(app)
     c.fake_feedback = fb  # type: ignore[attr-defined]
     yield c
@@ -95,3 +115,11 @@ def test_set_self_profile_is_owner_only(client):
     res = client.post(f"/members/{OWNER}/profiles/{PROFILE.id}/set-self")
     assert res.status_code == 200 and res.json()["is_self"] is True
     assert client.post(f"/members/{STRANGER}/profiles/{PROFILE.id}/set-self").status_code == 404
+
+
+def test_daily_share_is_owner_only(client):
+    res = client.post(f"/members/{OWNER}/profiles/{PROFILE.id}/daily/share")
+    assert res.status_code == 201 and res.json()["share_id"]
+    card = client.get(f"/kkachi/shares/{res.json()['share_id']}").json()
+    assert card["kind"] == "daily" and card["name"] == "테스트"
+    assert client.post(f"/members/{STRANGER}/profiles/{PROFILE.id}/daily/share").status_code == 404

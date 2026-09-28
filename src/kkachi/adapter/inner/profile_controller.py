@@ -171,6 +171,25 @@ async def get_fortune(
         raise HTTPException(status_code=404, detail=str(e))
 
 
+@profile_router.post("/{profile_id}/daily/share", status_code=201)
+@inject
+async def create_daily_share(
+    member_id: UUID,
+    profile_id: UUID,
+    svc: FortuneService = Depends(Provide[Container.fortune_service]),
+    profiles: ProfileService = Depends(Provide[Container.profile_service]),
+    share_repo=Depends(Provide[Container.share_repo]),
+) -> dict:
+    """오늘 시운 공유 카드 — 프로필의 오늘 일진 스냅샷을 shares에 저장하고 id 반환. 받는 쪽은 /s/{id}."""
+    profile = await _owned_profile(profiles, member_id, profile_id)
+    try:
+        card = await svc.daily_share_card(profile)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    share_id = await share_repo.create(card)
+    return {"share_id": str(share_id)}
+
+
 @profile_router.get("/{profile_id}/forecast")
 @inject
 async def get_forecast(

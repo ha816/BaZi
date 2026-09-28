@@ -1,6 +1,7 @@
 "use client";
 
 import PageHeader from "@/components/PageHeader";
+import ShareButton from "@/components/ShareButton";
 import LoginRequired from "@/components/LoginRequired";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -9,7 +10,7 @@ import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile, Rel
 import {
   analyzeCompatibility,
   analyzeCompatibilityByProfiles,
-  createCompatInvite,
+  createCompatShare,
   getCompatInvite,
   listProfiles,
   resolveCompatInvite,
@@ -48,8 +49,6 @@ function CompatibilityPageInner() {
   const narrativeAbortRef = useRef<AbortController | null>(null);
   const [inviteId, setInviteId] = useState<string | null>(null);
   const [inviterName, setInviterName] = useState<string>("");
-  const [shareUrl, setShareUrl] = useState<string>("");
-  const [shareBusy, setShareBusy] = useState(false);
   const searchParams = useSearchParams();
   // 로그인 필수 — null=아직 모름(하이드레이션 중), ""=비로그인
   const storedMember = useStorageValue(MEMBER_ID_KEY);
@@ -170,23 +169,6 @@ function CompatibilityPageInner() {
     }
   };
 
-  const handleShareLink = async () => {
-    setShareBusy(true);
-    try {
-      const { invite_id } = await createCompatInvite(personToInput(person1), relationType);
-      const url = `${window.location.origin}/compatibility?invite=${invite_id}`;
-      setShareUrl(url);
-      track("share_click", { channel: "invite" });
-      try {
-        if (navigator.share) await navigator.share({ title: "사주까치 궁합", text: `${getName(person1, "제")} 사주로 궁합 볼래요?`, url });
-        else await navigator.clipboard.writeText(url);
-      } catch { /* 사용자가 공유 취소 */ }
-    } catch {
-      setError("공유 링크 생성에 실패했어요.");
-    } finally {
-      setShareBusy(false);
-    }
-  };
 
   useEffect(() => {
     return () => { narrativeAbortRef.current?.abort(); };
@@ -195,7 +177,21 @@ function CompatibilityPageInner() {
   return (
     <main className="page page--center">
       <div className="page__inner">
-        <PageHeader title="사주 궁합" description="두 사람의 사주로 인간 관계 궁합을 풀어드립니다." />
+        <PageHeader
+          title="사주 궁합"
+          description="두 사람의 사주로 인간 관계 궁합을 풀어드립니다."
+          actions={
+            result && chatInput && !loading ? (
+              <ShareButton
+                label="궁합 공유"
+                create={() => createCompatShare(chatInput)}
+                title={`${resultNames.name1 || "첫 번째 분"} · ${resultNames.name2 || "두 번째 분"}의 궁합`}
+                text="두 사람의 궁합, 사주까치가 이렇게 봤어요. 우리도 30초 만에 →"
+                channel="compat"
+              />
+            ) : undefined
+          }
+        />
 
         {storedMember === "" && (
           <LoginRequired
@@ -279,19 +275,6 @@ function CompatibilityPageInner() {
                 name2={resultNames.name2 || getName(person2, "두 번째 분")}
                 streamingNarrative={narrative}
                 narrativeLoading={narrativeLoading} />
-              {!inviteId && (
-                <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-5 space-y-2 text-center">
-                  <p className="text-sm font-semibold text-[var(--color-ink)]">💌 상대에게 링크를 보내 궁합을 함께 봐요</p>
-                  <p className="text-xs text-[var(--color-ink-muted)]">{getName(person1, "첫 번째 분")}님 정보로 링크를 만들어요. 상대는 자기 정보만 넣으면 돼요.</p>
-                  <button type="button" onClick={handleShareLink} disabled={shareBusy}
-                    className="mt-1 px-5 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-sm font-semibold disabled:opacity-50">
-                    {shareBusy ? "만드는 중..." : "궁합 공유 링크 만들기"}
-                  </button>
-                  {shareUrl && (
-                    <p className="text-[11px] text-[var(--color-ink-faint)] break-all pt-1">{shareUrl}</p>
-                  )}
-                </div>
-              )}
             </>
           )}
           </>

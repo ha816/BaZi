@@ -378,3 +378,13 @@ export async function createShare(input: AnalysisInput, name: string): Promise<{
 export async function setSelfProfile(memberId: string, profileId: string): Promise<Profile> {
   return request<Profile>(`/members/${memberId}/profiles/${profileId}/set-self`, { method: "POST" });
 }
+
+/** 오늘 시운 공유 카드 — 프로필의 오늘 일진 스냅샷을 저장하고 id를 준다. 링크는 /s/{share_id} */
+export async function createDailyShare(memberId: string, profileId: string): Promise<{ share_id: string }> {
+  return request<{ share_id: string }>(`/members/${memberId}/profiles/${profileId}/daily/share`, { method: "POST" });
+}
+
+/** 궁합 공유 카드 — 두 사람 입력으로 계산한 결과 스냅샷을 저장하고 id를 준다. 링크는 /s/{share_id} */
+export async function createCompatShare(input: CompatibilityInput): Promise<{ share_id: string }> {
+  return request<{ share_id: string }>("/compatibility/shares", { method: "POST", body: JSON.stringify(input) });
+}

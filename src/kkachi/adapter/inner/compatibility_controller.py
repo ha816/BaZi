@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from kkachi.application.compatibility_daily import compute_daily_compat
-from kkachi.application.compatibility_service import CompatibilityService
+from kkachi.application.compatibility_service import CompatibilityService, build_compat_share_card
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.container import Container
@@ -69,6 +69,20 @@ async def analyze_compatibility_direct(
     user1 = _to_user(req.person1)
     user2 = _to_user(req.person2)
     return await svc.compute_direct(user1, user2, req.year, req.relation_type)
+
+
+@compatibility_router.post("/shares", status_code=201)
+@inject
+async def create_compat_share(
+    req: DirectCompatibilityRequest,
+    svc: CompatibilityService = Depends(Provide[Container.compatibility_service]),
+    share_repo=Depends(Provide[Container.share_repo]),
+) -> dict:
+    """궁합 공유 카드 — 두 사람 입력으로 계산한 결과의 스냅샷만 저장하고 id 반환. 받는 쪽은 /s/{id}."""
+    result = await svc.compute_direct(_to_user(req.person1), _to_user(req.person2), req.year, req.relation_type)
+    card = build_compat_share_card(req.person1.name, req.person2.name, req.relation_type, result)
+    share_id = await share_repo.create(card)
+    return {"share_id": str(share_id)}
 
 
 _CHAT_SYSTEM = """\

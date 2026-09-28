@@ -1,30 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import type { AnalysisInput } from "@/types/analysis";
-import { createShare } from "@/lib/api";
 import { track } from "@/lib/track";
 
 interface Props {
-  input: AnalysisInput;
-  name: string;
+  /** 서버에 카드 스냅샷을 만들고 share_id를 돌려주는 호출 (사주: createShare, 시운: createDailyShare) */
+  create: () => Promise<{ share_id: string }>;
+  /** 공유 시트 제목·문구 */
+  title: string;
+  text: string;
+  /** 버튼 글자 (기본 "공유") */
+  label?: string;
+  /** 이벤트 채널 구분 */
+  channel?: string;
 }
 
 const PANEL_BTN =
   "px-2 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-ink)] hover:bg-[var(--color-ivory-warm)] transition-colors";
 
-/** 결과 공유 — 서버에 카드 스냅샷(/kkachi/shares)을 만들고 /s/{id} 링크를 공유한다.
+/** 공유 버튼 — create()로 카드 스냅샷을 만들고 /s/{id} 링크를 공유한다 (분석 결과·시운 공용).
  *  이미지는 그 링크의 OG 이미지(/s/{id}/opengraph-image)를 그대로 쓴다. */
-export default function ShareButton({ input, name }: Props) {
+export default function ShareButton({ create, title, text, label = "공유", channel = "result" }: Props) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState(false);
-
-  const who = name ? `${name}님` : "나";
-  const title = `${who}의 사주 카드`;
-  const text = `${who}의 사주, 사주까치가 이렇게 봤어요. 나도 30초 만에 →`;
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -38,10 +39,10 @@ export default function ShareButton({ input, name }: Props) {
     try {
       let link = url;
       if (!link) {
-        const { share_id } = await createShare(input, name);
+        const { share_id } = await create();
         link = `${window.location.origin}/s/${share_id}`;
         setUrl(link);
-        track("share_click", { channel: "result" });
+        track("share_click", { channel });
       }
       setOpen(true);
       try {
@@ -91,7 +92,7 @@ export default function ShareButton({ input, name }: Props) {
         disabled={busy}
         className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[var(--color-ink)] text-[var(--color-ivory)] hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors"
       >
-        {busy ? "만드는 중…" : "공유"}
+        {busy ? "만드는 중…" : label}
       </button>
       {error && (
         <p className="absolute right-0 mt-1 text-[11px] text-[var(--color-fire)] whitespace-nowrap">공유 링크를 만들지 못했어요</p>
@@ -106,7 +107,7 @@ export default function ShareButton({ input, name }: Props) {
           >
             ✕
           </button>
-          <p className="text-xs font-semibold text-[var(--color-ink)]">내 사주 카드</p>
+          <p className="text-xs font-semibold text-[var(--color-ink)]">{title}</p>
           <img
             src={`${url}/opengraph-image`}
             alt="공유 카드 미리보기"

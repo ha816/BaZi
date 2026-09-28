@@ -515,6 +515,7 @@ export interface DailyFortune {
 
 // 결과 공유 카드 (/s/[id]) — 백엔드 KkachiService.build_share_card() 스냅샷. 생년월일·성별은 없다
 export interface ShareCard {
+  kind?: "saju"; // 없으면 사주 카드
   name: string;
   year: number;
   pillars: string[];
@@ -531,4 +532,44 @@ export interface ShareCard {
   pillar_summary: string;
   sinsal: string[];
   summary: { me?: string; energy?: string; yongshin?: string; year?: string; caution?: string };
+}
+
+// 시운 공유 카드 (/s/[id], kind="daily") — 백엔드 build_daily_share_card() 스냅샷
+export interface DailyShareCard {
+  kind: "daily";
+  name: string;
+  is_self: boolean;
+  date: string;
+  day_pillar: string;
+  day_pillar_korean: string;
+  day_element: string;
+  total_score: number;
+  level: string;
+  headline: string;
+  action: string;
+  caution: string;
+  tips: string[];
+  weather: { condition: string; element: string; temperature: number } | null;
+  solar_term?: string | null;
+  son_eomneun_nal: boolean;
+  yongshin?: string | null;
+}
+
+export type AnyShareCard = ShareCard | DailyShareCard | CompatShareCard;
+
+// 궁합 공유 카드 (/s/[id], kind="compat") — 백엔드 build_compat_share_card() 스냅샷
+export interface CompatShareCard {
+  kind: "compat";
+  name1: string;
+  name2: string;
+  relation_type: RelationType;
+  relation_label: string;
+  total_score: number;
+  label: string;
+  description: string;
+  domain_scores: Record<string, { score: number; level: string }>;
+  key_traits: string[];
+  shared_sinsal: string[];
+  p1: { stem: string; korean: string; element: string };
+  p2: { stem: string; korean: string; element: string };
 }
