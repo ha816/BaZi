@@ -365,3 +365,11 @@ export async function resolveCompatInvite(inviteId: string, person2: PersonInput
     body: JSON.stringify({ person2, year }),
   });
 }
+
+/** 결과 공유 카드 생성 — 서버가 카드 스냅샷을 저장하고 id를 준다. 링크는 /s/{share_id} */
+export async function createShare(input: AnalysisInput, name: string): Promise<{ share_id: string }> {
+  return request<{ share_id: string }>("/kkachi/shares", {
+    method: "POST",
+    body: JSON.stringify({ ...input, name }),
+  });
+}

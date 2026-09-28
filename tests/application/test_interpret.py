@@ -166,3 +166,13 @@ def test_summary_uses_name_when_given():
     assert "승민님, " not in sm.today
     refreshed = _service.today_summary(natal, postnatal, "승민")
     assert refreshed["today"] == sm.today and refreshed["today_date"] == sm.today_date
+
+
+def test_share_card_has_pillars_and_no_birth_info():
+    user = User(name="승민", gender=Gender.MALE, birth_dt=datetime(1990, 10, 10, 14, 30))
+    natal, postnatal = _service.analyze(user, 2026)
+    result = asyncio.run(_service.interpret(natal, postnatal, user=user, name="승민"))
+    card = _service.build_share_card(result, "승민")
+    assert card["name"] == "승민" and len(card["pillars"]) == 4 and card["pillar_summary"]
+    assert set(card["summary"]) == {"me", "energy", "yongshin", "year", "caution"} and card["summary"]["me"]
+    assert not {"birth_dt", "gender", "city", "today"} & (set(card) | set(card["summary"]))

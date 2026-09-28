@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 85 tests
+uv run pytest            # 88 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -44,6 +44,8 @@ bash scripts/deploy.sh   # 프론트 production 빌드 → backend·frontend 재
 | env | `KKACHI_VAPID_PUBLIC_KEY`·`KKACHI_VAPID_PRIVATE_KEY`·`KKACHI_VAPID_SUBJECT` | Web Push. 미설정이면 `/push/*` 503, 프론트 알림 버튼 숨김. **local.toml에 넣지 않는다** (`scripts/vapid_keygen.py`) |
 | env | `KKACHI_ADMIN_TOKEN` | `/admin/push/send-daily?dry_run=false` 실발송 헤더 |
 | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` (기본 `http://localhost:8000`) | 프론트 → API |
+| `frontend/.env.production` (gitignore) | `NEXT_PUBLIC_SITE_URL` | 링크 미리보기(OG)·sitemap의 절대 URL. **빌드 시** 주입되므로 `deploy.sh` 전에 있어야 한다. 베타는 ts.net 주소 |
+| env | `KKACHI_API_INTERNAL_URL` (기본 `http://127.0.0.1:8000`) | 서버 컴포넌트·OG 이미지(`/s/[id]`)가 백엔드를 직접 부를 때. 브라우저는 `/api` rewrite |
 | env | `KKACHI_DB_URL` | DB URL override — 앱(`fastapi.py`)·Alembic(`alembic/env.py`) 모두 env → local.toml → 기본값 순 |
 
 - `src/kkachi/resource/hand_landmarker.task` (MediaPipe 손 랜드마크 모델, 7.8MB)는 **git 미추적** — 없으면 `/palmistry/analyze` 요청 시 실패. README의 curl 명령으로 다운로드.
@@ -61,7 +63,7 @@ bash scripts/deploy.sh   # 프론트 production 빌드 → backend·frontend 재
 
 ```
 BaZi/
-├── alembic/versions/            # 8개 마이그레이션 (아래 DB 스키마 참고). env.py 는 KKACHI_DB_URL → local.toml 순으로 URL 결정
+├── alembic/versions/            # 13개 마이그레이션 (아래 DB 스키마 참고). env.py 는 KKACHI_DB_URL → local.toml 순으로 URL 결정
 ├── docker/docker-compose.yml    # postgres:17 + pg_isready healthcheck, db/user/pw = bazi
 ├── scripts/db.sh                # DB up/status/migrate/reset/down/logs/sql — /db 스킬이 호출
 ├── scripts/send_daily_push.py   # 아침 알림 발송 (launchd 07:00) · vapid_keygen.py VAPID 키 생성 · deploy.sh 베타 반영(빌드+재기동)
@@ -107,7 +109,7 @@ BaZi/
 │   │   └── util/                     # util.py(year_to_ganji, branch_relation, josa…) · sipsin_meta · clash_combine_meta · zodiac_meta
 │   └── adapter/
 │       ├── inner/
-│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · chat · stream-report
+│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · chat · stream-report · shares POST/GET(결과 공유 카드)
 │       │   ├── member_controller.py        # /members
 │       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·analyze·analyses·daily·forecast·feedback(POST/GET)
 │       │   ├── compatibility_controller.py # /compatibility — ""·direct·chat·narrative
@@ -126,13 +128,16 @@ BaZi/
 │           ├── push/webpush_adapter.py     # WebPushAdapter (pywebpush, VAPID env) — 404/410이면 구독 소멸 반환
 │           └── db/
 │               ├── models.py       # MemberModel · ProfileModel · AnalysisModel · FortuneModel · CompatibilityModel
-│               │                   #   · InterpretFeedbackModel · PaymentModel · EventModel · PushSubscriptionModel
+│               │                   #   · InterpretFeedbackModel · PaymentModel · EventModel · PushSubscriptionModel · CompatInviteModel · ShareModel
 │               ├── member_repo.py  # MemberRepo
+│               ├── invite_repo.py  # InviteRepo(compat_invites, 30일) · ShareRepo(shares, 만료 없음)
 │               ├── profile_repo.py # ProfileRepo · AnalysisRepo · FortuneRepo · CompatibilityRepo · FeedbackRepo
 │               └── payment_repo.py # PaymentRepo
 ├── frontend/src/
 │   ├── app/
-│   │   ├── page.tsx                 # 홈 — 날짜 헤더 · StoryTray · 프로필별 FortunePost(7일 예보) · VideoPost
+│   │   ├── page.tsx                 # 홈 — 비로그인: QuickStartPost(30초 퀵스타트 폼) / 로그인: StoryTray · 프로필별 FortunePost(7일 예보) · VideoPost
+│   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
+│   │   ├── opengraph-image.tsx      # 사이트 기본 OG 이미지 (satori) · robots.ts(/s/ 색인 금지) · sitemap.ts
 │   │   ├── analysis/page.tsx        # 사주 분석 — 프로필 선택 / 직접 입력 → ResultSlides (로그인 불필요)
 │   │   ├── analysis/deep/page.tsx   # /analysis 로 redirect 만 함 (구 심층 분석 경로 호환)
 │   │   ├── chat/page.tsx            # 까치 상담 풀스크린 챗 (sessionStorage 입력값 → /kkachi/chat)
@@ -147,7 +152,9 @@ BaZi/
 │   ├── components/
 │   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — SummaryCard + StickySajuBar + 6개 feature 탭(?tab=) + FeedbackBar + SajuChat FAB
 │   │   ├── SummaryCard.tsx          # 까치 한눈에 — 나·올해·이번 달·오늘·조심 (postnatal.summary)
-│   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출)
+│   │   ├── ShareButton.tsx          # 결과 공유 — POST /kkachi/shares → /s/{id} 링크 · OG 이미지 미리보기/저장/이미지 공유
+│   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
+│   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 (621 LOC)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
@@ -176,6 +183,7 @@ BaZi/
 │   └── types/analysis.ts
 ├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
 ├── frontend/public/sw.js         # 서비스워커 — push 수신·클릭(/siun?src=push)만, 오프라인 캐시 없음
+├── frontend/public/fonts/        # OG 이미지용 Noto Sans KR 400·700 서브셋 WOFF (한글 전체 + 코드에 쓰인 한자 242자, README 참고)
 ├── frontend/public/oheng/        # 오행 이미지 5종
 └── tests/
     ├── adapter/       # test_analyzer · test_fortune · test_sibi_unseong
@@ -291,6 +299,8 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
                              → { natal: NatalResult, postnatal: PostnatalResult }
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
+POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
+GET  /kkachi/shares/{id}     → ShareCard { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], summary{me,energy,yongshin,year,caution} }  404 if 없음
 
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
@@ -425,6 +435,11 @@ erDiagram
         DATETIME created_at
         DATETIME expires_at
     }
+    shares {
+        UUID id PK
+        JSONB payload
+        DATETIME created_at
+    }
 
     members ||--o{ profiles : "소유"
     members ||--o{ payments : "결제"
@@ -436,7 +451,7 @@ erDiagram
     profiles ||--o{ compatibilities : "profile_id_2"
 ```
 
-> `fortunes`는 `daily_fortunes`에서 rename됨 (`150d31f50d94`). `is_self`, `interpret_feedbacks`, `payments`, `events`(6317ec46c55b)는 이후 마이그레이션 추가. `events.member_id`는 FK 없음(비로그인 세션 포함).
+> `shares`(5bd6657a0541)는 결과 공유 카드 스냅샷 — FK·만료 없음, `payload`는 `KkachiService.build_share_card()` 결과. `fortunes`는 `daily_fortunes`에서 rename됨 (`150d31f50d94`). `is_self`, `interpret_feedbacks`, `payments`, `events`(6317ec46c55b)는 이후 마이그레이션 추가. `events.member_id`는 FK 없음(비로그인 세션 포함).
 
 ### 유니크 제약
 | 테이블 | 유니크 키 | 목적 |
@@ -466,7 +481,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | 비로그인: 날짜 헤더 + 소개 영상 / 로그인: StoryTray + 프로필별 오늘 운세 FortunePost(7일 예보, 손없는 날 배지) + 영상 | 선택 |
+| `/` | 비로그인: 날짜 헤더 + **QuickStartPost**("30초 만에 내 사주 보기" — `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis`로 이동해 자동 분석) + 소개 영상 / 로그인: StoryTray + 프로필별 오늘 운세 FortunePost(7일 예보, 손없는 날 배지) + 영상 | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/` | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지) | 필수 |
@@ -478,6 +493,7 @@ erDiagram
 | `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 지난주(지난 7일 아침 한 마디 + "맞았어요?" 👍/👎, R6)·오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
+| `/s/[id]` | 결과 공유 카드 랜딩 — 이름·팔자(오행색)·오행 분포·신살·한눈에 5줄 + "나도 30초 만에" CTA(`/`). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
@@ -489,6 +505,20 @@ erDiagram
 - **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. **"프로필 저장" 버튼을 먼저 눌러야 "분석 시작" 활성화** (로그인 시 실제 `POST /profiles`, 비로그인 시 확인 단계 역할). → `POST /kkachi/interpret`
 - **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시). `GET …/analyses`로 받은 저장된 연도는 폼·결과 상단에 "지난 연도 다시 보기" 칩 (R6)
 - 성공 시 `sessionStorage`에 저장 → 재진입 시 자동 재분석, `/chat`·AI 풀이 탭이 재사용
+- 결과 헤더의 **공유** 버튼(`ShareButton`, 아래 "결과 공유 카드" 절)
+
+## 결과 공유 카드 — 유입 루프 (ROADMAP V1)
+
+```
+결과 헤더 "공유" → POST /kkachi/shares (지금 입력값) → shares.payload = build_share_card() 스냅샷 → /s/{id}
+  → navigator.share(제목·문구·링크) 또는 클립보드 → 패널: OG 이미지 미리보기 · 링크 복사 · 이미지로 공유(파일) · 이미지 저장
+받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + "나도 30초 만에 내 사주 보기" → 홈 QuickStartPost
+카톡·슬랙 미리보기 → /s/{id}/opengraph-image (satori 1200×630, public/fonts 서브셋) — metadataBase = NEXT_PUBLIC_SITE_URL
+```
+
+- 카드에는 생년월일·성별·오늘 줄이 없다. 받는 사람은 카드에 보이는 것만 본다. 링크는 만료 없음
+- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수. 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성
+- 사이트 기본 OG(`app/opengraph-image.tsx`)는 브랜드 카드. `NEXT_PUBLIC_SITE_URL`이 없으면 OG URL이 localhost로 나가므로 배포 빌드 전 `.env.production` 확인
 
 ### sessionStorage 키
 | 키 | 저장 | 사용 |
@@ -594,6 +624,7 @@ tests/
 │   ├── test_fortune.py             # 세운·대운·충합
 │   ├── test_sibi_unseong.py        # 십이운성·신살
 │   ├── test_three_pillars.py       # 출생시간 미상 세 기둥(R2)
+│   ├── test_kkachi_controller.py   # /kkachi/shares 왕복 — 카드에 생년월일 없음, 세 기둥
 │   └── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
 └── application/
     ├── test_interpret.py       # 종합 해석 통합 테스트

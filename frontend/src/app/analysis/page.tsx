@@ -6,6 +6,7 @@ import { analyzeChart, analyzeProfileChart, createProfile, listAnalysisYears, li
 import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import ResultSlides from "@/components/ResultSlides";
+import ShareButton from "@/components/ShareButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY, INPUT_CLASS, hourToSiLabel } from "@/lib/constants";
 
@@ -24,6 +25,8 @@ export default function AnalysisPage() {
   const [cachedYears, setCachedYears] = useState<number[]>([]);
   const [detectedCity, setDetectedCity] = useState<string | undefined>();
   const [detectedLongitude, setDetectedLongitude] = useState<number | undefined>();
+  // 지금 보고 있는 결과의 입력값 — 공유 카드 생성에 그대로 보낸다
+  const [lastInput, setLastInput] = useState<AnalysisInput | null>(null);
 
   useEffect(() => {
     detectLocation().then((loc) => {
@@ -67,6 +70,7 @@ export default function AnalysisPage() {
         return;
       }
       setName(savedName);
+      setLastInput(input);
       setLoading(true);
       analyzeChart(input)
         .then(setResult)
@@ -96,6 +100,7 @@ export default function AnalysisPage() {
       const data = await analyzeChart(input);
       setName(n);
       setProfileId(undefined);
+      setLastInput(input);
       setResult(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
@@ -119,6 +124,7 @@ export default function AnalysisPage() {
         sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
         sessionStorage.setItem("kkachi_analysis_name", profile.name);
         setName(profile.name);
+        setLastInput(input);
       }
       setProfileId(selectedProfileId);
       setResult(data);
@@ -145,12 +151,15 @@ export default function AnalysisPage() {
               <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">사주 분석</h1>
               <p className="text-sm text-[var(--color-ink-muted)]">타고난 사주와 올해의 운세를 풀어드립니다.</p>
             </div>
-            <button
-              onClick={() => { setResult(null); setError(null); }}
-              className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
-            >
-              다시 입력
-            </button>
+            <div className="flex items-center gap-2">
+              {lastInput && <ShareButton input={lastInput} name={name} />}
+              <button
+                onClick={() => { setResult(null); setError(null); }}
+                className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
+              >
+                다시 입력
+              </button>
+            </div>
           </header>
           {profileId && otherYears.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 text-xs">

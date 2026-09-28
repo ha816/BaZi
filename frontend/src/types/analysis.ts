@@ -512,3 +512,21 @@ export interface DailyFortune {
   action?: string;
   caution?: string;
 }
+
+// 결과 공유 카드 (/s/[id]) — 백엔드 KkachiService.build_share_card() 스냅샷. 생년월일·성별은 없다
+export interface ShareCard {
+  name: string;
+  year: number;
+  pillars: string[];
+  pillar_elements: PillarElementInfo[];
+  hour_unknown: boolean;
+  day_stem: string;
+  day_stem_korean: string;
+  my_element: { name: string; meaning: string };
+  element_stats: Record<string, number>;
+  strength_label: string;
+  yongshin: { name: string; meaning: string };
+  pillar_summary: string;
+  sinsal: string[];
+  summary: { me?: string; energy?: string; yongshin?: string; year?: string; caution?: string };
+}

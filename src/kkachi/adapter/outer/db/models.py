@@ -153,3 +153,14 @@ class CompatInviteModel(Base):
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False)  # {name, gender, birth_dt, city, hour_unknown, relation_type}
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class ShareModel(Base):
+    """사주 결과 공유 카드(/s/{id}) — 서버가 계산한 카드 스냅샷(payload)만 담는다.
+    생년월일·성별은 저장하지 않으므로 링크를 받은 사람은 카드에 보이는 것만 본다. 만료 없음."""
+
+    __tablename__ = "shares"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)  # KkachiService.build_share_card() 결과
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

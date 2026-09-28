@@ -1,5 +1,6 @@
 from dataclasses import asdict
 from datetime import datetime
+from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
@@ -104,3 +105,33 @@ async def stream_report(
                 yield chunk
 
     return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
+
+
+@kkachi_router.post("/shares", status_code=201)
+@inject
+async def create_share(
+    req: AnalysisRequest,
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
+    share_repo=Depends(Provide[Container.share_repo]),
+) -> dict:
+    """결과 공유 카드 생성 — 서버가 계산한 카드 스냅샷만 저장하고 id 반환. 받는 쪽은 /s/{id}로 본다."""
+    try:
+        user = _make_user(req)
+        natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
+        result = await saju_svc.interpret(natal_info, postnatal_info, user=user, name=req.name)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
+    share_id = await share_repo.create(saju_svc.build_share_card(result, req.name))
+    return {"share_id": str(share_id)}
+
+
+@kkachi_router.get("/shares/{share_id}")
+@inject
+async def get_share(
+    share_id: UUID,
+    share_repo=Depends(Provide[Container.share_repo]),
+) -> dict:
+    card = await share_repo.get(share_id)
+    if card is None:
+        raise HTTPException(status_code=404, detail="공유 링크가 존재하지 않습니다.")
+    return card

@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { DailyFortune, DailyWeather, HourlyWeather, Profile } from "@/types/analysis";
+import { useRouter } from "next/navigation";
+import type { AnalysisInput, DailyFortune, DailyWeather, HourlyWeather, Profile } from "@/types/analysis";
 import { getDailyCompat, getForecast, getWeather, listProfiles, type DailyCompat } from "@/lib/api";
-import { detectLocation } from "@/lib/location";
+import { detectLocation, type LocationInfo } from "@/lib/location";
+import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
 import FeedPost from "@/components/FeedPost";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -320,6 +322,38 @@ function VideoPost({ loggedIn }: { loggedIn: boolean }) {
   );
 }
 
+// ── 비로그인 첫 화면: 30초 만에 내 사주 보기 ────────────────────────────────
+function QuickStartPost({ location }: { location: LocationInfo | null }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  // 입력값을 sessionStorage에 두고 /analysis로 — 그 페이지가 진입 시 자동으로 분석한다
+  const handleSubmit = (input: AnalysisInput, name: string) => {
+    setBusy(true);
+    sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
+    sessionStorage.setItem("kkachi_analysis_name", name);
+    sessionStorage.removeItem("kkachi_profile_input");
+    router.push("/analysis");
+  };
+
+  return (
+    <section className="px-4 pt-5 pb-6 border-b border-[var(--color-border-light)] bg-[var(--color-card)]">
+      <div className="flex items-center gap-3 mb-4">
+        <img src="/kkachi/icon-192.png" alt="사주까치" className="w-14 h-14 rounded-full flex-shrink-0" />
+        <div>
+          <h1 className="font-heading text-xl font-bold text-[var(--color-ink)]">30초 만에 내 사주 보기</h1>
+          <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">이름과 생년월일만 넣으면 타고난 팔자, 올해 흐름, 좋은 달까지. 로그인 없이.</p>
+        </div>
+      </div>
+      <AnalysisForm quick onSubmit={handleSubmit} loading={busy} defaultCity={location?.city} defaultLongitude={location?.longitude} />
+      <p className="mt-3 text-center text-[11px] text-[var(--color-ink-faint)]">
+        매일 아침 한 마디를 받고 싶다면{" "}
+        <Link href="/join" className="underline underline-offset-2 text-[var(--color-gold)]">로그인</Link>
+      </p>
+    </section>
+  );
+}
+
 // ── 프로필 없을 때 CTA 포스트 ──────────────────────────────────────────────
 function EmptyProfilePost() {
   return (
@@ -347,6 +381,7 @@ export default function Home() {
   const [memberId, setMemberId] = useState<string | null | undefined>(undefined);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [weatherCity, setWeatherCity] = useState<string>("Seoul");
+  const [location, setLocation] = useState<LocationInfo | null>(null);
 
   const today = new Date();
   const dateLabel = today.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
@@ -364,7 +399,7 @@ export default function Home() {
       }).catch(() => {});
     } else {
       track("home_view", { logged_in: false });
-      detectLocation().then((loc) => { if (loc) setWeatherCity(loc.city); }).catch(() => {});
+      detectLocation().then((loc) => { if (loc) { setWeatherCity(loc.city); setLocation(loc); } }).catch(() => {});
     }
   }, []);
 
@@ -385,6 +420,9 @@ export default function Home() {
 
         {/* 피드 */}
         <div>
+          {/* 비로그인: 입력 폼이 먼저 */}
+          {!memberId && <QuickStartPost location={location} />}
+
           {/* 로그인: 운세 포스트 */}
           {memberId && profiles.length === 0 && <EmptyProfilePost />}
           {memberId && profiles.map((p) => (

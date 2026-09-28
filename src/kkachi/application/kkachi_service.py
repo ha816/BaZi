@@ -256,6 +256,34 @@ class KkachiService(InterpreterPort):
         today = compute_fortune(natal, date.today(), None, postnatal, name=name)
         return {"today": _today_line(today), "today_date": today.date}
 
+    def build_share_card(self, interpretation: Interpretation, name: str = "") -> dict:
+        """결과 공유 카드(/s/{id})에 실을 스냅샷. 생년월일·성별과 날짜에 묶인 '오늘' 줄은 넣지 않는다."""
+        natal = interpretation.natal
+        post = interpretation.postnatal
+        sm = post.summary
+        sinsal: list[str] = []
+        for s in natal.sinsal:
+            if s["sinsal_korean"] not in sinsal:
+                sinsal.append(s["sinsal_korean"])
+        return {
+            "name": name,
+            "year": post.year,
+            "pillars": natal.pillars,
+            "pillar_elements": natal.pillar_elements,
+            "hour_unknown": natal.hour_unknown,
+            "day_stem": natal.day_stem,
+            "day_stem_korean": natal.day_stem_korean,
+            "my_element": natal.my_element,
+            "element_stats": natal.element_stats,
+            "strength_label": natal.strength_label,
+            "yongshin": natal.yongshin_info,
+            "pillar_summary": natal.pillar_summary,
+            "sinsal": sinsal[:4],
+            "summary": {
+                "me": sm.me, "energy": sm.energy, "yongshin": sm.yongshin, "year": sm.year, "caution": sm.caution,
+            } if sm else {},
+        }
+
     def build_chat_context(self, interpretation: Interpretation, user: User, name: str = "") -> str:
         natal = interpretation.natal
         post = interpretation.postnatal

@@ -10,10 +10,12 @@ interface Props {
   loading: boolean;
   defaultCity?: string;
   defaultLongitude?: number;
+  /** 홈 퀵스타트 — 저장 단계·정밀 설정 없이 버튼 하나 "내 사주 보기" (카드 배경은 부모가 준다) */
+  quick?: boolean;
 }
 
 
-export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, defaultLongitude }: Props) {
+export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, defaultLongitude, quick = false }: Props) {
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("1990-01-01");
   const [selectedHour, setSelectedHour] = useState("");
@@ -32,6 +34,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
   }
 
   const isReady = name.trim() !== "";
+  const canSubmit = quick ? isReady : saved;
 
   const handleNameChange = (v: string) => { setName(v); setSaved(false); };
   const handleBirthDateChange = (v: string) => { setBirthDate(v); setSaved(false); };
@@ -53,7 +56,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!saved) return;
+    if (!canSubmit) return;
     const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
     const time = hourOpt?.time ?? "12:00";
     const lon = longitude !== "" ? parseFloat(longitude) : undefined;
@@ -73,7 +76,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-7"
+      className={quick ? "space-y-5" : "bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-7"}
     >
       {/* Row 1: 이름 + 성별 */}
       <div className="flex gap-4">
@@ -143,17 +146,19 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
       </div>
 
       {/* 고급 설정 토글 */}
-      <button
-        type="button"
-        onClick={() => setShowAdvanced((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink-light)] transition-colors"
-      >
-        <span className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}>▶</span>
-        정밀 설정
-      </button>
+      {!quick && (
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="flex items-center gap-1.5 text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink-light)] transition-colors"
+        >
+          <span className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}>▶</span>
+          정밀 설정
+        </button>
+      )}
 
       {/* 정밀 설정: 분석 연도 */}
-      {showAdvanced && (
+      {!quick && showAdvanced && (
         <div className="pt-1">
           <label className="space-y-2">
             <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도 <span className="text-red-500">*</span></span>
@@ -169,6 +174,16 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
         </div>
       )}
 
+      {quick ? (
+        <button
+          type="submit"
+          disabled={!isReady || loading}
+          title={!isReady ? "이름을 입력해 주세요" : undefined}
+          className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] disabled:cursor-not-allowed transition-colors min-h-[52px] shadow-sm"
+        >
+          {loading ? "분석 중..." : "내 사주 보기"}
+        </button>
+      ) : (
       <div className="flex gap-3">
         <span
           className="flex-1"
@@ -200,6 +215,7 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
           </button>
         </span>
       </div>
+      )}
     </form>
   );
 }
