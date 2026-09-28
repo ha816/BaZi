@@ -19,6 +19,16 @@ const BORDER = "#E7E2D8";
 const PILLAR_LABELS = ["년주", "월주", "일주", "시주"];
 const ELEMENTS = ["木", "火", "土", "金", "水"];
 
+/** 한 글자 — "병(丙)" 형태: 한글 음 크게 + 괄호 한자 작게, 오행색 */
+function Glyph({ korean, hanja, color }: { korean: string; hanja: string; color: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", color, lineHeight: 1.1 }}>
+      <div style={{ display: "flex", fontSize: 46, fontWeight: 700 }}>{korean}</div>
+      <div style={{ display: "flex", fontSize: 28, fontWeight: 400, marginLeft: 2 }}>({hanja})</div>
+    </div>
+  );
+}
+
 type OgFont = { name: string; data: Buffer; weight: 400 | 700; style: "normal" };
 type OgAssets = { fonts: OgFont[]; mascot: string };
 
@@ -91,16 +101,17 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    width: 118,
+                    width: 132,
                     borderRadius: 18,
                     background: IVORY_WARM,
                     border: `1px solid ${BORDER}`,
                     padding: "10px 0 12px",
+                    gap: 6,
                   }}
                 >
                   <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{PILLAR_LABELS[i]}</div>
-                  <div style={{ display: "flex", fontSize: 68, fontWeight: 700, lineHeight: 1.15, color: getElementInfo(el?.stem_element ?? "").color }}>{p[0]}</div>
-                  <div style={{ display: "flex", fontSize: 68, fontWeight: 700, lineHeight: 1.15, color: getElementInfo(el?.branch_element ?? "").color }}>{p[1]}</div>
+                  <Glyph korean={card.pillar_stems_korean?.[i] ?? ""} hanja={p[0]} color={getElementInfo(el?.stem_element ?? "").color} />
+                  <Glyph korean={card.pillar_branches_korean?.[i] ?? ""} hanja={p[1]} color={getElementInfo(el?.branch_element ?? "").color} />
                 </div>
               );
             })}
@@ -111,7 +122,7 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  width: 118,
+                  width: 132,
                   borderRadius: 18,
                   border: `2px dashed ${BORDER}`,
                   color: INK_FAINT,
@@ -129,7 +140,7 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
               const info = getElementInfo(e);
               return (
                 <div key={e} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ display: "flex", width: 34, fontSize: 26, fontWeight: 700, color: info.color }}>{e}</div>
+                  <div style={{ display: "flex", width: 104, fontSize: 22, fontWeight: 700, color: info.color }}>{info.korean}({e})</div>
                   <div style={{ display: "flex", flex: 1, height: 18, borderRadius: 9, background: IVORY_WARM }}>
                     <div style={{ display: "flex", width: `${Math.round((n / maxCount) * 100)}%`, height: 18, borderRadius: 9, background: info.borderColor }} />
                   </div>
@@ -144,7 +155,7 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
           <div style={{ display: "flex", fontSize: 26, lineHeight: 1.4, color: INK }}>{headline}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
             <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>
-              {card.day_stem}({card.day_stem_korean}) 일간 · {card.strength_label} · 용신 {card.yongshin.name}
+              {card.day_stem_korean}({card.day_stem}) 일간 · {card.strength_label} · 용신 {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
             </div>
             <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 30초 만에 내 사주 보기 →</div>
           </div>

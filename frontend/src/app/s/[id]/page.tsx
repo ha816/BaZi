@@ -62,8 +62,15 @@ export default async function SharePage({ params }: Props) {
                 return (
                   <div key={i} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] py-3 text-center">
                     <p className="text-[10px] text-[var(--color-ink-muted)] mb-1">{PILLAR_LABELS[i]}</p>
-                    <p className="font-heading text-3xl font-bold leading-tight" style={{ color: getElementInfo(el?.stem_element ?? "").color }}>{p[0]}</p>
-                    <p className="font-heading text-3xl font-bold leading-tight" style={{ color: getElementInfo(el?.branch_element ?? "").color }}>{p[1]}</p>
+                    {[
+                      { korean: card.pillar_stems_korean?.[i] ?? "", hanja: p[0], color: getElementInfo(el?.stem_element ?? "").color },
+                      { korean: card.pillar_branches_korean?.[i] ?? "", hanja: p[1], color: getElementInfo(el?.branch_element ?? "").color },
+                    ].map((g) => (
+                      <p key={g.hanja} className="font-heading leading-tight whitespace-nowrap" style={{ color: g.color }}>
+                        <span className="text-2xl font-bold">{g.korean}</span>
+                        <span className="text-sm">({g.hanja})</span>
+                      </p>
+                    ))}
                   </div>
                 );
               })}
@@ -77,7 +84,7 @@ export default async function SharePage({ params }: Props) {
                 const info = getElementInfo(e);
                 return (
                   <div key={e} className="flex items-center gap-2 text-xs">
-                    <span className="w-5 font-bold" style={{ color: info.color }}>{e}</span>
+                    <span className="w-14 font-bold" style={{ color: info.color }}>{info.korean}({e})</span>
                     <div className="flex-1 h-2 rounded-full bg-[var(--color-ivory-warm)]">
                       <div className="h-2 rounded-full" style={{ width: `${(n / maxCount) * 100}%`, background: info.borderColor }} />
                     </div>
@@ -87,7 +94,7 @@ export default async function SharePage({ params }: Props) {
               })}
             </div>
             <p className="text-xs text-[var(--color-ink-muted)]">
-              {card.day_stem}({card.day_stem_korean}) 일간 · {card.strength_label} · 용신(用神) {card.yongshin.name}
+              {card.day_stem_korean}({card.day_stem}) 일간 · {card.strength_label} · 용신(用神) {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
             </p>
             {card.sinsal.length > 0 && (
               <div className="flex flex-wrap gap-1.5">

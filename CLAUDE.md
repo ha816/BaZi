@@ -49,7 +49,7 @@ bash scripts/deploy.sh   # 프론트 production 빌드 → backend·frontend 재
 | env | `KKACHI_DB_URL` | DB URL override — 앱(`fastapi.py`)·Alembic(`alembic/env.py`) 모두 env → local.toml → 기본값 순 |
 
 - `src/kkachi/resource/hand_landmarker.task` (MediaPipe 손 랜드마크 모델, 7.8MB)는 **git 미추적** — 없으면 `/palmistry/analyze` 요청 시 실패. README의 curl 명령으로 다운로드.
-- `frontend/next.config.ts`: `/api/*` → `127.0.0.1:8000` rewrite, tailscale 호스트 `allowedDevOrigins`.
+- `frontend/next.config.ts`: `/api/*` → `127.0.0.1:8000` rewrite, `allowedDevOrigins`(tailscale 호스트·LAN IP·127.0.0.1). **dev 서버는 이 목록에 없는 호스트로 열면 HMR·dev 자원이 막혀 화면이 비어 보인다** — 폰 등 다른 기기에서 볼 IP는 여기 추가. 프로덕션(`next start`)은 무관.
 - 이 머신은 `docker compose` 플러그인이 없고 `docker-compose` 바이너리만 있음 — `scripts/db.sh`가 둘을 자동 감지하므로 스크립트를 쓴다. launchd `com.kkachi.db`·`~/bin/kkachi-pg-backup.sh`도 같은 이유로 db.sh/자동 감지를 쓴다 (2026-09-18 수정).
 - 베타 프론트는 `next start`(production 빌드)로 떠 있다. `npm run dev`가 `.next`를 지우므로 베타를 살려둔 채 개발하려면 다른 포트·다른 체크아웃에서 하거나, 끝나고 `bash scripts/deploy.sh`로 다시 빌드한다.
 

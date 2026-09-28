@@ -269,6 +269,8 @@ class KkachiService(InterpreterPort):
             "name": name,
             "year": post.year,
             "pillars": natal.pillars,
+            "pillar_stems_korean": natal.pillar_stems_korean,      # 경·병·무·기 — 카드는 "병(丙)" 형태로 병기
+            "pillar_branches_korean": natal.pillar_branches_korean,
             "pillar_elements": natal.pillar_elements,
             "hour_unknown": natal.hour_unknown,
             "day_stem": natal.day_stem,

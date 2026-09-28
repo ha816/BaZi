@@ -518,6 +518,8 @@ export interface ShareCard {
   name: string;
   year: number;
   pillars: string[];
+  pillar_stems_korean?: string[];    // 경·병·무·기 (2026-09-28 이후 카드)
+  pillar_branches_korean?: string[]; // 오·술·신·미
   pillar_elements: PillarElementInfo[];
   hour_unknown: boolean;
   day_stem: string;

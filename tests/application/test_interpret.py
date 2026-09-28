@@ -174,5 +174,6 @@ def test_share_card_has_pillars_and_no_birth_info():
     result = asyncio.run(_service.interpret(natal, postnatal, user=user, name="승민"))
     card = _service.build_share_card(result, "승민")
     assert card["name"] == "승민" and len(card["pillars"]) == 4 and card["pillar_summary"]
+    assert len(card["pillar_stems_korean"]) == 4 and len(card["pillar_branches_korean"]) == 4
     assert set(card["summary"]) == {"me", "energy", "yongshin", "year", "caution"} and card["summary"]["me"]
     assert not {"birth_dt", "gender", "city", "today"} & (set(card) | set(card["summary"]))
