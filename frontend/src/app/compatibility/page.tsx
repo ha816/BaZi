@@ -5,7 +5,7 @@ import ShareButton from "@/components/ShareButton";
 import LoginRequired from "@/components/LoginRequired";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile, RelationType } from "@/types/analysis";
 import {
   analyzeCompatibility,
@@ -50,6 +50,8 @@ function CompatibilityPageInner() {
   const [inviteId, setInviteId] = useState<string | null>(null);
   const [inviterName, setInviterName] = useState<string>("");
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   // 로그인 필수 — null=아직 모름(하이드레이션 중), ""=비로그인
   const storedMember = useStorageValue(MEMBER_ID_KEY);
   const memberId = storedMember || null;
@@ -120,6 +122,18 @@ function CompatibilityPageInner() {
     return toPersonInput(s);
   };
 
+  // 분석 페이지의 "다시 입력"과 같은 동작 — 결과를 지우고 폼으로, ?tab= 제거
+  const handleReset = () => {
+    narrativeAbortRef.current?.abort();
+    setResult(null);
+    setChatInput(null);
+    setNarrative("");
+    setNarrativeLoading(false);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("tab");
+    router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -181,14 +195,25 @@ function CompatibilityPageInner() {
           title="사주 궁합"
           description="두 사람의 사주로 인간 관계 궁합을 풀어드립니다."
           actions={
-            result && chatInput && !loading ? (
-              <ShareButton
-                label="궁합 공유"
-                create={() => createCompatShare(chatInput)}
-                title={`${resultNames.name1 || "첫 번째 분"} · ${resultNames.name2 || "두 번째 분"}의 궁합`}
-                text="두 사람의 궁합, 사주까치가 이렇게 봤어요. 우리도 30초 만에 →"
-                channel="compat"
-              />
+            result && !loading ? (
+              <>
+                {chatInput && (
+                  <ShareButton
+                    label="궁합 공유"
+                    create={() => createCompatShare(chatInput)}
+                    title={`${resultNames.name1 || "첫 번째 분"} · ${resultNames.name2 || "두 번째 분"}의 궁합`}
+                    text="두 사람의 궁합, 사주까치가 이렇게 봤어요. 우리도 30초 만에 →"
+                    channel="compat"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
+                >
+                  다시 입력
+                </button>
+              </>
             ) : undefined
           }
         />
@@ -201,63 +226,65 @@ function CompatibilityPageInner() {
         )}
         {memberId && (
           <>
-          <form
-            onSubmit={handleSubmit}
-            className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-6"
-          >
-            {inviteId ? (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-3 text-sm text-[var(--color-ink)]">
-                  💌 <strong>{inviterName || "초대한 분"}</strong>님이 궁합을 보고 싶어 해요. 아래에 내 정보만 넣으면 두 분의 궁합을 볼 수 있어요.
+          {!result && (
+            <form
+              onSubmit={handleSubmit}
+              className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 md:p-9 space-y-6"
+            >
+              {inviteId ? (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-3 text-sm text-[var(--color-ink)]">
+                    💌 <strong>{inviterName || "초대한 분"}</strong>님이 궁합을 보고 싶어 해요. 아래에 내 정보만 넣으면 두 분의 궁합을 볼 수 있어요.
+                  </div>
+                  <PersonCard label="내 정보" state={person2} profiles={profiles}
+                    onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
                 </div>
-                <PersonCard label="내 정보" state={person2} profiles={profiles}
-                  onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
-              </div>
-            ) : (
-              <div className="flex flex-col md:flex-row gap-4">
-                <PersonCard label="첫 번째 분" state={person1} profiles={profiles}
-                  onChange={(patch) => setPerson1((s) => ({ ...s, ...patch }))} />
-                <div className="flex items-center justify-center flex-shrink-0 text-2xl text-[var(--color-gold-light)]">♥</div>
-                <PersonCard label="두 번째 분" state={person2} profiles={profiles}
-                  onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col md:flex-row gap-4">
+                  <PersonCard label="첫 번째 분" state={person1} profiles={profiles}
+                    onChange={(patch) => setPerson1((s) => ({ ...s, ...patch }))} />
+                  <div className="flex items-center justify-center flex-shrink-0 text-2xl text-[var(--color-gold-light)]">♥</div>
+                  <PersonCard label="두 번째 분" state={person2} profiles={profiles}
+                    onChange={(patch) => setPerson2((s) => ({ ...s, ...patch }))} />
+                </div>
+              )}
 
-            <div className="space-y-1.5" hidden={!!inviteId}>
-              <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
-              <div className="flex gap-2">
-                {([
-                  { value: "lover",  label: "연인·부부" },
-                  { value: "friend", label: "친구·동료" },
-                  { value: "family", label: "가족" },
-                ] as const).map(({ value, label }) => {
-                  const active = relationType === value;
-                  return (
-                    <button key={value} type="button" onClick={() => setRelationType(value)}
-                      className={`flex-1 rounded-lg py-2 text-sm border transition-colors ${
-                        active
-                          ? "bg-[var(--color-ink)] text-[var(--color-ivory)] border-[var(--color-ink)]"
-                          : "bg-white text-[var(--color-ink-muted)] border-[var(--color-border)] hover:border-[var(--color-gold-light)]"
-                      }`}>
-                      {label}
-                    </button>
-                  );
-                })}
+              <div className="space-y-1.5" hidden={!!inviteId}>
+                <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
+                <div className="flex gap-2">
+                  {([
+                    { value: "lover",  label: "연인·부부" },
+                    { value: "friend", label: "친구·동료" },
+                    { value: "family", label: "가족" },
+                  ] as const).map(({ value, label }) => {
+                    const active = relationType === value;
+                    return (
+                      <button key={value} type="button" onClick={() => setRelationType(value)}
+                        className={`flex-1 rounded-lg py-2 text-sm border transition-colors ${
+                          active
+                            ? "bg-[var(--color-ink)] text-[var(--color-ivory)] border-[var(--color-ink)]"
+                            : "bg-white text-[var(--color-ink-muted)] border-[var(--color-border)] hover:border-[var(--color-gold-light)]"
+                        }`}>
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
-              <label className="flex-1 space-y-1.5">
-                <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
-                <input type="number" value={year} onChange={(e) => setYear(+e.target.value)}
-                  className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors" min={1920} max={2100} />
-              </label>
-              <button type="submit" disabled={loading}
-                className="w-full sm:flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 sm:py-2.5 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
-                {loading ? "분석 중..." : "궁합 보기"}
-              </button>
-            </div>
-          </form>
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+                <label className="flex-1 space-y-1.5">
+                  <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
+                  <input type="number" value={year} onChange={(e) => setYear(+e.target.value)}
+                    className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors" min={1920} max={2100} />
+                </label>
+                <button type="submit" disabled={loading}
+                  className="w-full sm:flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 sm:py-2.5 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
+                  {loading ? "분석 중..." : "궁합 보기"}
+                </button>
+              </div>
+            </form>
+          )}
 
           {loading && <LoadingSpinner />}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import type { CompatibilityResult, DomainSignal, DomainSignalKind, PillarSnapshot } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
@@ -350,7 +350,17 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
     narrative = null,
   } = data;
 
-  const [tab, setTab] = useState<CompatTabId>("total");
+  // 탭은 ResultSlides처럼 ?tab= 에 둔다 (invite·p1·p2 등 다른 파라미터는 유지)
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const tabParam = searchParams.get("tab");
+  const tab: CompatTabId = COMPAT_TABS.find((t) => t.id === tabParam)?.id ?? "total";
+  const setTab = (id: CompatTabId) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", id);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="space-y-4">
