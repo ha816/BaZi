@@ -1,5 +1,6 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useEffect, useState } from "react";
 import { detectLocation } from "@/lib/location";
 import { listProfiles, getDailyFortune } from "@/lib/api";
@@ -115,13 +116,10 @@ export default function WeatherPage() {
   const meta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
   return (
-    <main className="min-h-screen py-8 px-4 pb-24">
-      <div className="max-w-lg mx-auto space-y-6">
+    <main className="page">
+      <div className="page__inner">
 
-        <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">날씨 기운</h1>
-          <p className="text-sm text-[var(--color-ink-muted)]">지금 이 순간, 주변을 감싸는 자연의 오행 에너지를 확인하세요.</p>
-        </header>
+        <PageHeader title="날씨 기운" description="지금 이 순간, 주변을 감싸는 자연의 오행 에너지를 확인하세요." />
 
         {loading && <LoadingSpinner />}
 

@@ -120,8 +120,8 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
     <div className="space-y-4">
       {natal.hour_unknown && (
         <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-ivory-warm)] px-4 py-3 text-xs leading-relaxed text-[var(--color-ink-muted)]">
-          <span className="font-semibold text-[var(--color-ink)]">🕰️ 출생시간을 몰라 세 기둥(三柱), 여섯 글자로 봤어요.</span>{" "}
-          시주(時柱)가 빠져 자녀·말년 영역은 보이지 않고, 대운 시작 나이는 ±2개월 오차가 있을 수 있어요. 시간을 알게 되면 프로필에서 고쳐 주세요.
+          <span className="font-semibold text-[var(--color-ink)]">⚠️ 출생시간을 몰라 연주, 월주, 일주로만 분석했어요.</span>{" "}
+          자녀·말년 운은 보이지 않고, 대운 시작 나이도 조금 어긋날 수 있어요. 시간을 알게 되면 다시 입력해 보세요.
         </div>
       )}
       <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">

@@ -1,12 +1,18 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ProfileCreateInput } from "@/types/analysis";
 import { createOrGetMember, listProfiles, createProfile } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import { MEMBER_ID_KEY, HOUR_OPTIONS, INPUT_CLASS } from "@/lib/constants";
+
+// 로그인 필수 페이지(시운·궁합)에서 온 경우 ?next= 로 되돌아간다. 상대 경로만 허용(open redirect 방지)
+function nextPath(): string {
+  const next = new URLSearchParams(window.location.search).get("next") ?? "";
+  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
+}
 
 export default function JoinPage() {
   const router = useRouter();
@@ -43,7 +49,7 @@ export default function JoinPage() {
       localStorage.setItem(MEMBER_ID_KEY, member.id);
       const existing = await listProfiles(member.id);
       if (existing.length > 0) {
-        router.push("/");
+        router.push(nextPath());
       } else {
         setMemberId(member.id);
         setProfileName(name.trim());
@@ -72,7 +78,7 @@ export default function JoinPage() {
         birth_hour_unknown: selectedHour === "",
       };
       await createProfile(memberId, data);
-      router.push("/");
+      router.push(nextPath());
     } catch {
       setProfileError("프로필 등록에 실패했습니다.");
     } finally {
@@ -82,14 +88,9 @@ export default function JoinPage() {
 
   if (step === "profile") {
     return (
-      <main className="min-h-screen flex items-center justify-center py-10 px-4">
-        <div className="w-full max-w-md space-y-8">
-          <header className="space-y-2">
-            <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">내 사주 등록</h1>
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              정확한 분석을 위해 생년월일을 입력해주세요.
-            </p>
-          </header>
+      <main className="page page--center">
+        <div className="page__inner page__inner--narrow">
+          <PageHeader title="내 사주 등록" description="정확한 분석을 위해 생년월일을 입력해주세요." />
 
           <form
             onSubmit={handleProfileSubmit}
@@ -178,20 +179,12 @@ export default function JoinPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center py-10 px-4">
-      <div className="w-full max-w-md space-y-8">
-        <header className="space-y-3">
-          <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-            ← 홈으로
-          </Link>
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">시작하기</h1>
-            <p className="text-sm text-[var(--color-ink-muted)] mt-2">
-              영리한 명리 상담사 사주까치와 함께해보세요.<br />
-              이미 가입한 이메일이면 기존 정보를 불러옵니다.
-            </p>
-          </div>
-        </header>
+    <main className="page page--center">
+      <div className="page__inner page__inner--narrow">
+        <PageHeader
+          title="시작하기"
+          description={<>영리한 명리 상담사 사주까치와 함께해보세요.<br />이미 가입한 이메일이면 기존 정보를 불러옵니다.</>}
+        />
 
         <form
           onSubmit={handleAccountSubmit}

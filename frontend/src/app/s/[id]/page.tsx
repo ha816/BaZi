@@ -76,7 +76,7 @@ export default async function SharePage({ params }: Props) {
               })}
             </div>
             {card.hour_unknown && (
-              <p className="text-[11px] text-[var(--color-ink-faint)]">🕰️ 출생시간을 몰라 세 기둥(三柱), 여섯 글자로 봤어요.</p>
+              <p className="text-[11px] text-[var(--color-ink-faint)]">⚠️ 출생시간을 몰라 연주, 월주, 일주로만 분석했어요.</p>
             )}
             <div className="space-y-1.5">
               {ELEMENTS.map((e) => {

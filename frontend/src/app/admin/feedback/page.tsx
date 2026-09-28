@@ -1,7 +1,7 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { getEventSummary, getFeedbackSummary, type EventSummary, type FeedbackSummary } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -42,19 +42,9 @@ export default function FeedbackAdminPage() {
   const overallRate = totalAll ? positiveAll / totalAll : 0;
 
   return (
-    <main className="min-h-screen py-10 px-4">
-      <div className="max-w-3xl mx-auto space-y-8">
-        <header className="space-y-2">
-          <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)]">
-            ← 홈으로
-          </Link>
-          <h1 className="font-heading text-2xl md:text-3xl font-bold text-[var(--color-ink)]">
-            해석 피드백 요약
-          </h1>
-          <p className="text-sm text-[var(--color-ink-muted)]">
-            탭별 👍/👎 비율을 만족도 낮은 순으로 정렬해요. 빨강이 우선 개선 대상이에요.
-          </p>
-        </header>
+    <main className="page">
+      <div className="page__inner">
+        <PageHeader title="해석 피드백 요약" description="탭별 👍/👎 비율을 만족도 낮은 순으로 정렬해요. 빨강이 우선 개선 대상이에요." />
 
         {error && (
           <div className="rounded-lg px-5 py-4 text-sm text-[var(--color-fire)]"

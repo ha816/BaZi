@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { AnalysisInput } from "@/types/analysis";
 import { HOUR_OPTIONS } from "@/lib/constants";
+
+const SIGNUP_HINT = "로그인하면 여러 프로필을 저장해 두고 바로 불러올 수 있어요";
 
 interface Props {
   onSubmit: (input: AnalysisInput, name: string) => void;
@@ -34,7 +37,9 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
   }
 
   const isReady = name.trim() !== "";
-  const canSubmit = quick ? isReady : saved;
+  // onSave는 로그인했을 때만 내려온다 → 비로그인은 저장 없이 바로 분석, 저장 버튼은 비활성 + 가입 유도
+  const canSave = !!onSave;
+  const canSubmit = quick || !canSave ? isReady : saved;
 
   const handleNameChange = (v: string) => { setName(v); setSaved(false); };
   const handleBirthDateChange = (v: string) => { setBirthDate(v); setSaved(false); };
@@ -184,14 +189,15 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
           {loading ? "분석 중..." : "내 사주 보기"}
         </button>
       ) : (
+      <>
       <div className="flex gap-3">
         <span
           className="flex-1"
-          title={!isReady ? "이름을 입력해 주세요" : undefined}
+          title={!canSave ? SIGNUP_HINT : !isReady ? "이름을 입력해 주세요" : undefined}
         >
           <button
             type="button"
-            disabled={!isReady || saved}
+            disabled={!canSave || !isReady || saved}
             onClick={handleSave}
             className="w-full border border-[var(--color-border)] rounded-lg py-4 text-base font-semibold transition-colors min-h-[52px]
               disabled:text-[var(--color-ink-faint)] disabled:border-[var(--color-border-light)] disabled:cursor-not-allowed
@@ -204,17 +210,24 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
         </span>
         <span
           className="flex-1"
-          title={!saved && !loading ? "먼저 프로필 저장을 눌러 주세요" : undefined}
+          title={!canSave ? SIGNUP_HINT : !saved && !loading ? "먼저 프로필 저장을 눌러 주세요" : undefined}
         >
           <button
             type="submit"
-            disabled={!saved || loading}
+            disabled={!canSubmit || loading}
             className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-4 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] disabled:cursor-not-allowed transition-colors min-h-[52px] shadow-sm"
           >
             {loading ? "분석 중..." : "분석 시작"}
           </button>
         </span>
       </div>
+      {!canSave && (
+        <p className="text-[11px] text-center text-[var(--color-ink-faint)]">
+          {SIGNUP_HINT}.{" "}
+          <Link href="/join?next=%2Fanalysis" className="underline underline-offset-2 text-[var(--color-gold)]">가입하기 →</Link>
+        </p>
+      )}
+      </>
       )}
     </form>
   );

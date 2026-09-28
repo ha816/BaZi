@@ -1,5 +1,6 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,22 +48,17 @@ export default function ProfilePage() {
   const canAddMore = profiles.length < MAX_PROFILES;
 
   return (
-    <main className="min-h-screen py-10 md:py-16 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <header className="space-y-3">
-          <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-            ← 홈으로
-          </Link>
-          <div className="flex items-end justify-between">
-            <div>
-              <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">프로필 관리</h1>
-              <p className="text-sm text-[var(--color-ink-muted)] mt-1">나와 소중한 분들의 사주 정보를 등록하고 관리하세요.</p>
-            </div>
+    <main className="page">
+      <div className="page__inner">
+        <PageHeader
+          title="프로필 관리"
+          description="나와 소중한 분들의 사주 정보를 등록하고 관리하세요."
+          actions={
             <Link href="/my" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
               계정 설정 →
             </Link>
-          </div>
-        </header>
+          }
+        />
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">

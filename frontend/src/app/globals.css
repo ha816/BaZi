@@ -427,3 +427,25 @@ body {
   padding: 4px 8px;
   text-align: left;
 }
+
+/* 페이지 공통 틀 — 홈·풀스크린 챗을 뺀 모든 페이지. 제목 줄은 components/PageHeader */
+.page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+.page--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.page__inner {
+  width: 100%;
+  max-width: 42rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.page__inner--narrow {
+  max-width: 28rem;
+}

@@ -163,6 +163,8 @@ BaZi/
 │   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
 │   │   ├── OhengPairDiagram · PillarPairDiagram   # 궁합 비교 다이어그램
 │   │   ├── DaeunTimeline · DaeunSeunTable · DomainBarChart · ScoreBar
+│   │   ├── LoginRequired.tsx        # 로그인 필수 페이지의 비로그인 안내 카드 (시운·궁합) → /join?next=
+│   │   ├── PageHeader.tsx           # 페이지 제목 줄 공통(제목 2xl·설명 sm·우측 액션). 페이지 틀은 globals.css .page/.page__inner (홈·챗 제외)
 │   │   ├── SectionHeader · CollapsibleSectionHeader · InlineCollapsibleHeader · InterpretSection
 │   │   ├── KkachiTip · TermBadge · Tooltip · FeedPost · BottomNav · LoadingSpinner
 │   │   └── tabs/
@@ -482,13 +484,13 @@ erDiagram
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
 | `/` | 비로그인: 날짜 헤더 + **QuickStartPost**("30초 만에 내 사주 보기" — `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis`로 이동해 자동 분석) + 소개 영상 / 로그인: StoryTray + 프로필별 오늘 운세 FortunePost(7일 예보, 손없는 날 배지) + 영상 | 선택 |
-| `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/` | — |
+| `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. `?next=`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지) | 필수 |
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 선택 |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과 + 스트리밍 종합해석 + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join?next=`, 초대 링크는 `?invite=` 유지) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 지난주(지난 7일 아침 한 마디 + "맞았어요?" 👍/👎, R6)·오늘~글피 탭, 날씨 배지 | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -499,10 +501,12 @@ erDiagram
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
 - `/weather`, `/palmistry`, `/admin/feedback`은 네비게이션에 연결되어 있지 않음 — URL 직접 진입만 가능.
 - 로그인 상태는 `localStorage["kkachi_member_id"]` (`MEMBER_ID_KEY`)로 판단. 비밀번호 없음.
+- **로그인 정책** (2026-09-28): 비로그인은 홈 퀵스타트·`/analysis` 직접 입력·공유 카드 `/s/[id]`·날씨·손금·가입만. **시운·궁합은 로그인 필수** — 비로그인이면 `LoginRequired` 카드(`/join?next=원래 경로`, 궁합 초대 링크는 `?invite=` 포함). 계정·프로필은 `/join` redirect. 새 기능이 개인 데이터를 쓰면 같은 카드를 쓴다.
 - 페이지 진입 시 `ipapi.co`로 IP 위치 감지 → city(+ longitude) 자동 입력. `longitude`는 UI 비노출로 `User.longitude` → sajupy 직접 전달.
 
 ### 분석 입력 흐름 (`/analysis`)
-- **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. **"프로필 저장" 버튼을 먼저 눌러야 "분석 시작" 활성화** (로그인 시 실제 `POST /profiles`, 비로그인 시 확인 단계 역할). → `POST /kkachi/interpret`
+- 모드 탭(저장된 프로필 불러오기 / 프로필 직접 입력하기)은 **로그인했을 때만** 보인다. 비로그인은 직접 입력 폼 하나.
+- **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. 로그인 시 **"프로필 저장"(`POST /profiles`)을 먼저 눌러야 "분석 시작" 활성화**. 비로그인은 저장 버튼 비활성(호버·캡션으로 "로그인하면 여러 프로필을 저장" 가입 유도, `/join?next=/analysis`)이고 분석 시작은 이름만 넣으면 바로 됨. → `POST /kkachi/interpret`
 - **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시). `GET …/analyses`로 받은 저장된 연도는 폼·결과 상단에 "지난 연도 다시 보기" 칩 (R6)
 - 성공 시 `sessionStorage`에 저장 → 재진입 시 자동 재분석, `/chat`·AI 풀이 탭이 재사용
 - 결과 헤더의 **공유** 버튼(`ShareButton`, 아래 "결과 공유 카드" 절)

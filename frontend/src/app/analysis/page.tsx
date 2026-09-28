@@ -1,5 +1,6 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useEffect, useState, Suspense } from "react";
 import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
 import { analyzeChart, analyzeProfileChart, createProfile, listAnalysisYears, listProfiles } from "@/lib/api";
@@ -144,23 +145,23 @@ export default function AnalysisPage() {
 
   if (result && !loading) {
     return (
-      <main className="min-h-screen py-8 px-4">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <header className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">사주 분석</h1>
-              <p className="text-sm text-[var(--color-ink-muted)]">타고난 사주와 올해의 운세를 풀어드립니다.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {lastInput && <ShareButton input={lastInput} name={name} />}
-              <button
-                onClick={() => { setResult(null); setError(null); }}
-                className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
-              >
-                다시 입력
-              </button>
-            </div>
-          </header>
+      <main className="page">
+        <div className="page__inner">
+          <PageHeader
+            title="사주 분석"
+            description="타고난 사주와 올해의 운세를 풀어드립니다."
+            actions={
+              <>
+                {lastInput && <ShareButton input={lastInput} name={name} />}
+                <button
+                  onClick={() => { setResult(null); setError(null); }}
+                  className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
+                >
+                  다시 입력
+                </button>
+              </>
+            }
+          />
           {profileId && otherYears.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className="text-[var(--color-ink-faint)]">지난 연도 다시 보기</span>
@@ -186,46 +187,42 @@ export default function AnalysisPage() {
   }
 
   return (
-    <main className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <main className="page">
+      <div className="page__inner">
 
-        <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">사주 분석</h1>
-          <p className="text-sm text-[var(--color-ink-muted)]">타고난 사주와 올해의 운세를 풀어드립니다.</p>
-        </header>
+        <PageHeader title="사주 분석" description="타고난 사주와 올해의 운세를 풀어드립니다." />
 
-        {/* 모드 탭 */}
-        <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)]">
-          {(["profile", "direct"] as const).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                mode === m
-                  ? "bg-white text-[var(--color-ink)] shadow-sm"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              }`}
-            >
-              {m === "profile" ? "저장된 프로필 불러오기" : "프로필 직접 입력하기"}
-            </button>
-          ))}
-        </div>
+        {/* 모드 탭 — 로그인했을 때만. 비로그인은 직접 입력 하나 (로그인 정책: CLAUDE.md) */}
+        {memberId && (
+          <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)]">
+            {(["profile", "direct"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  mode === m
+                    ? "bg-white text-[var(--color-ink)] shadow-sm"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                {m === "profile" ? "저장된 프로필 불러오기" : "프로필 직접 입력하기"}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* 프로필 없음 안내 */}
-        {mode === "profile" && profiles.length === 0 && (
+        {memberId && mode === "profile" && profiles.length === 0 && (
           <div className="text-center py-10 text-sm text-[var(--color-ink-faint)] space-y-3">
-            <p>{memberId ? "저장된 프로필이 없습니다." : "로그인 후 저장된 프로필을 불러올 수 있습니다."}</p>
-            <a
-              href={memberId ? "/profile" : "/join"}
-              className="inline-block text-sm text-[var(--color-gold)] hover:opacity-70 transition-opacity"
-            >
-              {memberId ? "프로필 추가하기 →" : "로그인하기 →"}
+            <p>저장된 프로필이 없습니다.</p>
+            <a href="/profile" className="inline-block text-sm text-[var(--color-gold)] hover:opacity-70 transition-opacity">
+              프로필 추가하기 →
             </a>
           </div>
         )}
 
         {/* 프로필 선택 폼 */}
-        {mode === "profile" && profiles.length > 0 && (
+        {memberId && mode === "profile" && profiles.length > 0 && (
           <form
             onSubmit={handleProfileSubmit}
             className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-5 space-y-4"
@@ -282,8 +279,8 @@ export default function AnalysisPage() {
           </form>
         )}
 
-        {/* 직접 입력 폼 */}
-        {mode === "direct" && (
+        {/* 직접 입력 폼 — 비로그인은 항상 이것 */}
+        {(!memberId || mode === "direct") && (
           <AnalysisForm
             onSubmit={handleDirectSubmit}
             loading={loading}

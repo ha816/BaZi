@@ -1,8 +1,9 @@
 // Optimized Siun Timeline
 "use client";
 
+import PageHeader from "@/components/PageHeader";
+import LoginRequired from "@/components/LoginRequired";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { listProfiles, getForecast, getFeedbackMap, postFeedback } from "@/lib/api";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import MorningBrief from "@/components/MorningBrief";
@@ -389,13 +390,10 @@ export default function SiunPage() {
   const tabs = ["지난주", "오늘", "내일", "모레", "글피"];
 
   return (
-    <main className="min-h-screen py-6 px-4 pb-24">
-      <div className="max-w-lg mx-auto space-y-4">
+    <main className="page">
+      <div className="page__inner">
         {/* 헤더 */}
-        <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">시운(時運)</h1>
-          <p className="text-sm text-[var(--color-ink-muted)]">나와 소중한 사람들의 기운이 만나는 순간을 분석합니다.</p>
-        </header>
+        <PageHeader title="시운(時運)" description="시시각각 바뀌는 나의 운을 날씨의 기운과 함께 풀어드립니다." />
 
         {loading && <LoadingSpinner />}
 
@@ -431,13 +429,7 @@ export default function SiunPage() {
 
         {/* 비로그인 */}
         {!loading && !loggedIn && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm p-8 flex flex-col items-center gap-4 text-center">
-            <p className="text-5xl">🪄</p>
-            <p className="text-base font-semibold text-[var(--color-ink)]">로그인하면 나만의 오늘 운세를 볼 수 있어요</p>
-            <Link href="/join" className="px-6 py-2.5 rounded-full bg-[var(--color-gold)] text-white text-sm font-semibold">
-              로그인 / 가입하기
-            </Link>
-          </div>
+          <LoginRequired message="로그인하면 나만의 오늘 운세를 볼 수 있어요" next="/siun" />
         )}
 
         {/* 탭 바 */}

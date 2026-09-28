@@ -1,5 +1,6 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useRef, useState } from "react";
 import type { PalmistryResult, PalmLineScores } from "@/types/analysis";
 import { analyzePalmistry } from "@/lib/api";
@@ -58,16 +59,11 @@ export default function PalmistryPage() {
   const elemInfo = result ? getElementInfo(result.hand_element) : null;
 
   return (
-    <main className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <main className="page">
+      <div className="page__inner">
 
         {/* 헤더 */}
-        <header className="space-y-1">
-          <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">손금 분석</h1>
-          <p className="text-sm text-[var(--color-ink-muted)]">
-            손의 형태로 나의 오행 기운을 알아보세요
-          </p>
-        </header>
+        <PageHeader title="손금 분석" description="손의 형태로 나의 오행 기운을 알아보세요." />
 
         {/* idle — 촬영 가이드 + 업로드 */}
         {(stage === "idle" || stage === "preview") && (

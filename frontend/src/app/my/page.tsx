@@ -1,5 +1,6 @@
 "use client";
 
+import PageHeader from "@/components/PageHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,17 +59,9 @@ export default function MyPage() {
   if (!member) return null;
 
   return (
-    <main className="min-h-screen py-10 md:py-16 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <header className="space-y-3">
-          <Link href="/" className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-gold)] transition-colors">
-            ← 홈으로
-          </Link>
-          <div>
-            <h1 className="font-heading text-3xl font-bold text-[var(--color-ink)]">계정 설정</h1>
-            <p className="text-sm text-[var(--color-ink-muted)] mt-1">회원님의 계정 정보와 설정을 관리할 수 있습니다.</p>
-          </div>
-        </header>
+    <main className="page">
+      <div className="page__inner">
+        <PageHeader title="계정 설정" description="회원님의 계정 정보와 설정을 관리할 수 있습니다." />
 
         {/* 계정 정보 */}
         <section className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-7 space-y-4">

@@ -76,10 +76,10 @@ function summarizeAllDomains(scores: Record<string, { score: number; level: stri
 
   const avg = present.reduce((s, n) => s + scores[n].score, 0) / present.length;
   let intro: string;
-  if (avg >= 70) intro = "네 영역 모두 두루 잘 맞는 인연이에요.";
+  if (avg >= 70) intro = "네 영역 모두 두루 잘 맞는 사이예요.";
   else if (avg >= 55) intro = "네 영역 흐름이 골고루 좋은 편이에요.";
   else if (avg >= 45) intro = "네 영역 흐름이 무난한 편이에요.";
-  else intro = "네 영역에서 노력이 필요한 인연이에요.";
+  else intro = "네 영역에서 노력이 필요한 사이예요.";
 
   const parts: string[] = [];
   if (strong.length > 0) parts.push(`${strong.join("·")} 쪽이 특히 호흡이 좋아요`);
@@ -606,7 +606,7 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
                     <div className="absolute inset-0 rounded-full border-4 border-t-[var(--color-gold)] animate-spin" />
                   </div>
                   <p className="text-sm text-[var(--color-ink-faint)] text-center">
-                    까치가 두 분의 인연을 풀어내고 있어요…
+                    까치가 두 분의 관계를 풀어내고 있어요…
                   </p>
                 </div>
               ) : (
