@@ -91,7 +91,7 @@ function FortunePost({ profile, memberId, selfId }: { profile: Profile; memberId
         today && meta ? (
           <div className="space-y-2.5">
             <MorningBrief data={today} stripName={profile.name} compact />
-            {(today.solar_term || today.weather || today.son_eomneun_nal) && (
+            {(today.solar_term || today.weather || today.son_eomneun_nal || dailyCompat) && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 {today.solar_term && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
