@@ -561,7 +561,7 @@ erDiagram
 ### 궁합 탭 구성 (`?tab=`, `CompatibilityResult` → `components/compatibility/`)
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
-| `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명·key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
+| `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명 · 영역별 점수(레이더 + 4영역 막대·레벨, "영역별 해설 보기" → domain 탭) · key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
 | `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 바로 아래 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
 | `character` | 성격·성질 | `SinsalTab` + `StrengthCard` | 신살(神殺) 카드("귀인·신살" 함께/한쪽만 + 십이신살 기둥별 비교표) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 옛 `?tab=sinsal`도 여기로 |
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |

@@ -1,6 +1,7 @@
 import { RELATION_TYPE_LABEL } from "@/lib/constants";
 import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
+import { DOMAIN_ICONS, DOMAIN_RADAR_ORDER, DomainRadar } from "./DomainTab";
 import type { CompatTabProps } from "./types";
 
 function ScoreRing({ score }: { score: number }) {
@@ -30,8 +31,15 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 /** 종합 궁합 — 점수 링·라벨·설명·핵심 특징. 시간 미상 고지는 "세 기둥 기준 점수"를 말하므로 점수 옆(여기)에만 둔다 */
-export default function TotalTab({ data, name1, name2, relationType }: CompatTabProps) {
-  const { total_score, label, description, key_traits, pillar1_snapshot, pillar2_snapshot } = data;
+interface Props extends CompatTabProps {
+  /** 영역 점수 아래 "영역별 해설 보기" → 영역별 탭 */
+  onNavigate?: (tab: string) => void;
+}
+
+export default function TotalTab({ data, name1, name2, relationType, onNavigate }: Props) {
+  const { total_score, label, description, key_traits, pillar1_snapshot, pillar2_snapshot, domain_scores } = data;
+  // 카드 순서는 레이더와 같게 고정(캐시 JSONB는 키 순서를 보존하지 않음)
+  const domains = DOMAIN_RADAR_ORDER.map((d) => d.label).filter((k) => domain_scores[k] != null);
   const unknown1 = !!pillar1_snapshot?.hour_unknown;
   const unknown2 = !!pillar2_snapshot?.hour_unknown;
   return (
@@ -61,6 +69,35 @@ export default function TotalTab({ data, name1, name2, relationType }: CompatTab
             <p className="text-sm text-[var(--color-ink-muted)] leading-relaxed">{description}</p>
           </div>
         </div>
+
+        {domains.length > 0 && (
+          <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-3 space-y-3">
+            <p className="text-xs font-semibold text-[var(--color-ink-muted)]">영역별 점수</p>
+            <DomainRadar scores={domain_scores} />
+            <div className="space-y-2">
+              {domains.map((k) => {
+                const d = domain_scores[k];
+                return (
+                  <div key={k} className="flex items-center gap-2 text-xs">
+                    <span className="w-24 flex-shrink-0 truncate font-semibold text-[var(--color-ink)]">
+                      {DOMAIN_ICONS[k] ?? "◎"} {d.display_name ?? k}
+                    </span>
+                    <div className="flex-1 h-2 rounded-full bg-[var(--color-parchment)]">
+                      <div className="h-2 rounded-full bg-[var(--color-gold)]" style={{ width: `${Math.max(4, Math.min(100, d.score))}%` }} />
+                    </div>
+                    <span className="w-8 text-right font-semibold text-[var(--color-ink)]">{d.score}</span>
+                    <span className="w-9 text-right text-[10px] text-[var(--color-gold)]">{d.level}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {onNavigate && (
+              <button type="button" onClick={() => onNavigate("domain")} className="text-xs text-[var(--color-gold)] underline underline-offset-2">
+                영역별 해설 보기 →
+              </button>
+            )}
+          </div>
+        )}
 
         {key_traits.length > 0 && (
           <div className="flex flex-wrap gap-1.5">

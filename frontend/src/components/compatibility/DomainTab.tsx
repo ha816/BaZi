@@ -4,7 +4,8 @@ import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
 import type { CompatTabProps } from "./types";
 
-const DOMAIN_ICONS: Record<string, string> = {
+// 종합 궁합 카드(TotalTab)도 같은 아이콘·순서·레이더를 쓴다
+export const DOMAIN_ICONS: Record<string, string> = {
   연애: "💕",
   결혼: "💍",
   재물: "💰",
@@ -85,14 +86,14 @@ function summarizeDomain(domain: string, pros: DomainSignal[], cons: DomainSigna
   return `${theme.intro} ${parts.join(" ")}`;
 }
 
-const DOMAIN_RADAR_ORDER: { label: string; angleDeg: number }[] = [
+export const DOMAIN_RADAR_ORDER: { label: string; angleDeg: number }[] = [
   { label: "연애", angleDeg: -90 },
   { label: "결혼", angleDeg: 0 },
   { label: "재물", angleDeg: 90 },
   { label: "직업", angleDeg: 180 },
 ];
 
-function DomainRadar({ scores }: { scores: Record<string, { score: number }> }) {
+export function DomainRadar({ scores }: { scores: Record<string, { score: number }> }) {
   const cx = 70, cy = 70, maxR = 50;
   const labelOff = 14;
 

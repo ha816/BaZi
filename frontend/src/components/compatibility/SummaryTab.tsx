@@ -24,7 +24,7 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
 
   return (
     <div className="space-y-4">
-      <TotalTab {...props} />
+      <TotalTab {...props} onNavigate={onNavigate} />
 
       {(rows.length > 0 || canDaily) && (
         <div className="slide-card">
