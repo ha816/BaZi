@@ -84,7 +84,7 @@ uv run python scripts/send_daily_push.py --dry-run      # 페이로드 미리보
 ### 6. 테스트
 
 ```bash
-uv run pytest           # 백엔드 (55 tests)
+uv run pytest           # 백엔드 (94 tests)
 cd frontend && npx tsc --noEmit   # 프론트 타입 체크
 ```
 

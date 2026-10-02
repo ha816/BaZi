@@ -65,13 +65,12 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 
 ## 5. 현재 hot spot (2026-09 기준)
 
-알면 우선순위 판단이 쉬워진다. 5월 표의 NatalTab(970→27)·fortune_service(462→97)·natal_adapter(447→192) 분할은 완료됨.
+알면 우선순위 판단이 쉬워진다. 5월 표의 NatalTab(970→27)·fortune_service(462→97)·natal_adapter(447→192) 분할은 완료됨. CompatibilityResult(679→~110, `components/compatibility/` 7탭)도 2026-10-02 완료.
 
 | 파일 | LOC | 문제 | 권장 액션 |
 |------|-----|------|-----------|
-| `src/kkachi/application/compatibility_service.py` | 1085 | 점수 계산 + 관계유형별 prose 사전 + 도메인 조언 + LLM 프롬프트 한 파일 | prose/조언 사전을 `util/compatibility_meta.py`로, 프롬프트 빌더 분리 |
+| `src/kkachi/application/compatibility_service.py` | 1125 | 점수 계산 + 관계유형별 prose 사전 + 도메인 조언 + LLM 프롬프트 한 파일 | prose/조언 사전을 `util/compatibility_meta.py`로, 프롬프트 빌더 분리 |
 | `src/kkachi/domain/ganji.py` | 653 | enum + 변환로직 + 지장간/한글 매핑 혼재 | 변환은 `application/util/`로 이동 |
-| `frontend/src/components/CompatibilityResult.tsx` | 621 | 점수·라더·기둥비교·신살·narrative 5개 영역 한 컴포넌트 | `components/compatibility/` 하위 섹션 분리 (NatalTab 방식) |
 | `frontend/src/types/analysis.ts` | 476 | 사주·궁합·운세·회원 타입 전부 한 파일 | 도메인별 파일 분리 검토 (import 경로 영향 큼, 낮은 우선순위) |
 | `src/kkachi/application/report_builder.py` | 448 | 6개 섹션 포맷팅 | 단일 책임 보존 결정(5/24). LLM 파이프 확장 시 재고 |
 | `frontend/src/components/tabs/ZodiacTab.tsx` | 417 | 십이지신·충합·연도별 궁합 3영역 | 섹션 분리 검토 |

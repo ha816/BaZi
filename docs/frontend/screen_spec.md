@@ -72,12 +72,14 @@ app/layout.tsx
 ├── PersonCard (첫 번째 분)         # 프로필/직접 입력 토글
 ├── PersonCard (두 번째 분)
 ├── 관계 유형 버튼 3개 · 분석 연도 · "궁합 보기"
-├── [결과] CompatibilityResult
-│   ├── 종합 점수·라벨
-│   ├── PillarPairDiagram · OhengPairDiagram      # 두 사주 비교
-│   ├── 기둥 관계·삼합 완성·오행 보완·신살 카드
-│   ├── 영역별 카드 × 4 (ScoreBar + narrative + advice)
-│   └── 스트리밍 종합해석 (narrative)
+├── [결과] CompatibilityResult (7탭, ?tab=)   # 본문은 components/compatibility/
+│   ├── 종합 TotalTab                 # 점수 링·라벨·설명·key_traits·시간 미상 고지
+│   ├── 팔자 나란히 PillarsTab         # 일주 관계 3칸 · PillarPairDiagram · 삼합 완성
+│   ├── 오행 보완 ElementTab           # 오행 바×2(주오행·강약·용신) · OhengPairDiagram · 없는 오행 · 보완 문장
+│   ├── 신살 만남 SinsalTab            # 함께/한쪽만 가진 신살 카드
+│   ├── 영역별 DomainTab               # 레이더 · 영역 카드×4(narrative·pros/cons 칩)
+│   ├── 오늘의 궁합 DailyTab           # GET /compatibility/daily — 프로필×2일 때만
+│   └── AI 해석 NarrativeTab           # 스트리밍 종합해석
 └── CompatibilityChat               # FAB → /compatibility/chat
 
 /siun
@@ -216,12 +218,13 @@ Step 2: 이름(pre-fill)·생년월일·시간·성별·도시(ipapi 자동) →
 
 ### `/compatibility` — 궁합
 
-**진입 조건:** 없음 (직접 입력은 비로그인 가능). 결제 게이트 없음.
+**진입 조건:** 로그인 필수 — 비로그인은 `LoginRequired` 카드 → `/join`(복귀 경로는 sessionStorage `kkachi_login_next`). 결제 게이트 없음.
 
 ```
 PersonCard × 2 (프로필/직접) + 관계 유형(lover|friend|family) + 연도 → "궁합 보기"
   → 둘 다 프로필: POST /compatibility (캐시)   그 외: POST /compatibility/direct
-  → CompatibilityResult + 즉시 POST /compatibility/narrative 스트리밍
+  → CompatibilityResult 7탭(?tab=; 오늘의 궁합 탭 진입 시 GET /compatibility/daily, 프로필×2일 때만) + 즉시 POST /compatibility/narrative 스트리밍
+  → 헤더 "궁합 공유" → POST /compatibility/shares → /s/{id}
   → sessionStorage kkachi_compat_input · kkachi_compat_names → CompatibilityChat FAB
 ```
 
@@ -292,9 +295,9 @@ idle → preview → loading → result
 | SectionHeader / CollapsibleSectionHeader / InlineCollapsibleHeader | 카드 헤더 3종 | 결과 탭 |
 | PageHeader + `.page`/`.page__inner` | 페이지 제목 줄(2xl·sm·액션) + 페이지 틀(py-8 px-4, max-w 42rem, gap 1.5rem). `.page--center`(세로 가운데, 내용이 화면보다 짧을 때만 효과)는 시운·분석·궁합·가입, `.page__inner--narrow`는 가입 폼 | 홈·챗 제외 전 페이지 |
 | InterpretSection | InterpretBlock[] 렌더 | 결과 탭, 손금 |
-| ScoreBar / DomainBarChart | 점수 바 | 시운, 궁합, FortuneTab |
+| ScoreBar / DomainBarChart | 점수 바 | 시운, FortuneTab |
 | ElementRadar / OhengAnalysis / PillarOhengGrid / PillarDetail / OhaengRelationDiagram | 오행·팔자 시각화 | NatalTab, DaeunTab |
-| OhengPairDiagram / PillarPairDiagram | 두 사주 비교 | CompatibilityResult |
+| OhengPairDiagram / PillarPairDiagram | 두 사주 비교 | compatibility/ElementTab · PillarsTab |
 | DaeunTimeline / DaeunSeunTable | 대운·세운 | DaeunTab |
 | MorningBrief | 아침 한 마디(헤드라인·할 것·피할 것) | 홈, /siun |
 | FeedPost | 피드 카드 레이아웃 | 홈 |
