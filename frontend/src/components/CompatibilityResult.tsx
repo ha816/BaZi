@@ -29,9 +29,8 @@ interface Props {
 // 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
 const COMPAT_TABS = [
   { id: "summary", emoji: "🐦", label: "한눈에" },   // 종합 궁합 카드 + 탭별 한 줄
-  { id: "pillars", emoji: "🧩", label: "팔자비교" },
+  { id: "pillars", emoji: "🧩", label: "팔자비교" },   // 기둥 비교 + 신살 만남
   { id: "element", emoji: "🌗", label: "오행 보완" },
-  { id: "sinsal",  emoji: "⭐", label: "신살 만남" },
   { id: "domain",  emoji: "📊", label: "영역별" },
   { id: "daily",   emoji: "🌅", label: "오늘의 궁합" },   // 프로필×2일 때만 (canDaily)
   { id: "ai",      emoji: "✨", label: "AI 해석" },
@@ -62,8 +61,9 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const tabParam = searchParams.get("tab");
   const canDaily = !!memberId && !!profileId1 && !!profileId2;
   const tabs = canDaily ? COMPAT_TABS : COMPAT_TABS.filter((t) => t.id !== "daily");
-  // 옛 링크 ?tab=total → 한눈에. ?tab=daily + 직접 입력 → 한눈에
-  const tab: CompatTabId = tabs.find((t) => t.id === (tabParam === "total" ? "summary" : tabParam))?.id ?? "summary";
+  // 옛 링크 호환: ?tab=total → 한눈에, ?tab=sinsal → 팔자비교. ?tab=daily + 직접 입력 → 한눈에
+  const LEGACY_TAB: Record<string, CompatTabId> = { total: "summary", sinsal: "pillars" };
+  const tab: CompatTabId = tabs.find((t) => t.id === (LEGACY_TAB[tabParam ?? ""] ?? tabParam))?.id ?? "summary";
   const [daily, setDaily] = useState<DailyCompat | null>(null);
   const [dailyFailed, setDailyFailed] = useState(false);
 
@@ -91,7 +91,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   return (
     <div className="space-y-4">
       <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">
-        <div className={`feature-tabbar ${tabs.length === 7 ? "feature-tabbar--7" : ""}`}>
+        <div className="feature-tabbar">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -109,9 +109,13 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
       {tab === "summary" && (
         <SummaryTab {...tabProps} canDaily={canDaily} daily={daily} onNavigate={(t) => setTab(t as CompatTabId)} />
       )}
-      {tab === "pillars" && <PillarsTab {...tabProps} />}
+      {tab === "pillars" && (
+        <div className="space-y-4">
+          <PillarsTab {...tabProps} />
+          <SinsalTab {...tabProps} />
+        </div>
+      )}
       {tab === "element" && <ElementTab {...tabProps} />}
-      {tab === "sinsal" && <SinsalTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
       {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
       {tab === "ai" && (

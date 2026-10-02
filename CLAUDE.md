@@ -156,7 +156,7 @@ BaZi/
 │   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
-│   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 7탭 정의·?tab=(다른 파라미터 보존)·탭바·캐시 기본값 한 번 채우기. 본문은 compatibility/
+│   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 6탭 정의·?tab=(다른 파라미터 보존)·탭바·캐시 기본값 한 번 채우기. 본문은 compatibility/
 │   │   ├── compatibility/           # SummaryTab(한눈에 = TotalTab 종합 카드 + 탭별 한 줄 GroupBox) · TotalTab · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
@@ -496,7 +496,7 @@ erDiagram
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", **7탭**(한눈에·팔자비교·오행 보완·신살 만남·영역별·오늘의 궁합·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭) + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", **6탭**(한눈에·팔자비교(+신살 만남)·오행 보완·영역별·오늘의 궁합·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 5탭) + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -561,15 +561,14 @@ erDiagram
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
 | `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명·key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
-| `pillars` | 팔자비교 | `PillarsTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성 |
+| `pillars` | 팔자비교 | `PillarsTab` + `SinsalTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 아래에 신살 만남 카드(함께/한쪽만 가진 신살). 옛 `?tab=sinsal`도 여기로 |
 | `element` | 오행 보완 | `ElementTab` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수 |
-| `sinsal` | 신살 만남 | `SinsalTab` | 함께 가진 신살 · 한쪽만 가진 신살(SinsalCard) · 빈 상태 |
 | `domain` | 영역별 | `DomainTab` | 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회(한눈에와 공유) |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |
 
 - 탭 전환은 `?tab=`만 바꾸고 `invite`·`p1`·`p2`는 보존. `?tab=daily`인데 직접 입력·초대면 종합으로. `tab_view{tab, page:"compat", has_profile}` 이벤트(새 이벤트 이름 없음)
-- 7탭일 때 탭바는 `.feature-tabbar--7`(모바일 4+3, sm 이상 한 줄). 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)
+- 탭은 최대 6개라 `.feature-tabbar` 한 줄에 들어간다. 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)
 - 캐시(JSONB)는 키 순서를 보존하지 않으므로 `domain_scores` 카드 순서는 프론트에서 고정. 옛 캐시에 없는 필드는 오케스트레이터가 기본값으로 채운다
 
 ## 타이밍 리포트 — `timing_rules.compute_timing` (ROADMAP R3)

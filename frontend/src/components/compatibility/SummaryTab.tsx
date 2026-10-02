@@ -16,9 +16,8 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
   const { data, name1, name2 } = props;
   const fill = (s: string) => s.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const rows = [
-    { tab: "pillars", emoji: "🧩", label: "팔자비교(八字比較)", text: data.summary?.pillars },
+    { tab: "pillars", emoji: "🧩", label: "팔자비교(八字比較)", text: data.summary?.pillars, sub: data.summary?.sinsal },
     { tab: "element", emoji: "🌗", label: "오행 보완(五行)", text: data.summary?.element },
-    { tab: "sinsal", emoji: "⭐", label: "신살 만남(神殺)", text: data.summary?.sinsal },
     { tab: "domain", emoji: "📊", label: "영역별 궁합", text: data.summary?.domain },
   ].filter((r) => r.text);
 
@@ -37,6 +36,11 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
             {rows.map((r) => (
               <GroupBox key={r.tab} emoji={r.emoji} label={r.label} tab={r.tab} onNavigate={onNavigate}>
                 <p className="text-sm leading-snug text-[var(--color-ink)]">{fill(r.text ?? "")}</p>
+                {r.sub && (
+                  <p className="mt-1.5 text-sm leading-snug text-[var(--color-ink-light)]">
+                    <span className="text-[11px] font-semibold text-[var(--color-ink-faint)] mr-1.5">신살</span>{fill(r.sub)}
+                  </p>
+                )}
               </GroupBox>
             ))}
             {canDaily && (
