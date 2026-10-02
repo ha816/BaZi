@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { RELATION_TYPE_LABEL } from "@/lib/constants";
 import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
@@ -34,9 +37,58 @@ function ScoreRing({ score }: { score: number }) {
 interface Props extends CompatTabProps {
   /** 영역 점수 아래 "영역별 해설 보기" → 영역별 탭 */
   onNavigate?: (tab: string) => void;
+  /** 점수 공개 여부 — 오케스트레이터가 결과 단위로 기억(탭을 오가도 다시 가리지 않음) */
+  revealed: boolean;
+  onReveal: () => void;
 }
 
-export default function TotalTab({ data, name1, name2, relationType, onNavigate }: Props) {
+// 드럼 치는 까치 그림 — 파일이 없으면 기본 까치 + 🥁 애니메이션으로 대신한다
+const DRUM_IMG = "/kkachi/drum_kkachi.png";
+const FALLBACK_IMG = "/kkachi/good_kkachi.png";
+const DRUMROLL_MS = 1200;
+
+/** 공개 전 — "두근두근 ○○님과 ○○님의 궁합은?" + 드럼 치는 까치 + 버튼 → 드럼롤 후 공개 */
+function RevealGate({ name1, name2, onReveal }: { name1: string; name2: string; onReveal: () => void }) {
+  const [rolling, setRolling] = useState(false);
+  const [hasDrumImg, setHasDrumImg] = useState(true);
+  const handle = () => {
+    if (rolling) return;
+    setRolling(true);
+    setTimeout(onReveal, DRUMROLL_MS);
+  };
+  return (
+    <div className="flex flex-col items-center text-center gap-4 py-2">
+      <p className="font-heading text-lg font-bold text-[var(--color-ink)] heart-thump">
+        두근두근 💓<br />
+        <span className="text-[var(--color-gold)]">{name1}님</span>과 <span className="text-[var(--color-gold)]">{name2}님</span>의 궁합은?
+      </p>
+      <div className="relative w-40 h-40">
+        <img
+          src={hasDrumImg ? DRUM_IMG : FALLBACK_IMG}
+          alt="드럼 치는 까치"
+          className={`w-40 h-40 rounded-full object-cover border-4 border-[var(--color-gold-faint)] ${rolling ? "heart-thump" : ""}`}
+          onError={() => setHasDrumImg(false)}
+        />
+        {!hasDrumImg && (
+          <>
+            <span className={`absolute -left-2 bottom-2 text-4xl drum-beat ${rolling ? "drum-beat--fast" : ""}`} aria-hidden>🥁</span>
+            <span className={`absolute -right-2 top-2 text-3xl drum-beat ${rolling ? "drum-beat--fast" : ""}`} style={{ animationDelay: "0.3s" }} aria-hidden>🥁</span>
+          </>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={handle}
+        disabled={rolling}
+        className="btn-shimmer w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:opacity-70"
+      >
+        {rolling ? "두구두구두구…" : "💞 두 분의 궁합 확인하기"}
+      </button>
+    </div>
+  );
+}
+
+export default function TotalTab({ data, name1, name2, relationType, onNavigate, revealed, onReveal }: Props) {
   const { total_score, label, description, key_traits, pillar1_snapshot, pillar2_snapshot, domain_scores } = data;
   // 카드 순서는 레이더와 같게 고정(캐시 JSONB는 키 순서를 보존하지 않음)
   const domains = DOMAIN_RADAR_ORDER.map((d) => d.label).filter((k) => domain_scores[k] != null);
@@ -49,6 +101,10 @@ export default function TotalTab({ data, name1, name2, relationType, onNavigate 
       </div>
       <div className="divider" />
       <div className="slide-card__body space-y-5">
+        {!revealed ? (
+          <RevealGate name1={name1} name2={name2} onReveal={onReveal} />
+        ) : (
+        <div className="space-y-5 score-pop">
         <KkachiTip label={`${RELATION_TYPE_LABEL[relationType]} 기준`}>
           {name1}님과 {name2}님은 {label}이에요. 탭을 하나씩 넘기며 두 분의 관계를 풀어드릴게요.
         </KkachiTip>
@@ -113,6 +169,8 @@ export default function TotalTab({ data, name1, name2, relationType, onNavigate 
           <p className="text-[11px] text-[var(--color-ink-muted)] rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-ivory-warm)] px-3 py-2">
             🕰️ {unknown1 && unknown2 ? "두 분 모두" : unknown1 ? `${name1}님의` : `${name2}님의`} 출생시간이 없어 시주(時柱) 비교는 뺐어요. 세 기둥 기준 점수예요.
           </p>
+        )}
+        </div>
         )}
       </div>
     </div>

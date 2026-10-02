@@ -70,6 +70,8 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const tab: CompatTabId = tabs.find((t) => t.id === (LEGACY_TAB[tabParam ?? ""] ?? tabParam))?.id ?? "summary";
   const [daily, setDaily] = useState<DailyCompat | null>(null);
   const [dailyFailed, setDailyFailed] = useState(false);
+  // 종합 점수 공개(두근두근) — 결과가 바뀌면 이 뷰가 다시 마운트되어 다시 가려진다
+  const [scoreRevealed, setScoreRevealed] = useState(false);
 
   // 오늘의 궁합은 한눈에·오늘의 궁합 탭이 함께 쓰므로 결과당 한 번만 받는다
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
       </div>
 
       {tab === "summary" && (
-        <SummaryTab {...tabProps} canDaily={canDaily} daily={daily} onNavigate={(t) => setTab(t as CompatTabId)} />
+        <SummaryTab {...tabProps} canDaily={canDaily} daily={daily} onNavigate={(t) => setTab(t as CompatTabId)} revealed={scoreRevealed} onReveal={() => setScoreRevealed(true)} />
       )}
       {tab === "pillars" && (
         <div className="space-y-4">

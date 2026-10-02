@@ -9,10 +9,12 @@ interface Props extends CompatTabProps {
   canDaily: boolean;
   daily: DailyCompat | null;
   onNavigate: (tab: string) => void;
+  revealed: boolean;
+  onReveal: () => void;
 }
 
 /** 한눈에 — 맨 위 종합 궁합 카드 + 탭별 한 줄(백엔드 summary). 박스 헤더를 누르면 그 탭으로 */
-export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Props) {
+export default function SummaryTab({ canDaily, daily, onNavigate, revealed, onReveal, ...props }: Props) {
   const { data, name1, name2 } = props;
   const fill = (s: string) => s.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const rows = [
@@ -24,7 +26,7 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
 
   return (
     <div className="space-y-4">
-      <TotalTab {...props} onNavigate={onNavigate} />
+      <TotalTab {...props} onNavigate={onNavigate} revealed={revealed} onReveal={onReveal} />
 
       {(rows.length > 0 || canDaily) && (
         <div className="slide-card">
