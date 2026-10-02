@@ -561,8 +561,8 @@ erDiagram
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
 | `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명·key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
-| `pillars` | 팔자비교 | `PillarsTab` + `SinsalTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 아래에 신살(神殺) 카드 — "귀인·신살"(함께 가진=같은 기운 / 한쪽만 가진) + 두 사람 십이신살(十二神殺) 기둥별 비교표(스냅샷 `sibi_sinsal`, 옛 캐시엔 없음 → 표 숨김). 옛 `?tab=sinsal`도 여기로 |
-| `element` | 오행 보완 | `ElementTab` + `StrengthCard` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수, 아래에 신강·신약 카드(두 사람 게이지 + 강약 조합 한 줄 `summary.strength`; 점수는 스냅샷 `strength`, 옛 캐시엔 라벨만) |
+| `pillars` | 팔자비교 | `PillarsTab` + `SinsalTab` + `StrengthCard` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 아래에 신살(神殺) 카드 — "귀인·신살"(함께 가진=같은 기운 / 한쪽만 가진) + 두 사람 십이신살(十二神殺) 기둥별 비교표(스냅샷 `sibi_sinsal`, 옛 캐시엔 없음 → 표 숨김), 맨 아래 신강·신약 카드(`StrengthCard` — 분석 용신 탭처럼 확인하기 버튼 → 두 사람 그림·게이지 + 강약 조합 `summary.strength` + 사람별 풀이 `strength_p1/p2`). 옛 `?tab=sinsal`도 여기로 |
+| `element` | 오행 보완 | `ElementTab` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수 |
 | `domain` | 영역별 | `DomainTab` | 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회(한눈에와 공유) |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |

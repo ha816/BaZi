@@ -1,3 +1,4 @@
+from kkachi.application.interpreter.narrative import strength_story
 from kkachi.application.util.util import josa
 from kkachi.domain.ganji import Oheng, Pillar
 
@@ -141,12 +142,30 @@ def _strength_line(result: dict) -> str:
     return ""
 
 
+def _strength_person(snap: dict | None, token: str) -> str:
+    """한 사람의 강약 풀이 — 라벨 · 성향/팁 · 강약 때문에 정해진 용신"""
+    if not snap or not snap.get("strength_label"):
+        return ""
+    label = snap["strength_label"]
+    v = snap.get("strength")
+    score = f" {v:+d}" if isinstance(v, int) else ""
+    line = f"{token}님은 {label}{score}이에요. {strength_story(label)}"
+    ys = snap.get("yongshin")
+    if ys and label == _STRONG:
+        line += f" 넘치는 기운을 풀어주는 {_el_josa(ys, '이', '가')} 용신(用神)이에요."
+    elif ys and label == _WEAK:
+        line += f" 부족한 힘을 채워주는 {_el_josa(ys, '이', '가')} 용신(用神)이에요."
+    return line
+
+
 def build_compat_summary(result: dict) -> dict:
     """궁합 결과 → 한눈에 {pillars, element, strength, sinsal, domain}. {p1}·{p2}는 이름 토큰."""
     return {
         "pillars": _pillars_line(result),
         "element": _element_line(result),
         "strength": _strength_line(result),
+        "strength_p1": _strength_person(result.get("pillar1_snapshot"), "{p1}"),
+        "strength_p2": _strength_person(result.get("pillar2_snapshot"), "{p2}"),
         "sinsal": _sinsal_line(result),
         "domain": _domain_line(result),
     }

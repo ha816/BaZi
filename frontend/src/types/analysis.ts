@@ -424,6 +424,9 @@ export interface CompatSummary {
   element: string;
   /** 두 사람 신강·신약 조합 한 줄 (옛 응답엔 없음) */
   strength?: string;
+  /** 사람별 강약 풀이 (라벨·성향·팁·용신 이유) */
+  strength_p1?: string;
+  strength_p2?: string;
   sinsal: string;
   domain: string;
 }

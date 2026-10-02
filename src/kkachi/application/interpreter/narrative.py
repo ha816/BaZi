@@ -14,6 +14,11 @@ _STRENGTH_TIP: dict[str, str] = {
     "중화(中和)": "일간의 기운이 균형 잡힌 상태예요. 폭넓은 환경에서 두루 안정적인 성과를 낼 수 있는 타입입니다.",
 }
 
+def strength_story(label: str) -> str:
+    """신강·신약 라벨 → 성향 + 활용 팁 두 문장 (분석 만세력·궁합 신강·신약 카드 공용)"""
+    return " ".join(s for s in (_STRENGTH_DESC.get(label, ""), _STRENGTH_TIP.get(label, "")) if s)
+
+
 _YONGSHIN_COLOR: dict[str, str] = {
     "木": "초록·청록", "火": "빨강·주황", "土": "노랑·갈색",
     "金": "흰색·은색", "水": "검정·남색",

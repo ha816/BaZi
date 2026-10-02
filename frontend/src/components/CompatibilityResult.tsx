@@ -30,7 +30,7 @@ interface Props {
 // 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
 const COMPAT_TABS = [
   { id: "summary", emoji: "🐦", label: "한눈에" },   // 종합 궁합 카드 + 탭별 한 줄
-  { id: "pillars", emoji: "🧩", label: "팔자비교" },   // 기둥 비교 + 신살 만남
+  { id: "pillars", emoji: "🧩", label: "팔자비교" },   // 기둥 비교 + 신살 + 신강·신약
   { id: "element", emoji: "🌗", label: "오행 보완" },
   { id: "domain",  emoji: "📊", label: "영역별" },
   { id: "daily",   emoji: "🌅", label: "오늘의 궁합" },   // 프로필×2일 때만 (canDaily)
@@ -114,14 +114,10 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
         <div className="space-y-4">
           <PillarsTab {...tabProps} />
           <SinsalTab {...tabProps} />
-        </div>
-      )}
-      {tab === "element" && (
-        <div className="space-y-4">
-          <ElementTab {...tabProps} />
           <StrengthCard {...tabProps} />
         </div>
       )}
+      {tab === "element" && <ElementTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
       {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
       {tab === "ai" && (

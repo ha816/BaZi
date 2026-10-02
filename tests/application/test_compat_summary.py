@@ -24,7 +24,7 @@ def test_summary_has_four_lines_with_name_tokens():
     s = build_compat_summary(_result(element_complement={
         "p1_lacks": ["水"], "p1_provides": [], "p2_lacks": [], "p2_provides": ["水"], "overlap_strong": [], "score": 3,
     }))
-    assert set(s) == {"pillars", "element", "strength", "sinsal", "domain"}
+    assert set(s) == {"pillars", "element", "strength", "strength_p1", "strength_p2", "sinsal", "domain"}
     assert all(v.endswith(".") for v in s.values() if v)
     assert "{p2}님이 물(水) 기운으로 {p1}님의" in s["element"]
 
@@ -68,3 +68,14 @@ def test_strength_pair_lines():
     assert line("신강(身強)", "신강(身強)").startswith("두 분 모두 신강")
     assert line("중화(中和)", "신약(身弱)") == "{p1}님이 중화(中和)라 {p2}님의 여린 기운에 맞춰 균형을 잡아줘요."
     assert line("", "") == ""  # 옛 스냅샷에 라벨이 없으면 빈 줄
+
+
+def test_strength_person_story_with_score_and_yongshin():
+    s = build_compat_summary(_result(
+        pillar1_snapshot={"my_main_element": "土", "yongshin": "金", "strength_label": "신강(身強)", "strength": 4},
+        pillar2_snapshot={"my_main_element": "木", "yongshin": "水", "strength_label": "신약(身弱)"},
+    ))
+    assert s["strength_p1"].startswith("{p1}님은 신강(身強) +4이에요. 타고난 에너지가 강하고")
+    assert s["strength_p1"].endswith("넘치는 기운을 풀어주는 쇠(金)가 용신(用神)이에요.")
+    assert s["strength_p2"].startswith("{p2}님은 신약(身弱)이에요.")  # 옛 캐시: 점수 없음
+    assert "부족한 힘을 채워주는 물(水)이 용신" in s["strength_p2"]
