@@ -249,6 +249,7 @@ V1로 공유 카드 3종(사주·시운·궁합)과 유입 동선이 깔렸다. 
 - 2026-10-02: **7탭** — 한눈에(종합 궁합 + 탭별 요약) · 팔자비교(+오행 보완) · 성격·성질(신살+신강·신약) · 띠궁합 · 영역별 · 오늘의 궁합(프로필×2일 때만) · AI 해석. `CompatibilityResult.tsx`(679→~110)는 오케스트레이터, 본문은 `components/compatibility/`. 이전은 3탭
 - 방향: 분석의 9탭처럼 "재미"를 주는 탭으로 쪼갠다. 후보 — 팔자 나란히 보기(기둥 비교·합충), 오행 보완(서로 채워주는 기운), 신살 만남(공통·각자), 삼합·천간합, 관계 유형별 조언(연인/친구/가족), 오늘의 궁합(일진 관계, R5 `compatibility_daily`), 언제가 좋을까(두 사람의 타이밍 교집합)
 - 재료는 `CompatibilityResult`(621 LOC)에 이미 대부분 있음 → 섹션을 탭으로 분리하는 작업이 먼저, 새 계산(오늘의 궁합·타이밍 교집합)은 그다음
+- 궁합 캐릭터 칭호 15종·이미지 카드 제작안: `docs/COMPAT_CHARACTER_TYPES.md` (2026-10-03) — [ ] 15장 그림 · [ ] 한눈에 박스에 그림 · [ ] 궁합 공유 카드·OG에 칭호
 - [x] 탭 구성 확정 · [x] 기존 섹션 탭 분리 · [x] 오늘의 궁합 탭 (2026-10-02) · [ ] 타이밍 교집합 탭 — 보류, 두 사람 `compute_timing` 교집합을 별도 모듈로
 
 **V2-3. LLM 모델 교체 실험 🟢**
@@ -324,5 +325,6 @@ V1로 공유 카드 3종(사주·시운·궁합)과 유입 동선이 깔렸다. 
 - `docs/research/monetization_전환전략.md` — 가격 구조·페이월 (R3 이후 참고)
 - `docs/research/viral_공유전략.md` — 공유 카드 레이아웃, OG 이미지, 카카오 SDK, K-factor
 - `docs/research/saju_combined_systems.md` — MBTI 결합 (보류)
+- `docs/COMPAT_CHARACTER_TYPES.md` — 궁합 캐릭터 15종 유형표·칭호 조합·문답 규칙·이미지 카드 제작안
 - `docs/research/llm_해석엔진_전략.md` — 프롬프트 패턴, 모델 비용 비교
 - `CLAUDE.md` 제품 방향 · `docs/REFACTORING.md` · `docs/frontend/screen_spec.md`

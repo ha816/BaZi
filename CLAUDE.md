@@ -71,6 +71,7 @@ BaZi/
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
 │   ├── ROADMAP.md               # 제품 핵심 루프 로드맵 — 우선순위·진행 현황 (기능 추가 전 필독)
+│   ├── COMPAT_CHARACTER_TYPES.md # 궁합 캐릭터 15종 유형표·칭호/문답 규칙·이미지 카드 제작안 (compatibility_character.py와 함께 갱신)
 │   ├── frontend/screen_spec.md  # 화면 명세
 │   ├── frontend/*/scenarios.md  # 화면별 시나리오
 │   ├── llm_samples/             # LLM 리포트 프롬프트·해석 출력 샘플
