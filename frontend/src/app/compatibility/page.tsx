@@ -43,6 +43,8 @@ function CompatibilityPageInner() {
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [chatInput, setChatInput] = useState<CompatibilityInput | null>(null);
   const [resultNames, setResultNames] = useState<{ name1: string; name2: string }>({ name1: "", name2: "" });
+  // 오늘의 궁합(프로필×2)용 — 제출 시점에 스냅샷. person state는 ?tab= 변경마다 effect가 다시 세팅하므로 렌더 시점 값을 쓰지 않는다
+  const [resultProfileIds, setResultProfileIds] = useState<{ p1: string; p2: string } | null>(null);
   const [narrative, setNarrative] = useState("");
   const [narrativeLoading, setNarrativeLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -128,6 +130,7 @@ function CompatibilityPageInner() {
     narrativeAbortRef.current?.abort();
     setResult(null);
     setChatInput(null);
+    setResultProfileIds(null);
     setNarrative("");
     setNarrativeLoading(false);
     const params = new URLSearchParams(searchParams.toString());
@@ -143,6 +146,7 @@ function CompatibilityPageInner() {
     setError(null);
     setResult(null);
     setChatInput(null);
+    setResultProfileIds(null);
     setNarrative("");
     setNarrativeLoading(false);
     try {
@@ -153,12 +157,14 @@ function CompatibilityPageInner() {
         relation_type: relationType,
       };
       // 초대로 들어왔으면 초대자 정보와 합쳐 resolve, 아니면 기존 경로
+      const byProfiles = !inviteId && person1.mode === "profile" && person2.mode === "profile" && !!person1.profileId && !!person2.profileId;
       const data = inviteId
         ? await resolveCompatInvite(inviteId, personToInput(person2), year)
-        : person1.mode === "profile" && person2.mode === "profile" && person1.profileId && person2.profileId
+        : byProfiles
           ? await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year, relationType)
           : await analyzeCompatibility(input);
       setResult(data);
+      if (byProfiles) setResultProfileIds({ p1: person1.profileId, p2: person2.profileId });
       if (inviteId) track("compat_invite_result", { via: "invite" });
       setChatInput(input);
       const names = {
@@ -298,6 +304,9 @@ function CompatibilityPageInner() {
                 name1={resultNames.name1 || getName(person1, "첫 번째 분")}
                 name2={resultNames.name2 || getName(person2, "두 번째 분")}
                 relationType={relationType}
+                memberId={memberId ?? undefined}
+                profileId1={resultProfileIds?.p1}
+                profileId2={resultProfileIds?.p2}
                 streamingNarrative={narrative}
                 narrativeLoading={narrativeLoading} />
             </>

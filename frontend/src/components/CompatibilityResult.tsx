@@ -1,9 +1,11 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { CompatibilityResult, RelationType } from "@/types/analysis";
+import { type DailyCompat } from "@/lib/api";
 import { track } from "@/lib/track";
+import DailyTab from "./compatibility/DailyTab";
 import DomainTab from "./compatibility/DomainTab";
 import ElementTab from "./compatibility/ElementTab";
 import NarrativeTab from "./compatibility/NarrativeTab";
@@ -16,6 +18,10 @@ interface Props {
   name1: string;
   name2: string;
   relationType: RelationType;
+  /** 셋 다 있을 때만(프로필×2) "오늘의 궁합" 탭을 보인다 — page.tsx가 제출 시점에 스냅샷한 값 */
+  memberId?: string;
+  profileId1?: string;
+  profileId2?: string;
   streamingNarrative?: string;
   narrativeLoading?: boolean;
 }
@@ -27,12 +33,13 @@ const COMPAT_TABS = [
   { id: "element", emoji: "🌗", label: "오행 보완" },
   { id: "sinsal",  emoji: "⭐", label: "신살 만남" },
   { id: "domain",  emoji: "📊", label: "영역별" },
+  { id: "daily",   emoji: "🌅", label: "오늘의 궁합" },   // 프로필×2일 때만 (canDaily)
   { id: "ai",      emoji: "✨", label: "AI 해석" },
 ] as const;
 type CompatTabId = (typeof COMPAT_TABS)[number]["id"];
 
 /** 궁합 결과 오케스트레이터 — 탭 정의·?tab=·탭바만. 본문은 compatibility/ 탭 파일 */
-export default function CompatibilityResultView({ data, name1, name2, relationType, streamingNarrative, narrativeLoading }: Props) {
+export default function CompatibilityResultView({ data, name1, name2, relationType, memberId, profileId1, profileId2, streamingNarrative, narrativeLoading }: Props) {
   // 신규 필드는 이전 캐시(JSONB)에 없을 수 있으므로 안전한 기본값을 여기서 한 번만 채운다
   const safe: CompatibilityResult = {
     ...data,
@@ -53,7 +60,10 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const router = useRouter();
   const pathname = usePathname();
   const tabParam = searchParams.get("tab");
-  const tab: CompatTabId = COMPAT_TABS.find((t) => t.id === tabParam)?.id ?? "total";
+  const canDaily = !!memberId && !!profileId1 && !!profileId2;
+  const tabs = canDaily ? COMPAT_TABS : COMPAT_TABS.filter((t) => t.id !== "daily");
+  const tab: CompatTabId = tabs.find((t) => t.id === tabParam)?.id ?? "total";   // ?tab=daily + 직접 입력 → total
+  const [daily, setDaily] = useState<DailyCompat | null>(null);
   const setTab = (id: CompatTabId) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", id);
@@ -61,16 +71,16 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   };
 
   useEffect(() => {
-    track("tab_view", { tab, page: "compat" });
-  }, [tab]);
+    track("tab_view", { tab, page: "compat", has_profile: canDaily });
+  }, [tab, canDaily]);
 
   const tabProps = { data: safe, name1, name2, relationType };
 
   return (
     <div className="space-y-4">
       <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">
-        <div className="feature-tabbar">
-          {COMPAT_TABS.map((t) => (
+        <div className={`feature-tabbar ${tabs.length === 7 ? "feature-tabbar--7" : ""}`}>
+          {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
@@ -89,6 +99,9 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
       {tab === "element" && <ElementTab {...tabProps} />}
       {tab === "sinsal" && <SinsalTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
+      {tab === "daily" && memberId && profileId1 && profileId2 && (
+        <DailyTab memberId={memberId} profileId1={profileId1} profileId2={profileId2} name1={name1} name2={name2} daily={daily} onLoaded={setDaily} />
+      )}
       {tab === "ai" && (
         <NarrativeTab narrative={safe.narrative} streamingNarrative={streamingNarrative} narrativeLoading={narrativeLoading} />
       )}
