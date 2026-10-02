@@ -496,7 +496,7 @@ erDiagram
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", **7탭**(한눈에·팔자 나란히·오행 보완·신살 만남·영역별·오늘의 궁합·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭) + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", **7탭**(한눈에·팔자비교·오행 보완·신살 만남·영역별·오늘의 궁합·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭) + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -561,7 +561,7 @@ erDiagram
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
 | `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명·key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
-| `pillars` | 팔자 나란히 | `PillarsTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성 |
+| `pillars` | 팔자비교 | `PillarsTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성 |
 | `element` | 오행 보완 | `ElementTab` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수 |
 | `sinsal` | 신살 만남 | `SinsalTab` | 함께 가진 신살 · 한쪽만 가진 신살(SinsalCard) · 빈 상태 |
 | `domain` | 영역별 | `DomainTab` | 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |

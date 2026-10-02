@@ -29,7 +29,7 @@ interface Props {
 // 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
 const COMPAT_TABS = [
   { id: "summary", emoji: "🐦", label: "한눈에" },   // 종합 궁합 카드 + 탭별 한 줄
-  { id: "pillars", emoji: "🧩", label: "팔자 나란히" },
+  { id: "pillars", emoji: "🧩", label: "팔자비교" },
   { id: "element", emoji: "🌗", label: "오행 보완" },
   { id: "sinsal",  emoji: "⭐", label: "신살 만남" },
   { id: "domain",  emoji: "📊", label: "영역별" },

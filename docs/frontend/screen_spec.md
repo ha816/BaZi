@@ -74,7 +74,7 @@ app/layout.tsx
 ├── 관계 유형 버튼 3개 · 분석 연도 · "궁합 보기"
 ├── [결과] CompatibilityResult (7탭, ?tab=)   # 본문은 components/compatibility/
 │   ├── 한눈에 SummaryTab             # 종합 궁합 카드(TotalTab) + 탭별 한 줄 박스(백엔드 summary·오늘의 궁합) → 누르면 그 탭
-│   ├── 팔자 나란히 PillarsTab         # 일주 관계 3칸 · PillarPairDiagram · 삼합 완성
+│   ├── 팔자비교 PillarsTab         # 일주 관계 3칸 · PillarPairDiagram · 삼합 완성
 │   ├── 오행 보완 ElementTab           # 오행 바×2(주오행·강약·용신) · OhengPairDiagram · 없는 오행 · 보완 문장
 │   ├── 신살 만남 SinsalTab            # 함께/한쪽만 가진 신살 카드
 │   ├── 영역별 DomainTab               # 레이더 · 영역 카드×4(narrative·pros/cons 칩)

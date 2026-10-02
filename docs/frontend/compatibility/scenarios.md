@@ -45,7 +45,7 @@
    | 탭 (`?tab=`) | 내용 |
    |---|---|
    | 한눈에 `summary` | 맨 위 종합 궁합(점수·라벨·설명·`key_traits`·시간 미상 고지) + 탭별 한 줄 박스(`summary.pillars/element/sinsal/domain` + 오늘의 궁합). 박스를 누르면 그 탭. 옛 `?tab=total` 호환 |
-   | 팔자 나란히 `pillars` | 일주 관계 3칸(`stem_combine`·`branch_combine`·`branch_clash`) · 같은 기둥 4쌍 관계(`pillar_relations`: 천간합·천간충·지지합·지지충·원진·형·해·파·삼합, PillarPairDiagram) · 삼합 완성(`samhap_completions`) |
+   | 팔자비교 `pillars` | 일주 관계 3칸(`stem_combine`·`branch_combine`·`branch_clash`) · 같은 기둥 4쌍 관계(`pillar_relations`: 천간합·천간충·지지합·지지충·원진·형·해·파·삼합, PillarPairDiagram) · 삼합 완성(`samhap_completions`) |
    | 오행 보완 `element` | 오행 바×2(주오행·강약·용신) · OhengPairDiagram · 없는 오행(`element_complement.p1_lacks/p2_lacks`) · 보완 문장·점수 |
    | 신살 만남 `sinsal` | 공유/고유 신살 카드(`shared_sinsal`, `unique_sinsal_1/2`), 없으면 빈 상태 |
    | 영역별 `domain` | 레이더 + 영역 카드 4종(`domain_scores`: 연애·결혼·재물·직업 — 관계 유형별 `display_name`) 각각 `{score, level, narrative, pros[], cons[]}` + pros/cons 칩. 카드 순서는 프론트에서 고정(캐시 JSONB는 키 순서를 보존하지 않음) |
@@ -90,7 +90,7 @@ POST /compatibility/narrative | /chat
 | 2026-05-25 | 궁합 챗을 `/compatibility/chat` 페이지로 분리 |
 | 2026-09-28 | 결과가 폼을 대체, 3탭(`?tab=`), 궁합 공유 카드(`/s/{id}`), 초대 링크 생성 UI 제거, 로그인 필수 |
 | 2026-10-02 | 종합 탭을 한눈에(종합 카드 + 탭별 요약, 백엔드 `compatibility_summary`)로 확장 |
-| 2026-10-02 | 7탭으로 재구성(`components/compatibility/` 분할, 팔자 나란히·오행 보완·신살 만남·오늘의 궁합) + 홈 "오늘 나와 N점" 배지 표시 조건 수정 |
+| 2026-10-02 | 7탭으로 재구성(`components/compatibility/` 분할, 팔자비교·오행 보완·신살 만남·오늘의 궁합) + 홈 "오늘 나와 N점" 배지 표시 조건 수정 |
 
 ---
 

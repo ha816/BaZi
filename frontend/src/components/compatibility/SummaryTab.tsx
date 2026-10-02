@@ -16,7 +16,7 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
   const { data, name1, name2 } = props;
   const fill = (s: string) => s.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const rows = [
-    { tab: "pillars", emoji: "🧩", label: "팔자 나란히(四柱 비교)", text: data.summary?.pillars },
+    { tab: "pillars", emoji: "🧩", label: "팔자비교(八字比較)", text: data.summary?.pillars },
     { tab: "element", emoji: "🌗", label: "오행 보완(五行)", text: data.summary?.element },
     { tab: "sinsal", emoji: "⭐", label: "신살 만남(神殺)", text: data.summary?.sinsal },
     { tab: "domain", emoji: "📊", label: "영역별 궁합", text: data.summary?.domain },

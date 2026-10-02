@@ -11,13 +11,13 @@ const DAY_CHECKS = [
   { key: "branch_clash", label: "지지충(衝)", good: false },
 ] as const;
 
-/** 팔자 나란히 — 일주 관계 3칸 + 같은 기둥끼리 비교(합·충·형·해·파) + 삼합 완성 */
+/** 팔자비교 — 일주 관계 3칸 + 같은 기둥끼리 비교(합·충·형·해·파) + 삼합 완성 */
 export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
   const { pillar1_snapshot, pillar2_snapshot, pillar_relations, samhap_completions } = data;
   return (
     <div className="slide-card">
-      <CollapsibleSectionHeader title="팔자 나란히(四柱 비교)">
-        <p>년주·월주·일주·시주를 같은 자리끼리 짝지어 천간합·지지 육합·삼합·반합·충·원진·형·해·파를 봐요. 일주(日柱)가 가장 무겁고(1.0), 월주 0.6·시주 0.5·년주 0.3 가중이에요. 한쪽이라도 출생시간이 없으면 시주 쌍은 비교하지 않아요.</p>
+      <CollapsibleSectionHeader title="팔자비교(八字比較)">
+        <p>년주·월주·일주·시주를 같은 자리끼리 짝지어 천간합·지지 육합·삼합·반합·충·원진·형·해·파를 봐요. 한쪽이라도 출생시간이 없으면 시주 쌍은 비교하지 않아요.</p>
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">
