@@ -14,10 +14,13 @@ interface Props extends CompatTabProps {
   onReveal: () => void;
   quiz: Record<number, QuizPick>;
   onQuiz: (i: number, pick: QuizPick) => void;
+  quizSubmitted: boolean;
+  onQuizSubmit: () => void;
+  onQuizReset: () => void;
 }
 
 /** 한눈에 — 맨 위 종합 궁합 카드 + 탭별 한 줄(백엔드 summary). 박스 헤더를 누르면 그 탭으로 */
-export default function SummaryTab({ canDaily, daily, onNavigate, revealed, onReveal, quiz, onQuiz, ...props }: Props) {
+export default function SummaryTab({ canDaily, daily, onNavigate, revealed, onReveal, quiz, onQuiz, quizSubmitted, onQuizSubmit, onQuizReset, ...props }: Props) {
   const { data, name1, name2 } = props;
   const fill = (s: string) => s.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const rows = [
@@ -30,7 +33,9 @@ export default function SummaryTab({ canDaily, daily, onNavigate, revealed, onRe
   return (
     <div className="space-y-4">
       <TotalTab {...props} onNavigate={onNavigate} revealed={revealed} onReveal={onReveal} />
-      {revealed && <ScenarioCard {...props} answers={quiz} onAnswer={onQuiz} />}
+      {revealed && (
+        <ScenarioCard {...props} answers={quiz} onAnswer={onQuiz} submitted={quizSubmitted} onSubmit={onQuizSubmit} onReset={onQuizReset} />
+      )}
 
       {(rows.length > 0 || canDaily) && (
         <div className="slide-card">

@@ -546,7 +546,7 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SummaryTab` | ① `TotalTab` — 처음엔 두근두근 게이트(드럼 까치 `/kkachi/drum_kkachi.png`, 없으면 🥁 애니메이션) → 1.2초 드럼롤 후 공개. 공개 후 오행 캐릭터 카드(그림 `/kkachi/compat/{character.key}.png`, 없으면 역할 이모지 · 칭호 · 각자 역할 · 설명) + 점수 한 줄(총점·라벨 + 관계별 중요한 두 영역 `RELATION_FOCUS_DOMAINS`, "영역별 점수 자세히" → domain 탭) · 시간 미상 고지 ② `ScenarioCard` "이럴 때 두 분은?" 퀴즈 — 사용자가 먼저 [이름1/이름2/둘 다] 고르면 사주 예측·근거·맞음/다름, 다 고르면 적중률(서버 저장 없음, 답은 결과 단위로 유지) ③ 탭별 한 줄 박스(백엔드 `summary` + 오늘의 궁합). 공개·퀴즈 상태는 오케스트레이터가 들고 있다. 옛 `?tab=total`도 여기로 |
+| `summary` | 한눈에 | `SummaryTab` | ① `TotalTab` — 처음엔 두근두근 게이트(드럼 까치 `/kkachi/drum_kkachi.png`, 없으면 🥁 애니메이션) → 1.2초 드럼롤 후 공개. 공개 후 오행 캐릭터 카드(그림 `/kkachi/compat/{character.key}.png`, 없으면 역할 이모지 · 칭호 · 각자 역할 · 설명) + 점수 한 줄(총점·라벨 + 관계별 중요한 두 영역 `RELATION_FOCUS_DOMAINS`, "영역별 점수 자세히" → domain 탭) · 시간 미상 고지 ② `ScenarioCard` "이럴 때 두 분은?" 사주 맞춰 보기 — 사용자가 6문항 모두 [이름1/이름2/둘 다/모르겠어요]로 답한 뒤(그동안 사주 예측 숨김) 한꺼번에 비교 → 궁합 풀이 신뢰도(높음·보통·낮음) + 사람별 사주 스타일(사주형·반반형·개성형) + 문항별 일치·근거, 다시 답하기(서버 저장 없음, 답·제출 상태는 결과 단위로 유지) ③ 탭별 한 줄 박스(백엔드 `summary` + 오늘의 궁합). 공개·퀴즈 상태는 오케스트레이터가 들고 있다. 옛 `?tab=total`도 여기로 |
 | `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |
