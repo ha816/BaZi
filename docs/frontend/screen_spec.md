@@ -76,7 +76,7 @@ app/layout.tsx
 │   ├── 한눈에 SummaryTab             # 종합 궁합 카드(TotalTab) + 탭별 한 줄 박스(백엔드 summary·오늘의 궁합) → 누르면 그 탭
 │   ├── 팔자비교 PillarsTab         # 일주 관계 3칸 · PillarPairDiagram · 삼합 완성 · 아래 SinsalTab(신살 만남)
 │   ├── 오행 보완 ElementTab           # 오행 바×2(주오행·강약·용신) · OhengPairDiagram · 없는 오행 · 보완 문장
-│   ├── 띠궁합 ZodiacTab               # 두 사람 띠 카드·띠 충합 · 연도별 띠 궁합(4년 × 각자)
+│   ├── 띠궁합 ZodiacTab               # 띠궁합(간단) · 사주지지(네 기둥 띠 비교) · 십이지 충합(12띠 원·풀이) · 연도별 띠 궁합
 │   ├── 영역별 DomainTab               # 레이더 · 영역 카드×4(narrative·pros/cons 칩)
 │   ├── 오늘의 궁합 DailyTab           # GET /compatibility/daily — 프로필×2일 때만
 │   └── AI 해석 NarrativeTab           # 스트리밍 종합해석

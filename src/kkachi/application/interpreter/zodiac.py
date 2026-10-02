@@ -13,7 +13,7 @@ from kkachi.domain.interpretation import (
 )
 from kkachi.domain.natal import NatalInfo
 
-_PILLAR_ROLES: list[dict[str, str]] = [
+PILLAR_ROLES: list[dict[str, str]] = [
     {"label": "년주(年柱)", "role": "사회적 자아", "desc": "남들이 보는 나의 대외 이미지, 사회적 첫인상"},
     {"label": "월주(月柱)", "role": "직장·부모 관계", "desc": "일과 직장, 부모 및 윗사람과의 에너지 흐름"},
     {"label": "일주(日柱)", "role": "본래 자아", "desc": "진짜 나의 내면, 배우자와의 인연 에너지"},
@@ -48,9 +48,9 @@ class ZodiacInterpreter:
             PillarZodiac(
                 branch=b,
                 info=zodiac_info(b),
-                pillar_label=_PILLAR_ROLES[i]["label"],
-                role=_PILLAR_ROLES[i]["role"],
-                role_desc=_PILLAR_ROLES[i]["desc"],
+                pillar_label=PILLAR_ROLES[i]["label"],
+                role=PILLAR_ROLES[i]["role"],
+                role_desc=PILLAR_ROLES[i]["desc"],
                 is_year=(i == 0),
             )
             for i, b in enumerate(pillar_branches)
@@ -85,8 +85,8 @@ def _build_pillar_pairs(pillar_branches: list[str]) -> list[PillarPair]:
                 PillarPair(
                     i=i,
                     j=j,
-                    pillar_label_a=_PILLAR_ROLES[i]["label"],
-                    pillar_label_b=_PILLAR_ROLES[j]["label"],
+                    pillar_label_a=PILLAR_ROLES[i]["label"],
+                    pillar_label_b=PILLAR_ROLES[j]["label"],
                     branch_a=a,
                     branch_b=b,
                     zodiac_a=zodiac_info(a).korean,

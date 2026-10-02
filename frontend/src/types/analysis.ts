@@ -432,12 +432,39 @@ export interface CompatZodiacYear {
   rel2: string;
 }
 
+export interface CompatZodiacMini {
+  branch: string;
+  korean: string;
+  emoji: string;
+}
+
+export interface CompatChunghap {
+  relation: string;
+  title: string;
+  explain: string;
+  /** 삼합일 때 세 자리와 완성시키는 세 번째 띠 */
+  trio: { branches: string[]; element: string; third: CompatZodiacMini } | null;
+  /** 12띠(子부터 시계 방향) 각자와의 관계 */
+  ring: (CompatZodiacMini & { rel1: string; rel2: string })[];
+  /** 두 분 모두와 삼합·육합인 띠 */
+  friends: CompatZodiacMini[];
+}
+
+export interface CompatPillarZodiac {
+  columns: { label: string; role: string; p1: CompatZodiacMini | null; p2: CompatZodiacMini | null; relation: string }[];
+  cross: { p1_pillar: string; p2_pillar: string; p1: CompatZodiacMini; p2: CompatZodiacMini; relation: string; relation_label: string }[];
+  tip: string;
+}
+
 export interface CompatZodiac {
   p1: ZodiacInfo;
   p2: ZodiacInfo;
   relation: string;
   relation_label: string;
   headline: string;
+  /** 옛 응답엔 없을 수 있음 */
+  chunghap?: CompatChunghap;
+  pillars?: CompatPillarZodiac | null;
   years: CompatZodiacYear[];
   years_line: string;
 }

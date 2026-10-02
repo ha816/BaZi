@@ -47,7 +47,7 @@
    | 한눈에 `summary` | 맨 위 종합 궁합(점수·라벨·설명·`key_traits`·시간 미상 고지) + 탭별 한 줄 박스(`summary.pillars/element/sinsal/domain` + 오늘의 궁합). 박스를 누르면 그 탭. 옛 `?tab=total` 호환 |
    | 팔자비교 `pillars` | 일주 관계 3칸(`stem_combine`·`branch_combine`·`branch_clash`) · 같은 기둥 4쌍 관계(`pillar_relations`: 천간합·천간충·지지합·지지충·원진·형·해·파·삼합, PillarPairDiagram) · 삼합 완성(`samhap_completions`) · 아래에 신살 만남 카드(`shared_sinsal`, `unique_sinsal_1/2`, 없으면 빈 상태) |
    | 오행 보완 `element` | 오행 바×2(주오행·강약·용신) · OhengPairDiagram · 없는 오행(`element_complement.p1_lacks/p2_lacks`) · 보완 문장·점수 |
-   | 띠궁합 `zodiac` | 두 사람 띠 카드·띠끼리 충합(삼합·육합·충·원진·보통·같은 띠) · 연도별 띠 궁합(앞으로 4년 각자 관계) — 결과의 `zodiac` |
+   | 띠궁합 `zodiac` | 띠궁합(두 띠·배지·한 줄) · 사주지지(네 기둥 띠를 자리별로 + 다른 자리끼리 관계) · 십이지 충합(12띠 원·관계 풀이·삼합 세 번째 띠·두 분 모두와 맞는 띠) · 연도별 띠 궁합(4년 각자) — 결과의 `zodiac` |
    | 영역별 `domain` | 레이더 + 영역 카드 4종(`domain_scores`: 연애·결혼·재물·직업 — 관계 유형별 `display_name`) 각각 `{score, level, narrative, pros[], cons[]}` + pros/cons 칩. 카드 순서는 프론트에서 고정(캐시 JSONB는 키 순서를 보존하지 않음) |
    | 오늘의 궁합 `daily` | `GET /compatibility/daily?member_id&p1&p2` → 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출(직접 입력·혼합·초대는 6탭, `?tab=daily`면 종합). 결과는 state에 캐시 |
    | AI 해석 `ai` | 결과 즉시 `POST /compatibility/narrative` 스트리밍 → 점진적으로 채워짐 (재분석 시 이전 스트림 abort) |
