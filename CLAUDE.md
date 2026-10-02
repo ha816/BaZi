@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 106 tests
+uv run pytest            # 109 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -98,6 +98,7 @@ BaZi/
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
+│   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 6개(강약 점수·오행 분포·역마/도화)
 │   │   ├── compatibility_zodiac.py   # build_compat_zodiac(result dict, year) 띠궁합 — 두 사람 년지 띠 정보·띠끼리 충합·4년 연도별 각자 관계 (스냅샷 년주만 써서 옛 캐시에도 동작)
 │   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 {pillars, element, strength, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
@@ -330,7 +331,7 @@ GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
-#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
+#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }, character { title, kind, roles[2], desc, scenarios[6]{q, who:p1|p2|both, reason} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간·특징) → /s/{share_id}
@@ -561,7 +562,7 @@ erDiagram
 ### 궁합 탭 구성 (`?tab=`, `CompatibilityResult` → `components/compatibility/`)
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
-| `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(처음엔 가림 — "두근두근 ○○님과 ○○님의 궁합은?" + 드럼 치는 까치(`/kkachi/drum_kkachi.png`, 없으면 기본 까치 + 🥁 애니메이션) + 확인하기 → 1.2초 드럼롤 후 공개, 공개 상태는 결과 단위로 유지 · 점수 링·라벨·설명 · 영역별 점수(레이더 + 4영역 막대·레벨, "영역별 해설 보기" → domain 탭) · key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
+| `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(처음엔 가림 — "두근두근 ○○님과 ○○님의 궁합은?" + 드럼 치는 까치(`/kkachi/drum_kkachi.png`, 없으면 기본 까치 + 🥁 애니메이션) + 확인하기 → 1.2초 드럼롤 후 공개, 공개 상태는 결과 단위로 유지 · 점수 링·라벨·설명 · 공개 후 맨 위 캐릭터 칭호 박스(`character.title`·각자 역할·설명) · 영역별 점수(관계 유형별 중요한 두 영역 큰 타일 `RELATION_FOCUS_DOMAINS` + 나머지 막대, "영역별 해설 보기" → domain 탭) · key_traits·시간 미상 고지) + "이럴 때 두 분은?" 뒤집기 카드 6장(`ScenarioCard`, 공개 후) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
 | `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 바로 아래 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
 | `character` | 성격·성질 | `SinsalTab` + `StrengthCard` | 신살(神殺) 카드("귀인·신살" 함께/한쪽만 + 십이신살 기둥별 비교표) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 옛 `?tab=sinsal`도 여기로 |
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |
@@ -662,6 +663,7 @@ tests/
     ├── test_fortune_rules.py   # 일진 점수·아침 한 마디
     ├── test_timing_rules.py    # 타이밍 리포트(R3)
     ├── test_push_service.py    # 푸시 페이로드
+    ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```

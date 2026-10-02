@@ -42,3 +42,10 @@ export const INPUT_CLASS =
 
 // 궁합 관계 유형 라벨 — 폼 버튼·결과 탭 공통 (객체 순서 = 버튼 노출 순서)
 export const RELATION_TYPE_LABEL: Record<RelationType, string> = { lover: "연인·부부", friend: "친구·동료", family: "가족" };
+
+// 관계 유형별로 크게 보여줄 영역 두 개(백엔드 domain_scores 키) — 연인은 연애·결혼, 친구는 신뢰·협업, 가족은 유대·정서
+export const RELATION_FOCUS_DOMAINS: Record<RelationType, [string, string]> = {
+  lover: ["연애", "결혼"],
+  friend: ["결혼", "직업"],
+  family: ["결혼", "연애"],
+};

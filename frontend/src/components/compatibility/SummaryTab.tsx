@@ -1,6 +1,7 @@
 import type { DailyCompat } from "@/lib/api";
 import SectionHeader from "../SectionHeader";
 import { GroupBox } from "../SummaryCard";
+import ScenarioCard from "./ScenarioCard";
 import TotalTab from "./TotalTab";
 import type { CompatTabProps } from "./types";
 
@@ -27,6 +28,7 @@ export default function SummaryTab({ canDaily, daily, onNavigate, revealed, onRe
   return (
     <div className="space-y-4">
       <TotalTab {...props} onNavigate={onNavigate} revealed={revealed} onReveal={onReveal} />
+      {revealed && <ScenarioCard {...props} />}
 
       {(rows.length > 0 || canDaily) && (
         <div className="slide-card">

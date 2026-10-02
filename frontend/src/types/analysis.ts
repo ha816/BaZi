@@ -419,6 +419,18 @@ export interface CompatibilityResult {
   summary?: CompatSummary;
   /** 띠궁합 — 백엔드 compatibility_zodiac. 스냅샷 없으면 null */
   zodiac?: CompatZodiac | null;
+  /** 궁합 캐릭터 — 백엔드 compatibility_character (관계 유형별 문장). 옛 응답·일간 없으면 없음 */
+  character?: CompatCharacter | null;
+}
+
+export interface CompatCharacter {
+  /** 예: "끌리는 장작과 모닥불 커플" */
+  title: string;
+  kind: "generate" | "overcome" | "same";
+  roles: { token: string; name: string; element: string; emoji: string }[];
+  desc: string;
+  /** 이럴 때 두 분은? — who: p1 | p2 | both */
+  scenarios: { q: string; who: "p1" | "p2" | "both"; reason: string }[];
 }
 
 export interface CompatZodiacYear {

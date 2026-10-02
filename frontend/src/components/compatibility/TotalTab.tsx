@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { RELATION_TYPE_LABEL } from "@/lib/constants";
+import { RELATION_FOCUS_DOMAINS, RELATION_TYPE_LABEL } from "@/lib/constants";
+import { getElementInfo } from "@/lib/elementColors";
 import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
-import { DOMAIN_ICONS, DOMAIN_RADAR_ORDER, DomainRadar } from "./DomainTab";
+import { DOMAIN_ICONS, DOMAIN_RADAR_ORDER } from "./DomainTab";
 import type { CompatTabProps } from "./types";
 
 function ScoreRing({ score }: { score: number }) {
@@ -92,6 +93,11 @@ export default function TotalTab({ data, name1, name2, relationType, onNavigate,
   const { total_score, label, description, key_traits, pillar1_snapshot, pillar2_snapshot, domain_scores } = data;
   // 카드 순서는 레이더와 같게 고정(캐시 JSONB는 키 순서를 보존하지 않음)
   const domains = DOMAIN_RADAR_ORDER.map((d) => d.label).filter((k) => domain_scores[k] != null);
+  // 관계 유형별로 중요한 두 영역은 큰 타일, 나머지는 작은 막대
+  const focus = RELATION_FOCUS_DOMAINS[relationType].filter((k) => domain_scores[k] != null);
+  const rest = domains.filter((k) => !focus.includes(k));
+  const ch = data.character;
+  const fill = (t: string) => t.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const unknown1 = !!pillar1_snapshot?.hour_unknown;
   const unknown2 = !!pillar2_snapshot?.hour_unknown;
   return (
@@ -105,6 +111,24 @@ export default function TotalTab({ data, name1, name2, relationType, onNavigate,
           <RevealGate name1={name1} name2={name2} onReveal={onReveal} />
         ) : (
         <div className="space-y-5 score-pop">
+        {ch && (
+          <div className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-4 text-center space-y-3">
+            <p className="text-[11px] font-semibold text-[var(--color-gold)]">두 분은</p>
+            <p className="font-heading text-2xl font-bold leading-snug text-[var(--color-ink)]">{ch.title}</p>
+            <div className="flex justify-center gap-2 flex-wrap">
+              {ch.roles.map((ro, i) => {
+                const info = getElementInfo(ro.element);
+                return (
+                  <span key={i} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border bg-white" style={{ borderColor: info.borderColor, color: info.color }}>
+                    <span className="font-semibold">{i === 0 ? name1 : name2}님</span> = {ro.emoji} {ro.name}
+                    <span className="text-[10px] opacity-70">({info.korean}{ro.element})</span>
+                  </span>
+                );
+              })}
+            </div>
+            <p className="text-sm leading-relaxed text-[var(--color-ink)]">{fill(ch.desc)}</p>
+          </div>
+        )}
         <KkachiTip label={`${RELATION_TYPE_LABEL[relationType]} 기준`}>
           {name1}님과 {name2}님은 {label}이에요. 탭을 하나씩 넘기며 두 분의 관계를 풀어드릴게요.
         </KkachiTip>
@@ -128,10 +152,21 @@ export default function TotalTab({ data, name1, name2, relationType, onNavigate,
 
         {domains.length > 0 && (
           <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory)] p-3 space-y-3">
-            <p className="text-xs font-semibold text-[var(--color-ink-muted)]">영역별 점수</p>
-            <DomainRadar scores={domain_scores} />
+            <p className="text-xs font-semibold text-[var(--color-ink-muted)]">{RELATION_TYPE_LABEL[relationType]} 궁합에서 중요한 두 가지</p>
+            <div className="grid grid-cols-2 gap-2">
+              {focus.map((k) => {
+                const d = domain_scores[k];
+                return (
+                  <div key={k} className="rounded-xl border border-[var(--color-gold-light)] bg-white px-3 py-3 text-center">
+                    <p className="text-xs font-semibold text-[var(--color-ink-muted)]">{DOMAIN_ICONS[k] ?? "◎"} {d.display_name ?? k}</p>
+                    <p className="font-heading text-3xl font-bold text-[var(--color-ink)]">{d.score}<span className="text-xs font-normal text-[var(--color-ink-faint)]">점</span></p>
+                    <p className="text-[11px] font-semibold text-[var(--color-gold)]">{d.level}</p>
+                  </div>
+                );
+              })}
+            </div>
             <div className="space-y-2">
-              {domains.map((k) => {
+              {rest.map((k) => {
                 const d = domain_scores[k];
                 return (
                   <div key={k} className="flex items-center gap-2 text-xs">

@@ -2,6 +2,7 @@ from dataclasses import asdict
 from typing import Literal
 from uuid import UUID
 
+from kkachi.application.compatibility_character import build_compat_character
 from kkachi.application.compatibility_summary import build_compat_summary
 from kkachi.application.compatibility_zodiac import build_compat_zodiac
 from kkachi.application.kkachi_service import KkachiService
@@ -333,6 +334,7 @@ class CompatibilityService:
         result = asdict(self._compute(natal1, natal2, postnatal1, postnatal2, relation_type))
         result["summary"] = build_compat_summary(result)
         result["zodiac"] = build_compat_zodiac(result, year)
+        result["character"] = build_compat_character(result, relation_type)
         return result
 
     def build_chat_context(
@@ -429,6 +431,7 @@ class CompatibilityService:
             result_dict = self._apply_relation_prose(cached.result, relation_type)
             result_dict["summary"] = build_compat_summary(result_dict)  # 옛 캐시에도 붙도록 매번 계산
             result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
+            result_dict["character"] = build_compat_character(result_dict, relation_type)
             return result_dict
 
         profile1 = await self._profile_port.get(pid1)
@@ -449,6 +452,7 @@ class CompatibilityService:
         await self._compatibility_port.save(lo, hi, year, result_dict)
         result_dict["summary"] = build_compat_summary(result_dict)
         result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
+        result_dict["character"] = build_compat_character(result_dict, relation_type)
         return result_dict
 
     def _apply_relation_prose(self, result_dict: dict, rel: RelationType) -> dict:
