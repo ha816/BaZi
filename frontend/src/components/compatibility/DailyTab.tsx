@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getDailyCompat, type DailyCompat } from "@/lib/api";
+import type { DailyCompat } from "@/lib/api";
 import { FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import { STEM_ELEMENT, ganjiKor } from "@/lib/ganji";
 import KkachiTip from "../KkachiTip";
@@ -8,14 +7,11 @@ import LoadingSpinner from "../LoadingSpinner";
 import SectionHeader from "../SectionHeader";
 
 interface Props {
-  memberId: string;
-  profileId1: string;
-  profileId2: string;
   name1: string;
   name2: string;
-  /** 오케스트레이터가 들고 있는 결과 — 탭을 떠났다 와도 다시 부르지 않는다 */
+  /** 오케스트레이터가 GET /compatibility/daily로 받아 둔 값 — 한눈에와 같이 쓴다 */
   daily: DailyCompat | null;
-  onLoaded: (d: DailyCompat) => void;
+  failed: boolean;
 }
 
 // 백엔드 level(좋음/보통/주의) → FORECAST_LEVEL_META 키
@@ -25,18 +21,7 @@ const fmtDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 
 /** 오늘의 궁합 — 오늘 일진이 두 사람의 일지·용신에 닿는지 본 점수(GET /compatibility/daily). 프로필×2일 때만 */
-export default function DailyTab({ memberId, profileId1, profileId2, name1, name2, daily, onLoaded }: Props) {
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (daily) return;
-    let alive = true;
-    getDailyCompat(memberId, profileId1, profileId2)
-      .then((d) => { if (alive) onLoaded(d); })
-      .catch(() => { if (alive) setFailed(true); });
-    return () => { alive = false; };
-  }, [daily, memberId, profileId1, profileId2, onLoaded]);
-
+export default function DailyTab({ name1, name2, daily, failed }: Props) {
   const el = daily ? getElementInfo(STEM_ELEMENT[daily.day_pillar[0]] ?? "") : null;
   const kor = daily ? ganjiKor(daily.day_pillar) : "";
   const meta = daily ? FORECAST_LEVEL_META[LEVEL_KEY[daily.level] ?? "평범한 날"] : null;

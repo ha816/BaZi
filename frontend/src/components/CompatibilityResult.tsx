@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { CompatibilityResult, RelationType } from "@/types/analysis";
-import { type DailyCompat } from "@/lib/api";
+import { getDailyCompat, type DailyCompat } from "@/lib/api";
 import { track } from "@/lib/track";
 import DailyTab from "./compatibility/DailyTab";
 import DomainTab from "./compatibility/DomainTab";
@@ -11,7 +11,7 @@ import ElementTab from "./compatibility/ElementTab";
 import NarrativeTab from "./compatibility/NarrativeTab";
 import PillarsTab from "./compatibility/PillarsTab";
 import SinsalTab from "./compatibility/SinsalTab";
-import TotalTab from "./compatibility/TotalTab";
+import SummaryTab from "./compatibility/SummaryTab";
 
 interface Props {
   data: CompatibilityResult;
@@ -28,7 +28,7 @@ interface Props {
 
 // 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
 const COMPAT_TABS = [
-  { id: "total",   emoji: "💞", label: "종합" },
+  { id: "summary", emoji: "🐦", label: "한눈에" },   // 종합 궁합 카드 + 탭별 한 줄
   { id: "pillars", emoji: "🧩", label: "팔자 나란히" },
   { id: "element", emoji: "🌗", label: "오행 보완" },
   { id: "sinsal",  emoji: "⭐", label: "신살 만남" },
@@ -62,8 +62,20 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const tabParam = searchParams.get("tab");
   const canDaily = !!memberId && !!profileId1 && !!profileId2;
   const tabs = canDaily ? COMPAT_TABS : COMPAT_TABS.filter((t) => t.id !== "daily");
-  const tab: CompatTabId = tabs.find((t) => t.id === tabParam)?.id ?? "total";   // ?tab=daily + 직접 입력 → total
+  // 옛 링크 ?tab=total → 한눈에. ?tab=daily + 직접 입력 → 한눈에
+  const tab: CompatTabId = tabs.find((t) => t.id === (tabParam === "total" ? "summary" : tabParam))?.id ?? "summary";
   const [daily, setDaily] = useState<DailyCompat | null>(null);
+  const [dailyFailed, setDailyFailed] = useState(false);
+
+  // 오늘의 궁합은 한눈에·오늘의 궁합 탭이 함께 쓰므로 결과당 한 번만 받는다
+  useEffect(() => {
+    if (!memberId || !profileId1 || !profileId2) return;
+    let alive = true;
+    getDailyCompat(memberId, profileId1, profileId2)
+      .then((d) => { if (alive) setDaily(d); })
+      .catch(() => { if (alive) setDailyFailed(true); });
+    return () => { alive = false; };
+  }, [memberId, profileId1, profileId2]);
   const setTab = (id: CompatTabId) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", id);
@@ -94,14 +106,14 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
         </div>
       </div>
 
-      {tab === "total" && <TotalTab {...tabProps} />}
+      {tab === "summary" && (
+        <SummaryTab {...tabProps} canDaily={canDaily} daily={daily} onNavigate={(t) => setTab(t as CompatTabId)} />
+      )}
       {tab === "pillars" && <PillarsTab {...tabProps} />}
       {tab === "element" && <ElementTab {...tabProps} />}
       {tab === "sinsal" && <SinsalTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
-      {tab === "daily" && memberId && profileId1 && profileId2 && (
-        <DailyTab memberId={memberId} profileId1={profileId1} profileId2={profileId2} name1={name1} name2={name2} daily={daily} onLoaded={setDaily} />
-      )}
+      {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
       {tab === "ai" && (
         <NarrativeTab narrative={safe.narrative} streamingNarrative={streamingNarrative} narrativeLoading={narrativeLoading} />
       )}

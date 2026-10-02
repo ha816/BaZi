@@ -11,8 +11,8 @@ interface Props {
   onNavigate?: (tab: string) => void;
 }
 
-// 카테고리 박스 — 헤더(누르면 해당 탭) + 내용. tab은 ResultSlides FEATURE_TABS의 id.
-function GroupBox({ emoji, label, tab, onNavigate, children }: {
+// 카테고리 박스 — 헤더(누르면 해당 탭) + 내용. tab은 탭 id (분석 FEATURE_TABS · 궁합 COMPAT_TABS 공용)
+export function GroupBox({ emoji, label, tab, onNavigate, children }: {
   emoji: string; label: string; tab: string; onNavigate?: (tab: string) => void; children: ReactNode;
 }) {
   return (

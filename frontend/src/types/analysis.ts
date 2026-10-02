@@ -411,6 +411,15 @@ export interface CompatibilityResult {
   samhap_completions: SamhapCompletion[];
   key_traits: string[];
   narrative: string | null;
+  /** 한눈에 4줄 — 백엔드 compatibility_summary. {p1}·{p2}는 이름 토큰(프론트가 치환). 옛 응답엔 없을 수 있음 */
+  summary?: CompatSummary;
+}
+
+export interface CompatSummary {
+  pillars: string;
+  element: string;
+  sinsal: string;
+  domain: string;
 }
 
 export interface PersonInput {
