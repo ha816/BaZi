@@ -31,8 +31,8 @@ interface Props {
 // 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
 const COMPAT_TABS = [
   { id: "summary", emoji: "🐦", label: "한눈에" },   // 종합 궁합 카드 + 탭별 한 줄
-  { id: "pillars", emoji: "🧩", label: "팔자비교" },   // 기둥 비교 + 신살 + 신강·신약
-  { id: "element", emoji: "🌗", label: "오행 보완" },
+  { id: "pillars", emoji: "🧩", label: "팔자비교" },   // 기둥 비교 + 오행 보완
+  { id: "character", emoji: "🎭", label: "성격·성질" },   // 신살 + 신강·신약
   { id: "zodiac",  emoji: "🐾", label: "띠궁합" },
   { id: "domain",  emoji: "📊", label: "영역별" },
   { id: "daily",   emoji: "🌅", label: "오늘의 궁합" },   // 프로필×2일 때만 (canDaily)
@@ -64,8 +64,9 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const tabParam = searchParams.get("tab");
   const canDaily = !!memberId && !!profileId1 && !!profileId2;
   const tabs = canDaily ? COMPAT_TABS : COMPAT_TABS.filter((t) => t.id !== "daily");
-  // 옛 링크 호환: ?tab=total → 한눈에, ?tab=sinsal → 팔자비교. ?tab=daily + 직접 입력 → 한눈에
-  const LEGACY_TAB: Record<string, CompatTabId> = { total: "summary", sinsal: "pillars" };
+  // ?tab=daily + 직접 입력 → 한눈에
+  // 옛 링크 호환: 종합→한눈에, 오행 보완→팔자비교, 신살→성격·성질
+  const LEGACY_TAB: Record<string, CompatTabId> = { total: "summary", element: "pillars", sinsal: "character" };
   const tab: CompatTabId = tabs.find((t) => t.id === (LEGACY_TAB[tabParam ?? ""] ?? tabParam))?.id ?? "summary";
   const [daily, setDaily] = useState<DailyCompat | null>(null);
   const [dailyFailed, setDailyFailed] = useState(false);
@@ -115,11 +116,15 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
       {tab === "pillars" && (
         <div className="space-y-4">
           <PillarsTab {...tabProps} />
+          <ElementTab {...tabProps} />
+        </div>
+      )}
+      {tab === "character" && (
+        <div className="space-y-4">
           <SinsalTab {...tabProps} />
           <StrengthCard {...tabProps} />
         </div>
       )}
-      {tab === "element" && <ElementTab {...tabProps} />}
       {tab === "zodiac" && <ZodiacTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
       {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
