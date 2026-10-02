@@ -332,7 +332,7 @@ GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
-#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }, character { title, kind, roles[2], desc, scenarios[6]{q, who:p1|p2|both, reason} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
+#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }, character { title, kind, key(그림 키 예 木火), roles[2], desc, scenarios[6]{q, who:p1|p2|both, reason} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간·특징) → /s/{share_id}
@@ -546,7 +546,7 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) |
+| `summary` | 한눈에 | `SummaryTab` | ① `TotalTab` — 처음엔 두근두근 게이트(드럼 까치 `/kkachi/drum_kkachi.png`, 없으면 🥁 애니메이션) → 1.2초 드럼롤 후 공개. 공개 후 오행 캐릭터 카드(그림 `/kkachi/compat/{character.key}.png`, 없으면 역할 이모지 · 칭호 · 각자 역할 · 설명) + 점수 한 줄(총점·라벨 + 관계별 중요한 두 영역 `RELATION_FOCUS_DOMAINS`, "영역별 점수 자세히" → domain 탭) · 시간 미상 고지 ② `ScenarioCard` "이럴 때 두 분은?" 퀴즈 — 사용자가 먼저 [이름1/이름2/둘 다] 고르면 사주 예측·근거·맞음/다름, 다 고르면 적중률(서버 저장 없음, 답은 결과 단위로 유지) ③ 탭별 한 줄 박스(백엔드 `summary` + 오늘의 궁합). 공개·퀴즈 상태는 오케스트레이터가 들고 있다. 옛 `?tab=total`도 여기로 |
 | `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |

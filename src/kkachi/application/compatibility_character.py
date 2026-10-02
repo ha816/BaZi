@@ -82,12 +82,13 @@ def _day_mood(result: dict) -> str:
 
 
 def _title(e1: str, e2: str, mood: str, rel: str) -> tuple[str, str, list[dict], str, str, str]:
-    """→ (칭호, 관계 종류, 역할 2개, a 토큰, b 토큰, 비유 핵심어)"""
+    """→ (칭호, 관계 종류, 역할 2개, a 토큰, b 토큰, 그림 키) — 그림 키는 주는 쪽 오행 먼저(예: 木火, 같은 기운은 土土)"""
     if e1 == e2:
         phrase, word = _SAME_NAME[e1]
         roles = [{"token": "{p1}", "name": word, "element": e1, "emoji": _EMOJI[e1]},
                  {"token": "{p2}", "name": word, "element": e2, "emoji": _EMOJI[e2]}]
         kind, a, b = "same", "{p1}", "{p2}"
+        key = e1 + e1
     else:
         o1, o2 = Oheng[e1], Oheng[e2]
         if o1.generates == o2 or o1.overcomes == o2:
@@ -95,6 +96,7 @@ def _title(e1: str, e2: str, mood: str, rel: str) -> tuple[str, str, list[dict],
         else:
             first, second, a, b = e2, e1, "{p2}", "{p1}"
         kind = "generate" if Oheng[first].generates == Oheng[second] else "overcome"
+        key = first + second
         n_first, n_second = _PAIR_NAME[(first, second)]
         name_of = {first: n_first, second: n_second}
         roles = [{"token": "{p1}", "name": name_of[e1], "element": e1, "emoji": _EMOJI[e1]},
@@ -102,7 +104,7 @@ def _title(e1: str, e2: str, mood: str, rel: str) -> tuple[str, str, list[dict],
         # 칭호는 {p1} 쪽 비유부터
         phrase = f"{name_of[e1]}{josa(name_of[e1], '과', '와')} {name_of[e2]}"
     prefix = f"{_MOOD[mood][rel][0]} " if mood else ""
-    return f"{prefix}{phrase} {_SUFFIX.get(rel, '커플')}", kind, roles, a, b, phrase
+    return f"{prefix}{phrase} {_SUFFIX.get(rel, '커플')}", kind, roles, a, b, key
 
 
 def _count(snap: dict | None, *els: str) -> int:
@@ -202,8 +204,9 @@ def build_compat_character(result: dict, relation_type: str = "lover") -> dict |
         return None
     rel = relation_type if relation_type in _SUFFIX else "lover"
     mood = _day_mood(result)
-    title, kind, roles, a, b, _ = _title(e1, e2, mood, rel)
+    title, kind, roles, a, b, key = _title(e1, e2, mood, rel)
     desc = _DESC[kind][rel].format(a=a, b=b)
     if mood:
         desc += " " + _MOOD[mood][rel][1]
-    return {"title": title, "kind": kind, "roles": roles, "desc": desc, "scenarios": _scenarios(result, rel, kind, a)}
+    # key → 그림 frontend/public/kkachi/compat/{key}.png (docs/COMPAT_CHARACTER_TYPES.md 15종)
+    return {"title": title, "kind": kind, "key": key, "roles": roles, "desc": desc, "scenarios": _scenarios(result, rel, kind, a)}

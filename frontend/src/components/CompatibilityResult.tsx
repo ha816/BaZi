@@ -12,6 +12,7 @@ import NarrativeTab from "./compatibility/NarrativeTab";
 import PillarsTab from "./compatibility/PillarsTab";
 import SinsalTab from "./compatibility/SinsalTab";
 import StrengthCard from "./compatibility/StrengthCard";
+import type { QuizPick } from "./compatibility/ScenarioCard";
 import SummaryTab from "./compatibility/SummaryTab";
 import ZodiacTab from "./compatibility/ZodiacTab";
 
@@ -72,6 +73,8 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const [dailyFailed, setDailyFailed] = useState(false);
   // 종합 점수 공개(두근두근) — 결과가 바뀌면 이 뷰가 다시 마운트되어 다시 가려진다
   const [scoreRevealed, setScoreRevealed] = useState(false);
+  // 이럴 때 두 분은? 사용자 답 — 화면 안에서만 쓰고 서버에 보내지 않는다
+  const [quiz, setQuiz] = useState<Record<number, QuizPick>>({});
 
   // 오늘의 궁합은 한눈에·오늘의 궁합 탭이 함께 쓰므로 결과당 한 번만 받는다
   useEffect(() => {
@@ -113,7 +116,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
       </div>
 
       {tab === "summary" && (
-        <SummaryTab {...tabProps} canDaily={canDaily} daily={daily} onNavigate={(t) => setTab(t as CompatTabId)} revealed={scoreRevealed} onReveal={() => setScoreRevealed(true)} />
+        <SummaryTab {...tabProps} canDaily={canDaily} daily={daily} onNavigate={(t) => setTab(t as CompatTabId)} revealed={scoreRevealed} onReveal={() => setScoreRevealed(true)} quiz={quiz} onQuiz={(i, pick) => setQuiz((q) => ({ ...q, [i]: pick }))} />
       )}
       {tab === "pillars" && (
         <div className="space-y-4">

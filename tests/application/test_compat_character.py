@@ -13,10 +13,11 @@ def _result(ds1: str, ds2: str, kinds=(), **snap) -> dict:
 
 def test_title_metaphor_follows_p1_order_and_relation_suffix():
     c = build_compat_character(_result("戊", "庚"), "lover")  # 土生金 → 광산·보석
-    assert c["title"] == "광산과 보석 커플" and c["kind"] == "generate"
+    assert c["title"] == "광산과 보석 커플" and c["kind"] == "generate" and c["key"] == "土金"
     assert c["desc"].startswith("{p1}님이 {p2}님을 아낌없이 키워주는")
     rev = build_compat_character(_result("庚", "戊"), "friend")  # p1 金, p2 土 → 보석과 광산, 주는 쪽은 p2
     assert rev["title"] == "보석과 광산 콤비" and rev["desc"].startswith("{p2}님이 판을 깔아주고")
+    assert rev["key"] == "土金"  # 그림은 주는 쪽(土) 먼저 — p1이 받는 쪽이어도 같은 그림
 
 
 def test_mood_prefix_and_same_element_family():
