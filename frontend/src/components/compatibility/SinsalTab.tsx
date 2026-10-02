@@ -1,6 +1,6 @@
 import CollapsibleSectionHeader from "../CollapsibleSectionHeader";
 import KkachiTip from "../KkachiTip";
-import { SINSAL_INFO } from "../tabs/natal/data";
+import { PILLAR_LABELS_SHORT, SIBI_SINSAL_INFO, SINSAL_INFO } from "../tabs/natal/data";
 import type { CompatTabProps } from "./types";
 
 const SHARED_SINSAL_MEANING: Record<string, string> = {
@@ -104,14 +104,20 @@ const PERSON2_ACCENT = {
   footColor: "#0f766e",
 };
 
-/** 신살 만남 — 함께 가진 신살(공통 코드) · 한쪽만 가진 신살(상대를 받쳐주는 자리) */
+/** 신살 — 함께 가진 신살(같은 기운) · 한쪽만 가진 신살(상대를 받쳐주는 자리) · 두 사람 십이신살 비교 */
 export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
   const { shared_sinsal, unique_sinsal_1, unique_sinsal_2 } = data;
-  const empty = shared_sinsal.length === 0 && unique_sinsal_1.length === 0 && unique_sinsal_2.length === 0;
+  const s1 = data.pillar1_snapshot?.sibi_sinsal ?? [];
+  const s2 = data.pillar2_snapshot?.sibi_sinsal ?? [];
+  const hasSibi = s1.some(Boolean) || s2.some(Boolean);
+  // 시주 미상이면 3칸, 아니면 4칸 — 둘 중 긴 쪽 기준
+  const cols = Math.max(s1.length, s2.length);
+  const sharedSibi = [...new Set(s1.filter(Boolean))].filter((n) => s2.includes(n));
+  const empty = shared_sinsal.length === 0 && unique_sinsal_1.length === 0 && unique_sinsal_2.length === 0 && !hasSibi;
   return (
     <div className="slide-card">
-      <CollapsibleSectionHeader title="신살 만남(神殺)">
-        <p>신살(神殺)은 사주에 깃든 특별한 기운으로, 옛날에는 길흉으로 봤지만 현대에는 <strong>개인의 캐릭터·역량</strong>으로 풀이해요. <strong>함께 가진 신살</strong>은 두 분이 같은 코드를 공유한다는 뜻이고, <strong>한쪽만 가진 신살</strong>은 그 분이 그 영역에서 상대를 받쳐주는 자리예요. 함께 가진 신살은 하나당 종합 점수에 +2예요.</p>
+      <CollapsibleSectionHeader title="신살(神殺)">
+        <p>신살(神殺)은 사주에 깃든 특별한 기운으로, 옛날에는 길흉으로 봤지만 현대에는 <strong>개인의 캐릭터·역량</strong>으로 풀이해요. <strong>함께 가진 신살</strong>은 두 분이 같은 기운을 지녔다는 뜻이고, <strong>한쪽만 가진 신살</strong>은 그 분이 그 영역에서 상대를 받쳐주는 자리예요. <strong>십이신살(十二神殺)</strong>은 년지를 기준으로 각 기둥에 붙는 열두 가지 기운이에요.</p>
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">
@@ -119,12 +125,12 @@ export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
           <KkachiTip>두 분이 가진 신살(神殺)이 없어 보여줄 카드가 없어요. 신살이 없다고 궁합이 나쁜 건 아니에요.</KkachiTip>
         ) : (
           <>
-            <KkachiTip>함께 가진 신살은 두 분의 공통 코드, 한쪽만 가진 신살은 그 분이 상대를 받쳐주는 자리예요.</KkachiTip>
+            <KkachiTip>함께 가진 신살은 두 분이 나누는 같은 기운, 한쪽만 가진 신살은 그 분이 상대를 받쳐주는 자리예요.</KkachiTip>
 
             {shared_sinsal.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
-                  함께 가진 신살 <span className="font-normal text-[var(--color-ink-faint)] ml-1">두 분의 공통 코드</span>
+                  함께 가진 신살 <span className="font-normal text-[var(--color-ink-faint)] ml-1">두 분이 같은 기운</span>
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {shared_sinsal.map((s) => (
@@ -183,6 +189,52 @@ export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {hasSibi && (
+              <div className="space-y-2 pt-2 border-t border-[var(--color-border-light)]">
+                <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
+                  십이신살(十二神殺) <span className="font-normal text-[var(--color-ink-faint)] ml-1">기둥별로 나란히</span>
+                </p>
+                <div className="overflow-hidden rounded-xl border border-[var(--color-border-light)]">
+                  <div className="grid text-center text-[10px] text-[var(--color-ink-faint)] bg-[var(--color-ivory-warm)]" style={{ gridTemplateColumns: `3.5rem repeat(${cols}, minmax(0, 1fr))` }}>
+                    <div className="py-1.5" />
+                    {Array.from({ length: cols }, (_, i) => <div key={i} className="py-1.5">{PILLAR_LABELS_SHORT[i]}</div>)}
+                  </div>
+                  {[{ name: name1, list: s1, other: s2 }, { name: name2, list: s2, other: s1 }].map(({ name, list, other }, row) => (
+                    <div key={row} className="grid text-center border-t border-[var(--color-border-light)]" style={{ gridTemplateColumns: `3.5rem repeat(${cols}, minmax(0, 1fr))` }}>
+                      <div className="py-2 text-[10px] font-semibold text-[var(--color-ink-muted)] truncate px-1 self-center">{name}님</div>
+                      {Array.from({ length: cols }, (_, i) => {
+                        const n = list[i] ?? "";
+                        const same = !!n && other.includes(n);
+                        return (
+                          <div key={i} className={`py-2 px-0.5 ${same ? "bg-emerald-50" : ""}`}>
+                            {n ? (
+                              <>
+                                <p className={`text-xs font-semibold leading-tight ${same ? "text-emerald-700" : "text-[var(--color-ink)]"}`}>{n}</p>
+                                {SIBI_SINSAL_INFO[n] && <p className="text-[9px] text-[var(--color-ink-faint)]">({SIBI_SINSAL_INFO[n].hanja})</p>}
+                              </>
+                            ) : <p className="text-xs text-[var(--color-ink-faint)]">—</p>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+                {sharedSibi.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] text-[var(--color-ink-muted)]">두 분이 같은 기운 <span className="text-[var(--color-ink-faint)]">(초록 칸)</span></p>
+                    {sharedSibi.map((n) => (
+                      <div key={n} className="flex items-baseline gap-2 text-xs">
+                        <span className="flex-shrink-0 px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">{n}</span>
+                        <span className="text-[var(--color-ink-muted)]">{SIBI_SINSAL_INFO[n]?.meaning}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[var(--color-ink-faint)]">두 분의 십이신살은 겹치지 않아요 — 서로 다른 기운으로 채워주는 사이예요.</p>
+                )}
               </div>
             )}
           </>

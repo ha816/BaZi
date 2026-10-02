@@ -84,7 +84,7 @@ def _sinsal_line(result: dict) -> str:
     if shared:
         names = "·".join(shared[:2])
         obj = f"{names} 외 {len(shared) - 2}개를" if len(shared) > 2 else names + josa(names, "을", "를")
-        head = f"두 분 모두 {obj} 가져 같은 코드를 공유해요"
+        head = f"두 분 모두 {obj} 가져 같은 기운을 나눠요"
     elif u1 or u2:
         head = "함께 가진 신살은 없지만 각자 다른 자리에서 서로를 받쳐줘요"
     else:

@@ -375,6 +375,8 @@ export interface PillarSnapshot {
   strength_label: string;
   yongshin: string;
   hour_unknown?: boolean;
+  /** 기둥별 십이신살 (년·월·일·시 순, ""=없음). 옛 캐시엔 없음 */
+  sibi_sinsal?: string[];
 }
 
 export interface ElementComplement {
