@@ -1,3 +1,4 @@
+from kkachi.application.compatibility_zodiac import zodiac_summary_line
 from kkachi.application.interpreter.narrative import strength_story
 from kkachi.application.util.util import josa
 from kkachi.domain.ganji import Oheng, Pillar
@@ -167,5 +168,6 @@ def build_compat_summary(result: dict) -> dict:
         "strength_p1": _strength_person(result.get("pillar1_snapshot"), "{p1}"),
         "strength_p2": _strength_person(result.get("pillar2_snapshot"), "{p2}"),
         "sinsal": _sinsal_line(result),
+        "zodiac": zodiac_summary_line(result),
         "domain": _domain_line(result),
     }

@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 99 tests
+uv run pytest            # 104 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -98,6 +98,7 @@ BaZi/
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
+│   │   ├── compatibility_zodiac.py   # build_compat_zodiac(result dict, year) 띠궁합 — 두 사람 년지 띠 정보·띠끼리 충합·4년 연도별 각자 관계 (스냅샷 년주만 써서 옛 캐시에도 동작)
 │   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 {pillars, element, strength, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
@@ -156,8 +157,8 @@ BaZi/
 │   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
-│   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 6탭 정의·?tab=(다른 파라미터 보존)·탭바·캐시 기본값 한 번 채우기. 본문은 compatibility/
-│   │   ├── compatibility/           # SummaryTab(한눈에 = TotalTab 종합 카드 + 탭별 한 줄 GroupBox) · StrengthCard(신강·신약) · TotalTab · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
+│   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 7탭 정의·?tab=(다른 파라미터 보존)·탭바·캐시 기본값 한 번 채우기. 본문은 compatibility/
+│   │   ├── compatibility/           # SummaryTab(한눈에 = TotalTab 종합 카드 + 탭별 한 줄 GroupBox) · StrengthCard(신강·신약) · ZodiacTab(띠궁합) · TotalTab · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
@@ -329,7 +330,7 @@ GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
-#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, sinsal, domain } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
+#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }, zodiac { p1, p2, relation, relation_label, headline, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간·특징) → /s/{share_id}
@@ -496,7 +497,7 @@ erDiagram
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", **6탭**(한눈에·팔자비교(+신살 만남)·오행 보완·영역별·오늘의 궁합·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 5탭) + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", **7탭**(한눈에·팔자비교(+신살·신강신약)·오행 보완·띠궁합·영역별·오늘의 궁합·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭) + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -563,12 +564,13 @@ erDiagram
 | `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명·key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
 | `pillars` | 팔자비교 | `PillarsTab` + `SinsalTab` + `StrengthCard` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 아래에 신살(神殺) 카드 — "귀인·신살"(함께 가진=같은 기운 / 한쪽만 가진) + 두 사람 십이신살(十二神殺) 기둥별 비교표(스냅샷 `sibi_sinsal`, 옛 캐시엔 없음 → 표 숨김), 맨 아래 신강·신약 카드(`StrengthCard` — 분석 용신 탭처럼 확인하기 버튼 → 두 사람 그림·게이지 + 강약 조합 `summary.strength` + 사람별 풀이 `strength_p1/p2`). 옛 `?tab=sinsal`도 여기로 |
 | `element` | 오행 보완 | `ElementTab` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수 |
+| `zodiac` | 띠궁합 | `ZodiacTab` | 두 사람 띠 카드(이모지·키워드·특징) · 띠끼리 충합 배지(`RELATION_STYLE`) · 띠 관계 한 줄 · 각자 띠 강점 / 연도별 띠 궁합(확인하기 → 4년 × 각자 관계, 둘 다 합인 해 강조) |
 | `domain` | 영역별 | `DomainTab` | 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회(한눈에와 공유) |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |
 
 - 탭 전환은 `?tab=`만 바꾸고 `invite`·`p1`·`p2`는 보존. `?tab=daily`인데 직접 입력·초대면 종합으로. `tab_view{tab, page:"compat", has_profile}` 이벤트(새 이벤트 이름 없음)
-- 탭은 최대 6개라 `.feature-tabbar` 한 줄에 들어간다. 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)
+- 7탭일 때 탭바는 `.feature-tabbar--7`(모바일 4+3, sm 이상 한 줄), 6탭은 기본 한 줄. 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)
 - 캐시(JSONB)는 키 순서를 보존하지 않으므로 `domain_scores` 카드 순서는 프론트에서 고정. 옛 캐시에 없는 필드는 오케스트레이터가 기본값으로 채운다
 
 ## 타이밍 리포트 — `timing_rules.compute_timing` (ROADMAP R3)
@@ -660,6 +662,7 @@ tests/
     ├── test_fortune_rules.py   # 일진 점수·아침 한 마디
     ├── test_timing_rules.py    # 타이밍 리포트(R3)
     ├── test_push_service.py    # 푸시 페이로드
+    ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```
 

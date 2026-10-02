@@ -13,6 +13,7 @@ import PillarsTab from "./compatibility/PillarsTab";
 import SinsalTab from "./compatibility/SinsalTab";
 import StrengthCard from "./compatibility/StrengthCard";
 import SummaryTab from "./compatibility/SummaryTab";
+import ZodiacTab from "./compatibility/ZodiacTab";
 
 interface Props {
   data: CompatibilityResult;
@@ -32,6 +33,7 @@ const COMPAT_TABS = [
   { id: "summary", emoji: "🐦", label: "한눈에" },   // 종합 궁합 카드 + 탭별 한 줄
   { id: "pillars", emoji: "🧩", label: "팔자비교" },   // 기둥 비교 + 신살 + 신강·신약
   { id: "element", emoji: "🌗", label: "오행 보완" },
+  { id: "zodiac",  emoji: "🐾", label: "띠궁합" },
   { id: "domain",  emoji: "📊", label: "영역별" },
   { id: "daily",   emoji: "🌅", label: "오늘의 궁합" },   // 프로필×2일 때만 (canDaily)
   { id: "ai",      emoji: "✨", label: "AI 해석" },
@@ -92,7 +94,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   return (
     <div className="space-y-4">
       <div className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">
-        <div className="feature-tabbar">
+        <div className={`feature-tabbar ${tabs.length === 7 ? "feature-tabbar--7" : ""}`}>
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -118,6 +120,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
         </div>
       )}
       {tab === "element" && <ElementTab {...tabProps} />}
+      {tab === "zodiac" && <ZodiacTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
       {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
       {tab === "ai" && (

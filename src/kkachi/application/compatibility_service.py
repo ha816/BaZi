@@ -3,6 +3,7 @@ from typing import Literal
 from uuid import UUID
 
 from kkachi.application.compatibility_summary import build_compat_summary
+from kkachi.application.compatibility_zodiac import build_compat_zodiac
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.llm_port import LlmPort
@@ -331,6 +332,7 @@ class CompatibilityService:
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
         result = asdict(self._compute(natal1, natal2, postnatal1, postnatal2, relation_type))
         result["summary"] = build_compat_summary(result)
+        result["zodiac"] = build_compat_zodiac(result, year)
         return result
 
     def build_chat_context(
@@ -426,6 +428,7 @@ class CompatibilityService:
         if cached:
             result_dict = self._apply_relation_prose(cached.result, relation_type)
             result_dict["summary"] = build_compat_summary(result_dict)  # 옛 캐시에도 붙도록 매번 계산
+            result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
             return result_dict
 
         profile1 = await self._profile_port.get(pid1)
@@ -445,6 +448,7 @@ class CompatibilityService:
         result_dict = asdict(result)
         await self._compatibility_port.save(lo, hi, year, result_dict)
         result_dict["summary"] = build_compat_summary(result_dict)
+        result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
         return result_dict
 
     def _apply_relation_prose(self, result_dict: dict, rel: RelationType) -> dict:

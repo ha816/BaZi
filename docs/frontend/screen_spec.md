@@ -72,10 +72,11 @@ app/layout.tsx
 ├── PersonCard (첫 번째 분)         # 프로필/직접 입력 토글
 ├── PersonCard (두 번째 분)
 ├── 관계 유형 버튼 3개 · 분석 연도 · "궁합 보기"
-├── [결과] CompatibilityResult (6탭, ?tab=)   # 본문은 components/compatibility/
+├── [결과] CompatibilityResult (7탭, ?tab=)   # 본문은 components/compatibility/
 │   ├── 한눈에 SummaryTab             # 종합 궁합 카드(TotalTab) + 탭별 한 줄 박스(백엔드 summary·오늘의 궁합) → 누르면 그 탭
 │   ├── 팔자비교 PillarsTab         # 일주 관계 3칸 · PillarPairDiagram · 삼합 완성 · 아래 SinsalTab(신살 만남)
 │   ├── 오행 보완 ElementTab           # 오행 바×2(주오행·강약·용신) · OhengPairDiagram · 없는 오행 · 보완 문장
+│   ├── 띠궁합 ZodiacTab               # 두 사람 띠 카드·띠 충합 · 연도별 띠 궁합(4년 × 각자)
 │   ├── 영역별 DomainTab               # 레이더 · 영역 카드×4(narrative·pros/cons 칩)
 │   ├── 오늘의 궁합 DailyTab           # GET /compatibility/daily — 프로필×2일 때만
 │   └── AI 해석 NarrativeTab           # 스트리밍 종합해석
@@ -222,7 +223,7 @@ Step 2: 이름(pre-fill)·생년월일·시간·성별·도시(ipapi 자동) →
 ```
 PersonCard × 2 (프로필/직접) + 관계 유형(lover|friend|family) + 연도 → "궁합 보기"
   → 둘 다 프로필: POST /compatibility (캐시)   그 외: POST /compatibility/direct
-  → CompatibilityResult 6탭(?tab=; 오늘의 궁합 탭 진입 시 GET /compatibility/daily, 프로필×2일 때만) + 즉시 POST /compatibility/narrative 스트리밍
+  → CompatibilityResult 7탭(?tab=; 오늘의 궁합 탭 진입 시 GET /compatibility/daily, 프로필×2일 때만) + 즉시 POST /compatibility/narrative 스트리밍
   → 헤더 "궁합 공유" → POST /compatibility/shares → /s/{id}
   → sessionStorage kkachi_compat_input · kkachi_compat_names → CompatibilityChat FAB
 ```

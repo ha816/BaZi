@@ -18,6 +18,7 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
   const rows = [
     { tab: "pillars", emoji: "🧩", label: "팔자비교(八字比較)", text: data.summary?.pillars, subs: [{ label: "신살", text: data.summary?.sinsal }, { label: "강약", text: data.summary?.strength }] },
     { tab: "element", emoji: "🌗", label: "오행 보완(五行)", text: data.summary?.element, subs: [] },
+    { tab: "zodiac", emoji: "🐾", label: "띠궁합(十二支)", text: data.summary?.zodiac, subs: [] },
     { tab: "domain", emoji: "📊", label: "영역별 궁합", text: data.summary?.domain, subs: [] },
   ].filter((r) => r.text);
 

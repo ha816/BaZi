@@ -417,6 +417,29 @@ export interface CompatibilityResult {
   narrative: string | null;
   /** 한눈에 4줄 — 백엔드 compatibility_summary. {p1}·{p2}는 이름 토큰(프론트가 치환). 옛 응답엔 없을 수 있음 */
   summary?: CompatSummary;
+  /** 띠궁합 — 백엔드 compatibility_zodiac. 스냅샷 없으면 null */
+  zodiac?: CompatZodiac | null;
+}
+
+export interface CompatZodiacYear {
+  year: number;
+  ganji: string;
+  branch: string;
+  kor: string;
+  emoji: string;
+  /** 그해 띠와 각자 띠의 관계: 나(본명년)·삼합·육합·충·원진·보통 */
+  rel1: string;
+  rel2: string;
+}
+
+export interface CompatZodiac {
+  p1: ZodiacInfo;
+  p2: ZodiacInfo;
+  relation: string;
+  relation_label: string;
+  headline: string;
+  years: CompatZodiacYear[];
+  years_line: string;
 }
 
 export interface CompatSummary {
@@ -428,6 +451,8 @@ export interface CompatSummary {
   strength_p1?: string;
   strength_p2?: string;
   sinsal: string;
+  /** 띠 관계 한 줄 */
+  zodiac?: string;
   domain: string;
 }
 

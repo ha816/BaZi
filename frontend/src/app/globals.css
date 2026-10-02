@@ -336,6 +336,11 @@ body {
   padding-bottom: 8px;
 }
 
+/* 궁합 결과 7탭(프로필×2, CompatibilityResult) — 6+1로 깨지지 않게 모바일 4+3, sm 이상 한 줄 */
+.feature-tabbar--7 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .feature-tab {
   display: flex;
   flex-direction: column;
@@ -358,6 +363,9 @@ body {
   .feature-tabbar {
     grid-template-columns: repeat(6, 1fr);
     gap: 6px;
+  }
+  .feature-tabbar--7 {
+    grid-template-columns: repeat(7, 1fr);
   }
   .feature-tab {
     flex-direction: row;

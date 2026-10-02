@@ -24,7 +24,7 @@ def test_summary_has_four_lines_with_name_tokens():
     s = build_compat_summary(_result(element_complement={
         "p1_lacks": ["水"], "p1_provides": [], "p2_lacks": [], "p2_provides": ["水"], "overlap_strong": [], "score": 3,
     }))
-    assert set(s) == {"pillars", "element", "strength", "strength_p1", "strength_p2", "sinsal", "domain"}
+    assert set(s) == {"pillars", "element", "strength", "strength_p1", "strength_p2", "sinsal", "zodiac", "domain"}
     assert all(v.endswith(".") for v in s.values() if v)
     assert "{p2}님이 물(水) 기운으로 {p1}님의" in s["element"]
 
