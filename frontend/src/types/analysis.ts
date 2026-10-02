@@ -377,6 +377,8 @@ export interface PillarSnapshot {
   hour_unknown?: boolean;
   /** 기둥별 십이신살 (년·월·일·시 순, ""=없음). 옛 캐시엔 없음 */
   sibi_sinsal?: string[];
+  /** 신강·신약 점수(+신강/−신약). 옛 캐시엔 없음 */
+  strength?: number | null;
 }
 
 export interface ElementComplement {
@@ -420,6 +422,8 @@ export interface CompatibilityResult {
 export interface CompatSummary {
   pillars: string;
   element: string;
+  /** 두 사람 신강·신약 조합 한 줄 (옛 응답엔 없음) */
+  strength?: string;
   sinsal: string;
   domain: string;
 }

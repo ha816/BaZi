@@ -23,7 +23,8 @@ class PillarSnapshot:
     strength_label: str                 # "신강(身強)"
     yongshin: str                       # "水"
     hour_unknown: bool = False          # 시주 없음 (세 기둥)
-    sibi_sinsal: list[str] = field(default_factory=list)  # 기둥별 십이신살 (년·월·일·시 순, ""=없음)
+    sibi_sinsal: list[str] = field(default_factory=list)
+    strength: int | None = None         # 신강·신약 점수(+신강/−신약, 네 기둥 ±8·세 기둥 ±6). 옛 캐시엔 없음  # 기둥별 십이신살 (년·월·일·시 순, ""=없음)
 
 
 @dataclass

@@ -520,6 +520,7 @@ class CompatibilityService:
             yongshin=natal.yongshin.name,
             hour_unknown=natal.saju.hour_unknown,
             sibi_sinsal=list(natal.sibi_sinsal),
+            strength=natal.strength,
         )
 
     def _compute_pillar_relations(

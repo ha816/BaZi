@@ -24,8 +24,8 @@ def test_summary_has_four_lines_with_name_tokens():
     s = build_compat_summary(_result(element_complement={
         "p1_lacks": ["水"], "p1_provides": [], "p2_lacks": [], "p2_provides": ["水"], "overlap_strong": [], "score": 3,
     }))
-    assert set(s) == {"pillars", "element", "sinsal", "domain"}
-    assert all(v.endswith(".") for v in s.values())
+    assert set(s) == {"pillars", "element", "strength", "sinsal", "domain"}
+    assert all(v.endswith(".") for v in s.values() if v)
     assert "{p2}님이 물(水) 기운으로 {p1}님의" in s["element"]
 
 
@@ -56,3 +56,15 @@ def test_sinsal_shared_josa_and_empty_state():
     assert s["sinsal"].startswith("두 분 모두 천을귀인을 가져")
     assert "{p1}님만 역마살 등 2개" in s["sinsal"]
     assert "신살이 없어요" in build_compat_summary(_result())["sinsal"]
+
+
+def test_strength_pair_lines():
+    def line(l1, l2):
+        return build_compat_summary(_result(
+            pillar1_snapshot={"my_main_element": "土", "yongshin": "金", "strength_label": l1},
+            pillar2_snapshot={"my_main_element": "木", "yongshin": "水", "strength_label": l2},
+        ))["strength"]
+    assert line("신약(身弱)", "신강(身強)").startswith("{p2}님은 신강(身強), {p1}님은 신약(身弱)")
+    assert line("신강(身強)", "신강(身強)").startswith("두 분 모두 신강")
+    assert line("중화(中和)", "신약(身弱)") == "{p1}님이 중화(中和)라 {p2}님의 여린 기운에 맞춰 균형을 잡아줘요."
+    assert line("", "") == ""  # 옛 스냅샷에 라벨이 없으면 빈 줄

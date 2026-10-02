@@ -16,8 +16,8 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
   const { data, name1, name2 } = props;
   const fill = (s: string) => s.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const rows = [
-    { tab: "pillars", emoji: "🧩", label: "팔자비교(八字比較)", text: data.summary?.pillars, sub: data.summary?.sinsal },
-    { tab: "element", emoji: "🌗", label: "오행 보완(五行)", text: data.summary?.element },
+    { tab: "pillars", emoji: "🧩", label: "팔자비교(八字比較)", text: data.summary?.pillars, sub: data.summary?.sinsal, subLabel: "신살" },
+    { tab: "element", emoji: "🌗", label: "오행 보완(五行)", text: data.summary?.element, sub: data.summary?.strength, subLabel: "강약" },
     { tab: "domain", emoji: "📊", label: "영역별 궁합", text: data.summary?.domain },
   ].filter((r) => r.text);
 
@@ -38,7 +38,7 @@ export default function SummaryTab({ canDaily, daily, onNavigate, ...props }: Pr
                 <p className="text-sm leading-snug text-[var(--color-ink)]">{fill(r.text ?? "")}</p>
                 {r.sub && (
                   <p className="mt-1.5 text-sm leading-snug text-[var(--color-ink-light)]">
-                    <span className="text-[11px] font-semibold text-[var(--color-ink-faint)] mr-1.5">신살</span>{fill(r.sub)}
+                    <span className="text-[11px] font-semibold text-[var(--color-ink-faint)] mr-1.5">{r.subLabel}</span>{fill(r.sub)}
                   </p>
                 )}
               </GroupBox>

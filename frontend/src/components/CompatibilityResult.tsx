@@ -11,6 +11,7 @@ import ElementTab from "./compatibility/ElementTab";
 import NarrativeTab from "./compatibility/NarrativeTab";
 import PillarsTab from "./compatibility/PillarsTab";
 import SinsalTab from "./compatibility/SinsalTab";
+import StrengthCard from "./compatibility/StrengthCard";
 import SummaryTab from "./compatibility/SummaryTab";
 
 interface Props {
@@ -115,7 +116,12 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
           <SinsalTab {...tabProps} />
         </div>
       )}
-      {tab === "element" && <ElementTab {...tabProps} />}
+      {tab === "element" && (
+        <div className="space-y-4">
+          <ElementTab {...tabProps} />
+          <StrengthCard {...tabProps} />
+        </div>
+      )}
       {tab === "domain" && <DomainTab {...tabProps} />}
       {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
       {tab === "ai" && (

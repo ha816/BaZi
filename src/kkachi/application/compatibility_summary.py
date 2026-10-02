@@ -115,11 +115,38 @@ def _domain_line(result: dict) -> str:
     return f"{line}, {name(low)}도 {low_score}점으로 무난해요."
 
 
+_STRONG, _WEAK, _MID = "신강(身強)", "신약(身弱)", "중화(中和)"
+
+
+def _strength_line(result: dict) -> str:
+    """두 사람 신강·신약 조합 — strength_label만 쓰므로 옛 캐시에도 동작"""
+    s1, s2 = result.get("pillar1_snapshot"), result.get("pillar2_snapshot")
+    if not s1 or not s2:
+        return ""
+    l1, l2 = s1.get("strength_label", ""), s2.get("strength_label", "")
+    if l1 == _STRONG and l2 == _WEAK:
+        return "{p1}님은 신강(身強), {p2}님은 신약(身弱)이라 한 분이 앞에서 이끌고 한 분이 곁에서 받쳐주는 짝이에요."
+    if l1 == _WEAK and l2 == _STRONG:
+        return "{p2}님은 신강(身強), {p1}님은 신약(身弱)이라 한 분이 앞에서 이끌고 한 분이 곁에서 받쳐주는 짝이에요."
+    if l1 == _STRONG and l2 == _STRONG:
+        return "두 분 모두 신강(身強)이라 각자 주관이 뚜렷해요. 결정할 영역을 미리 나눠 두면 부딪힘이 줄어요."
+    if l1 == _WEAK and l2 == _WEAK:
+        return "두 분 모두 신약(身弱)이라 서로 기대며 힘을 보태는 사이예요. 주변의 도움을 함께 끌어오면 더 단단해져요."
+    if l1 == _MID and l2 == _MID:
+        return "두 분 모두 중화(中和)라 어느 쪽으로도 치우치지 않는 안정된 짝이에요."
+    if l1 == _MID:
+        return "{p1}님이 중화(中和)라 {p2}님의 " + ("강한" if l2 == _STRONG else "여린") + " 기운에 맞춰 균형을 잡아줘요."
+    if l2 == _MID:
+        return "{p2}님이 중화(中和)라 {p1}님의 " + ("강한" if l1 == _STRONG else "여린") + " 기운에 맞춰 균형을 잡아줘요."
+    return ""
+
+
 def build_compat_summary(result: dict) -> dict:
-    """궁합 결과 → 한눈에 4줄 {pillars, element, sinsal, domain}. {p1}·{p2}는 이름 토큰."""
+    """궁합 결과 → 한눈에 {pillars, element, strength, sinsal, domain}. {p1}·{p2}는 이름 토큰."""
     return {
         "pillars": _pillars_line(result),
         "element": _element_line(result),
+        "strength": _strength_line(result),
         "sinsal": _sinsal_line(result),
         "domain": _domain_line(result),
     }

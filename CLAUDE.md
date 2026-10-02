@@ -98,7 +98,7 @@ BaZi/
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
-│   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 4줄 {pillars, element, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
+│   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 {pillars, element, strength, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
 │   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
@@ -157,7 +157,7 @@ BaZi/
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 6탭 정의·?tab=(다른 파라미터 보존)·탭바·캐시 기본값 한 번 채우기. 본문은 compatibility/
-│   │   ├── compatibility/           # SummaryTab(한눈에 = TotalTab 종합 카드 + 탭별 한 줄 GroupBox) · TotalTab · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
+│   │   ├── compatibility/           # SummaryTab(한눈에 = TotalTab 종합 카드 + 탭별 한 줄 GroupBox) · StrengthCard(신강·신약) · TotalTab · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
@@ -329,7 +329,7 @@ GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
-#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, sinsal, domain } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
+#   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, sinsal, domain } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간·특징) → /s/{share_id}
@@ -561,8 +561,8 @@ erDiagram
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
 | `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(점수 링·라벨·설명·key_traits·시간 미상 고지) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
-| `pillars` | 팔자비교 | `PillarsTab` + `SinsalTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 아래에 신살(神殺) 카드(함께 가진=같은 기운 / 한쪽만 가진 신살) + 두 사람 십이신살(十二神殺) 기둥별 비교표(스냅샷 `sibi_sinsal`, 옛 캐시엔 없음 → 표 숨김). 옛 `?tab=sinsal`도 여기로 |
-| `element` | 오행 보완 | `ElementTab` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수 |
+| `pillars` | 팔자비교 | `PillarsTab` + `SinsalTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 아래에 신살(神殺) 카드 — "귀인·신살"(함께 가진=같은 기운 / 한쪽만 가진) + 두 사람 십이신살(十二神殺) 기둥별 비교표(스냅샷 `sibi_sinsal`, 옛 캐시엔 없음 → 표 숨김). 옛 `?tab=sinsal`도 여기로 |
+| `element` | 오행 보완 | `ElementTab` + `StrengthCard` | 사람별 오행 바(주오행·강약·용신) · `OhengPairDiagram` · 없는 오행 칩 · 보완 문장·점수, 아래에 신강·신약 카드(두 사람 게이지 + 강약 조합 한 줄 `summary.strength`; 점수는 스냅샷 `strength`, 옛 캐시엔 라벨만) |
 | `domain` | 영역별 | `DomainTab` | 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회(한눈에와 공유) |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |

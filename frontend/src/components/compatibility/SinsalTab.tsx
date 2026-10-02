@@ -127,6 +127,12 @@ export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
           <>
             <KkachiTip>함께 가진 신살은 두 분이 나누는 같은 기운, 한쪽만 가진 신살은 그 분이 상대를 받쳐주는 자리예요.</KkachiTip>
 
+            {(shared_sinsal.length > 0 || unique_sinsal_1.length > 0 || unique_sinsal_2.length > 0) && (
+              <p className="text-sm font-semibold text-[var(--color-ink)]">
+                귀인·신살 <span className="text-[11px] font-normal text-[var(--color-ink-faint)] ml-1">일간·일지 기준으로 붙는 특별한 기운</span>
+              </p>
+            )}
+
             {shared_sinsal.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
@@ -194,8 +200,8 @@ export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
 
             {hasSibi && (
               <div className="space-y-2 pt-2 border-t border-[var(--color-border-light)]">
-                <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
-                  십이신살(十二神殺) <span className="font-normal text-[var(--color-ink-faint)] ml-1">기둥별로 나란히</span>
+                <p className="text-sm font-semibold text-[var(--color-ink)]">
+                  십이신살(十二神殺) <span className="text-[11px] font-normal text-[var(--color-ink-faint)] ml-1">년지 기준, 기둥마다 하나씩</span>
                 </p>
                 <div className="overflow-hidden rounded-xl border border-[var(--color-border-light)]">
                   <div className="grid text-center text-[10px] text-[var(--color-ink-faint)] bg-[var(--color-ivory-warm)]" style={{ gridTemplateColumns: `3.5rem repeat(${cols}, minmax(0, 1fr))` }}>
