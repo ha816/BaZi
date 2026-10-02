@@ -1,29 +1,38 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { CompatibilityResult } from "@/types/analysis";
+import { useEffect } from "react";
+import type { CompatibilityResult, RelationType } from "@/types/analysis";
+import { track } from "@/lib/track";
 import DomainTab from "./compatibility/DomainTab";
+import ElementTab from "./compatibility/ElementTab";
 import NarrativeTab from "./compatibility/NarrativeTab";
+import PillarsTab from "./compatibility/PillarsTab";
+import SinsalTab from "./compatibility/SinsalTab";
 import TotalTab from "./compatibility/TotalTab";
 
 interface Props {
   data: CompatibilityResult;
   name1: string;
   name2: string;
+  relationType: RelationType;
   streamingNarrative?: string;
   narrativeLoading?: boolean;
 }
 
-// 순서 = 노출 순서. 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
+// 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
 const COMPAT_TABS = [
-  { id: "total", emoji: "💞", label: "종합 궁합" },
-  { id: "domain", emoji: "📊", label: "영역별 궁합" },
-  { id: "ai", emoji: "✨", label: "까치 AI 종합 해석" },
+  { id: "total",   emoji: "💞", label: "종합" },
+  { id: "pillars", emoji: "🧩", label: "팔자 나란히" },
+  { id: "element", emoji: "🌗", label: "오행 보완" },
+  { id: "sinsal",  emoji: "⭐", label: "신살 만남" },
+  { id: "domain",  emoji: "📊", label: "영역별" },
+  { id: "ai",      emoji: "✨", label: "AI 해석" },
 ] as const;
 type CompatTabId = (typeof COMPAT_TABS)[number]["id"];
 
 /** 궁합 결과 오케스트레이터 — 탭 정의·?tab=·탭바만. 본문은 compatibility/ 탭 파일 */
-export default function CompatibilityResultView({ data, name1, name2, streamingNarrative, narrativeLoading }: Props) {
+export default function CompatibilityResultView({ data, name1, name2, relationType, streamingNarrative, narrativeLoading }: Props) {
   // 신규 필드는 이전 캐시(JSONB)에 없을 수 있으므로 안전한 기본값을 여기서 한 번만 채운다
   const safe: CompatibilityResult = {
     ...data,
@@ -51,7 +60,11 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const tabProps = { data: safe, name1, name2 };
+  useEffect(() => {
+    track("tab_view", { tab, page: "compat" });
+  }, [tab]);
+
+  const tabProps = { data: safe, name1, name2, relationType };
 
   return (
     <div className="space-y-4">
@@ -72,6 +85,9 @@ export default function CompatibilityResultView({ data, name1, name2, streamingN
       </div>
 
       {tab === "total" && <TotalTab {...tabProps} />}
+      {tab === "pillars" && <PillarsTab {...tabProps} />}
+      {tab === "element" && <ElementTab {...tabProps} />}
+      {tab === "sinsal" && <SinsalTab {...tabProps} />}
       {tab === "domain" && <DomainTab {...tabProps} />}
       {tab === "ai" && (
         <NarrativeTab narrative={safe.narrative} streamingNarrative={streamingNarrative} narrativeLoading={narrativeLoading} />

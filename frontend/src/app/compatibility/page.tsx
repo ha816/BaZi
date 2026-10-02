@@ -22,7 +22,7 @@ import CompatibilityChat from "@/components/CompatibilityChat";
 import CompatibilityResultView from "@/components/CompatibilityResult";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import PersonCard, { type PersonState, DEFAULT_MANUAL } from "@/components/PersonCard";
-import { MEMBER_ID_KEY, HOUR_OPTIONS } from "@/lib/constants";
+import { MEMBER_ID_KEY, HOUR_OPTIONS, RELATION_TYPE_LABEL } from "@/lib/constants";
 import { RELATION_GLYPH } from "@/lib/relations";
 
 export default function CompatibilityPage() {
@@ -253,11 +253,7 @@ function CompatibilityPageInner() {
               <div className="space-y-1.5" hidden={!!inviteId}>
                 <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
                 <div className="flex gap-2">
-                  {([
-                    { value: "lover",  label: "연인·부부" },
-                    { value: "friend", label: "친구·동료" },
-                    { value: "family", label: "가족" },
-                  ] as const).map(({ value, label }) => {
+                  {(Object.entries(RELATION_TYPE_LABEL) as [RelationType, string][]).map(([value, label]) => {
                     const active = relationType === value;
                     return (
                       <button key={value} type="button" onClick={() => setRelationType(value)}
@@ -301,6 +297,7 @@ function CompatibilityPageInner() {
               <CompatibilityResultView data={result}
                 name1={resultNames.name1 || getName(person1, "첫 번째 분")}
                 name2={resultNames.name2 || getName(person2, "두 번째 분")}
+                relationType={relationType}
                 streamingNarrative={narrative}
                 narrativeLoading={narrativeLoading} />
             </>

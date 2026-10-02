@@ -1,3 +1,5 @@
+import type { RelationType } from "@/types/analysis";
+
 // 인증
 export const MEMBER_ID_KEY = "kkachi_member_id";
 
@@ -37,3 +39,6 @@ export function hourToSiLabel(hour: number): string {
 // 입력 필드 공통 스타일
 export const INPUT_CLASS =
   "w-full border border-[var(--color-border)] rounded-lg px-4 py-3 text-base bg-[var(--color-card)] text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors";
+
+// 궁합 관계 유형 라벨 — 폼 버튼·결과 탭 공통 (객체 순서 = 버튼 노출 순서)
+export const RELATION_TYPE_LABEL: Record<RelationType, string> = { lover: "연인·부부", friend: "친구·동료", family: "가족" };
