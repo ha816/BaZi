@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 109 tests
+uv run pytest            # 112 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -99,7 +99,7 @@ BaZi/
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
-│   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 6개(강약 점수·오행 분포·역마/도화)
+│   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 — 두 사람 십신 합집합마다 1문항(더 많이 가진 쪽이 예측, 6~10개, 모자라면 강약·신살 질문으로 채움; 스냅샷 `sipsin` 없는 옛 캐시는 고정 6문항)
 │   │   ├── compatibility_zodiac.py   # build_compat_zodiac(result dict, year) 띠궁합 — 두 사람 년지 띠 정보·띠끼리 충합·4년 연도별 각자 관계 (스냅샷 년주만 써서 옛 캐시에도 동작)
 │   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 {pillars, element, strength, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환

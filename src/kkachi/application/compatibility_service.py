@@ -1,3 +1,4 @@
+from collections import Counter
 from dataclasses import asdict
 from typing import Literal
 from uuid import UUID
@@ -529,6 +530,7 @@ class CompatibilityService:
             hour_unknown=natal.saju.hour_unknown,
             sibi_sinsal=list(natal.sibi_sinsal),
             strength=natal.strength,
+            sipsin=dict(Counter(s.name for _, s in natal.sipsin)),
         )
 
     def _compute_pillar_relations(

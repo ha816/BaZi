@@ -129,6 +129,50 @@ def _strength(snap: dict | None) -> int:
     return {"신강(身強)": 1, "신약(身弱)": -1}.get(s.get("strength_label", ""), 0)
 
 
+# 십신별 성향과 관계 유형별 질문 — 그 십신을 더 많이 가진 쪽이 사주 예측 답
+_SIPSIN_ORDER = ["比肩", "劫財", "食神", "傷官", "偏財", "正財", "偏官", "正官", "偏印", "正印"]
+_SIPSIN_KOR = {"比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관", "偏財": "편재",
+               "正財": "정재", "偏官": "편관", "正官": "정관", "偏印": "편인", "正印": "정인"}
+_SIPSIN_TRAIT = {
+    "比肩": "자존심과 독립심", "劫財": "승부욕과 경쟁심", "食神": "먹고 즐기는 여유", "傷官": "말솜씨와 직설",
+    "偏財": "통 큰 씀씀이와 사교성", "正財": "꼼꼼한 살림과 저축", "偏官": "결단력과 추진력",
+    "正官": "규칙과 책임감", "偏印": "직감과 혼자만의 시간", "正印": "배움과 보살핌",
+}
+_SIPSIN_Q: dict[str, dict[str, str]] = {
+    "比肩": {"lover": "싸우고 나서 먼저 굽히지 않는 쪽은?", "friend": "\"내 방식대로 할게\"가 더 많은 쪽은?", "family": "고집으로 치면 더 센 쪽은?"},
+    "劫財": {"lover": "게임이나 내기에서 절대 안 지려는 쪽은?", "friend": "내기만 하면 눈에 불을 켜는 쪽은?", "family": "가족 윷놀이에서 제일 진지한 쪽은?"},
+    "食神": {"lover": "데이트 맛집 찾기를 맡는 쪽은?", "friend": "\"뭐 먹을래?\"에 바로 답하는 쪽은?", "family": "주말에 맛있는 걸 해 먹자고 하는 쪽은?"},
+    "傷官": {"lover": "서운한 건 바로 말로 하는 쪽은?", "friend": "할 말은 꼭 하는 쪽은?", "family": "잔소리에 바로 말대꾸하는 쪽은?"},
+    "偏財": {"lover": "기분 내서 한턱 쏘는 쪽은?", "friend": "모임에서 계산을 먼저 하는 쪽은?", "family": "통 크게 선물하는 쪽은?"},
+    "正財": {"lover": "데이트 비용을 꼼꼼히 챙기는 쪽은?", "friend": "더치페이 계산을 정확히 하는 쪽은?", "family": "가계부를 쓰는 쪽은?"},
+    "偏官": {"lover": "급할 때 바로 결정하는 쪽은?", "friend": "\"그냥 지금 가자\" 하는 쪽은?", "family": "집안의 큰 결정을 밀어붙이는 쪽은?"},
+    "正官": {"lover": "약속 시간을 칼같이 지키는 쪽은?", "friend": "약속 시간을 칼같이 지키는 쪽은?", "family": "집안 규칙을 잘 지키는 쪽은?"},
+    "偏印": {"lover": "혼자 있는 시간이 꼭 필요한 쪽은?", "friend": "갑자기 연락이 뜸해지는 쪽은?", "family": "자기 방에 혼자 있는 시간이 긴 쪽은?"},
+    "正印": {"lover": "아플 때 약 챙겨 주는 쪽은?", "friend": "새로 배운 걸 알려주는 쪽은?", "family": "아플 때 약 챙겨 주는 쪽은?"},
+}
+_MIN_Q, _MAX_Q = 6, 10
+
+
+def _sipsin_scenarios(s1: dict, s2: dict, rel: str) -> list[dict]:
+    """두 사람 십신 합집합 → 십신마다 질문 1개. 더 많이 가진 쪽이 예측 답, 같으면 둘 다"""
+    c1, c2 = s1.get("sipsin") or {}, s2.get("sipsin") or {}
+    out = []
+    for name in _SIPSIN_ORDER:
+        n1, n2 = c1.get(name, 0), c2.get(name, 0)
+        if n1 == 0 and n2 == 0:
+            continue
+        who = _pick(n1, n2)
+        kor = f"{_SIPSIN_KOR[name]}({name})" + josa(_SIPSIN_KOR[name], "이", "가")
+        trait = _SIPSIN_TRAIT[name] + josa(_SIPSIN_TRAIT[name], "이", "가")
+        if who == "both":
+            reason = f"두 분 모두 {kor} {n1}개씩 — {trait} 비슷해요"
+        else:
+            hi, lo = (n1, n2) if who == "p1" else (n2, n1)
+            reason = f"{kor} {hi}개(상대 {lo}개) — {trait} 더 강한 쪽"
+        out.append({"q": _SIPSIN_Q[name].get(rel, _SIPSIN_Q[name]["lover"]), "who": who, "reason": reason, "basis": name})
+    return out
+
+
 def _scenarios(result: dict, rel: str, kind: str, a: str) -> list[dict]:
     s1, s2 = result.get("pillar1_snapshot"), result.get("pillar2_snapshot")
     st1, st2 = _strength(s1), _strength(s2)
@@ -189,11 +233,24 @@ def _scenarios(result: dict, rel: str, kind: str, a: str) -> list[dict]:
             ("새로운 일(이사·여행)을 먼저 꺼내는 쪽은?", mover, "move"),
         ],
     }
-    out = []
+    base = []
     for q, who, key in q_by_rel.get(rel, q_by_rel["lover"]):
         reason = why[key] if who != "both" else "두 분이 비슷해서 그때그때 달라요"
-        out.append({"q": q, "who": who, "reason": reason})
-    return out
+        base.append({"q": q, "who": who, "reason": reason, "basis": key})
+    # 십신이 있으면(새 스냅샷) 십신 합집합 질문이 주인공, 모자라면 강약·신살 질문으로 6개까지 채운다
+    if s1 and s2 and "sipsin" in s1 and "sipsin" in s2:
+        out = _sipsin_scenarios(s1, s2, rel)[:_MAX_Q]
+        # 채울 때는 십신과 겹치지 않는 근거(강약·역마·도화·경청) 먼저
+        filler = sorted(base, key=lambda x: ["lead", "yield", "move", "charm", "listen", "give", "talk", "care", "money"].index(x["basis"]))
+        seen = {x["q"] for x in out}
+        for x in filler:
+            if len(out) >= _MIN_Q:
+                break
+            if x["q"] not in seen:
+                out.append(x)
+                seen.add(x["q"])
+        return out
+    return base
 
 
 def build_compat_character(result: dict, relation_type: str = "lover") -> dict | None:
