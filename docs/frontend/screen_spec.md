@@ -313,7 +313,7 @@ idle → preview → loading → result
 | `lib/ganji.ts` | 천간·지지 표시 메타 SoT (해석 분기 금지) |
 | `lib/elementColors.ts` | `ELEMENT_META`, `FORECAST_LEVEL_META`(level별 까치 이미지), `getElementInfo()` 등 |
 | `lib/zodiac.ts` | 12지신 메타, `getZodiacEmoji(birth_dt)` |
-| `lib/relations.ts` | `RELATION_STYLE` (나·삼합·육합·보통·원진·충 색상) |
+| `lib/relations.ts` | `RELATION_STYLE` (나·삼합·육합·보통·원진·충 색상), `RELATION_GLYPH` (연인 ♥·친구 ★·가족 ✿ — 궁합 공유 카드 제목, OG 서브셋 기호) |
 | `lib/glossary.ts` | 용어 사전 (TermBadge) |
 | `lib/location.ts` | `detectLocation()` — ipapi.co |
 | `lib/api.ts` | 모든 API 호출 + 스트리밍 reader 4종 |

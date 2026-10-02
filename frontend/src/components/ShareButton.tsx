@@ -4,7 +4,7 @@ import { useState } from "react";
 import { track } from "@/lib/track";
 
 interface Props {
-  /** 서버에 카드 스냅샷을 만들고 share_id를 돌려주는 호출 (사주: createShare, 시운: createDailyShare) */
+  /** 서버에 카드 스냅샷을 만들고 share_id를 돌려주는 호출 (사주: createShare, 시운: createDailyShare, 궁합: createCompatShare) */
   create: () => Promise<{ share_id: string }>;
   /** 공유 시트 제목·문구 */
   title: string;
@@ -18,14 +18,16 @@ interface Props {
 const PANEL_BTN =
   "px-2 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-ink)] hover:bg-[var(--color-ivory-warm)] transition-colors";
 
-/** 공유 버튼 — create()로 카드 스냅샷을 만들고 /s/{id} 링크를 공유한다 (분석 결과·시운 공용).
- *  이미지는 그 링크의 OG 이미지(/s/{id}/opengraph-image)를 그대로 쓴다. */
+/** 공유 버튼 — create()로 카드 스냅샷을 만들고 /s/{id} 링크를 공유한다 (분석 결과·시운·궁합 공용).
+ *  이미지는 그 링크의 OG 이미지(/s/{id}/opengraph-image)를 그대로 쓰고, 저장 파일명은 사주까치_{제목}_{YYYYMMDD}.png */
 export default function ShareButton({ create, title, text, label = "공유", channel = "result" }: Props) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  // 저장·이미지 공유 파일명 — 제목의 기호·공백은 _ 로, 날짜는 로컬(en-CA = YYYY-MM-DD)
+  const fileName = `사주까치_${title.replace(/[^0-9A-Za-z가-힣]+/g, "_").replace(/^_|_$/g, "") || "card"}_${new Date().toLocaleDateString("en-CA").replace(/-/g, "")}.png`;
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -76,7 +78,7 @@ export default function ShareButton({ create, title, text, label = "공유", cha
     if (!url) return;
     try {
       const blob = await (await fetch(`${url}/opengraph-image`)).blob();
-      const files = [new File([blob], "sajukkachi.png", { type: "image/png" })];
+      const files = [new File([blob], fileName, { type: "image/png" })];
       if (navigator.canShare?.({ files })) await navigator.share({ files, title, text });
       else flash("이미지 공유가 안 되는 브라우저예요. '이미지 저장'을 써 주세요");
     } catch {
@@ -117,7 +119,7 @@ export default function ShareButton({ create, title, text, label = "공유", cha
           <div className="grid grid-cols-3 gap-1.5 text-xs">
             <button type="button" onClick={handleCopy} className={PANEL_BTN}>링크 복사</button>
             <button type="button" onClick={handleShareImage} className={PANEL_BTN}>이미지로 공유</button>
-            <a href={`${url}/opengraph-image`} download="sajukkachi.png" className={`${PANEL_BTN} text-center`}>이미지 저장</a>
+            <a href={`${url}/opengraph-image`} download={fileName} className={`${PANEL_BTN} text-center`}>이미지 저장</a>
           </div>
           {notice && <p className="text-[11px] text-center text-[var(--color-gold)]">{notice}</p>}
         </div>

@@ -136,7 +136,7 @@ BaZi/
 ├── frontend/src/
 │   ├── app/
 │   │   ├── page.tsx                 # 홈 — 비로그인: QuickStartPost(30초 퀵스타트 폼) / 로그인: StoryTray · 프로필별 FortunePost(7일 예보) · VideoPost
-│   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx(사주/시운 kind 분기) · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
+│   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx(사주/시운/궁합 kind 분기) · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
 │   │   ├── opengraph-image.tsx      # 사이트 기본 OG 이미지 (satori) · robots.ts(/s/ 색인 금지) · sitemap.ts
 │   │   ├── analysis/page.tsx        # 사주 분석 — 프로필 선택 / 직접 입력 → ResultSlides (로그인 불필요)
 │   │   ├── analysis/deep/page.tsx   # /analysis 로 redirect 만 함 (구 심층 분석 경로 호환)
@@ -152,7 +152,7 @@ BaZi/
 │   ├── components/
 │   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — SummaryCard + StickySajuBar + 6개 feature 탭(?tab=) + FeedbackBar + SajuChat FAB
 │   │   ├── SummaryCard.tsx          # 까치 한눈에 — 나·올해·이번 달·오늘·조심 (postnatal.summary)
-│   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유
+│   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 — 종합·영역별·AI 해석 3탭(feature-tabbar, ?tab= — ResultSlides와 동일 구조)
@@ -302,7 +302,7 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], summary{me,energy,yongshin,year,caution} }  404 if 없음
+GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], summary{me,energy,yongshin,year,caution} }  404 if 없음
 
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
@@ -498,7 +498,7 @@ erDiagram
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
-| `/s/[id]` | 결과 공유 카드 랜딩 — 이름·팔자(오행색)·오행 분포·신살·한눈에 5줄 + "나도 30초 만에" CTA(`/`). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
+| `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(점수·라벨·두 사람 일간·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
@@ -520,12 +520,12 @@ erDiagram
 ```
 결과 헤더 "공유" → POST /kkachi/shares (지금 입력값) → shares.payload = build_share_card() 스냅샷 → /s/{id}
   → navigator.share(제목·문구·링크) 또는 클립보드 → 패널: OG 이미지 미리보기 · 링크 복사 · 이미지로 공유(파일) · 이미지 저장
-받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + "나도 30초 만에 내 사주 보기" → 홈 QuickStartPost
+받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + kind별 CTA(사주 "나도 30초 만에 내 사주 보기" / 시운 "나도 오늘 시운 보기" / 궁합 "우리 궁합도 보기") → 홈 QuickStartPost(궁합은 /compatibility)
 카톡·슬랙 미리보기 → /s/{id}/opengraph-image (satori 1200×630, public/fonts 서브셋) — metadataBase = NEXT_PUBLIC_SITE_URL
 ```
 
 - 카드에는 생년월일·성별·오늘 줄이 없다. 받는 사람은 카드에 보이는 것만 본다. 링크는 만료 없음
-- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수. 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성
+- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수(레벨 색은 Tailwind emerald/amber/rose -800·-100 hex = 페이지 `FORECAST_LEVEL_META.badge`). 폰트 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나오니 금지 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →(`lib/relations.ts RELATION_GLYPH`). 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성. 궁합 점수 색 임계는 65/45(백엔드 라벨 80/65/45와 정렬)
 - 사이트 기본 OG(`app/opengraph-image.tsx`)는 브랜드 카드. `NEXT_PUBLIC_SITE_URL`이 없으면 OG URL이 localhost로 나가므로 배포 빌드 전 `.env.production` 확인
 
 ### sessionStorage 키

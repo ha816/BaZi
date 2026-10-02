@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import KkachiTip from "@/components/KkachiTip";
 import SectionHeader from "@/components/SectionHeader";
 import { FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
+import { RELATION_GLYPH } from "@/lib/relations";
 import type { CompatShareCard, DailyShareCard } from "@/types/analysis";
 import { fetchShare } from "./share";
 
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
   if (card.kind === "compat") {
-    const title = `${card.name1}님과 ${card.name2}님의 ${card.relation_label} 궁합 ${card.total_score}점`;
+    const title = `${card.name1 || "첫 번째 분"}님과 ${card.name2 || "두 번째 분"}님의 ${card.relation_label} 궁합 ${card.total_score}점`;
     const description = card.description || card.label;
     return {
       title,
@@ -58,8 +59,8 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
   const el = getElementInfo(card.day_element);
   const k = card.day_pillar_korean;
   const badges = [
-    card.solar_term ? `🌿 ${card.solar_term}` : "",
-    card.weather ? `${getElementInfo(card.weather.element).korean}(${card.weather.element}) 기운 · ${card.weather.condition}` : "",
+    card.solar_term ? `🌿 절기 ${card.solar_term}` : "",
+    card.weather ? `${card.weather.condition} · ${getElementInfo(card.weather.element).korean}(${card.weather.element}) 기운` : "",
     card.son_eomneun_nal ? "👻 손없는 날" : "",
     card.yongshin ? `용신(用神) ${getElementInfo(card.yongshin).korean}(${card.yongshin})` : "",
   ].filter(Boolean);
@@ -100,8 +101,8 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
             </div>
             <div className="space-y-1.5">
               <p className="text-base font-semibold leading-snug text-[var(--color-ink)]">{card.headline}</p>
-              {card.action && <p className="text-sm text-[var(--color-ink)]">✦ {card.action}</p>}
-              {card.caution && <p className="text-sm text-[var(--color-ink-light)]">✕ {card.caution}</p>}
+              {card.action && <p className="text-sm text-[var(--color-ink)]">✦ 할 것 · {card.action}</p>}
+              {card.caution && <p className="text-sm text-[var(--color-ink-light)]">✕ 피할 것 · {card.caution}</p>}
             </div>
             {badges.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -110,12 +111,13 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
                 ))}
               </div>
             )}
+            {card.tips[0] && <KkachiTip>{card.tips[0]}</KkachiTip>}
           </div>
         </section>
 
         <section className="rounded-2xl bg-[var(--color-ink)] text-[var(--color-ivory)] p-5 text-center space-y-3">
           <p className="font-heading text-lg font-bold">나도 오늘 시운 보기</p>
-          <p className="text-xs opacity-70">내 사주를 등록하면 매일 아침 한 마디를 받아요. 30초면 돼요.</p>
+          <p className="text-xs opacity-70">이름과 생년월일만 넣으면 내 사주와 오늘의 흐름까지, 30초면 돼요. 등록하면 매일 아침 한 마디도 받아요.</p>
           <Link href="/" className="block w-full py-3 rounded-lg bg-[var(--color-gold)] text-[var(--color-ink)] text-sm font-semibold hover:bg-[var(--color-gold-light)] transition-colors">
             내 사주 보기
           </Link>
@@ -125,12 +127,16 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
   );
 }
 
+// 임계 65/45 = 백엔드 TOTAL_LABEL_BY_REL(80/65/45)과 맞춤. 색은 FORECAST_LEVEL_META.badge와 동일
 const scoreTone = (score: number) =>
-  score >= 70 ? "bg-emerald-100 text-emerald-800" : score >= 50 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800";
+  score >= 65 ? "bg-emerald-100 text-emerald-800" : score >= 45 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800";
 
 /** 궁합 공유 카드 — 점수·라벨·두 사람 일간·영역 점수·특징. 생년월일 없음 */
 function CompatShareView({ card }: { card: CompatShareCard }) {
   const domains = Object.entries(card.domain_scores);
+  const n1 = card.name1 || "첫 번째 분";
+  const n2 = card.name2 || "두 번째 분";
+  const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
   return (
     <main className="page page--center">
       <div className="page__inner">
@@ -138,7 +144,7 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
           <img src="/kkachi/icon-192.png" alt="사주까치" className="w-12 h-12 rounded-full" />
           <div>
             <p className="text-xs font-semibold text-[var(--color-gold)]">사주까치 · {card.relation_label} 궁합</p>
-            <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">{card.name1}님과 {card.name2}님</h1>
+            <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">{n1}님 <span className="text-[var(--color-gold)]">{glyph}</span> {n2}님</h1>
           </div>
         </header>
 
@@ -155,8 +161,8 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${scoreTone(card.total_score)}`}>{card.label}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {[{ name: card.name1, d: card.p1 }, { name: card.name2, d: card.p2 }].map(({ name, d }) => (
-                <div key={name} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] px-3 py-2 text-center">
+              {[{ name: n1, d: card.p1 }, { name: n2, d: card.p2 }].map(({ name, d }, i) => (
+                <div key={i} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] px-3 py-2 text-center">
                   <p className="text-[11px] text-[var(--color-ink-muted)] truncate">{name}</p>
                   <p className="font-heading leading-tight whitespace-nowrap" style={{ color: getElementInfo(d.element).color }}>
                     <span className="text-xl font-bold">{d.korean}</span>
@@ -186,7 +192,7 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
                   <span key={t} className="text-[11px] px-2 py-0.5 rounded-full border border-[var(--color-gold-light)] text-[var(--color-gold)]">{t}</span>
                 ))}
                 {card.shared_sinsal.map((s) => (
-                  <span key={s} className="text-[11px] px-2 py-0.5 rounded-full border border-[var(--color-border)] text-[var(--color-ink-muted)]">함께 {s}</span>
+                  <span key={s} className="text-[11px] px-2 py-0.5 rounded-full border border-[var(--color-border)] text-[var(--color-ink-muted)]">둘 다 {s}</span>
                 ))}
               </div>
             )}

@@ -406,7 +406,7 @@ export default function SiunPage() {
                 label={profile.is_self ? "나의 시운 공유" : `${profile.name}의 시운 공유`}
                 create={() => createDailyShare(memberId, profile.id)}
                 title={`${profile.is_self ? "나" : `${profile.name}님`}의 오늘 시운`}
-                text="오늘 하루 기운, 사주까치가 이렇게 봤어요. 나도 30초 만에 →"
+                text={`${profile.is_self ? "오늘 내 시운" : `${profile.name}님의 오늘 시운`}${todayFortune ? ` ${todayFortune.total_score}점` : ""}, 사주까치가 이렇게 봤어요. 나도 오늘 시운 보기 →`}
                 channel="daily"
               />
             ) : undefined

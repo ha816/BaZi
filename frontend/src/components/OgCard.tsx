@@ -2,9 +2,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CompatShareCard, DailyShareCard, ShareCard } from "@/types/analysis";
 import { getElementInfo } from "@/lib/elementColors";
+import { RELATION_GLYPH } from "@/lib/relations";
 
 // 링크 미리보기(OG) 이미지 — satori(next/og)로 그린다. 서버 전용: fs로 폰트·이미지를 읽는다.
 // satori 규칙: 자식이 둘 이상인 div는 display:flex, CSS 변수 불가, WOFF2 불가.
+// 글자 규칙: public/fonts 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나온다 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -15,7 +17,7 @@ const IVORY = "#F8F6F1";
 const IVORY_WARM = "#F0EDE5";
 const GOLD = "#A68B5B";
 const GOLD_LIGHT = "#C4AD82";
-const BORDER = "#E7E2D8";
+const BORDER = "#E0D9CE"; // = --color-border
 const PILLAR_LABELS = ["년주", "월주", "일주", "시주"];
 const ELEMENTS = ["木", "火", "土", "金", "水"];
 
@@ -75,7 +77,7 @@ const inner = {
 
 /** 공유 카드 — 이름 · 팔자 타일(오행색) · 오행 분포 · 한 줄 요약 · CTA */
 export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string }) {
-  const who = card.name ? `${card.name}님` : "나";
+  const who = card.name ? `${clip(card.name, 10)}님` : "나";
   const maxCount = Math.max(1, ...ELEMENTS.map((e) => card.element_stats[e] ?? 0));
   const headline = clip(card.pillar_summary || card.summary.me || "", 76);
 
@@ -148,6 +150,13 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
                 </div>
               );
             })}
+            {card.sinsal.length > 0 && (
+              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                {card.sinsal.slice(0, 3).map((s) => (
+                  <div key={s} style={{ display: "flex", fontSize: 18, fontWeight: 700, color: GOLD, border: `1px solid ${GOLD_LIGHT}`, borderRadius: 999, padding: "4px 12px" }}>{s}</div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -165,10 +174,11 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
   );
 }
 
+// = Tailwind emerald/amber/rose -800(fg)·-100(bg) — 페이지의 FORECAST_LEVEL_META.badge 클래스와 같은 색
 const LEVEL_COLORS: Record<string, { fg: string; bg: string }> = {
-  "좋은 날": { fg: "#1B6B3A", bg: "#E6F4EA" },
-  "평범한 날": { fg: "#8A4F00", bg: "#FBF1DC" },
-  "주의가 필요한 날": { fg: "#B02020", bg: "#FBE4E1" },
+  "좋은 날": { fg: "#006045", bg: "#d0fae5" },
+  "평범한 날": { fg: "#973c00", bg: "#fef3c6" },
+  "주의가 필요한 날": { fg: "#a50036", bg: "#ffe4e6" },
 };
 
 const fmtDate = (iso: string) =>
@@ -180,8 +190,8 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
   const lv = LEVEL_COLORS[card.level] ?? LEVEL_COLORS["평범한 날"];
   const k = card.day_pillar_korean;
   const badges = [
-    card.solar_term ?? "",
-    card.weather ? `${getElementInfo(card.weather.element).korean}(${card.weather.element}) 기운 · ${card.weather.condition}` : "",
+    card.solar_term ? `절기 ${card.solar_term}` : "",
+    card.weather ? `${card.weather.condition} · ${getElementInfo(card.weather.element).korean}(${card.weather.element}) 기운` : "",
     card.son_eomneun_nal ? "손없는 날" : "",
     card.yongshin ? `용신 ${getElementInfo(card.yongshin).korean}(${card.yongshin})` : "",
   ].filter(Boolean);
@@ -192,7 +202,7 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>사주까치 · {fmtDate(card.date)}</div>
-            <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 2 }}>{card.name}님의 오늘 시운</div>
+            <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 2 }}>{clip(card.name, 10)}님의 오늘 시운</div>
           </div>
           <img src={mascot} alt="" width={88} height={88} style={{ borderRadius: 44 }} />
         </div>
@@ -215,7 +225,7 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
             <Glyph korean={k[0] ?? ""} hanja={card.day_pillar[0] ?? ""} color={el.color} />
             <Glyph korean={k[1] ?? ""} hanja={card.day_pillar[1] ?? ""} color={el.color} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 170, gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 200, gap: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700 }}>
               <div style={{ display: "flex", fontSize: 72, lineHeight: 1 }}>{card.total_score}</div>
               <div style={{ display: "flex", fontSize: 24, color: INK_MUTED, marginLeft: 4 }}>점</div>
@@ -230,7 +240,7 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{badges.join("  ·  ")}</div>
+          <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{clip(badges.join(" · "), 36)}</div>
           <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 오늘 시운 보기 →</div>
         </div>
       </div>
@@ -240,31 +250,40 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
 
 /** 궁합 공유 카드 — 점수·라벨 · 두 사람 일간 · 영역 점수 · 한 줄 · CTA */
 export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot: string }) {
-  const tone = card.total_score >= 70 ? LEVEL_COLORS["좋은 날"] : card.total_score >= 50 ? LEVEL_COLORS["평범한 날"] : LEVEL_COLORS["주의가 필요한 날"];
+  // 임계 65/45 = 백엔드 TOTAL_LABEL_BY_REL(80/65/45)과 맞춤
+  const tone = card.total_score >= 65 ? LEVEL_COLORS["좋은 날"] : card.total_score >= 45 ? LEVEL_COLORS["평범한 날"] : LEVEL_COLORS["주의가 필요한 날"];
   const domains = Object.entries(card.domain_scores).slice(0, 4);
+  const n1 = card.name1 || "첫 번째 분";
+  const n2 = card.name2 || "두 번째 분";
+  const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
+  const footer = [...card.shared_sinsal.slice(0, 1).map((s) => `둘 다 ${s}`), ...card.key_traits].slice(0, 3).join(" · ");
   return (
     <div style={outer}>
       <div style={{ ...inner, flexDirection: "column" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>사주까치 · {card.relation_label} 궁합</div>
-            <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 2 }}>{card.name1}님과 {card.name2}님</div>
+            <div style={{ display: "flex", alignItems: "center", fontSize: 44, fontWeight: 700, marginTop: 2 }}>
+              <div style={{ display: "flex" }}>{clip(n1, 6)}님</div>
+              <div style={{ display: "flex", fontSize: 40, color: GOLD, margin: "0 10px" }}>{glyph}</div>
+              <div style={{ display: "flex" }}>{clip(n2, 6)}님</div>
+            </div>
           </div>
           <img src={mascot} alt="" width={88} height={88} style={{ borderRadius: 44 }} />
         </div>
 
         <div style={{ display: "flex", flex: 1, marginTop: 22, gap: 32, alignItems: "center" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 200, gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 240, gap: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700 }}>
               <div style={{ display: "flex", fontSize: 88, lineHeight: 1 }}>{card.total_score}</div>
               <div style={{ display: "flex", fontSize: 26, color: INK_MUTED, marginLeft: 4 }}>점</div>
             </div>
-            <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 999, padding: "6px 16px" }}>{card.label}</div>
+            <div style={{ display: "flex", fontSize: 18, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 999, padding: "6px 16px" }}>{card.label}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, width: 190 }}>
-            {[{ name: card.name1, d: card.p1 }, { name: card.name2, d: card.p2 }].map(({ name, d }) => (
-              <div key={name} style={{ display: "flex", flexDirection: "column", alignItems: "center", borderRadius: 16, background: IVORY_WARM, border: `1px solid ${BORDER}`, padding: "8px 0" }}>
-                <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{name}</div>
+            {[{ name: n1, d: card.p1 }, { name: n2, d: card.p2 }].map(({ name, d }, i) => (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", borderRadius: 16, background: IVORY_WARM, border: `1px solid ${BORDER}`, padding: "8px 0" }}>
+                <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{clip(name, 8)}</div>
                 <div style={{ display: "flex", alignItems: "baseline", color: getElementInfo(d.element).color, lineHeight: 1.1 }}>
                   <div style={{ display: "flex", fontSize: 36, fontWeight: 700 }}>{d.korean}</div>
                   <div style={{ display: "flex", fontSize: 22, marginLeft: 2 }}>({d.stem})</div>
@@ -289,8 +308,8 @@ export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot:
         <div style={{ display: "flex", flexDirection: "column", marginTop: 16 }}>
           <div style={{ display: "flex", fontSize: 24, lineHeight: 1.4, color: INK }}>{clip(card.description || "", 70)}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{card.key_traits.slice(0, 3).join("  ·  ")}</div>
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>우리도 궁합 보기 →</div>
+            <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{clip(footer, 36)}</div>
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>우리 궁합도 보기 →</div>
           </div>
         </div>
       </div>

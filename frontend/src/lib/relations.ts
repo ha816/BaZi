@@ -1,3 +1,5 @@
+import type { RelationType } from "@/types/analysis";
+
 export interface RelationStyle {
   label: string;
   color: string;
@@ -13,3 +15,6 @@ export const RELATION_STYLE: Record<string, RelationStyle> = {
   "원진": { label: "원진(怨嗔)", color: "#B05A20", bg: "#FCDDC0", border: "#E09050" },
   "충":   { label: "충(衝)",     color: "#B82020", bg: "#FBCFC8", border: "#E07070" },
 };
+
+/** 궁합 카드 제목의 두 사람 사이 기호 — OG 폰트 서브셋(public/fonts)에 있는 것만. ✦·✕·이모지는 없다 */
+export const RELATION_GLYPH: Record<RelationType, string> = { lover: "♥", friend: "★", family: "✿" };
