@@ -292,6 +292,8 @@ export interface PostnatalResult {
 export interface AnalysisResult {
   natal: NatalResult;
   postnatal: PostnatalResult;
+  /** 내 사주 맞춰 보기(V3) 10문항 — 백엔드 self_quiz. 옛 응답엔 없음 */
+  self_quiz?: SelfQuizItem[];
 }
 
 export interface AnalysisInput {
@@ -656,4 +658,14 @@ export interface CompatShareCard {
   shared_sinsal: string[];
   p1: { stem: string; korean: string; element: string };
   p2: { stem: string; korean: string; element: string };
+}
+
+export interface SelfQuizItem {
+  q: string;
+  /** 십신 한자 (예: 食神) */
+  basis: string;
+  count: number;
+  /** 사주 예측: 그렇다 / 반반 / 아니다 */
+  predict: "yes" | "half" | "no";
+  reason: string;
 }

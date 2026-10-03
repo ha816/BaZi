@@ -6,6 +6,18 @@ _SIPSIN_KOREAN: dict[Sipsin, str] = {
     Sipsin.偏印: "편인", Sipsin.正印: "정인",
 }
 
+# 십신 표시 순서 · 성향 한 마디 — 궁합 "이럴 때 두 분은?"과 "내 사주 맞춰 보기"(self_quiz) 공용
+SIPSIN_ORDER: list[Sipsin] = [
+    Sipsin.比肩, Sipsin.劫財, Sipsin.食神, Sipsin.傷官, Sipsin.偏財,
+    Sipsin.正財, Sipsin.偏官, Sipsin.正官, Sipsin.偏印, Sipsin.正印,
+]
+SIPSIN_TRAIT: dict[Sipsin, str] = {
+    Sipsin.比肩: "자존심과 독립심", Sipsin.劫財: "승부욕과 경쟁심", Sipsin.食神: "먹고 즐기는 여유",
+    Sipsin.傷官: "말솜씨와 직설", Sipsin.偏財: "통 큰 씀씀이와 사교성", Sipsin.正財: "꼼꼼한 살림과 저축",
+    Sipsin.偏官: "결단력과 추진력", Sipsin.正官: "규칙과 책임감", Sipsin.偏印: "직감과 혼자만의 시간",
+    Sipsin.正印: "배움과 보살핌",
+}
+
 _SIPSIN_REL: dict[Sipsin, tuple[str, str, str]] = {
     # (rel, rel_kind, yinyang)
     Sipsin.比肩: ("같은 오행", "same",         "일치"),

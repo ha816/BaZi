@@ -7,6 +7,7 @@ from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.self_quiz import build_self_quiz
 from kkachi.domain.interpretation import INTERPRETATION_VERSION
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender, User
@@ -86,10 +87,12 @@ class ProfileService:
                 natal, postnatal = self.saju_service.analyze(user, year)
                 summary.update(self.saju_service.today_summary(natal, postnatal, profile.name))
                 await self.analysis_port.save(profile_id, year, cached.result)
+            cached.result["self_quiz"] = build_self_quiz(cached.result.get("natal") or {})  # 옛 캐시에도
             return cached.result
 
         # 캐시 없음 또는 응답 구조가 바뀐 옛 캐시(version 불일치) → 전체 재계산
         natal, postnatal = self.saju_service.analyze(user, year)
         result = asdict(await self.saju_service.interpret(natal, postnatal, user=user, name=profile.name))
         await self.analysis_port.save(profile_id, year, result)
+        result["self_quiz"] = build_self_quiz(result["natal"])
         return result

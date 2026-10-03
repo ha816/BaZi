@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.report_builder import LlmReportBuilder
+from kkachi.application.self_quiz import build_self_quiz
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 
@@ -40,7 +41,9 @@ async def interpret(
         result = await saju_svc.interpret(natal_info, postnatal_info, user=user, name=req.name)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"분석 중 오류: {e}")
-    return asdict(result)
+    out = asdict(result)
+    out["self_quiz"] = build_self_quiz(out["natal"])  # 내 사주 맞춰 보기 (V3)
+    return out
 
 
 class ChatRequest(BaseModel):

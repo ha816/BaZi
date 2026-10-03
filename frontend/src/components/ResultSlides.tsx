@@ -18,6 +18,7 @@ import EnergyTab from "./tabs/EnergyTab";
 import DomainFortuneSection from "./tabs/DomainFortuneSection";
 import SajuChat from "./SajuChat";
 import SummaryCard from "./SummaryCard";
+import SelfQuizCard, { type SelfPick } from "./SelfQuizCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
 
@@ -94,6 +95,10 @@ function FeedbackBar({
 }
 
 export default function ResultSlides({ data, name, memberId, profileId }: Props) {
+  // 내 사주 맞춰 보기(V3) — 탭을 오가도 유지되게 여기서 들고 있는다. "다시 입력"으로 결과가 사라지면 함께 초기화
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, SelfPick>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -142,7 +147,20 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
 
       <div>
         {active === "summary" && postnatal.summary && (
-          <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} onNavigate={(t) => handleTabChange(t as FeatureId)} />
+          <div className="space-y-4">
+            <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} onNavigate={(t) => handleTabChange(t as FeatureId)} />
+            <SelfQuizCard
+              items={data.self_quiz ?? []}
+              name={name}
+              open={quizOpen}
+              answers={quizAnswers}
+              submitted={quizSubmitted}
+              onOpen={() => setQuizOpen(true)}
+              onAnswer={(i, pick) => setQuizAnswers((a) => ({ ...a, [i]: pick }))}
+              onSubmit={() => setQuizSubmitted(true)}
+              onReset={() => { setQuizAnswers({}); setQuizSubmitted(false); }}
+            />
+          </div>
         )}
         {active === "timing"  && (
           <div className="space-y-4">
