@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 112 tests
+uv run pytest            # 114 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -98,6 +98,7 @@ BaZi/
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
+│   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 내 사주 맞춰 보기 10문항 — 십신 개수로 그렇다/반반/아니다 예측 (V3, 설문으로 출생시간 추정 안 함)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
 │   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 — 두 사람 십신 합집합마다 1문항(더 많이 가진 쪽이 예측, 6~10개, 모자라면 강약·신살 질문으로 채움; 스냅샷 `sipsin` 없는 옛 캐시는 고정 6문항)
 │   │   ├── compatibility_zodiac.py   # build_compat_zodiac(result dict, year) 띠궁합 — 두 사람 년지 띠 정보·띠끼리 충합·4년 연도별 각자 관계 (스냅샷 년주만 써서 옛 캐시에도 동작)
@@ -156,6 +157,7 @@ BaZi/
 │   ├── components/
 │   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — 9개 feature 탭(?tab=, 한눈에 SummaryCard 포함) + FeedbackBar + SajuChat FAB
 │   │   ├── SummaryCard.tsx          # 까치 한눈에 — 나·올해·이번 달·오늘·조심 (postnatal.summary)
+│   │   ├── SelfQuizCard.tsx         # 내 사주 맞춰 보기(V3) — 한눈에 탭 SummaryCard 아래 선택형. 10문항 답한 뒤 한꺼번에 사주 예측과 비교 → 일치율·신뢰도·사주 스타일(상태는 ResultSlides, 서버 저장 없음)
 │   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
@@ -303,7 +305,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 ```
 # 사주 해석 (kkachi_controller, prefix /kkachi)
 POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul", longitude?, name="", hour_unknown=false }
-                             → { natal: NatalResult, postnatal: PostnatalResult }
+                             → { natal: NatalResult, postnatal: PostnatalResult, self_quiz: [{q, basis, count, predict: yes|half|no, reason}] }  (self_quiz = 내 사주 맞춰 보기 10문항, 프로필 /analyze 응답에도 붙음)
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
@@ -546,7 +548,7 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SummaryTab` | ① `TotalTab` — 처음엔 두근두근 게이트(드럼 까치 `/kkachi/drum_kkachi.png`, 없으면 🥁 애니메이션) → 1.2초 드럼롤 후 공개. 공개 후 오행 캐릭터 카드(그림 `/kkachi/compat/{character.key}.png`, 없으면 역할 이모지 · 칭호 · 각자 역할 · 설명) + 점수 한 줄(총점·라벨 + 관계별 중요한 두 영역 `RELATION_FOCUS_DOMAINS`, "영역별 점수 자세히" → domain 탭) · 시간 미상 고지 ② `ScenarioCard` "이럴 때 두 분은?" 사주 맞춰 보기 — 사용자가 6문항 모두 [이름1/이름2/둘 다/모르겠어요]로 답한 뒤(그동안 사주 예측 숨김) 한꺼번에 비교 → 궁합 풀이 신뢰도(높음·보통·낮음) + 사람별 사주 스타일(사주형·반반형·개성형) + 문항별 일치·근거, 다시 답하기(서버 저장 없음, 답·제출 상태는 결과 단위로 유지) ③ 탭별 한 줄 박스(백엔드 `summary` + 오늘의 궁합). 공개·퀴즈 상태는 오케스트레이터가 들고 있다. 옛 `?tab=total`도 여기로 |
+| `summary` | 한눈에 | `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
 | `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |
@@ -563,7 +565,7 @@ erDiagram
 ### 궁합 탭 구성 (`?tab=`, `CompatibilityResult` → `components/compatibility/`)
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
-| `summary` | 한눈에 | `SummaryTab` | 맨 위 `TotalTab`(처음엔 가림 — "두근두근 ○○님과 ○○님의 궁합은?" + 드럼 치는 까치(`/kkachi/drum_kkachi.png`, 없으면 기본 까치 + 🥁 애니메이션) + 확인하기 → 1.2초 드럼롤 후 공개, 공개 상태는 결과 단위로 유지 · 점수 링·라벨·설명 · 공개 후 맨 위 캐릭터 칭호 박스(`character.title`·각자 역할·설명) · 영역별 점수(관계 유형별 중요한 두 영역 큰 타일 `RELATION_FOCUS_DOMAINS` + 나머지 막대, "영역별 해설 보기" → domain 탭) · key_traits·시간 미상 고지) + "이럴 때 두 분은?" 뒤집기 카드 6장(`ScenarioCard`, 공개 후) + 탭별 한 줄 박스(백엔드 `summary` 4줄 + 오늘의 궁합 점수·headline). 박스 헤더를 누르면 그 탭으로. 옛 `?tab=total`도 여기로 |
+| `summary` | 한눈에 | `SummaryTab` | ① `TotalTab` — 처음엔 두근두근 게이트(드럼 까치 `/kkachi/drum_kkachi.png`, 없으면 🥁 애니메이션) → 1.2초 드럼롤 후 공개. 공개 후 오행 캐릭터 카드(그림 `/kkachi/compat/{character.key}.png`, 없으면 역할 이모지 · 칭호 · 각자 역할 · 설명) + 점수 한 줄(총점·라벨 + 관계별 중요한 두 영역 `RELATION_FOCUS_DOMAINS`, "영역별 점수 자세히" → domain 탭) · 시간 미상 고지 ② `ScenarioCard` "이럴 때 두 분은?" 사주 맞춰 보기 — 사용자가 6문항 모두 [이름1/이름2/둘 다/모르겠어요]로 답한 뒤(그동안 사주 예측 숨김) 한꺼번에 비교 → 궁합 풀이 신뢰도(높음·보통·낮음) + 사람별 사주 스타일(사주형·반반형·개성형) + 문항별 일치·근거, 다시 답하기(서버 저장 없음, 답·제출 상태는 결과 단위로 유지) ③ 탭별 한 줄 박스(백엔드 `summary` + 오늘의 궁합). 공개·퀴즈 상태는 오케스트레이터가 들고 있다. 옛 `?tab=total`도 여기로 |
 | `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 바로 아래 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
 | `character` | 성격·성질 | `SinsalTab` + `StrengthCard` | 신살(神殺) 카드("귀인·신살" 함께/한쪽만 + 십이신살 기둥별 비교표) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 옛 `?tab=sinsal`도 여기로 |
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |
@@ -666,6 +668,7 @@ tests/
     ├── test_push_service.py    # 푸시 페이로드
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
+    ├── test_self_quiz.py       # 내 사주 맞춰 보기 10문항(개수→예측·근거·조사)
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```
 
