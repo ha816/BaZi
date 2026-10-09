@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 114 tests
+uv run pytest            # 125 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -97,7 +97,7 @@ BaZi/
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
-│   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1085 LOC, hot spot)
+│   │   ├── compatibility_service.py  # 궁합 점수·영역별 prose·관계유형(lover/friend/family)·LLM 프롬프트 (1153 LOC, hot spot) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 내 사주 맞춰 보기 10문항 — 십신 개수로 그렇다/반반/아니다 예측 (V3, 설문으로 출생시간 추정 안 함)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
 │   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 — 두 사람 십신 합집합마다 1문항(더 많이 가진 쪽이 예측, 6~10개, 모자라면 강약·신살 질문으로 채움; 스냅샷 `sipsin` 없는 옛 캐시는 고정 6문항)
@@ -337,7 +337,7 @@ POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}
 #   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }, character { title, kind, key(그림 키 예 木火), roles[2], desc, scenarios[6]{q, who:p1|p2|both, reason} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
 POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
-POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간·특징) → /s/{share_id}
+POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간 p1/p2{stem,korean,element(일간 글자 오행),hour_unknown}·특징·character{title,key,roles[{name,element,emoji}],desc(이름 채움)}) → /s/{share_id}
 POST /compatibility/invites  { person1, relation_type } → { invite_id }  (초대자 정보 저장, 30일 TTL) — 생성 UI는 2026-09-28 제거, ?invite= 링크 처리만 유지
 GET  /compatibility/invites/{id}          → { name, relation_type }  (민감정보 제외)
 POST /compatibility/invites/{id}/resolve  { person2, year } → CompatibilityResult
@@ -506,7 +506,7 @@ erDiagram
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
-| `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(점수·라벨·두 사람 일간·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
+| `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: `compat/{key}.png` 있으면 그림·없으면 역할 이모지 + 칭호 + 역할 칩 + 설명 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
@@ -533,7 +533,7 @@ erDiagram
 ```
 
 - 카드에는 생년월일·성별·오늘 줄이 없다. 받는 사람은 카드에 보이는 것만 본다. 링크는 만료 없음
-- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수(레벨 색은 Tailwind emerald/amber/rose -800·-100 hex = 페이지 `FORECAST_LEVEL_META.badge`). 폰트 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나오니 금지 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →(`lib/relations.ts RELATION_GLYPH`). 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성. 궁합 점수 색 임계는 65/45(백엔드 라벨 80/65/45와 정렬)
+- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수(레벨 색은 Tailwind emerald/amber/rose -800·-100 hex = 페이지 `FORECAST_LEVEL_META.badge`). 폰트 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나오니 금지 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →(`lib/relations.ts RELATION_GLYPH`). 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성. 궁합 점수 색 임계는 65/45(백엔드 라벨 80/65/45와 정렬). 궁합 OG의 캐릭터는 글자만 — "두 분은 {칭호}" 줄 + 일간 타일 아래 "= 광산(土)"(이모지·그림 없음)
 - 사이트 기본 OG(`app/opengraph-image.tsx`)는 브랜드 카드. `NEXT_PUBLIC_SITE_URL`이 없으면 OG URL이 localhost로 나가므로 배포 빌드 전 `.env.production` 확인
 
 ### sessionStorage 키
@@ -659,7 +659,9 @@ tests/
 │   ├── test_sibi_unseong.py        # 십이운성·신살
 │   ├── test_three_pillars.py       # 출생시간 미상 세 기둥(R2)
 │   ├── test_kkachi_controller.py   # /kkachi/shares 왕복 — 카드에 생년월일 없음, 세 기둥
-│   └── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
+│   ├── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
+│   ├── test_compatibility_controller.py # direct(summary·character·zodiac·세 기둥)·프로필 궁합 404·공유 카드 왕복(character, 생년월일 없음)·초대(민감정보 제외·resolve)·오늘의 궁합 소유자 검증
+│   └── test_push_controller.py     # VAPID 미설정 503 · 구독 저장/해지 왕복 · https 아닌 endpoint 422
 └── application/
     ├── test_interpret.py       # 종합 해석 통합 테스트
     ├── test_compatibility.py   # 궁합 점수·관계·삼합·캐시·관계유형
@@ -669,11 +671,13 @@ tests/
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     ├── test_self_quiz.py       # 내 사주 맞춰 보기 10문항(개수→예측·근거·조사)
+    ├── test_compat_share_card.py # 궁합 공유 카드 스냅샷(점수만·character 이름 채움·일간 색은 일간 오행) · test_daily_share_card.py 시운 카드 · test_profile_service.py
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```
 
 > 컨트롤러 테스트 패턴: `Container()`를 만들어 `container.<provider>.override(providers.Object(fake))` 후 `TestClient(app)`를 `with` 없이 쓰면 lifespan(DB)이 돌지 않는다. 끝나면 `container.unwire()`.
-> 미커버 영역: 풍수·십이지신 Interpreter, 궁합·푸시 컨트롤러. 신규 작성 시 우선.
+> 컨트롤러가 Singleton 서비스에 묶여 있으면(예: PushService→FortuneService→DB) 그 경로에서 안 쓰는 의존성도 `providers.Object(None)`으로 끊어야 엔진 생성(`url=None`)에서 안 죽는다.
+> 미커버 영역: 풍수·십이지신 Interpreter. 신규 작성 시 우선.
 
 ## 알려진 이슈 / 정리 후보 (2026-09-12 기준)
 

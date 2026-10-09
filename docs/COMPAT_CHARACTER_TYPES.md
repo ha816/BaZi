@@ -180,5 +180,5 @@ OG 이미지(공유 링크 미리보기)는 satori로 그리므로 이모지를 
 
 - [ ] 15장 그림 생성 → `frontend/public/kkachi/compat/` 에 넣기 (원본은 `originals/`)
 - [x] 한눈에 "두 분은" 박스에 그림 자리 — `compat/{key}.png`를 먼저 찾고 없으면 역할 이모지 (2026-10-03)
-- [ ] 궁합 공유 카드(`/s/{id}` kind=compat)·OG 이미지에 칭호·역할·그림 넣기 — 백엔드 `build_compat_share_card`에 `character` 추가 필요
+- [x] 궁합 공유 카드(`/s/{id}` kind=compat)·OG 이미지에 칭호·역할 넣기 (2026-10-09) — 백엔드 `build_compat_share_card().character`(title·key·roles·desc, 이름 채움·scenarios 제외). 페이지는 `compat/{key}.png`가 있으면 그림, 없으면 역할 이모지(서버 렌더라 파일 존재로 판단). OG는 글자만 — 헤더 아래 "두 분은 {칭호}" 줄 + 일간 타일 아래 "= 광산(土)" + 설명 첫 문장
 - [ ] 실기기에서 카톡 미리보기로 OG 확인
