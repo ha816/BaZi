@@ -311,7 +311,7 @@ V1로 공유 카드 3종(사주·시운·궁합)과 유입 동선이 깔렸다. 
 - ~~**도메인 키 불일치**: 연간 5개 vs 일진 4개~~ → R3에서 사용자 언어 6개(`timing_rules`)로 통일함.
 - **인증 없음**: `localStorage`의 UUID가 자격증명. 2026-09-18에 프로필 `/{pid}` 경로 소유자 검증(남의 프로필 404)과 `/admin/*` 토큰 게이트(`KKACHI_ADMIN_TOKEN`)는 넣었다. UUID 추측·탈취 자체는 여전히 방어 없음 — 실서비스 전 로그인 방식 재검토.
 - ~~**컨트롤러 테스트 없음**~~ → `tests/adapter/test_profile_controller.py`·`test_kkachi_controller.py`(TestClient + 가짜 포트)로 시작, 2026-10-09에 `test_compatibility_controller.py`(direct·프로필·공유·초대·오늘의 궁합 소유자 검증)·`test_push_controller.py`(VAPID 미설정 503·구독 왕복·https 검증) 추가. 남은 미커버는 풍수·십이지신 Interpreter.
-- **`compatibility_service.py` 1153 LOC**: R5·V2-2를 여기 쌓지 않았다(오늘의 궁합은 `compatibility_daily.py`; 타이밍 교집합도 별도 모듈로). 프론트 `CompatibilityResult.tsx`는 2026-10-02에 `components/compatibility/`로 분할(679→~110).
+- **`compatibility_service.py` 597 LOC** (2026-10-09 분리: 문장 표 `util/compatibility_meta` · 문장 생성 `compatibility_prose` · LLM 프롬프트 `compatibility_prompt`): R5·V2-2를 여기 쌓지 않았다(오늘의 궁합은 `compatibility_daily.py`; 타이밍 교집합도 별도 모듈로). 프론트 `CompatibilityResult.tsx`는 2026-10-02에 `components/compatibility/`로 분할(679→~110).
 
 ---
 

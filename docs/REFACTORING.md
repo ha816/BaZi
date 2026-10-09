@@ -65,11 +65,11 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 
 ## 5. 현재 hot spot (2026-09 기준)
 
-알면 우선순위 판단이 쉬워진다. 5월 표의 NatalTab(970→27)·fortune_service(462→97)·natal_adapter(447→192) 분할은 완료됨. CompatibilityResult(679→~110, `components/compatibility/` 7탭)도 2026-10-02 완료.
+알면 우선순위 판단이 쉬워진다. 5월 표의 NatalTab(970→27)·fortune_service(462→97)·natal_adapter(447→192) 분할은 완료됨. CompatibilityResult(679→~110, `components/compatibility/` 7탭)도 2026-10-02 완료. compatibility_service(1153→597: 문장 표 `util/compatibility_meta` · 문장 생성 `compatibility_prose` · LLM 프롬프트 `compatibility_prompt`)는 2026-10-09 완료 — 출력 스냅샷 39건 동일 확인.
 
 | 파일 | LOC | 문제 | 권장 액션 |
 |------|-----|------|-----------|
-| `src/kkachi/application/compatibility_service.py` | 1153 | 점수 계산 + 관계유형별 prose 사전 + 도메인 조언 + LLM 프롬프트 한 파일 | prose/조언 사전을 `util/compatibility_meta.py`로, 프롬프트 빌더 분리 |
+| `src/kkachi/application/compatibility_service.py` | 597 | 점수 계산만 남음 — `_compute_domain_scores` 197 LOC가 1/3 | 영역(연애·결혼·재물·직업)별 함수로 쪼갤지 검토. 점수가 1점도 바뀌면 안 되므로 스냅샷 비교 필수 |
 | `src/kkachi/domain/ganji.py` | 653 | enum + 변환로직 + 지장간/한글 매핑 혼재 | 변환은 `application/util/`로 이동 |
 | `frontend/src/types/analysis.ts` | 476 | 사주·궁합·운세·회원 타입 전부 한 파일 | 도메인별 파일 분리 검토 (import 경로 영향 큼, 낮은 우선순위) |
 | `src/kkachi/application/report_builder.py` | 448 | 6개 섹션 포맷팅 | 단일 책임 보존 결정(5/24). LLM 파이프 확장 시 재고 |
