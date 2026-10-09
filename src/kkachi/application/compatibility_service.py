@@ -95,6 +95,20 @@ def build_compat_share_card(name1: str, name2: str, relation_type: str, result: 
     }
 
 
+def _signal(kind: str, text: str) -> dict:
+    """영역 점수의 근거 한 조각 — kind는 harmony·clash·sinsal·sipsin·element·fortune(DOMAIN_KIND_PHRASE_BY_REL 키)."""
+    return {"kind": kind, "text": text}
+
+
+def _apply_year_fortune(score: int, pros: list[dict], cons: list[dict], key: str, avg: float) -> int:
+    """두 사람 올해 영역운 평균(50 기준)을 ±로 더하고 0~100으로 자른다 — 모든 영역 점수의 마지막 단계."""
+    if avg >= 65:
+        pros.append(_signal("fortune", f"올해 {key} 양호({avg:.0f})"))
+    elif avg <= 35:
+        cons.append(_signal("fortune", f"올해 {key} 부진({avg:.0f})"))
+    return max(0, min(100, score + int((avg - 50) * 0.2)))
+
+
 class CompatibilityService:
     def __init__(
         self,
@@ -410,188 +424,171 @@ class CompatibilityService:
         samhap_completions: list[dict],
         relation_type: RelationType = "lover",
     ) -> dict[str, dict]:
-        def avg_postnatal(key: str) -> float:
+        """영역 4개(연애·결혼·재물·직업) 점수 — 공통 재료(일주·월주 관계, 십신 보유, 올해 영역운 평균)를 만들어 영역별 _score_*에 넘긴다."""
+        day, wol = Pillar.日柱.korean, Pillar.月柱.korean
+        day_rels = [r for r in pillar_relations if r.pillar1 == day and r.pillar2 == day]
+        wol_rels = [r for r in pillar_relations if r.pillar1 == wol and r.pillar2 == wol]
+
+        def has(natal: NatalInfo, *kinds: Sipsin) -> bool:
+            return any(s in kinds for _, s in natal.sipsin)
+
+        def avg(key: str) -> float:
             s1 = postnatal1.domain_scores.get(key, {}).get("score", 50)
             s2 = postnatal2.domain_scores.get(key, {}).get("score", 50)
             return (s1 + s2) / 2
 
-        day = Pillar.日柱.korean
-        wol = Pillar.月柱.korean
-        all_branch_rels = [r for r in pillar_relations if r.kind in ("branch_combine", "branch_clash", "wonjin")]
-        day_rels = [r for r in pillar_relations if r.pillar1 == day and r.pillar2 == day]
-        wol_rels = [r for r in pillar_relations if r.pillar1 == wol and r.pillar2 == wol]
+        has_jae1, has_jae2 = has(natal1, Sipsin.正財, Sipsin.偏財), has(natal2, Sipsin.正財, Sipsin.偏財)
+        has_gwan1, has_gwan2 = has(natal1, Sipsin.正官, Sipsin.偏官), has(natal2, Sipsin.正官, Sipsin.偏官)
+        both_sik = has(natal1, Sipsin.食神, Sipsin.傷官) and has(natal2, Sipsin.食神, Sipsin.傷官)
+        both_in = has(natal1, Sipsin.偏印, Sipsin.正印) and has(natal2, Sipsin.偏印, Sipsin.正印)
 
-        has_jae1 = any(s in (Sipsin.正財, Sipsin.偏財) for _, s in natal1.sipsin)
-        has_jae2 = any(s in (Sipsin.正財, Sipsin.偏財) for _, s in natal2.sipsin)
-        has_gwan1 = any(s in (Sipsin.正官, Sipsin.偏官) for _, s in natal1.sipsin)
-        has_gwan2 = any(s in (Sipsin.正官, Sipsin.偏官) for _, s in natal2.sipsin)
-        has_sik1 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal1.sipsin)
-        has_sik2 = any(s in (Sipsin.食神, Sipsin.傷官) for _, s in natal2.sipsin)
-        has_in1 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal1.sipsin)
-        has_in2 = any(s in (Sipsin.偏印, Sipsin.正印) for _, s in natal2.sipsin)
-
-        def _signal(kind: str, text: str) -> dict:
-            return {"kind": kind, "text": text}
-
-        # 연애
-        love = 50
-        love_pros: list[dict] = []
-        love_cons: list[dict] = []
-        for r in all_branch_rels:
-            if r.kind == "branch_combine":
-                love += 7
-                love_pros.append(_signal("harmony", f"{r.pillar1} 육합"))
-            elif r.kind == "branch_clash":
-                love -= 7
-                love_cons.append(_signal("clash", f"{r.pillar1} 충"))
-            elif r.kind == "wonjin":
-                love -= 4
-                love_cons.append(_signal("clash", f"{r.pillar1} 원진"))
-        if any(r.kind == "samhap" for r in pillar_relations):
-            love += 8
-            love_pros.append(_signal("harmony", "삼합 반합"))
-        if "도화살" in shared_sinsal:
-            love += 12
-            love_pros.append(_signal("sinsal", "도화살 공유 — 이성적 끌림"))
-        if has_sik1 and has_sik2:
-            love += 5
-            love_pros.append(_signal("sipsin", "두 분 모두 식상 — 표현력·매력 풍부"))
-        talent_avg = avg_postnatal("재능운")
-        if talent_avg >= 65:
-            love_pros.append(_signal("fortune", f"올해 재능운 양호({talent_avg:.0f})"))
-        elif talent_avg <= 35:
-            love_cons.append(_signal("fortune", f"올해 재능운 부진({talent_avg:.0f})"))
-        love += int((talent_avg - 50) * 0.2)
-        love = max(0, min(100, love))
-
-        # 결혼
-        marriage = 45
-        marriage_pros: list[dict] = []
-        marriage_cons: list[dict] = []
-        for r in day_rels:
-            if r.kind in ("stem_combine", "branch_combine"):
-                marriage += 12
-                marriage_pros.append(_signal("harmony", "일주 합 — 부부 합"))
-            elif r.kind == "branch_clash":
-                marriage -= 10
-                marriage_cons.append(_signal("clash", "일주 충 — 갈등 주의"))
-            elif r.kind == "stem_clash":
-                marriage -= 8
-                marriage_cons.append(_signal("clash", "일주 천간충"))
-        if "천을귀인" in shared_sinsal:
-            marriage += 10
-            marriage_pros.append(_signal("sinsal", "천을귀인 공유 — 위기에 서로 보호"))
-        if "월덕귀인" in shared_sinsal:
-            marriage += 6
-            marriage_pros.append(_signal("sinsal", "월덕귀인 공유 — 평화로운 흐름"))
-        if samhap_completions:
-            marriage += SAMHAP_COMPLETION_MARRIAGE
-            marriage_pros.append(_signal("harmony", f"삼합({samhap_completions[0]['element']}국) 완성"))
-        strongest1 = max(natal1.element_stats, key=lambda o: natal1.element_stats.get(o, 0))
-        strongest2 = max(natal2.element_stats, key=lambda o: natal2.element_stats.get(o, 0))
-        if strongest2.generates == natal1.yongshin:
-            marriage += 8
-            marriage_pros.append(_signal("element", f"상대 {strongest2.name}이 내 용신({natal1.yongshin.name}) 도움"))
-        if strongest1.generates == natal2.yongshin:
-            marriage += 8
-            marriage_pros.append(_signal("element", f"내 {strongest1.name}이 상대 용신({natal2.yongshin.name}) 도움"))
-        if has_in1 and has_in2:
-            marriage += 4
-            marriage_pros.append(_signal("sipsin", "두 분 모두 인성 — 정서적 안정"))
-        yeon_avg = avg_postnatal("인연운")
-        if yeon_avg >= 65:
-            marriage_pros.append(_signal("fortune", f"올해 인연운 양호({yeon_avg:.0f})"))
-        elif yeon_avg <= 35:
-            marriage_cons.append(_signal("fortune", f"올해 인연운 부진({yeon_avg:.0f})"))
-        marriage += int((yeon_avg - 50) * 0.2)
-        marriage = max(0, min(100, marriage))
-
-        # 재물
-        wealth = 45
-        wealth_pros: list[dict] = []
-        wealth_cons: list[dict] = []
-        if has_jae1 and has_jae2:
-            wealth += 15
-            wealth_pros.append(_signal("sipsin", "두 분 모두 재성(財星) 보유"))
-        elif has_jae1 or has_jae2:
-            wealth += 8
-            wealth_pros.append(_signal("sipsin", "한 분 재성 보유 — 재물 주도"))
-        else:
-            wealth_cons.append(_signal("sipsin", "양쪽 재성 부재 — 재물 흐름 약함"))
-        if has_sik1 and has_sik2 and (has_jae1 or has_jae2):
-            wealth += 5
-            wealth_pros.append(_signal("sipsin", "식상생재(食傷生財) — 재물 창출력"))
-        for r in day_rels:
-            if r.kind in ("stem_combine", "branch_combine"):
-                wealth += 5
-                wealth_pros.append(_signal("harmony", "일주 합"))
-        if element_complement.get("score", 0) >= 5:
-            wealth += 5
-            wealth_pros.append(_signal("element", "오행 보완 시너지"))
-        elif element_complement.get("overlap_strong"):
-            wealth_cons.append(_signal("element", "오행 과잉 중복"))
-        jae_avg = avg_postnatal("재물운")
-        if jae_avg >= 65:
-            wealth_pros.append(_signal("fortune", f"올해 재물운 양호({jae_avg:.0f})"))
-        elif jae_avg <= 35:
-            wealth_cons.append(_signal("fortune", f"올해 재물운 부진({jae_avg:.0f})"))
-        wealth += int((jae_avg - 50) * 0.2)
-        wealth = max(0, min(100, wealth))
-
-        # 직업
-        career = 45
-        career_pros: list[dict] = []
-        career_cons: list[dict] = []
-        if has_gwan1 and has_gwan2:
-            career += 15
-            career_pros.append(_signal("sipsin", "두 분 모두 관성(官星) 보유"))
-        elif has_gwan1 or has_gwan2:
-            career += 8
-            career_pros.append(_signal("sipsin", "한 분 관성 보유 — 방향 제시"))
-        else:
-            career_cons.append(_signal("sipsin", "양쪽 관성 부재 — 사회적 방향성 약함"))
-        if has_in1 and has_in2 and (has_gwan1 or has_gwan2):
-            career += 5
-            career_pros.append(_signal("sipsin", "관인상생(官印相生) — 직장 안정"))
-        for r in wol_rels:
-            if r.kind in ("stem_combine", "branch_combine"):
-                career += 6
-                career_pros.append(_signal("harmony", "월주 합 — 사회 환경 조화"))
-            elif r.kind == "branch_clash":
-                career -= 6
-                career_cons.append(_signal("clash", "월주 충"))
-        if "문창귀인" in shared_sinsal:
-            career += 5
-            career_pros.append(_signal("sinsal", "문창귀인 공유 — 전문성 코드"))
-        gwan_avg = avg_postnatal("관록운")
-        if gwan_avg >= 65:
-            career_pros.append(_signal("fortune", f"올해 관록운 양호({gwan_avg:.0f})"))
-        elif gwan_avg <= 35:
-            career_cons.append(_signal("fortune", f"올해 관록운 부진({gwan_avg:.0f})"))
-        career += int((gwan_avg - 50) * 0.2)
-        career = max(0, min(100, career))
-
-        def _reason(pros: list[dict], cons: list[dict]) -> str:
-            parts = [p["text"] for p in (pros + cons)[:3]]
-            return ", ".join(parts) if parts else "기본 관계로 산출"
-
+        scored = {
+            "연애": self._score_love(pillar_relations, shared_sinsal, both_sik, avg("재능운")),
+            "결혼": self._score_marriage(natal1, natal2, day_rels, shared_sinsal, samhap_completions, both_in, avg("인연운")),
+            "재물": self._score_wealth(has_jae1, has_jae2, both_sik, day_rels, element_complement, avg("재물운")),
+            "직업": self._score_career(has_gwan1, has_gwan2, both_in, wol_rels, shared_sinsal, avg("관록운")),
+        }
         label_map = DOMAIN_LABEL_BY_REL[relation_type]
-
-        def _entry(domain: str, score: int, pros: list[dict], cons: list[dict]) -> dict:
+        out: dict[str, dict] = {}
+        for domain, (score, pros, cons) in scored.items():
             advice = advice_for(domain, score, pros, cons, relation_type)
-            return {
+            parts = [p["text"] for p in (pros + cons)[:3]]
+            out[domain] = {
                 "score": score,
                 "level": level_for(score),
-                "reason": _reason(pros, cons),
+                "reason": ", ".join(parts) if parts else "기본 관계로 산출",
                 "display_name": label_map.get(domain, domain),
                 "pros": pros,
                 "cons": cons,
                 "narrative": narrate_domain(domain, score, pros, cons, relation_type, advice),
             }
+        return out
 
-        return {
-            "연애": _entry("연애", love, love_pros, love_cons),
-            "결혼": _entry("결혼", marriage, marriage_pros, marriage_cons),
-            "재물": _entry("재물", wealth, wealth_pros, wealth_cons),
-            "직업": _entry("직업", career, career_pros, career_cons),
-        }
+    def _score_love(
+        self, pillar_relations: list[PillarRelation], shared_sinsal: list[str], both_sik: bool, talent_avg: float,
+    ) -> tuple[int, list[dict], list[dict]]:
+        """연애 — 지지 육합·충·원진(모든 기둥) · 삼합 반합 · 도화살 공유 · 양쪽 식상 · 올해 재능운"""
+        score = 50
+        pros: list[dict] = []
+        cons: list[dict] = []
+        for r in pillar_relations:
+            if r.kind == "branch_combine":
+                score += 7
+                pros.append(_signal("harmony", f"{r.pillar1} 육합"))
+            elif r.kind == "branch_clash":
+                score -= 7
+                cons.append(_signal("clash", f"{r.pillar1} 충"))
+            elif r.kind == "wonjin":
+                score -= 4
+                cons.append(_signal("clash", f"{r.pillar1} 원진"))
+        if any(r.kind == "samhap" for r in pillar_relations):
+            score += 8
+            pros.append(_signal("harmony", "삼합 반합"))
+        if "도화살" in shared_sinsal:
+            score += 12
+            pros.append(_signal("sinsal", "도화살 공유 — 이성적 끌림"))
+        if both_sik:
+            score += 5
+            pros.append(_signal("sipsin", "두 분 모두 식상 — 표현력·매력 풍부"))
+        return _apply_year_fortune(score, pros, cons, "재능운", talent_avg), pros, cons
+
+    def _score_marriage(
+        self, natal1: NatalInfo, natal2: NatalInfo, day_rels: list[PillarRelation], shared_sinsal: list[str],
+        samhap_completions: list[dict], both_in: bool, yeon_avg: float,
+    ) -> tuple[int, list[dict], list[dict]]:
+        """결혼 — 일주 합·충 · 천을/월덕귀인 공유 · 삼합 완성 · 상대 최다 오행이 내 용신을 생 · 양쪽 인성 · 올해 인연운"""
+        score = 45
+        pros: list[dict] = []
+        cons: list[dict] = []
+        for r in day_rels:
+            if r.kind in ("stem_combine", "branch_combine"):
+                score += 12
+                pros.append(_signal("harmony", "일주 합 — 부부 합"))
+            elif r.kind == "branch_clash":
+                score -= 10
+                cons.append(_signal("clash", "일주 충 — 갈등 주의"))
+            elif r.kind == "stem_clash":
+                score -= 8
+                cons.append(_signal("clash", "일주 천간충"))
+        if "천을귀인" in shared_sinsal:
+            score += 10
+            pros.append(_signal("sinsal", "천을귀인 공유 — 위기에 서로 보호"))
+        if "월덕귀인" in shared_sinsal:
+            score += 6
+            pros.append(_signal("sinsal", "월덕귀인 공유 — 평화로운 흐름"))
+        if samhap_completions:
+            score += SAMHAP_COMPLETION_MARRIAGE
+            pros.append(_signal("harmony", f"삼합({samhap_completions[0]['element']}국) 완성"))
+        strongest1 = max(natal1.element_stats, key=lambda o: natal1.element_stats.get(o, 0))
+        strongest2 = max(natal2.element_stats, key=lambda o: natal2.element_stats.get(o, 0))
+        if strongest2.generates == natal1.yongshin:
+            score += 8
+            pros.append(_signal("element", f"상대 {strongest2.name}이 내 용신({natal1.yongshin.name}) 도움"))
+        if strongest1.generates == natal2.yongshin:
+            score += 8
+            pros.append(_signal("element", f"내 {strongest1.name}이 상대 용신({natal2.yongshin.name}) 도움"))
+        if both_in:
+            score += 4
+            pros.append(_signal("sipsin", "두 분 모두 인성 — 정서적 안정"))
+        return _apply_year_fortune(score, pros, cons, "인연운", yeon_avg), pros, cons
+
+    def _score_wealth(
+        self, has_jae1: bool, has_jae2: bool, both_sik: bool, day_rels: list[PillarRelation],
+        element_complement: dict, jae_avg: float,
+    ) -> tuple[int, list[dict], list[dict]]:
+        """재물 — 재성 보유(양쪽·한쪽·없음) · 식상생재 · 일주 합 · 오행 보완 · 올해 재물운"""
+        score = 45
+        pros: list[dict] = []
+        cons: list[dict] = []
+        if has_jae1 and has_jae2:
+            score += 15
+            pros.append(_signal("sipsin", "두 분 모두 재성(財星) 보유"))
+        elif has_jae1 or has_jae2:
+            score += 8
+            pros.append(_signal("sipsin", "한 분 재성 보유 — 재물 주도"))
+        else:
+            cons.append(_signal("sipsin", "양쪽 재성 부재 — 재물 흐름 약함"))
+        if both_sik and (has_jae1 or has_jae2):
+            score += 5
+            pros.append(_signal("sipsin", "식상생재(食傷生財) — 재물 창출력"))
+        for r in day_rels:
+            if r.kind in ("stem_combine", "branch_combine"):
+                score += 5
+                pros.append(_signal("harmony", "일주 합"))
+        if element_complement.get("score", 0) >= 5:
+            score += 5
+            pros.append(_signal("element", "오행 보완 시너지"))
+        elif element_complement.get("overlap_strong"):
+            cons.append(_signal("element", "오행 과잉 중복"))
+        return _apply_year_fortune(score, pros, cons, "재물운", jae_avg), pros, cons
+
+    def _score_career(
+        self, has_gwan1: bool, has_gwan2: bool, both_in: bool, wol_rels: list[PillarRelation],
+        shared_sinsal: list[str], gwan_avg: float,
+    ) -> tuple[int, list[dict], list[dict]]:
+        """직업 — 관성 보유(양쪽·한쪽·없음) · 관인상생 · 월주 합·충 · 문창귀인 공유 · 올해 관록운"""
+        score = 45
+        pros: list[dict] = []
+        cons: list[dict] = []
+        if has_gwan1 and has_gwan2:
+            score += 15
+            pros.append(_signal("sipsin", "두 분 모두 관성(官星) 보유"))
+        elif has_gwan1 or has_gwan2:
+            score += 8
+            pros.append(_signal("sipsin", "한 분 관성 보유 — 방향 제시"))
+        else:
+            cons.append(_signal("sipsin", "양쪽 관성 부재 — 사회적 방향성 약함"))
+        if both_in and (has_gwan1 or has_gwan2):
+            score += 5
+            pros.append(_signal("sipsin", "관인상생(官印相生) — 직장 안정"))
+        for r in wol_rels:
+            if r.kind in ("stem_combine", "branch_combine"):
+                score += 6
+                pros.append(_signal("harmony", "월주 합 — 사회 환경 조화"))
+            elif r.kind == "branch_clash":
+                score -= 6
+                cons.append(_signal("clash", "월주 충"))
+        if "문창귀인" in shared_sinsal:
+            score += 5
+            pros.append(_signal("sinsal", "문창귀인 공유 — 전문성 코드"))
+        return _apply_year_fortune(score, pros, cons, "관록운", gwan_avg), pros, cons
