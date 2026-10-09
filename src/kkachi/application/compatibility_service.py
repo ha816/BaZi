@@ -292,10 +292,21 @@ _RELATION_LABEL = {"lover": "연인", "friend": "친구", "family": "가족"}
 
 
 def build_compat_share_card(name1: str, name2: str, relation_type: str, result: dict) -> dict:
-    """궁합 공유 카드(/s/{id}, kind="compat") 스냅샷 — 점수·라벨·영역 점수·특징만. 생년월일 없음."""
+    """궁합 공유 카드(/s/{id}, kind="compat") 스냅샷 — 점수·라벨·영역 점수·특징·캐릭터 칭호만. 생년월일 없음."""
     def day(snapshot: dict | None) -> dict:
         ds = (snapshot or {}).get("day_stem", "")
-        return {"stem": ds, "korean": Stem.from_char(ds).korean if ds else "", "element": (snapshot or {}).get("my_main_element", "")}
+        stem = Stem.from_char(ds) if ds else None
+        # 색은 일간 글자 자체의 오행(주오행 my_main_element가 아님 — 캐릭터 역할 오행과 같은 기준)
+        return {"stem": ds, "korean": stem.korean if stem else "", "element": stem.element.name if stem else "",
+                "hour_unknown": bool((snapshot or {}).get("hour_unknown"))}  # 세 기둥 고지(R2) — 카드도 정직하게
+    n1, n2 = name1 or "첫 번째 분", name2 or "두 번째 분"
+    ch = result.get("character")
+    character = {
+        "title": ch["title"],
+        "key": ch["key"],
+        "roles": [{"name": r["name"], "element": r["element"], "emoji": r["emoji"]} for r in ch["roles"]],
+        "desc": ch["desc"].replace("{p1}", n1).replace("{p2}", n2),
+    } if ch else None
     return {
         "kind": "compat",
         "name1": name1,
@@ -310,6 +321,7 @@ def build_compat_share_card(name1: str, name2: str, relation_type: str, result: 
         "shared_sinsal": (result.get("shared_sinsal") or [])[:3],
         "p1": day(result.get("pillar1_snapshot")),
         "p2": day(result.get("pillar2_snapshot")),
+        "character": character,  # 칭호·역할·설명(이름 채움) — docs/COMPAT_CHARACTER_TYPES.md §6-3
     }
 
 

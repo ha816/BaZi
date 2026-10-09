@@ -248,7 +248,7 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
   );
 }
 
-/** 궁합 공유 카드 — 점수·라벨 · 두 사람 일간 · 영역 점수 · 한 줄 · CTA */
+/** 궁합 공유 카드 — 캐릭터 칭호 · 점수·라벨 · 두 사람 일간(역할) · 영역 점수 · 한 줄 · CTA */
 export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot: string }) {
   // 임계 65/45 = 백엔드 TOTAL_LABEL_BY_REL(80/65/45)과 맞춤
   const tone = card.total_score >= 65 ? LEVEL_COLORS["좋은 날"] : card.total_score >= 45 ? LEVEL_COLORS["평범한 날"] : LEVEL_COLORS["주의가 필요한 날"];
@@ -257,6 +257,9 @@ export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot:
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
   const footer = [...card.shared_sinsal.slice(0, 1).map((s) => `둘 다 ${s}`), ...card.key_traits].slice(0, 3).join(" · ");
+  const ch = card.character;
+  // 캐릭터가 있으면 한 줄은 설명 첫 문장(이모지 없이 역할만 — OgCard 글자 규칙), 없으면 기존 description
+  const line = ch ? ch.desc.split(/(?<=\.)\s+/)[0] : card.description || "";
   return (
     <div style={outer}>
       <div style={{ ...inner, flexDirection: "column" }}>
@@ -271,8 +274,14 @@ export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot:
           </div>
           <img src={mascot} alt="" width={88} height={88} style={{ borderRadius: 44 }} />
         </div>
+        {ch && (
+          <div style={{ display: "flex", alignItems: "baseline", marginTop: 10 }}>
+            <div style={{ display: "flex", fontSize: 22, color: INK_MUTED, marginRight: 10 }}>두 분은</div>
+            <div style={{ display: "flex", fontSize: 32, fontWeight: 700, color: GOLD }}>{clip(ch.title, 30)}</div>
+          </div>
+        )}
 
-        <div style={{ display: "flex", flex: 1, marginTop: 22, gap: 32, alignItems: "center" }}>
+        <div style={{ display: "flex", flex: 1, marginTop: ch ? 14 : 22, gap: 32, alignItems: "center" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 240, gap: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700 }}>
               <div style={{ display: "flex", fontSize: 88, lineHeight: 1 }}>{card.total_score}</div>
@@ -281,7 +290,7 @@ export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot:
             <div style={{ display: "flex", fontSize: 18, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 999, padding: "6px 16px" }}>{card.label}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, width: 190 }}>
-            {[{ name: n1, d: card.p1 }, { name: n2, d: card.p2 }].map(({ name, d }, i) => (
+            {[{ name: n1, d: card.p1, role: ch?.roles[0] }, { name: n2, d: card.p2, role: ch?.roles[1] }].map(({ name, d, role }, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", borderRadius: 16, background: IVORY_WARM, border: `1px solid ${BORDER}`, padding: "8px 0" }}>
                 <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{clip(name, 8)}</div>
                 <div style={{ display: "flex", alignItems: "baseline", color: getElementInfo(d.element).color, lineHeight: 1.1 }}>
@@ -289,6 +298,9 @@ export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot:
                   <div style={{ display: "flex", fontSize: 22, marginLeft: 2 }}>({d.stem})</div>
                   <div style={{ display: "flex", fontSize: 16, color: INK_FAINT, marginLeft: 6 }}>일간</div>
                 </div>
+                {role && (
+                  <div style={{ display: "flex", fontSize: 17, fontWeight: 700, color: GOLD, marginTop: 2 }}>= {role.name}({role.element})</div>
+                )}
               </div>
             ))}
           </div>
@@ -306,7 +318,7 @@ export function CompatOgImage({ card, mascot }: { card: CompatShareCard; mascot:
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: 16 }}>
-          <div style={{ display: "flex", fontSize: 24, lineHeight: 1.4, color: INK }}>{clip(card.description || "", 70)}</div>
+          <div style={{ display: "flex", fontSize: 24, lineHeight: 1.4, color: INK }}>{clip(line, 70)}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}` }}>
             <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{clip(footer, 36)}</div>
             <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>우리 궁합도 보기 →</div>

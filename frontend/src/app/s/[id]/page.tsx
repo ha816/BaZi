@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -32,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   if (card.kind === "compat") {
     const title = `${card.name1 || "첫 번째 분"}님과 ${card.name2 || "두 번째 분"}님의 ${card.relation_label} 궁합 ${card.total_score}점`;
-    const description = card.description || card.label;
+    const description = [card.character?.title && `두 분은 ${card.character.title}`, card.description || card.label].filter(Boolean).join(" · ");
     return {
       title,
       description,
@@ -131,12 +133,15 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
 const scoreTone = (score: number) =>
   score >= 65 ? "bg-emerald-100 text-emerald-800" : score >= 45 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800";
 
-/** 궁합 공유 카드 — 점수·라벨·두 사람 일간·영역 점수·특징. 생년월일 없음 */
+/** 궁합 공유 카드 — 캐릭터 칭호·점수·라벨·두 사람 일간·영역 점수·특징. 생년월일 없음 */
 function CompatShareView({ card }: { card: CompatShareCard }) {
   const domains = Object.entries(card.domain_scores);
   const n1 = card.name1 || "첫 번째 분";
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
+  const ch = card.character;
+  // 15종 그림(docs/COMPAT_CHARACTER_TYPES.md)은 아직 없을 수 있다 — 서버 렌더라 onError 대신 파일 존재로 판단
+  const hasArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/compat", `${ch.key}.png`));
   return (
     <main className="page page--center">
       <div className="page__inner">
@@ -154,6 +159,33 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
           </div>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
+            {ch && (
+              <div className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-4 text-center space-y-3">
+                {hasArt ? (
+                  <img src={`/kkachi/compat/${ch.key}.png`} alt="" className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
+                ) : (
+                  <div className="flex items-center justify-center gap-3 py-1 text-5xl" aria-hidden>
+                    <span>{ch.roles[0]?.emoji}</span>
+                    <span className="text-xl text-[var(--color-gold-light)]">{glyph}</span>
+                    <span>{ch.roles[1]?.emoji}</span>
+                  </div>
+                )}
+                <p className="text-[11px] font-semibold text-[var(--color-gold)]">두 분은</p>
+                <p className="font-heading text-2xl font-bold leading-snug text-[var(--color-ink)]">{ch.title}</p>
+                <div className="flex justify-center gap-2 flex-wrap">
+                  {ch.roles.map((ro, i) => {
+                    const info = getElementInfo(ro.element);
+                    return (
+                      <span key={i} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border bg-white" style={{ borderColor: info.borderColor, color: info.color }}>
+                        <span className="font-semibold">{i === 0 ? n1 : n2}님</span> = {ro.emoji} {ro.name}
+                        <span className="text-[10px] opacity-70">({info.korean}{ro.element})</span>
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="text-sm leading-relaxed text-[var(--color-ink)]">{ch.desc}</p>
+              </div>
+            )}
             <div className="flex items-center gap-4">
               <p className="font-heading text-4xl font-bold text-[var(--color-ink)]">
                 {card.total_score}<span className="text-base font-normal text-[var(--color-ink-muted)]">점</span>
@@ -172,7 +204,12 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
                 </div>
               ))}
             </div>
-            {card.description && <KkachiTip>{card.description}</KkachiTip>}
+            {(card.p1.hour_unknown || card.p2.hour_unknown) && (
+              <p className="text-[11px] text-[var(--color-ink-faint)]">
+                🕰️ {card.p1.hour_unknown && card.p2.hour_unknown ? "두 분 모두" : card.p1.hour_unknown ? `${n1}님의` : `${n2}님의`} 출생시간이 없어 시주(時柱) 비교는 뺐어요. 세 기둥 기준 점수예요.
+              </p>
+            )}
+            {!ch && card.description && <KkachiTip>{card.description}</KkachiTip>}
             {domains.length > 0 && (
               <div className="space-y-1.5">
                 {domains.map(([k, v]) => (

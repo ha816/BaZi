@@ -209,7 +209,11 @@ function CompatibilityPageInner() {
                     label="궁합 공유"
                     create={() => createCompatShare(chatInput)}
                     title={`${resultNames.name1 || "첫 번째 분"}님 ${RELATION_GLYPH[chatInput.relation_type ?? "lover"]} ${resultNames.name2 || "두 번째 분"}님 궁합`}
-                    text={`${resultNames.name1 || "첫 번째 분"}님과 ${resultNames.name2 || "두 번째 분"}님 궁합 ${result.total_score}점, 사주까치가 이렇게 봤어요. 우리 궁합도 보기 →`}
+                    text={
+                      result.character
+                        ? `${resultNames.name1 || "첫 번째 분"}님과 ${resultNames.name2 || "두 번째 분"}님은 ${result.character.title}! 궁합 ${result.total_score}점, 사주까치가 이렇게 봤어요. 우리 궁합도 보기 →`
+                        : `${resultNames.name1 || "첫 번째 분"}님과 ${resultNames.name2 || "두 번째 분"}님 궁합 ${result.total_score}점, 사주까치가 이렇게 봤어요. 우리 궁합도 보기 →`
+                    }
                     channel="compat"
                   />
                 )}

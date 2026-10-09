@@ -656,8 +656,10 @@ export interface CompatShareCard {
   domain_scores: Record<string, { score: number; level: string }>;
   key_traits: string[];
   shared_sinsal: string[];
-  p1: { stem: string; korean: string; element: string };
-  p2: { stem: string; korean: string; element: string };
+  p1: { stem: string; korean: string; element: string; hour_unknown?: boolean };
+  p2: { stem: string; korean: string; element: string; hour_unknown?: boolean };
+  /** 궁합 캐릭터 칭호 — 이름은 채워져 있다. 옛 카드·일간 없음이면 없음 */
+  character?: { title: string; key: string; roles: { name: string; element: string; emoji: string }[]; desc: string } | null;
 }
 
 export interface SelfQuizItem {
