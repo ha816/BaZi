@@ -10,6 +10,7 @@ from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.util.util import josa
 from kkachi.domain.compatibility import CompatibilityResult, PillarRelation, PillarSnapshot
 from kkachi.domain.ganji import (
     SAMHAP_GROUPS,
@@ -1053,17 +1054,22 @@ class CompatibilityService:
         pillar_relations: list[PillarRelation],
     ) -> str:
         el1, el2 = natal1.my_main_element, natal2.my_main_element
+        # 조사는 한자가 아니라 한글 읽기(흙·쇠…)로 고른다 — "土이 金를" 방지
+        k1 = f"{el1.meaning}({el1.name})"
+        k2 = f"{el2.meaning}({el2.name})"
+        k1_ga, k2_ga = k1 + josa(el1.meaning, "이", "가"), k2 + josa(el2.meaning, "이", "가")
+        k1_eul, k2_eul = k1 + josa(el1.meaning, "을", "를"), k2 + josa(el2.meaning, "을", "를")
         parts: list[str] = []
         if el1 == el2:
-            parts.append(f"두 분은 같은 {el1.name} 기운을 가졌습니다. 공감대가 넓지만 경쟁심이 생길 수 있습니다.")
+            parts.append(f"두 분은 같은 {k1} 기운을 가졌습니다. 공감대가 넓지만 경쟁심이 생길 수 있습니다.")
         elif el1.generates == el2:
-            parts.append(f"{el1.name}이 {el2.name}를 키워주는 상생 관계로, 한 분이 자연스럽게 다른 분을 이끌어줍니다.")
+            parts.append(f"{k1_ga} {k2_eul} 키워주는 상생 관계로, 한 분이 자연스럽게 다른 분을 이끌어줍니다.")
         elif el2.generates == el1:
-            parts.append(f"{el2.name}이 {el1.name}를 키워주는 상생 관계로, 서로를 성장시키는 든든한 파트너입니다.")
+            parts.append(f"{k2_ga} {k1_eul} 키워주는 상생 관계로, 서로를 성장시키는 든든한 파트너입니다.")
         elif el1.overcomes == el2:
-            parts.append(f"{el1.name}이 {el2.name}를 억제하는 상극 관계로, 주도권 갈등이 있을 수 있지만 강한 자극이 됩니다.")
+            parts.append(f"{k1_ga} {k2_eul} 억제하는 상극 관계로, 주도권 갈등이 있을 수 있지만 강한 자극이 됩니다.")
         else:
-            parts.append(f"{el2.name}이 {el1.name}를 억제하는 상극 관계로, 긴장감이 있지만 강한 끌림이 있습니다.")
+            parts.append(f"{k2_ga} {k1_eul} 억제하는 상극 관계로, 긴장감이 있지만 강한 끌림이 있습니다.")
 
         day = Pillar.日柱.korean
         for r in pillar_relations:
