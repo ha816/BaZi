@@ -28,12 +28,11 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
         </KkachiTip>
         <img
           src={`/kkachi/saju_character/${c.key}.webp`}
-          alt={`${c.name} — ${c.title}`}
+          alt={c.title}
           className="w-full aspect-square rounded-xl object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
         />
         <div className="text-center space-y-1">
-          <p className="text-xs font-semibold" style={{ color: el.color }}>{c.name}</p>
           <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{c.title}</p>
           <p className="text-sm text-[var(--color-ink-muted)]">{c.line}</p>
         </div>
