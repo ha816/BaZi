@@ -2,7 +2,7 @@ from kkachi.domain.natal import NatalInfo
 
 # 사주 캐릭터 20유형 — 일간(日干) 10 × 신강/신약. 표는 docs/SAJU_CHARACTER_TYPES.md와 같다(바꿀 때 함께 고친다).
 # 그림은 frontend/public/kkachi/saju_character/{key}.webp (key 예 "갑_강")
-# (캐릭터, 유형명, 한 줄 성향, 대표 직업(그림), 잘 맞는 일, 힘이 덜 나는 일)
+# (캐릭터, 유형명, 한 줄 성향, 대표 직업(그림), 잘 맞는 일, 맞지 않는 일)
 _TYPES: dict[tuple[str, bool], tuple[str, str, str, str, list[str], list[str]]] = {
     ("甲", True): ("숲의 대장 나무", "개척하는 리더", "먼저 길을 내고 사람들을 이끈다", "창업가", ["창업가", "기획자", "행정가"], ["단순 반복 사무", "보조·비서", "엄격한 위계 조직"]),
     ("甲", False): ("숲을 이루는 어린 나무", "함께 크는 성장가", "혼자보다 함께 클 때 가장 높이 자란다", "선생님", ["교사", "HR", "커뮤니티 매니저"], ["실적 압박 영업", "1인 창업", "단기 트레이딩"]),
@@ -28,7 +28,7 @@ _TYPES: dict[tuple[str, bool], tuple[str, str, str, str, list[str], list[str]]] 
 
 
 def build_saju_character(natal: NatalInfo) -> dict:
-    """일간 × 신강/신약 → 캐릭터 유형 (그림 키·이름·유형명·한 줄·잘 맞는 일/힘이 덜 나는 일)"""
+    """일간 × 신강/신약 → 캐릭터 유형 (그림 키·이름·유형명·한 줄·잘 맞는 일/맞지 않는 일)"""
     stem = natal.saju.stem_of_day_pillar
     strong = natal.is_strong
     name, title, line, job, jobs, jobs_avoid = _TYPES[(stem.name, strong)]

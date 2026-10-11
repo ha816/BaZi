@@ -36,36 +36,15 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
           <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{c.title}</p>
           <p className="text-sm text-[var(--color-ink-muted)]">{c.line}</p>
         </div>
-        <div className="rounded-xl border border-[var(--color-border-light)] divide-y divide-[var(--color-border-light)]">
-          <div className="px-3 py-2 space-y-1.5">
-            <p className="text-[11px] font-semibold text-[var(--color-ink)]">👍 잘 맞는 일</p>
-            <div className="flex flex-wrap gap-1.5">
-              {c.jobs.map((j) => (
-                <span
-                  key={j}
-                  className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                  style={{ backgroundColor: el.bgColor, color: el.color, border: `1px solid ${el.borderColor}` }}
-                >
-                  {j}
-                </span>
-              ))}
-            </div>
+        <div className="grid grid-cols-2 rounded-xl border border-[var(--color-border-light)] divide-x divide-[var(--color-border-light)] text-center">
+          <div className="px-2 py-2.5">
+            <p className="text-[11px] font-semibold mb-1" style={{ color: el.color }}>👍 잘 맞는 일</p>
+            {c.jobs.map((j) => <p key={j} className="text-xs font-semibold text-[var(--color-ink)] leading-relaxed break-keep">{j}</p>)}
           </div>
-          {c.jobs_avoid?.length > 0 && (
-            <div className="px-3 py-2 space-y-1.5">
-              <p className="text-[11px] font-semibold text-[var(--color-ink-muted)]">💤 힘이 덜 나는 일</p>
-              <div className="flex flex-wrap gap-1.5">
-                {c.jobs_avoid.map((j) => (
-                  <span
-                    key={j}
-                    className="rounded-full px-2.5 py-1 text-[11px] text-[var(--color-ink-muted)] bg-[var(--color-parchment)] border border-[var(--color-border-light)]"
-                  >
-                    {j}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="px-2 py-2.5">
+            <p className="text-[11px] font-semibold mb-1 text-[var(--color-ink-muted)]">👎 맞지 않는 일</p>
+            {(c.jobs_avoid ?? []).map((j) => <p key={j} className="text-xs text-[var(--color-ink-muted)] leading-relaxed break-keep">{j}</p>)}
+          </div>
         </div>
         <button
           type="button"
