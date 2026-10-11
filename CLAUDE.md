@@ -553,7 +553,7 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·👍 선호하는 일 | 👎 선호하지 않는 일 두 칸·기운 % 게이지 → 용신 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
+| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·선호하는 일 | 선호하지 않는 일 두 칸·기운 % 게이지 → 용신 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
 | `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |

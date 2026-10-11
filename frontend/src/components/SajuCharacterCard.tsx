@@ -38,7 +38,7 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
         </div>
         <div className="grid grid-cols-2 rounded-xl border border-[var(--color-border-light)] divide-x divide-[var(--color-border-light)] text-center">
           <div className="px-2 py-2.5">
-            <p className="text-[11px] font-semibold mb-1.5" style={{ color: el.color }}>👍 선호하는 일</p>
+            <p className="text-[11px] font-semibold mb-1.5" style={{ color: el.color }}>선호하는 일</p>
             <div className="flex flex-wrap justify-center gap-1.5">
               {c.jobs.map((j) => (
                 <span
@@ -52,7 +52,7 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
             </div>
           </div>
           <div className="px-2 py-2.5">
-            <p className="text-[11px] font-semibold mb-1.5 text-[var(--color-ink-muted)]">👎 선호하지 않는 일</p>
+            <p className="text-[11px] font-semibold mb-1.5 text-[var(--color-ink-muted)]">선호하지 않는 일</p>
             <div className="flex flex-wrap justify-center gap-1.5">
               {(c.jobs_avoid ?? []).map((j) => (
                 <span
