@@ -1,7 +1,7 @@
 # 사주 캐릭터 20유형 — 복붙용 이미지 프롬프트
 
 > `docs/SAJU_CHARACTER_TYPES.md`의 공통 프롬프트 + 유형별 장면을 하나로 합친 것. 장면을 고치면 그 문서를 먼저 고치고 이 파일을 다시 만든다.
-> 사용법: Gemini에 기준 까치 `frontend/public/kkachi/strength/신강.png`를 첨부하고 아래 블록 하나를 그대로 붙여 넣는다. 신약은 같은 일간의 신강 결과도 함께 첨부하면 짝이 더 잘 맞는다. 원본 PNG는 `frontend/public/kkachi/originals/saju_character/{파일명}`에 저장(git 제외)하고, 화면용 1024px WebP로 변환해 `kkachi/saju_character/`에 둔다
+> 사용법: Gemini에 기준 까치 `frontend/public/kkachi/strength/신강.png`를 첨부하고 아래 블록 하나를 그대로 붙여 넣는다. 신약은 같은 일간의 신강 결과도 함께 첨부하면 짝이 더 잘 맞는다. 원본 PNG는 `frontend/public/kkachi/saju_character/{파일명}`에 저장(git 제외)하고, 같은 폴더에 화면용 1024px WebP로 변환해 둔다(화면은 WebP만 사용)
 
 ---
 
