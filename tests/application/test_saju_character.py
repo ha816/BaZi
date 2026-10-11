@@ -14,7 +14,7 @@ def test_character_from_day_stem_and_strength():
     c = build_saju_character(natal)  # 戊土 · 기운 77.1% 신강
     assert c["key"] == "무_강" and c["strong"] is True
     assert c["name"] == "우뚝 선 산" and c["title"] == "든든한 수호자" and c["job"] == "CEO"
-    assert c["strength_pct"] == natal.strength_pct and len(c["jobs"]) == 3
+    assert c["strength_pct"] == natal.strength_pct and c["jobs"] == ["경영자", "공무원"]
     assert len(c["jobs_avoid"]) == 3 and not set(c["jobs"]) & set(c["jobs_avoid"])
 
 
