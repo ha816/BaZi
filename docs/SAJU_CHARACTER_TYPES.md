@@ -1,7 +1,7 @@
 # 사주 캐릭터 20유형 — 유형표와 이미지 생성 프롬프트
 
 > 작성: 2026-10-11 · 유형 = 일간(日干) 10 × 신강/신약 2. 중화는 가까운 쪽으로 붙인다(판정 로직 개선 A안 진행 중)
-> 그림은 외부(Gemini)에서 기준 까치(`frontend/public/kkachi/strength/신강.png`)를 첨부해 생성. 저장 위치: `frontend/public/kkachi/saju_character/{일간}_{강|약}.webp` (예 `갑_강.webp`, 1024px). Gemini 원본 PNG(2048px)도 같은 폴더에 두되 git에서 제외(화면은 WebP만 사용)
+> 그림은 외부(Gemini)에서 기준 까치(`frontend/public/kkachi/strength/신강.png`)를 첨부해 생성. 저장 위치: `frontend/public/kkachi/saju_character/{일간}_{강|약}.webp` (예 `갑_강.webp`, 1024px). Gemini 원본 PNG(2048px)도 같은 폴더에 둔다(화면은 WebP만 사용)
 
 ## 1. 유형표
 
