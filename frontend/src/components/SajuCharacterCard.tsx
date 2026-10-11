@@ -37,16 +37,36 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
           <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{c.title}</p>
           <p className="text-sm text-[var(--color-ink-muted)]">{c.line}</p>
         </div>
-        <div className="flex flex-wrap justify-center gap-1.5">
-          {c.jobs.map((j) => (
-            <span
-              key={j}
-              className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-              style={{ backgroundColor: el.bgColor, color: el.color, border: `1px solid ${el.borderColor}` }}
-            >
-              {j}
-            </span>
-          ))}
+        <div className="rounded-xl border border-[var(--color-border-light)] divide-y divide-[var(--color-border-light)]">
+          <div className="px-3 py-2 space-y-1.5">
+            <p className="text-[11px] font-semibold text-[var(--color-ink)]">👍 잘 맞는 일</p>
+            <div className="flex flex-wrap gap-1.5">
+              {c.jobs.map((j) => (
+                <span
+                  key={j}
+                  className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                  style={{ backgroundColor: el.bgColor, color: el.color, border: `1px solid ${el.borderColor}` }}
+                >
+                  {j}
+                </span>
+              ))}
+            </div>
+          </div>
+          {c.jobs_avoid?.length > 0 && (
+            <div className="px-3 py-2 space-y-1.5">
+              <p className="text-[11px] font-semibold text-[var(--color-ink-muted)]">💤 힘이 덜 나는 일</p>
+              <div className="flex flex-wrap gap-1.5">
+                {c.jobs_avoid.map((j) => (
+                  <span
+                    key={j}
+                    className="rounded-full px-2.5 py-1 text-[11px] text-[var(--color-ink-muted)] bg-[var(--color-parchment)] border border-[var(--color-border-light)]"
+                  >
+                    {j}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <button
           type="button"

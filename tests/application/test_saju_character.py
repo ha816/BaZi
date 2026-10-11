@@ -15,6 +15,7 @@ def test_character_from_day_stem_and_strength():
     assert c["key"] == "무_강" and c["strong"] is True
     assert c["name"] == "우뚝 선 산" and c["title"] == "든든한 수호자" and c["job"] == "CEO"
     assert c["strength_pct"] == natal.strength_pct and len(c["jobs"]) == 3
+    assert len(c["jobs_avoid"]) == 3 and not set(c["jobs"]) & set(c["jobs_avoid"])
 
 
 def test_all_20_types_have_image():
