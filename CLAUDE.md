@@ -101,7 +101,7 @@ BaZi/
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
 │   │   ├── compatibility_prompt.py   # format_chat_context·format_narrative_prompt — 궁합 결과 → LLM 챗 [데이터] 블록·종합해석 프롬프트
-│   │   ├── saju_character.py     # build_saju_character(natal) 사주 캐릭터 20유형(일간×신강/신약) → NatalResult.character {key(그림 saju_character/{key}.webp), name, title, line, job, jobs[3](잘 맞는 일), jobs_avoid[3](맞지 않는 일), strength_pct…} — 표는 docs/SAJU_CHARACTER_TYPES.md와 함께 갱신
+│   │   ├── saju_character.py     # build_saju_character(natal) 사주 캐릭터 20유형(일간×신강/신약) → NatalResult.character {key(그림 saju_character/{key}.webp), name, title, line, job, jobs[3](잘 맞는 일), jobs_avoid[3](안 맞는 일), strength_pct…} — 표는 docs/SAJU_CHARACTER_TYPES.md와 함께 갱신
 │   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 내 사주 맞춰 보기 10문항 — 십신 개수로 그렇다/반반/아니다 예측 (V3, 설문으로 출생시간 추정 안 함)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
 │   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 — 두 사람 십신 합집합마다 1문항(더 많이 가진 쪽이 예측, 6~10개, 모자라면 강약·신살 질문으로 채움; 스냅샷 `sipsin` 없는 옛 캐시는 고정 6문항)
@@ -553,7 +553,7 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·👍 잘 맞는 일 | 👎 맞지 않는 일 두 칸·기운 % 게이지 → 용신 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
+| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·👍 잘 맞는 일 | 👎 안 맞는 일 두 칸·기운 % 게이지 → 용신 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
 | `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |
