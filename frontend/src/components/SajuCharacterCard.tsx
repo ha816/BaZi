@@ -19,10 +19,9 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="나의 사주 캐릭터">
-        나를 상징하는 <strong className="text-[var(--color-ink)]">일간(日干)</strong> 10가지에, 사주 전체에서 일간의 힘이 센지 여린지를 보는{" "}
-        <strong className="text-[var(--color-ink)]">신강·신약(身強·身弱)</strong>을 더해 나눈 <strong className="text-[var(--color-ink)]">20가지 유형</strong> 중 하나예요.
-        태어난 순간의 여덟 글자로 정해지기 때문에 평생 바뀌지 않아요. 해마다 들어오는 운에 따라 그 시기의 기운이 강해지거나 약해질 뿐, 유형은 그대로예요.
-        기운 %는 일간을 돕는 기운의 비중으로, 50% 이상이면 신강이에요.
+        나를 상징하는 <strong className="text-[var(--color-ink)]">일간(日干)</strong>에, 일간의 힘이 센지 여린지를 보는{" "}
+        <strong className="text-[var(--color-ink)]">신강·신약(身強·身弱)</strong>으로 뽑아본 나의 캐릭터예요.
+        태어난 순간의 여덟 글자로 정해지기 때문에 평생 바뀌지 않아요. 해마다 들어오는 운에 따라 그 시기의 기운이 강해지거나 약해질 뿐, 캐릭터 유형은 변하지 않아요.
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-3">
