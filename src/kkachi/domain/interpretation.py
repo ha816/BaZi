@@ -175,6 +175,9 @@ class NatalResult:
     # 팔자 요약
     pillar_summary: str = ""
 
+    # 사주 캐릭터 20유형 (일간 × 신강/신약) — application/saju_character.py
+    character: dict = field(default_factory=dict)
+
     # 출생시간 미상 → 시주 제외 세 기둥(三柱) 기준 (pillars·sipsin·sibi_unseong 등이 3개)
     hour_unknown: bool = False
 
@@ -251,8 +254,8 @@ class PostnatalResult:
 
 
 # analyses 캐시 호환 버전. 응답 구조(필드 추가·의미 변경)가 바뀌면 +1 → 옛 캐시는 전체 재계산된다.
-#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)  4: summary에 용신·십이지신·풍수 줄 추가  5: me 문구 '님의 사주는'  6: me에 사주팔자 네 기둥 낭독  7: summary.energy(신살·운성)  8: summary.timing(택시)  9: 강약 strength_pct(득령·지장간 가중, 중화 없음)
-INTERPRETATION_VERSION = 9
+#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)  4: summary에 용신·십이지신·풍수 줄 추가  5: me 문구 '님의 사주는'  6: me에 사주팔자 네 기둥 낭독  7: summary.energy(신살·운성)  8: summary.timing(택시)  9: 강약 strength_pct(득령·지장간 가중, 중화 없음)  10: natal.character(20유형)
+INTERPRETATION_VERSION = 10
 
 
 @dataclass

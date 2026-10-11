@@ -43,6 +43,7 @@ from kkachi.application.interpreter.yongshin import (
 from kkachi.application.interpreter.zodiac import ZodiacInterpreter
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.saju_port import InterpreterPort, NatalPort, PostnatalPort
+from kkachi.application.saju_character import build_saju_character
 from kkachi.application.timing_rules import compute_timing, timing_digest, timing_highlight
 from kkachi.application.util.sipsin_meta import enrich_sipsin
 from kkachi.application.util.util import year_to_ganji
@@ -88,6 +89,7 @@ class NatalService:
             element_stats={o.name: c for o, c in natal.element_stats.items()},
             strength_pct=natal.strength_pct,
             strength_label=natal.strength_label,
+            character=build_saju_character(natal),
             my_element={"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
             yongshin_info={"name": natal.yongshin.name, "meaning": natal.yongshin.meaning},
             kisin_info={"name": kisin.name, "meaning": kisin.meaning},

@@ -18,6 +18,7 @@ import EnergyTab from "./tabs/EnergyTab";
 import DomainFortuneSection from "./tabs/DomainFortuneSection";
 import SajuChat from "./SajuChat";
 import SummaryCard from "./SummaryCard";
+import SajuCharacterCard from "./SajuCharacterCard";
 import SelfQuizCard, { type SelfPick } from "./SelfQuizCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
@@ -148,6 +149,9 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
       <div>
         {active === "summary" && postnatal.summary && (
           <div className="space-y-4">
+            {natal.character?.key && (
+              <SajuCharacterCard character={natal.character} name={name} onNavigate={(t) => handleTabChange(t as FeatureId)} />
+            )}
             <SummaryCard summary={postnatal.summary} hasProfile={!!profileId} onNavigate={(t) => handleTabChange(t as FeatureId)} />
             <SelfQuizCard
               items={data.self_quiz ?? []}

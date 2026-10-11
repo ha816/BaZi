@@ -101,6 +101,8 @@ export interface NatalResult {
   /** 일간 기운 세기 0~100 (50 이상 신강). 옛 결과엔 없음 */
   strength_pct?: number;
   strength_label: string;
+  /** 사주 캐릭터 20유형. 옛 결과엔 없음 */
+  character?: SajuCharacter;
   my_element: { name: string; meaning: string };
   yongshin_info: { name: string; meaning: string };
   kisin_info: { name: string; meaning: string };
@@ -368,6 +370,22 @@ export interface PillarRelation {
     | "samhap";
   label: string;          // "卯戌 육합", "丑未 충"
   polarity: 1 | -1 | 0;
+}
+
+/** 사주 캐릭터 — 일간 × 신강/신약 20유형 (백엔드 application/saju_character.py) */
+export interface SajuCharacter {
+  key: string;            // "갑_강" → /kkachi/saju_character/{key}.webp
+  stem: string;
+  stem_korean: string;
+  element: string;
+  strong: boolean;
+  strength_label: string;
+  strength_pct: number;
+  name: string;           // 숲의 대장 나무
+  title: string;          // 개척하는 리더
+  line: string;
+  job: string;            // 그림 속 대표 직업
+  jobs: string[];
 }
 
 export interface PillarSnapshot {
