@@ -22,7 +22,7 @@ export default function CollapsibleSectionHeader({ title, children }: Props) {
         )}
       </div>
       {open && hasDetail && (
-        <div className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2 space-y-2">
+        <div className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2 space-y-2 break-keep">
           {children}
         </div>
       )}
