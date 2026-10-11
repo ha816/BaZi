@@ -24,7 +24,7 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
       <div className="divider" />
       <div className="slide-card__body space-y-3">
         <KkachiTip>
-          {`${name ? `${name}님을` : "이 사주를"} 나타내는 일간(日干) **${c.stem_korean}${ELEMENT_READING[c.element] ?? ""}(${c.stem}${c.element})**에 기운의 세기 **${c.strength_label}**을 더해 고른 캐릭터예요.`}
+          {`일간(日干) **${c.stem_korean}${ELEMENT_READING[c.element] ?? ""}(${c.stem}${c.element})**에 기운의 세기 **${c.strength_label}**을 더해 고른 ${name ? `${name}님의` : "이 사주의"} 까치 캐릭터예요.`}
         </KkachiTip>
         <img
           src={`/kkachi/saju_character/${c.key}.webp`}

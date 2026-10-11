@@ -6,7 +6,7 @@ interface Props {
 function renderInline(text: string): React.ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
     part.startsWith("**") && part.endsWith("**")
-      ? <strong key={i} className="text-[var(--color-ink)]">{part.slice(2, -2)}</strong>
+      ? <strong key={i} className="text-[var(--color-ink)] whitespace-nowrap">{part.slice(2, -2)}</strong>
       : part
   );
 }
@@ -23,7 +23,7 @@ export default function KkachiTip({ children, label }: Props) {
       />
       <div className="flex-1 bg-[var(--color-ivory)] rounded-xl rounded-tl-none px-3 py-2">
         {label && <p className="text-[10px] font-semibold text-[var(--color-ink-faint)] mb-0.5">{label}</p>}
-        <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">{content}</p>
+        <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed break-keep">{content}</p>
       </div>
     </div>
   );
