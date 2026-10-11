@@ -180,7 +180,7 @@ BaZi/
 │   │   ├── KkachiTip · TermBadge · Tooltip · FeedPost · BottomNav · LoadingSpinner
 │   │   └── tabs/
 │   │       ├── NatalTab.tsx         # 만세력 — natal/ 4개 섹션(팔자·십신·지장간·공망) 조합 · EnergyTab = 신살·운성(SibiUnseong·Sinsal)
-│   │       ├── natal/               # PillarSection · SipsinSection · JizanganSection · GongmangSection
+│   │       ├── natal/               # PillarSection · StrengthSection(신강·신약) · SipsinSection · JizanganSection · GongmangSection
 │   │       │                        #   · SibiUnseongSection · SinsalSection · data.ts(SIPSIN_INFO, SINSAL_INFO 등 표시 메타)
 │   │       ├── YongshinTab · SamjaeTab            # "용신·삼재" 탭
 │   │       ├── DaeunTab · SeunTab · WolUnTab · FortuneTab   # "시운(時運)" 탭
@@ -553,10 +553,10 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·선호하는 일 | 선호하지 않는 일 두 칸·기운 % 게이지 → 용신 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
-| `natal` | 만세력 | `NatalTab` → PillarSection · SipsinSection · JizanganSection · GongmangSection |
+| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·선호하는 일 | 선호하지 않는 일 두 칸·기운 % 게이지 → 만세력 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
+| `natal` | 만세력 | `NatalTab` → PillarSection · StrengthSection(신강·신약) · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
-| `yongshin` | 용신·삼재 | `YongshinTab`(신강·신약, 용신·기신) + `SamjaeTab` |
+| `yongshin` | 용신·삼재 | `YongshinTab`(오행 분석, 용신·기신) + `SamjaeTab` |
 | `timing` | 택시(擇時) | `TimingTab` — 영역 6개 × 12개월 색칠, 선택 달 근거·행동 + `DomainFortuneSection` |
 | `daeun` | 시운(時運) | `DaeunTab` + `SeunTab` + `WolUnTab` + `FortuneTab`(충합, 영역별 운) |
 | `zodiac` | 십이지신 | `ZodiacTab` |

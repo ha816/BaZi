@@ -68,7 +68,7 @@ export default function SajuCharacterCard({ character: c, name, onNavigate }: Pr
         </div>
         <button
           type="button"
-          onClick={() => onNavigate?.("yongshin")}
+          onClick={() => onNavigate?.("natal")}
           className="w-full rounded-xl border border-[var(--color-border-light)] px-3 py-2 text-left hover:bg-[var(--color-parchment)] transition-colors"
         >
           <div className="flex justify-between text-[11px] mb-1.5">
