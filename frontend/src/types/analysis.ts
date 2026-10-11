@@ -385,8 +385,8 @@ export interface SajuCharacter {
   title: string;          // 개척하는 리더
   line: string;
   job: string;            // 그림 속 대표 직업
-  jobs: string[];         // 잘 맞는 일
-  jobs_avoid: string[];   // 안 맞는 일
+  jobs: string[];         // 선호하는 일
+  jobs_avoid: string[];   // 선호하지 않는 일
 }
 
 export interface PillarSnapshot {
