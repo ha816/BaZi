@@ -45,6 +45,26 @@ _SIBI_SINSAL_MAP: list[tuple[frozenset[Branch], dict[Branch, str]]] = [
 ]
 
 
+# 신강·신약 자리별 가중치 — 월지(득령) > 일지(득지) > 나머지(득세). 일간 자신은 제외
+_STEM_WEIGHT = {Pillar.年柱: 8, Pillar.月柱: 12, Pillar.時柱: 10}
+_BRANCH_WEIGHT = {Pillar.年柱: 8, Pillar.月柱: 30, Pillar.日柱: 15, Pillar.時柱: 12}
+_STRENGTH_CUT = 42.0
+# 월령 왕상휴수사(旺相休囚死)
+_WANGSANG = {"旺": 1.0, "相": 0.8, "休": 0.3, "囚": 0.2, "死": 0.0}
+
+
+def _season_relation(season: Oheng, me: Oheng) -> str:
+    if season == me:
+        return "旺"
+    if season == me.generated_by:
+        return "相"
+    if season == me.generates:
+        return "休"
+    if season == me.overcomes:
+        return "囚"
+    return "死"
+
+
 class NatalAdapter(NatalPort):
     """선천 분석기 — NatalPort 구현체."""
 
@@ -57,8 +77,8 @@ class NatalAdapter(NatalPort):
 
         stats = self._get_oheng()
         me = self.day_stem.element
-        strength = self._get_strength(stats, me)
-        yongshin = self._get_yongshin(me, strength)
+        strength_pct = self._get_strength_pct(me)
+        yongshin = self._get_yongshin(me, strength_pct)
 
         day_branch = self.saju[Pillar.日柱].branch
         gongmang_set = Gongmang.from_day_pillar(self.day_stem, day_branch)
@@ -67,7 +87,7 @@ class NatalAdapter(NatalPort):
             saju=self.saju,
             my_main_element=me,
             element_stats=stats,
-            strength=strength,
+            strength_pct=strength_pct,
             yongshin=yongshin,
             sipsin=self._get_sipsin(),
             sibi_unseong=self._get_sibi_unseong(),
@@ -86,13 +106,40 @@ class NatalAdapter(NatalPort):
         counts = Counter(elements)
         return {o: counts.get(o, 0) for o in Oheng}
 
-    def _get_strength(self, stats: dict[Oheng, int], me: Oheng) -> int:
-        helping = stats[me] + stats[me.generated_by]
-        draining = sum(stats.values()) - helping
-        return helping - draining
+    def _get_strength_pct(self, me: Oheng) -> float:
+        """일간을 뺀 자리마다 나를 돕는(비겁·인성) 비율을 가중합 — 월지는 지장간과 왕상휴수사를 반씩.
 
-    def _get_yongshin(self, me: Oheng, strength: int) -> Oheng:
-        return me.generates if strength > 0 else me.generated_by
+        원점수 기대값이 40% 안팎이라 42를 경계로 보고, 화면용으로 42→50이 되게 구간 선형 변환한다.
+        시간 미상이면 시주 두 자리를 빼고 같은 방식으로 정규화한다.
+        """
+        helps = (me, me.generated_by)
+        num = den = 0.0
+        for pillar, sb in self.saju.pillars.items():
+            if pillar != Pillar.日柱:
+                w = _STEM_WEIGHT[pillar]
+                den += w
+                num += w * (sb.stem.element in helps)
+            ratio = sum(
+                wt for s, wt in zip(sb.branch.jizan_gan, sb.branch.jizan_gan_weights, strict=True)
+                if s.element in helps
+            ) / sum(sb.branch.jizan_gan_weights)
+            if pillar == Pillar.月柱:
+                ratio = 0.5 * ratio + 0.5 * _WANGSANG[_season_relation(sb.branch.element, me)]
+            w = _BRANCH_WEIGHT[pillar]
+            den += w
+            num += w * ratio
+        raw = num / den * 100
+        if abs(raw - _STRENGTH_CUT) < 1e-9:
+            month_main = self.saju[Pillar.月柱].branch.jizan_gan[-1].element
+            return 50.1 if month_main in helps else 49.9
+        if raw < _STRENGTH_CUT:
+            pct = raw / _STRENGTH_CUT * 50
+        else:
+            pct = 50 + (raw - _STRENGTH_CUT) / (100 - _STRENGTH_CUT) * 50
+        return round(pct, 1)
+
+    def _get_yongshin(self, me: Oheng, strength_pct: float) -> Oheng:
+        return me.generates if strength_pct >= 50 else me.generated_by
 
     def _get_sipsin(self) -> list[tuple[str, Sipsin]]:
         results = []

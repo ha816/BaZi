@@ -2,8 +2,8 @@ from kkachi.application.compatibility_character import build_compat_character
 
 
 def _result(ds1: str, ds2: str, kinds=(), **snap) -> dict:
-    s1 = {"day_stem": ds1, "strength_label": "신강(身強)", "strength": 4, "element_stats": {"木": 0, "火": 2, "土": 4, "金": 2, "水": 0}}
-    s2 = {"day_stem": ds2, "strength_label": "신약(身弱)", "strength": -2, "element_stats": {"木": 1, "火": 0, "土": 2, "金": 2, "水": 3}}
+    s1 = {"day_stem": ds1, "strength_label": "신강(身強)", "strength_pct": 73.4, "element_stats": {"木": 0, "火": 2, "土": 4, "金": 2, "水": 0}}
+    s2 = {"day_stem": ds2, "strength_label": "신약(身弱)", "strength_pct": 38.5, "element_stats": {"木": 1, "火": 0, "土": 2, "金": 2, "水": 3}}
     s1.update(snap.get("s1", {}))
     s2.update(snap.get("s2", {}))
     return {"pillar1_snapshot": s1, "pillar2_snapshot": s2,
@@ -33,9 +33,9 @@ def test_scenarios_differ_by_relation_and_use_strength_and_sinsal():
     assert len(lover) == 6 and lover[0]["q"] != friend[0]["q"]
     by_q = {s["q"]: s for s in lover}
     assert by_q["싸우면 누가 먼저 사과할까?"]["who"] == "p2"  # 신약 쪽
-    assert by_q["싸우면 누가 먼저 사과할까?"]["reason"].startswith("신약(身弱) -2로 일간 기운이 더 여려")
-    both_strong = build_compat_character(_result("戊", "庚", s2={"strength_label": "신강(身強)", "strength": 2}), "lover")["scenarios"]
-    assert both_strong[0]["reason"].startswith("신강(身強) +2로 일간 기운이 더 여려")  # 라벨이 아니라 점수 비교
+    assert by_q["싸우면 누가 먼저 사과할까?"]["reason"].startswith("기운 38.5%의 신약(身弱)로 일간 기운이 더 여려")
+    both_strong = build_compat_character(_result("戊", "庚", s2={"strength_label": "신강(身強)", "strength_pct": 55.0}), "lover")["scenarios"]
+    assert both_strong[0]["reason"].startswith("기운 55%의 신강(身強)로 일간 기운이 더 여려")  # 라벨이 아니라 기운 세기 비교
     assert by_q["데이트 코스는 누가 정할까?"]["who"] == "p1"  # 신강 쪽
     assert by_q["\"우리 여행 갈까?\" 먼저 꺼내는 쪽은?"]["who"] == "p2"  # 역마살
     assert build_compat_character({"pillar1_snapshot": None, "pillar2_snapshot": None}) is None

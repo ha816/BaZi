@@ -49,20 +49,16 @@ class ElementBalanceInterpreter:
         if not excess and not lacking:
             lines.append("다섯 가지 기운이 비교적 고르게 분포되어 있어 안정적인 구성입니다.")
 
-        strength = natal.strength
-        if strength > 0:
+        pct = natal.strength_pct
+        if natal.is_strong:
             lines.append(
-                f"기운이 강한 편(+{strength})이에요. {OHENG_METAPHOR[my_element]}가 넘치는 상태입니다. "
+                f"기운이 강한 편(기운 {pct:g}%)이에요. {OHENG_METAPHOR[my_element]}가 넘치는 상태입니다. "
                 f"이 에너지를 바깥으로 발산하는 활동(운동·사업 확장·봉사)이 균형을 맞춰줍니다."
-            )
-        elif strength < 0:
-            lines.append(
-                f"기운이 약한 편({strength})이에요. {my_element.meaning}의 기운이 주변에 눌려 있는 상태입니다. "
-                f"든든한 지원군(멘토·팀·가족)과 함께할 때 본래의 역량이 발휘됩니다."
             )
         else:
             lines.append(
-                "다섯 기운이 균형을 이루고 있어 어떤 환경에서든 안정적으로 적응할 수 있습니다."
+                f"기운이 약한 편(기운 {pct:g}%)이에요. {my_element.meaning}의 기운이 주변에 눌려 있는 상태입니다. "
+                f"든든한 지원군(멘토·팀·가족)과 함께할 때 본래의 역량이 발휘됩니다."
             )
 
         return [InterpretBlock(description=line) for line in lines]

@@ -33,7 +33,7 @@ def test_three_pillars_derived_counts():
     assert len(u.sipsin) == 5  # 년·월 천간 2 + 년·월·일 지지 3
     assert [p for p, _ in u.sibi_unseong] == ["년주", "월주", "일주"]
     assert len(u.jizan_gan) == 3 and len(u.sibi_sinsal) == 3 and len(u.gongmang) == 3
-    assert u.strength_label in {"신강(身強)", "신약(身弱)", "중화(中和)"}
+    assert u.strength_label in {"신강(身強)", "신약(身弱)"}
 
 
 def test_interpretation_marks_hour_unknown_and_stays_consistent():

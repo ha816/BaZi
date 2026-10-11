@@ -19,10 +19,9 @@ class YongshinInterpreter:
     def __call__(self, natal: NatalInfo, postnatal: PostnatalInfo) -> list[InterpretBlock]:
         yongshin = natal.yongshin
         my_element = natal.my_main_element
-        strength = natal.strength
         lines = []
 
-        if strength > 0:
+        if natal.is_strong:
             lines.append(
                 f"넘치는 {my_element.meaning}의 기운을 적절히 빼주는 {yongshin.meaning}의 기운이 "
                 f"당신에게 가장 도움이 됩니다. 마치 뜨거운 여름에 시원한 {yongshin.meaning}을 만난 것과 같아, "

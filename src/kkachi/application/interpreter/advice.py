@@ -74,15 +74,10 @@ class AdviceInterpreter:
 
         # 4. 개운법 (강약·삼재 반영)
         fortune = YONGSHIN_FORTUNE[yongshin]
-        is_strong = natal.strength_label.startswith("신강")
-        is_weak = natal.strength_label.startswith("신약")
-
-        if is_strong:
+        if natal.is_strong:
             gaeun_desc = f"신강 사주라 기운이 넘쳐요. {yongshin.meaning}의 기운으로 넘치는 에너지를 자연스럽게 흘려보내세요."
-        elif is_weak:
-            gaeun_desc = f"신약 사주라 기운을 채워야 해요. {yongshin.meaning}의 기운을 집중적으로 보강하는 게 핵심이에요."
         else:
-            gaeun_desc = f"{yongshin.meaning}의 기운을 일상에서 꾸준히 보강하는 방법이에요."
+            gaeun_desc = f"신약 사주라 기운을 채워야 해요. {yongshin.meaning}의 기운을 집중적으로 보강하는 게 핵심이에요."
 
         tips = [
             InterpretTip(label="추천 활동", text=fortune["활동"]),

@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 125 tests
+uv run pytest            # 132 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -71,6 +71,7 @@ BaZi/
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
 │   ├── ROADMAP.md               # 제품 핵심 루프 로드맵 — 우선순위·진행 현황 (기능 추가 전 필독)
+│   ├── SAJU_CHARACTER_TYPES.md  # 사주 캐릭터 20유형(일간×신강/신약) 유형표·직업 의인화 이미지 프롬프트
 │   ├── COMPAT_CHARACTER_TYPES.md # 궁합 캐릭터 15종 유형표·칭호/문답 규칙·이미지 카드 제작안 (compatibility_character.py와 함께 갱신)
 │   ├── frontend/screen_spec.md  # 화면 명세
 │   ├── frontend/*/scenarios.md  # 화면별 시나리오
@@ -215,6 +216,7 @@ BaZi/
 POST /kkachi/interpret  (로그인 불필요)
   → KkachiService.analyze(user, year)
       → NatalAdapter.analyze     → NatalInfo   (간지, 오행, 강약, 용신, 십신, 십이운성, 신살, 지장간, 십이신살, 공망)
+          강약 strength_pct 0~100(50↑ 신강, 중화 없음): 일간 뺀 자리별 가중(월지30·일지15·시지12·월간12·시간10·년간8·년지8) × 돕는 비율(지지는 지장간 비중, 월지는 왕상휴수사와 반반), 원점수 42 → 50% 구간 선형 변환. 용신은 50 기준
       → PostnatalAdapter.analyze → PostnatalInfo (세운, 대운, 월운 6개월, 충합, 영역점수+reason, 삼재)
   → KkachiService.interpret(natal, postnatal, user, name)
       → NatalService.interpret_natal       → NatalResult  (narratives, personality, element_balance, feng_shui, zodiac …)
@@ -598,7 +600,7 @@ erDiagram
 ## 출생시간 미상 — 세 기둥(三柱) 분석 (ROADMAP R2)
 
 - 입력: 시간 "모르겠어요" → `AnalysisInput.hour_unknown` / `profiles.birth_hour_unknown`. birth_dt는 여전히 정오(12:00)로 저장되며 sajupy 계산에만 쓰인다(자시 경계 회피 → 일주 안전)
-- 계산: `cal_saju(include_hour=False)` → `Saju.hour=None` → `pillars` 3개. 오행(6글자)·강약(부호 판정이라 임계 불변, 게이지 ±6)·용신·십신·십이운성·지장간·십이신살·공망·충합이 자동으로 세 기둥 기준. 궁합은 한쪽만 미상이어도 時柱 쌍 제외(가중치 재분배 없음). 대운 기산은 정오 기준(±2개월 오차 고지)
+- 계산: `cal_saju(include_hour=False)` → `Saju.hour=None` → `pillars` 3개. 오행(6글자)·강약(시주 두 자리를 빼고 같은 가중치로 정규화)·용신·십신·십이운성·지장간·십이신살·공망·충합이 자동으로 세 기둥 기준. 궁합은 한쪽만 미상이어도 時柱 쌍 제외(가중치 재분배 없음). 대운 기산은 정오 기준(±2개월 오차 고지)
 - 출력: `NatalResult.hour_unknown`, `PillarSnapshot.hour_unknown`. 프론트는 결과 상단 고지, `PillarDetail` 시주 자리 "?" 타일, natal 섹션 3열, 궁합 비교표 "?" 셀
 - 기존 프로필: "모르겠어요"와 오시(午)가 모두 12:00으로 저장돼 있어 일괄 전환 불가 → 전부 "시간 있음", 편집에서 전환. 프로필 수정 시 analyses·fortunes 캐시 삭제
 - 리포트/LLM: 만세력 섹션에 세 기둥 고지 → 시주 영역 언급 금지 지시

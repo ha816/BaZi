@@ -211,7 +211,7 @@ class LlmReportBuilder:
     def _yongshin_samjae_section(self, n: NatalResult, p: PostnatalResult) -> str:
         lines = ["## 용신·삼재(用神·三災)", ""]
         lines.append("### 신강·신약(身強·身弱)")
-        lines.append(f"- {n.strength_label} (값: {n.strength_value:+d})")
+        lines.append(f"- {n.strength_label} (기운 {n.strength_pct:g}%, 50% 이상이면 신강)")
         if n.narratives.get("strength_tip"):
             lines.append(f"> {n.narratives['strength_tip']}")
 

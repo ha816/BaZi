@@ -246,7 +246,7 @@ class NatalInfo:
     saju: Saju
     my_main_element: Oheng
     element_stats: dict[Oheng, int]
-    strength: int
+    strength_pct: float                 # 일간 기운 세기 0~100, 50 이상이면 신강
     yongshin: Oheng
     sipsin: list[tuple[str, Sipsin]]
     sibi_unseong: list[tuple[str, SibiUnseong]]
@@ -261,12 +261,12 @@ class NatalInfo:
         return self.saju[Pillar.年柱].branch
 
     @property
+    def is_strong(self) -> bool:
+        return self.strength_pct >= 50
+
+    @property
     def strength_label(self) -> str:
-        if self.strength > 0:
-            return "신강(身強)"
-        elif self.strength < 0:
-            return "신약(身弱)"
-        return "중화(中和)"
+        return "신강(身強)" if self.is_strong else "신약(身弱)"
 
 
 @dataclass

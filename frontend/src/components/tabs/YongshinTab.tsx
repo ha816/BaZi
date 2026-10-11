@@ -7,7 +7,6 @@ import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import KkachiTip from "@/components/KkachiTip";
 import OhengAnalysis from "@/components/OhengAnalysis";
 
-const STRENGTH_MAX = 8;
 
 const STRENGTH_IMG: Record<string, string> = {
   "신강(身強)": "/kkachi/strength/신강.png",
@@ -30,14 +29,8 @@ export default function YongshinTab({ natal, postnatal }: Props) {
   const kisinName = natal.kisin_info.name;
   const kisinInfo = kisinName ? getElementInfo(kisinName) : null;
   const guide = natal.yongshin_guide;
-  const strengthMax = natal.hour_unknown ? 6 : STRENGTH_MAX; // 세 기둥이면 6글자 기준 ±6
-  const strengthPct = Math.min(100, Math.max(0, 50 + (natal.strength_value / strengthMax) * 50));
-  const strengthColor =
-    natal.strength_label === "신강(身強)"
-      ? "var(--color-fire)"
-      : natal.strength_label === "신약(身弱)"
-      ? "var(--color-water)"
-      : "var(--color-earth)";
+  const strengthPct = Math.min(100, Math.max(0, natal.strength_pct ?? 50));
+  const strengthColor = natal.strength_label === "신강(身強)" ? "var(--color-fire)" : "var(--color-water)";
 
   const seunStemIdx = STEM_ORDER.indexOf(postnatal.seun_ganji[0]);
   const seunBranchIdx = BRANCH_ORDER.indexOf(postnatal.seun_ganji[1]);
@@ -105,11 +98,11 @@ export default function YongshinTab({ natal, postnatal }: Props) {
                   />
                 </div>
                 <div className="flex justify-between text-[10px] mt-1.5">
-                  <span className="text-[var(--color-water)]">신약(身弱) −{strengthMax}</span>
+                  <span className="text-[var(--color-water)]">신약(身弱)</span>
                   <span className="font-semibold" style={{ color: strengthColor }}>
-                    {natal.strength_value > 0 ? `+${natal.strength_value}` : natal.strength_value} · {natal.strength_label}
+                    기운 {strengthPct}% · {natal.strength_label}
                   </span>
-                  <span className="text-[var(--color-fire)]">+{strengthMax} 신강(身強){natal.hour_unknown ? " · 세 기둥 기준" : ""}</span>
+                  <span className="text-[var(--color-fire)]">신강(身強){natal.hour_unknown ? " · 세 기둥 기준" : ""}</span>
                 </div>
               </div>
 

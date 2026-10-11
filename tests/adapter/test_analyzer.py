@@ -1,7 +1,10 @@
 from datetime import datetime
 
+import pytest
+
 from kkachi.adapter.outer.natal_adapter import NatalAdapter
-from kkachi.domain.ganji import Oheng, Sipsin, Stem
+from kkachi.domain.ganji import Oheng, Sipsin, Stem, StemBranch
+from kkachi.domain.natal import Saju
 from kkachi.domain.user import Gender, User
 
 _analyzer = NatalAdapter()
@@ -25,12 +28,32 @@ def test_analyze_basic():
 
 def test_judge_strength_strong():
     info = analyze(USER_1990)
-    assert info.strength == 4
+    assert info.strength_pct == 77.1
+    assert info.strength_label == "신강(身強)"
 
 
 def test_judge_strength_weak():
     info = analyze(USER_1983)
-    assert info.strength == -4
+    assert info.strength_pct == 21.4
+    assert info.strength_label == "신약(身弱)"
+
+
+# 득령(월지)·득지(일지)·득세(나머지) 교과서 예시 — 강약 판정 회귀
+@pytest.mark.parametrize("palja, strong", [
+    ("壬子 壬寅 甲寅 甲子", True),   # 득령·득지·득세 → 극신강
+    ("庚申 己卯 甲申 庚午", False),  # 득령만, 실지·실세 → 경계지만 약
+    ("甲寅 丙子 丙午 甲午", True),   # 실령이나 득지·득세
+    ("壬子 辛亥 丁丑 庚子", False),  # 삼실 → 극신약
+    ("丙午 甲午 戊辰 庚申", True),   # 인성 월령
+    ("戊辰 丙辰 甲辰 戊辰", False),  # 재다신약 (辰 지장간 乙·癸가 조금 도움)
+    ("丙寅 庚申 庚子 甲申", True),   # 월령 비겁, 나머지 식재관 — 옛 판정은 중화(0)
+])
+def test_strength_textbook_examples(palja, strong):
+    y, m, d, h = (StemBranch.from_text(t) for t in palja.split())
+    _analyzer.saju = Saju(year=y, month=m, day=d, hour=h)
+    pct = _analyzer._get_strength_pct(_analyzer.saju.stem_of_day_pillar.element)
+    assert (pct >= 50) == strong
+    assert 0 <= pct <= 100
 
 
 def test_find_yongshin_for_strong():

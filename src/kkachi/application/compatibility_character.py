@@ -123,10 +123,11 @@ def _pick(v1: float, v2: float) -> str:
     return "p1" if v1 > v2 else "p2" if v2 > v1 else "both"
 
 
-def _strength(snap: dict | None) -> int:
+def _strength(snap: dict | None) -> float:
+    """기운 세기 − 50 (+신강/−신약). 옛 캐시엔 strength_pct가 없어 라벨로만 판단"""
     s = snap or {}
-    if isinstance(s.get("strength"), int):
-        return s["strength"]
+    if isinstance(s.get("strength_pct"), (int, float)):
+        return s["strength_pct"] - 50
     return {"신강(身強)": 1, "신약(身弱)": -1}.get(s.get("strength_label", ""), 0)
 
 
@@ -184,9 +185,11 @@ def _scenarios(result: dict, rel: str, kind: str, a: str) -> list[dict]:
     charm1, charm2 = _has(result, 1, "도화살", "년살"), _has(result, 2, "도화살", "년살")
     mood_maker = "both" if charm1 and charm2 else "p1" if charm1 else "p2" if charm2 else talk
 
-    def _label(snap: dict | None, v: int) -> str:
-        lab = (snap or {}).get("strength_label", "")
-        return f"{lab} {v:+d}" if isinstance((snap or {}).get("strength"), int) else lab
+    def _label(snap: dict | None, v: float) -> str:
+        s = snap or {}
+        lab = s.get("strength_label", "")
+        pct = s.get("strength_pct")
+        return f"기운 {pct:g}%의 {lab}" if isinstance(pct, (int, float)) else lab
 
     lead_snap, lead_v = (s1, st1) if leader == "p1" else (s2, st2)
     yield_snap, yield_v = (s1, st1) if yielder == "p1" else (s2, st2)

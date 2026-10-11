@@ -148,7 +148,7 @@ class NatalResult:
 
     # 오행·강약·용신
     element_stats: dict[str, int] = field(default_factory=dict)
-    strength_value: int = 0
+    strength_pct: float = 0.0          # 일간 기운 세기 0~100 (50 이상 신강)
     strength_label: str = ""
     my_element: dict[str, str] = field(default_factory=dict)
     yongshin_info: dict[str, str] = field(default_factory=dict)
@@ -251,8 +251,8 @@ class PostnatalResult:
 
 
 # analyses 캐시 호환 버전. 응답 구조(필드 추가·의미 변경)가 바뀌면 +1 → 옛 캐시는 전체 재계산된다.
-#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)  4: summary에 용신·십이지신·풍수 줄 추가  5: me 문구 '님의 사주는'  6: me에 사주팔자 네 기둥 낭독  7: summary.energy(신살·운성)  8: summary.timing(택시)
-INTERPRETATION_VERSION = 8
+#   1: 초기  2: summary(R1)  3: timing(R3)·hour_unknown(R2)  4: summary에 용신·십이지신·풍수 줄 추가  5: me 문구 '님의 사주는'  6: me에 사주팔자 네 기둥 낭독  7: summary.energy(신살·운성)  8: summary.timing(택시)  9: 강약 strength_pct(득령·지장간 가중, 중화 없음)
+INTERPRETATION_VERSION = 9
 
 
 @dataclass

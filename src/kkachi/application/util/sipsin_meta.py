@@ -97,10 +97,10 @@ def sipsin_polarity(sipsin: Sipsin) -> int:
     return _SIPSIN_POLARITY[sipsin]
 
 
-def sipsin_strength_modifier(sipsin: Sipsin, strength: int) -> int:
-    """일간 강약에 따른 길흉 보정 — 신강은 설기를 반김, 신약은 보조를 반김."""
-    is_strong = strength > 2
-    is_weak = strength < -2
+def sipsin_strength_modifier(sipsin: Sipsin, strength_pct: float) -> int:
+    """일간 강약에 따른 길흉 보정 — 뚜렷한 신강(67%↑)은 설기를, 뚜렷한 신약(33%↓)은 보조를 반김."""
+    is_strong = strength_pct >= 67
+    is_weak = strength_pct <= 33
     if is_strong:
         if sipsin in _DRAIN_SIPSIN:
             return +2

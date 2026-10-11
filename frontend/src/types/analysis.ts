@@ -98,7 +98,8 @@ export interface NatalResult {
   pillar_branches_korean: string[];
   pillar_elements: PillarElementInfo[];
   element_stats: Record<string, number>;
-  strength_value: number;
+  /** 일간 기운 세기 0~100 (50 이상 신강). 옛 결과엔 없음 */
+  strength_pct?: number;
   strength_label: string;
   my_element: { name: string; meaning: string };
   yongshin_info: { name: string; meaning: string };
@@ -379,8 +380,8 @@ export interface PillarSnapshot {
   hour_unknown?: boolean;
   /** 기둥별 십이신살 (년·월·일·시 순, ""=없음). 옛 캐시엔 없음 */
   sibi_sinsal?: string[];
-  /** 신강·신약 점수(+신강/−신약). 옛 캐시엔 없음 */
-  strength?: number | null;
+  /** 일간 기운 세기 0~100 (50 이상 신강). 옛 캐시엔 없음 */
+  strength_pct?: number | null;
 }
 
 export interface ElementComplement {

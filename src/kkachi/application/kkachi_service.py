@@ -86,7 +86,7 @@ class NatalService:
             pillar_branches_korean=pillar_branches_korean,
             pillar_elements=pillar_elements,
             element_stats={o.name: c for o, c in natal.element_stats.items()},
-            strength_value=natal.strength,
+            strength_pct=natal.strength_pct,
             strength_label=natal.strength_label,
             my_element={"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
             yongshin_info={"name": natal.yongshin.name, "meaning": natal.yongshin.meaning},

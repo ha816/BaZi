@@ -5,13 +5,11 @@ from kkachi.domain.natal import NatalInfo
 _STRENGTH_DESC: dict[str, str] = {
     "신강(身強)": "타고난 에너지가 강하고 자기 주도적인 성향이에요.",
     "신약(身弱)": "주변 환경의 영향을 잘 받고 협력에서 힘을 발휘해요.",
-    "중화(中和)": "기운이 고르게 균형 잡혀 안정적인 사주예요.",
 }
 
 _STRENGTH_TIP: dict[str, str] = {
     "신강(身強)": "일간의 기운이 강한 편이에요. 에너지를 쏟을 방향을 잘 고르는 게 중요해요.",
     "신약(身弱)": "일간의 기운이 약한 편이에요. 나를 지지해주는 환경과 사람을 잘 고르면 훨씬 잘 발휘돼요.",
-    "중화(中和)": "일간의 기운이 균형 잡힌 상태예요. 폭넓은 환경에서 두루 안정적인 성과를 낼 수 있는 타입입니다.",
 }
 
 def strength_story(label: str) -> str:
@@ -153,7 +151,7 @@ class NatalNarrativeInterpreter:
         }
 
     def _strength_tip(self, natal: NatalInfo) -> str:
-        return _STRENGTH_TIP.get(natal.strength_label, _STRENGTH_TIP["중화(中和)"])
+        return _STRENGTH_TIP[natal.strength_label]
 
     def _yongshin_tip(self, natal: NatalInfo, name: str) -> str:
         return build_yongshin_tip(natal, postnatal_result=None)

@@ -264,7 +264,7 @@ class CompatibilityService:
             yongshin=natal.yongshin.name,
             hour_unknown=natal.saju.hour_unknown,
             sibi_sinsal=list(natal.sibi_sinsal),
-            strength=natal.strength,
+            strength_pct=natal.strength_pct,
             sipsin=dict(Counter(s.name for _, s in natal.sipsin)),
         )
 

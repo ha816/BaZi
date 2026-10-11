@@ -117,7 +117,7 @@ def _domain_line(result: dict) -> str:
     return f"{line}, {name(low)}도 {low_score}점으로 무난해요."
 
 
-_STRONG, _WEAK, _MID = "신강(身強)", "신약(身弱)", "중화(中和)"
+_STRONG, _WEAK = "신강(身強)", "신약(身弱)"
 
 
 def _strength_line(result: dict) -> str:
@@ -134,12 +134,6 @@ def _strength_line(result: dict) -> str:
         return "두 분 모두 신강(身強)이라 각자 주관이 뚜렷해요. 결정할 영역을 미리 나눠 두면 부딪힘이 줄어요."
     if l1 == _WEAK and l2 == _WEAK:
         return "두 분 모두 신약(身弱)이라 서로 기대며 힘을 보태는 사이예요. 주변의 도움을 함께 끌어오면 더 단단해져요."
-    if l1 == _MID and l2 == _MID:
-        return "두 분 모두 중화(中和)라 어느 쪽으로도 치우치지 않는 안정된 짝이에요."
-    if l1 == _MID:
-        return "{p1}님이 중화(中和)라 {p2}님의 " + ("강한" if l2 == _STRONG else "여린") + " 기운에 맞춰 균형을 잡아줘요."
-    if l2 == _MID:
-        return "{p2}님이 중화(中和)라 {p1}님의 " + ("강한" if l1 == _STRONG else "여린") + " 기운에 맞춰 균형을 잡아줘요."
     return ""
 
 
@@ -148,9 +142,9 @@ def _strength_person(snap: dict | None, token: str) -> str:
     if not snap or not snap.get("strength_label"):
         return ""
     label = snap["strength_label"]
-    v = snap.get("strength")
-    score = f" {v:+d}" if isinstance(v, int) else ""
-    line = f"{token}님은 {label}{score}이에요. {strength_story(label)}"
+    v = snap.get("strength_pct")
+    score = f"기운 {v:g}%의 " if isinstance(v, (int, float)) else ""
+    line = f"{token}님은 {score}{label}이에요. {strength_story(label)}"
     ys = snap.get("yongshin")
     if ys and label == _STRONG:
         line += f" 넘치는 기운을 풀어주는 {_el_josa(ys, '이', '가')} 용신(用神)이에요."

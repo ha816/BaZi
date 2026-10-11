@@ -7,11 +7,9 @@ import KkachiTip from "../KkachiTip";
 import type { CompatTabProps } from "./types";
 
 // 분석 용신·삼재 탭(YongshinTab) 신강·신약 카드와 같은 축·색·그림 — 네 기둥 ±8, 세 기둥 ±6
-const STRENGTH_MAX = 8;
 const LABEL_COLOR: Record<string, string> = {
   "신강(身強)": "var(--color-fire)",
   "신약(身弱)": "var(--color-water)",
-  "중화(中和)": "var(--color-earth)",
 };
 const STRENGTH_IMG: Record<string, string> = {
   "신강(身強)": "/kkachi/strength/신강.png",
@@ -21,9 +19,7 @@ const FALLBACK_IMG = "/kkachi/normal_kkachi_00.png";
 
 function Person({ name, snap }: { name: string; snap: PillarSnapshot }) {
   const color = LABEL_COLOR[snap.strength_label] ?? "var(--color-earth)";
-  const max = snap.hour_unknown ? 6 : STRENGTH_MAX;
-  const v = snap.strength;
-  const pct = v == null ? null : Math.min(100, Math.max(0, 50 + (v / max) * 50));
+  const pct = snap.strength_pct == null ? null : Math.min(100, Math.max(0, snap.strength_pct));
   return (
     <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] p-3 space-y-2.5">
       <img
@@ -35,7 +31,7 @@ function Person({ name, snap }: { name: string; snap: PillarSnapshot }) {
       <div className="text-center">
         <p className="text-xs font-semibold text-[var(--color-ink-muted)] truncate">{name}님</p>
         <p className="font-heading text-base font-bold" style={{ color }}>{snap.strength_label}</p>
-        {v != null && <p className="text-[11px] font-semibold" style={{ color }}>{v > 0 ? `+${v}` : v}</p>}
+        {pct != null && <p className="text-[11px] font-semibold" style={{ color }}>기운 {pct}%</p>}
       </div>
       {pct != null && (
         <div>
@@ -47,8 +43,8 @@ function Person({ name, snap }: { name: string; snap: PillarSnapshot }) {
             />
           </div>
           <div className="flex justify-between text-[9px] mt-1">
-            <span className="text-[var(--color-water)]">−{max}</span>
-            <span className="text-[var(--color-fire)]">+{max}{snap.hour_unknown ? " · 세 기둥" : ""}</span>
+            <span className="text-[var(--color-water)]">약</span>
+            <span className="text-[var(--color-fire)]">강{snap.hour_unknown ? " · 세 기둥" : ""}</span>
           </div>
         </div>
       )}

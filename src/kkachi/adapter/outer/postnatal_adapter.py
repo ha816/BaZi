@@ -176,7 +176,7 @@ class PostnatalAdapter(PostnatalPort):
     ) -> dict[str, dict]:
         seun_sipsins = [seun_stem[1], seun_branch[1]]
         daeun_sipsins = [s for _, s in self._get_sipsin(current_daeun.ganji)] if current_daeun else []
-        strength = self.natal.strength
+        strength = self.natal.strength_pct
         scores = {}
         for domain_name, domain_sipsins in DOMAIN_MAP.items():
             seun_matches = [s for s in seun_sipsins if s in domain_sipsins]
