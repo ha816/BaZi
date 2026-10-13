@@ -93,22 +93,21 @@ export default function SelfQuizCard({ items, name, answers, submitted, onAnswer
             </div>
             <KkachiTip>{rateNote(matched / items.length)}</KkachiTip>
             <p className="text-xs font-semibold text-[var(--color-ink-muted)] pt-1">문항별로 맞춰 보기</p>
-            {items.map((it, i) => {
-              const pick = answers[i];
-              const same = pick === it.predict;
-              const tone = same ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50";
-              return (
-                <div key={it.basis} className={`rounded-xl border p-3 space-y-1 ${tone}`}>
-                  <p className="text-sm font-semibold leading-snug text-[var(--color-ink)]">Q{i + 1}. {it.q}</p>
+            {/* 다른 문항을 먼저(근거 포함), 일치한 문항은 뒤에 짧게(근거 없이) — 번호는 원래 문항 순서 그대로 */}
+            {items
+              .map((it, i) => ({ it, i, same: answers[i] === it.predict }))
+              .sort((a, b) => Number(a.same) - Number(b.same))
+              .map(({ it, i, same }) => (
+                <div key={it.basis} className={`rounded-xl border space-y-1 ${same ? "border-emerald-200 bg-emerald-50 px-3 py-2" : "border-rose-200 bg-rose-50 p-3"}`}>
+                  <p className={`font-semibold leading-snug text-[var(--color-ink)] ${same ? "text-xs" : "text-sm"}`}>Q{i + 1}. {it.q}</p>
                   <p className="text-xs">
-                    <span className="text-[var(--color-ink-muted)]">내 답 </span><strong className="text-[var(--color-ink)]">{LABEL[pick]}</strong>
+                    <span className="text-[var(--color-ink-muted)]">내 답 </span><strong className="text-[var(--color-ink)]">{LABEL[answers[i]]}</strong>
                     <span className="text-[var(--color-ink-muted)]"> · 사주 예측 </span><strong className="text-[var(--color-ink)]">{LABEL[it.predict]}</strong>
                     <span className={`ml-1.5 font-bold ${same ? "text-emerald-700" : "text-rose-700"}`}>{same ? "✓ 일치" : "✗ 다름"}</span>
                   </p>
-                  <p className="text-[11px] leading-snug text-[var(--color-ink-muted)]">근거: {it.reason}</p>
+                  {!same && <p className="text-[11px] leading-snug text-[var(--color-ink-muted)]">근거: {it.reason}</p>}
                 </div>
-              );
-            })}
+              ))}
             <button type="button" onClick={onReset} className="block mx-auto text-xs text-[var(--color-gold)] underline underline-offset-2">다시 답하기</button>
           </div>
         )}
