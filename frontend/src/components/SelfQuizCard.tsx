@@ -51,7 +51,7 @@ export default function SelfQuizCard({ items, name, answers, submitted, onAnswer
             <KkachiTip>평소의 {who}에 가장 가까운 답을 골라 주세요. 10문항을 다 고르면 사주가 미리 예측해 둔 답과 한꺼번에 맞춰, 얼마나 맞는지 알려드려요.</KkachiTip>
             {items.map((it, i) => (
               <div key={it.basis} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] p-3 space-y-2">
-                <p className="text-sm font-semibold leading-snug text-[var(--color-ink)]">Q{i + 1}. {it.q}</p>
+                <p className="text-sm font-semibold leading-snug text-[var(--color-ink)] break-keep">Q{i + 1}. {it.q}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {OPTIONS.map((o) => {
                     const on = answers[i] === o.pick;
@@ -99,7 +99,7 @@ export default function SelfQuizCard({ items, name, answers, submitted, onAnswer
               .sort((a, b) => Number(a.same) - Number(b.same))
               .map(({ it, i, same }) => (
                 <div key={it.basis} className={`rounded-xl border space-y-1 ${same ? "border-emerald-200 bg-emerald-50 px-3 py-2" : "border-rose-200 bg-rose-50 p-3"}`}>
-                  <p className={`font-semibold leading-snug text-[var(--color-ink)] ${same ? "text-xs" : "text-sm"}`}>Q{i + 1}. {it.q}</p>
+                  <p className={`font-semibold leading-snug text-[var(--color-ink)] break-keep ${same ? "text-xs" : "text-sm"}`}>Q{i + 1}. {it.q}</p>
                   <p className="text-xs">
                     <span className="text-[var(--color-ink-muted)]">내 답 </span><strong className="text-[var(--color-ink)]">{LABEL[answers[i]]}</strong>
                     <span className="text-[var(--color-ink-muted)]"> · 사주 예측 </span><strong className="text-[var(--color-ink)]">{LABEL[it.predict]}</strong>
