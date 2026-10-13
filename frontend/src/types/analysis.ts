@@ -688,6 +688,6 @@ export interface SelfQuizItem {
   basis: string;
   count: number;
   /** 사주 예측: 그렇다 / 반반 / 아니다 */
-  predict: "yes" | "half" | "no";
+  predict: "yes" | "no";
   reason: string;
 }

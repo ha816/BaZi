@@ -17,11 +17,11 @@ _SELF_Q: dict[Sipsin, str] = {
     Sipsin.偏印: "혼자만의 시간이 없으면 쉽게 지치는 편인가요?",
     Sipsin.正印: "새로운 걸 배우고 자격을 따는 걸 좋아하는 편인가요?",
 }
-_PREDICT_LABEL = {"yes": "그렇다", "half": "반반", "no": "아니다"}
+_PREDICT_LABEL = {"yes": "그렇다", "no": "아니다"}
 
 
 def build_self_quiz(natal: dict) -> list[dict]:
-    """natal 결과 dict → [{q, basis, count, predict(yes|half|no), reason}] 10문항. 십신 정보가 없으면 []"""
+    """natal 결과 dict → [{q, basis, count, predict(yes|no), reason}] 10문항. 십신이 1개라도 있으면 그렇다. 십신 정보가 없으면 []"""
     entries = natal.get("sipsin") or []
     if not entries:
         return []
@@ -31,13 +31,13 @@ def build_self_quiz(natal: dict) -> list[dict]:
     out = []
     for sp in SIPSIN_ORDER:
         n = counts.get(sp.name, 0)
-        predict = "yes" if n >= 2 else "half" if n == 1 else "no"
+        predict = "yes" if n >= 1 else "no"
         kor = f"{sipsin_korean(sp)}({sp.name})"
         trait = SIPSIN_TRAIT[sp] + josa(SIPSIN_TRAIT[sp], "이", "가")
         if n >= 2:
             why = f"사주에 {kor}{josa(sipsin_korean(sp), '이', '가')} {n}개 — {trait} 뚜렷한 편"
         elif n == 1:
-            why = f"사주에 {kor}{josa(sipsin_korean(sp), '이', '가')} 1개 — {trait} 조금 있는 편"
+            why = f"사주에 {kor}{josa(sipsin_korean(sp), '이', '가')} 1개 — {trait} 있는 편"
         else:
             why = f"사주에 {kor}{josa(sipsin_korean(sp), '이', '가')} 없어요 — {trait} 약한 편"
         out.append({

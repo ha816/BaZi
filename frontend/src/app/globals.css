@@ -168,6 +168,60 @@ body {
 .heart-thump { animation: heart-thump 1.2s ease-in-out infinite; }
 .score-pop { animation: score-pop 0.5s ease-out both; }
 
+/* 사주 캐릭터 공개 — 실루엣 → 천간 슬롯 → 짠! (SajuCharacterCard RevealGate) */
+.char-silhouette { filter: blur(10px) brightness(0.75) saturate(0.5); transform: scale(1.02); }
+@keyframes char-shake {
+  0%, 100% { transform: rotate(0) scale(1); }
+  25%      { transform: rotate(-4deg) scale(1.03); }
+  75%      { transform: rotate(4deg) scale(1.03); }
+}
+.char-silhouette--shake { animation: char-shake 0.25s ease-in-out infinite; }
+@keyframes char-reveal {
+  0%   { opacity: 0; transform: scale(0.6) rotate(-6deg); filter: blur(10px); }
+  45%  { filter: brightness(1.6); }
+  70%  { opacity: 1; transform: scale(1.04) rotate(1deg); filter: brightness(1.1); }
+  100% { opacity: 1; transform: scale(1) rotate(0); filter: none; }
+}
+.char-reveal { animation: char-reveal 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.stem-slot {
+  min-width: 11rem;
+  height: 3.25rem;
+  overflow: hidden;
+  border: 1.5px solid;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.1s, border-color 0.1s, color 0.1s;
+}
+@keyframes stem-roll {
+  0%   { transform: translateY(-70%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.stem-slot__item { display: inline-flex; align-items: center; gap: 0.5rem; animation: stem-roll 0.07s ease-out both; }
+.stem-slot--landed { animation: score-pop 0.35s ease-out, glow-pulse 0.5s ease-in-out 1; }
+@keyframes bar-grow {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+.bar-grow { animation: bar-grow 0.9s ease-out 0.8s both; }
+/* 사주팔자 등장 연출 — 기둥이 솟고(pillar-rise) 글자가 도장처럼 찍힌다(ink-stamp). PillarDetail animate */
+@keyframes pillar-rise {
+  0%   { opacity: 0; transform: translateY(24px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pillar-rise { animation: pillar-rise 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes ink-stamp {
+  0%   { opacity: 0; transform: scale(1.9) rotate(-10deg); filter: blur(3px); }
+  55%  { opacity: 1; transform: scale(0.9) rotate(2deg); filter: blur(0); }
+  75%  { transform: scale(1.06) rotate(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.ink-stamp { display: inline-block; animation: ink-stamp 0.6s ease-out both; } /* 글자 하나가 찍히는 시간 */
+@media (prefers-reduced-motion: reduce) {
+  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp { animation: none !important; }
+}
+
 /* Glow pulse — 용신 reveal 등 */
 @keyframes glow-pulse {
   0%, 100% { box-shadow: 0 0 0 0 var(--glow-color, #A68B5B); }

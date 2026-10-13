@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { CompatibilityResult, RelationType } from "@/types/analysis";
 import { getDailyCompat, type DailyCompat } from "@/lib/api";
@@ -60,7 +60,6 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
 
   // 탭은 ResultSlides처럼 ?tab= 에 둔다 (invite·p1·p2 등 다른 파라미터는 유지)
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const tabParam = searchParams.get("tab");
   const canDaily = !!memberId && !!profileId1 && !!profileId2;
@@ -89,7 +88,8 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const setTab = (id: CompatTabId) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", id);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    // 서버 왕복 없이 URL만 바꾼다 — ResultSlides.handleTabChange 참고
+    window.history.replaceState(null, "", `${pathname}?${params.toString()}`);
   };
 
   useEffect(() => {

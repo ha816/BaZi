@@ -160,7 +160,7 @@ export default function AnalysisPage() {
                   />
                 )}
                 <button
-                  onClick={() => { setResult(null); setError(null); }}
+                  onClick={() => { setResult(null); setError(null); window.history.replaceState(null, "", "/analysis"); }}
                   className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
                 >
                   다시 입력

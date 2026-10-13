@@ -21,14 +21,26 @@ interface Props {
   highlightDayStem?: boolean;
   jizanGan?: JizanGanItem[][];
   gongmang?: boolean[];
+  /** 등장 연출 — 시→일→월→년(화면 왼쪽부터) 순으로 기둥이 솟고, 천간·지지가 도장처럼 찍힌다 (만세력 첫 카드) */
+  animate?: boolean;
 }
+
+// 등장 연출 타이밍(초) — 기둥 간격(네 기둥이 다 서는 데 약 1.0초), 기둥이 선 뒤 천간·지지가 찍히는 시점.
+// 글자 하나가 찍히는 시간(0.6초)은 globals.css .ink-stamp
+const RISE_GAP = 0.275;
+const STAMP_STEM = 0.3;
+const STAMP_BRANCH = 0.5;
 
 const PILLAR_LABELS = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"];
 const PILLAR_SUB = ["조상·사회", "부모·성장", "나·배우자", "자녀·노년"];
 const PILLAR_TERMS = ["년주", "월주", "일주", "시주"];
 const PILLAR_TERMS_HAN = ["年柱", "月柱", "日柱", "時柱"];
 
-export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false, jizanGan, gongmang }: Props) {
+export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false, jizanGan, gongmang, animate = false }: Props) {
+  // 시주(origI 3)부터 차례로 — 화면 왼쪽(시)에서 오른쪽(년)으로
+  const order = (origI: number) => 3 - origI;
+  const rise = (origI: number) => (animate ? { className: "pillar-rise", style: { animationDelay: `${order(origI) * RISE_GAP}s` } } : { className: "", style: {} });
+  const stamp = (origI: number, at: number) => (animate ? { className: "ink-stamp", style: { animationDelay: `${order(origI) * RISE_GAP + at}s` } } : { className: "", style: {} });
   return (
     <div>
       {pillarSummary && (
@@ -50,8 +62,8 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
           if (!pillar) {
             // 출생시간 미상 → 시주(時柱) 자리를 비워 두고 왜 비었는지 보여준다
             return (
-              <div key={i} className="rounded-xl text-center border border-dashed flex flex-col"
-                style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-ivory-warm)" }}>
+              <div key={i} className={`rounded-xl text-center border border-dashed flex flex-col ${rise(origI).className}`}
+                style={{ borderColor: "var(--color-border)", backgroundColor: "var(--color-ivory-warm)", ...rise(origI).style }}>
                 <div className="px-1.5 md:px-3 py-2 md:py-3 border-b border-dashed" style={{ borderColor: "var(--color-border)" }}>
                   <div className="text-xs md:text-sm font-medium text-[var(--color-ink-muted)] leading-tight">{PILLAR_LABELS[origI]}</div>
                   <div className="text-[10px] md:text-xs text-[var(--color-ink-faint)] leading-tight">시간 모름</div>
@@ -66,11 +78,13 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
           return (
             <div
               key={i}
-              className="rounded-xl text-center border transition-shadow"
-              style={isDayPillar
-                ? { borderColor: "var(--color-gold)", backgroundColor: "var(--color-gold-faint)" }
-                : { borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }
-              }
+              className={`rounded-xl text-center border transition-shadow ${rise(origI).className}`}
+              style={{
+                ...(isDayPillar
+                  ? { borderColor: "var(--color-gold)", backgroundColor: "var(--color-gold-faint)" }
+                  : { borderColor: "var(--color-border-light)", backgroundColor: "var(--color-card)" }),
+                ...rise(origI).style,
+              }}
             >
               <div className="px-1.5 md:px-3 py-2 md:py-3 border-b" style={{ borderColor: isDayPillar ? "var(--color-gold)" : "var(--color-border-light)" }}>
                 {basic ? (
@@ -98,8 +112,8 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                   천간(天干)
                 </div>
                 <div
-                  className="font-heading text-lg md:text-3xl font-bold leading-tight"
-                  style={{ color: stemInfo?.color ?? "var(--color-ink)" }}
+                  className={`font-heading text-lg md:text-3xl font-bold leading-tight ${stamp(origI, STAMP_STEM).className}`}
+                  style={{ color: stemInfo?.color ?? "var(--color-ink)", ...stamp(origI, STAMP_STEM).style }}
                 >
                   {STEM_KOR[stem]}({stem})
                 </div>
@@ -123,8 +137,8 @@ export default function PillarDetail({ pillars, dayStem, pillarElements, basic =
                   지지(地支)
                 </div>
                 <div
-                  className="font-heading text-lg md:text-3xl font-bold leading-tight"
-                  style={{ color: branchInfo?.color ?? "var(--color-ink)" }}
+                  className={`font-heading text-lg md:text-3xl font-bold leading-tight ${stamp(origI, STAMP_BRANCH).className}`}
+                  style={{ color: branchInfo?.color ?? "var(--color-ink)", ...stamp(origI, STAMP_BRANCH).style }}
                 >
                   {BRANCH_KOR[branch]}({branch})
                 </div>

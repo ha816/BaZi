@@ -85,7 +85,7 @@ BaZi/
 │   │   ├── ganji.py             # Oheng, Stem, Branch, StemBranch, Pillar, Sipsin, SibiUnseong, Gongmang,
 │   │   │                        #   StemCombine/StemClash, BranchCombine/Clash/Wonjin/Hyung/Hae/Pa, SAMHAP_GROUPS, OHENG_GUIDE
 │   │   ├── natal.py             # Jeol, Samjae, Sinsal enum · Saju(hour=None이면 세 기둥) · NatalInfo · DaeunPeriod · PostnatalInfo
-│   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · Summary(한눈에 5줄) · NatalResult · PostnatalResult · Interpretation
+│   │   ├── interpretation.py    # InterpretBlock/Tip · FengShuiResult · ZodiacResult · Summary(탭별 요약 — 화면 노출 없음, LLM 기본 요약용으로 유지) · NatalResult · PostnatalResult · Interpretation
 │   │   ├── fortune.py           # Fortune (일진 결과 + 아침 한 마디 headline/action/caution) · FortuneCache
 │   │   ├── compatibility.py     # PillarRelation · PillarSnapshot · CompatibilityResult · Compatibility
 │   │   ├── user.py              # User(hour_unknown 포함), Gender("male"|"female")
@@ -102,7 +102,7 @@ BaZi/
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
 │   │   ├── compatibility_prompt.py   # format_chat_context·format_narrative_prompt — 궁합 결과 → LLM 챗 [데이터] 블록·종합해석 프롬프트
 │   │   ├── saju_character.py     # build_saju_character(natal) 사주 캐릭터 20유형(일간×신강/신약) → NatalResult.character {key(그림 saju_character/{key}.webp), name, title, line, job, jobs[3](선호하는 일), jobs_avoid[3](선호하지 않는 일), strength_pct…} — 표는 docs/SAJU_CHARACTER_TYPES.md와 함께 갱신
-│   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 내 사주 맞춰 보기 10문항 — 십신 개수로 그렇다/반반/아니다 예측 (V3, 설문으로 출생시간 추정 안 함)
+│   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 설문조사 10문항 — 십신이 1개라도 있으면 그렇다, 없으면 아니다 예측(2026-10-13 반반 제거) (V3, 설문으로 출생시간 추정 안 함)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
 │   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 — 두 사람 십신 합집합마다 1문항(더 많이 가진 쪽이 예측, 6~10개, 모자라면 강약·신살 질문으로 채움; 스냅샷 `sipsin` 없는 옛 캐시는 고정 6문항)
 │   │   ├── compatibility_zodiac.py   # build_compat_zodiac(result dict, year) 띠궁합 — 두 사람 년지 띠 정보·띠끼리 충합·4년 연도별 각자 관계 (스냅샷 년주만 써서 옛 캐시에도 동작)
@@ -159,9 +159,10 @@ BaZi/
 │   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
 │   │   └── admin/feedback/page.tsx  # 탭별 👍/👎 요약 대시보드
 │   ├── components/
-│   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — 9개 feature 탭(?tab=, 한눈에 SummaryCard 포함) + FeedbackBar + SajuChat FAB
-│   │   ├── SummaryCard.tsx          # 까치 한눈에 — 나·올해·이번 달·오늘·조심 (postnatal.summary)
-│   │   ├── SelfQuizCard.tsx         # 내 사주 맞춰 보기(V3) — 한눈에 탭 SummaryCard 아래 선택형. 10문항 답한 뒤 한꺼번에 사주 예측과 비교 → 일치율·신뢰도·사주 스타일(상태는 ResultSlides, 서버 저장 없음)
+│   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — 9개 feature 탭(?tab=, 기본 natal. 한눈에 탭은 2026-10-13 제거 — 옛 ?tab=summary는 natal로) + 탭 끝 NextTabCard("다음 이야기" — 흥미 유발 제목 hook만, 내용 미리보기 없음) + FeedbackBar + SajuChat FAB. 탭 전환은 history.replaceState(서버 왕복 없음) + 새 탭 첫 줄로 스크롤
+│   │   ├── ResultIntro.tsx          # 분석 직후 전체 화면 인트로(?step=intro, 건너뛰기 가능) — 캐릭터 공개(SajuCharacterCard RevealGate 천간 슬롯) → 캐릭터 인사 말풍선 → [📋 설문조사 → ?step=survey] / [🗺️ 내 사주 분석 보기 → "운세 지도 펼치는 중…" → ?tab=natal]. 결과 단계는 한 페이지 안 주소(?step=)로 관리(pushState — 뒤로 가기로 설문 → 인트로). 새 결과(주소에 step·tab 없음)만 인트로, natal.character 없으면 생략. 설문 화면은 ResultSlides가 같은 전체 화면 틀로 SelfQuizCard를 띄움 — 제출해도 일치율은 여기서 안 보여주고 "답변 완료! 설문조사 탭에 숨겨 뒀어요" 화면만(일치율은 설문조사 탭에서 공개, 다음 이야기 카드도 "몇 % 맞았을까?"로 예고)
+│   │   ├── SummaryCard.tsx          # GroupBox(카테고리 박스)만 남음 — 궁합 SummaryTab이 씀. 분석 "한눈에" 카드는 2026-10-13 화면에서 제거(postnatal.summary API는 LLM 기본 요약용으로 유지)
+│   │   ├── SelfQuizCard.tsx         # 설문조사(V3, 2026-10-13 "내 사주 맞춰 보기"에서 이름 변경) — 설문조사 탭(AI 풀이 앞) 선택형. 10문항 그렇다/아니다로 답한 뒤 한꺼번에 사주 예측과 비교 → 일치율(같은 답 수/10)·신뢰도·사주 스타일(상태는 ResultSlides, 서버 저장 없음). 인트로의 ?step=survey 화면에서도 같은 상태로 뜸
 │   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
@@ -310,7 +311,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 ```
 # 사주 해석 (kkachi_controller, prefix /kkachi)
 POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul", longitude?, name="", hour_unknown=false }
-                             → { natal: NatalResult, postnatal: PostnatalResult, self_quiz: [{q, basis, count, predict: yes|half|no, reason}] }  (self_quiz = 내 사주 맞춰 보기 10문항, 프로필 /analyze 응답에도 붙음)
+                             → { natal: NatalResult, postnatal: PostnatalResult, self_quiz: [{q, basis, count, predict: yes|no, reason}] }  (self_quiz = 설문조사 10문항, 프로필 /analyze 응답에도 붙음)
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
@@ -553,17 +554,17 @@ erDiagram
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
 |----|------|---------|
-| `summary` | 한눈에 | `SajuCharacterCard` 나의 사주 캐릭터(그림·유형명·한 줄 — 자연물 비유 name은 노출 안 함·선호하는 일 | 선호하지 않는 일 두 칸·기운 % 게이지 → 만세력 탭, `natal.character` 없는 옛 결과는 숨김) + `SummaryCard` — 나·올해·이번 달·오늘·조심 (postnatal.summary) + 아래 `SelfQuizCard` 내 사주 맞춰 보기 (V3, 선택형 10문항 → 일치율·신뢰도·사주 스타일) |
-| `natal` | 만세력 | `NatalTab` → PillarSection · StrengthSection(신강·신약) · SipsinSection · JizanganSection · GongmangSection |
+| `natal` | 만세력 | `NatalTab` → PillarSection(등장 연출 `PillarDetail animate`: 시→일→월→년 기둥이 솟고 천간·지지가 도장처럼 찍힘 — 인트로·설문이 덮는 동안엔 탭 본문을 마운트하지 않아 닫힌 뒤 재생. 일간 심상은 "확인하기"로 열림) · StrengthSection(신강·신약) · `SajuCharacterCard` 나의 캐릭터(2026-10-13 한눈에서 이동·이름 변경, `afterStrength` slot, 신강·신약처럼 "확인하기"를 눌러야 열림 — 그림·유형명·한 줄·선호하는 일 | 선호하지 않는 일·기운 % 게이지, 자연물 비유 name 노출 안 함, `natal.character` 없으면 숨김) · SipsinSection · JizanganSection · GongmangSection |
 | `energy` | 신살·운성 | `EnergyTab` → SibiUnseongSection · SinsalSection |
 | `yongshin` | 용신·삼재 | `YongshinTab`(오행 분석, 용신·기신) + `SamjaeTab` |
 | `timing` | 택시(擇時) | `TimingTab` — 영역 6개 × 12개월 색칠, 선택 달 근거·행동 + `DomainFortuneSection` |
 | `daeun` | 시운(時運) | `DaeunTab` + `SeunTab` + `WolUnTab` + `FortuneTab`(충합, 영역별 운) |
 | `zodiac` | 십이지신 | `ZodiacTab` |
 | `fengshui` | 풍수 | `FengShuiTab` |
+| `survey` | 설문조사 | `SelfQuizCard` (V3, 그렇다/아니다 10문항 → 일치율·신뢰도·사주 스타일, 2026-10-13 한눈에서 별도 탭으로). `self_quiz` 없는 옛 결과는 탭 숨김 |
 | `ai` | AI 풀이 | `AiTab` → `/kkachi/stream-report` 스트리밍 (Ollama 없으면 에러 문구) |
 
-- 맨 위 `SummaryCard`(까치 한눈에): 나·올해·이번 달·오늘·조심 다섯 줄. 나머지 탭은 그 아래 "더 알아보기" 성격. `summary_view` 이벤트
+- 한눈에 탭(`SummaryCard`)은 2026-10-13 화면에서 뺐다. `postnatal.summary`(me·year·month·today·caution·energy·timing·yongshin·zodiac·fengshui)는 API에 그대로 두고, 나중에 탭별 요약을 LLM에 기본 요약으로 넘기는 데 쓴다. `summary_view` 이벤트는 더 이상 안 나감
 - 모든 탭 하단에 `FeedbackBar` (memberId·profileId 있을 때만 전송), 우하단 `SajuChat` FAB → `/chat`.
 - 카드 포맷: `slide-card` + `CollapsibleSectionHeader`/`SectionHeader` + divider + 본문 시작에 인트로 `KkachiTip` 필수 (`docs/REFACTORING.md §4-3`).
 
@@ -675,7 +676,7 @@ tests/
     ├── test_push_service.py    # 푸시 페이로드
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
-    ├── test_self_quiz.py       # 내 사주 맞춰 보기 10문항(개수→예측·근거·조사)
+    ├── test_self_quiz.py       # 설문조사 10문항(개수→그렇다/아니다 예측·근거·조사)
     ├── test_compat_share_card.py # 궁합 공유 카드 스냅샷(점수만·character 이름 채움·일간 색은 일간 오행) · test_daily_share_card.py 시운 카드 · test_profile_service.py
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```

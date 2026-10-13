@@ -17,6 +17,8 @@ export default function PillarSection({ natal }: Props) {
   const meInfo = getElementInfo(natal.my_element.name);
   const stored = useStorageValue("kkachi_concept_saju");
   const [override, setOverride] = useState<boolean | null>(null);
+  // 일간 심상 — 신강·신약처럼 "확인하기"를 눌러야 그림·풀이가 열린다
+  const [showStem, setShowStem] = useState(false);
   const sajuOpen = override ?? stored === "open";
 
   const toggleSaju = () => {
@@ -49,42 +51,53 @@ export default function PillarSection({ natal }: Props) {
           사주의 4기둥 8글자가 펼쳐지는 큰 지도예요. 위쪽 천간(天干)은 마음·뜻을, 아래쪽 지지(地支)는 환경·시간을 나타내요. 그 중 일주의 천간(日干)이 바로 나 자신입니다.
         </KkachiTip>
 
-        <PillarDetail pillars={natal.pillars} dayStem={natal.day_stem} basic />
+        <PillarDetail pillars={natal.pillars} dayStem={natal.day_stem} basic highlightDayStem animate />
 
         <div className="rounded-xl p-4 space-y-3 border border-[var(--color-border-light)]"
           style={{ backgroundColor: "var(--color-card)" }}>
           <p className="text-xs font-semibold text-[var(--color-ink-muted)] text-center">
             일간(日干) 심상(心象)
           </p>
-          <img
-            src={`/kkachi/sipgan/십간_${stemKor}.png`}
-            alt=""
-            className="w-4/5 mx-auto block aspect-[3/2] rounded-2xl object-cover"
-            style={{ backgroundColor: "var(--color-card)" }}
-            onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
-          />
-          <div className="flex flex-col items-center gap-2 text-center">
-            <p className="font-heading font-bold leading-snug text-[var(--color-ink)]">
-              <span className="text-3xl mr-1" style={{ color: meInfo.color }}>
-                {stemKor || natal.day_stem}({natal.day_stem})
-              </span>
-              <span className="text-lg">- {stemProfile.tagline}</span>
-            </p>
-            <div className="flex flex-wrap gap-1 justify-center">
-              {stemProfile.keywords.map((kw) => (
-                <span
-                  key={kw}
-                  className="text-[10px] px-2 py-0.5 rounded-full border font-medium"
-                  style={{ color: meInfo.color, borderColor: meInfo.borderColor, backgroundColor: meInfo.bgColor }}
-                >
-                  {kw}
-                </span>
-              ))}
+          {!showStem ? (
+            <button
+              type="button"
+              onClick={() => setShowStem(true)}
+              className="btn-shimmer w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:opacity-70"
+            >
+              ✨ 나의 일간 심상 확인하기
+            </button>
+          ) : (
+            <div className="space-y-3 score-pop">
+              <img
+                src={`/kkachi/sipgan/십간_${stemKor}.png`}
+                alt=""
+                className="w-4/5 mx-auto block aspect-[3/2] rounded-2xl object-cover"
+                style={{ backgroundColor: "var(--color-card)" }}
+                onError={(e) => { (e.target as HTMLImageElement).src = "/kkachi/normal_kkachi_00.png"; }}
+              />
+              <div className="flex flex-col items-center gap-2 text-center">
+                <p className="font-heading font-bold leading-snug text-[var(--color-ink)]">
+                  <span className="text-3xl mr-1" style={{ color: meInfo.color }}>
+                    {stemKor || natal.day_stem}({natal.day_stem})
+                  </span>
+                  <span className="text-lg">- {stemProfile.tagline}</span>
+                </p>
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {stemProfile.keywords.map((kw) => (
+                    <span
+                      key={kw}
+                      className="text-[10px] px-2 py-0.5 rounded-full border font-medium"
+                      style={{ color: meInfo.color, borderColor: meInfo.borderColor, backgroundColor: meInfo.bgColor }}
+                    >
+                      {kw}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <KkachiTip>{stemProfile.hint}</KkachiTip>
             </div>
-          </div>
+          )}
         </div>
-
-        <KkachiTip>{stemProfile.hint}</KkachiTip>
       </div>
     </div>
   );
