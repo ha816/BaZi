@@ -687,6 +687,8 @@ export interface SelfQuizItem {
   /** 십신 한자 (예: 食神) */
   basis: string;
   count: number;
+  /** 십신·지장간 조합 점수(천간 자리 가중 + 지장간 비중×지지 자리 가중 + 투출 5) — 8점 이상이면 그렇다. 옛 응답엔 없음 */
+  score?: number;
   /** 사주 예측: 그렇다 / 반반 / 아니다 */
   predict: "yes" | "no";
   reason: string;
