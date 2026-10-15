@@ -148,7 +148,7 @@ body {
   color: var(--color-gold);
 }
 
-/* 궁합 점수 공개 — 두근두근 드럼롤 (compatibility/TotalTab RevealGate) */
+/* 궁합 점수 공개 — 두근두근 드럼롤 (compatibility/CompatTotal RevealGate, 결과 직후 인트로) */
 @keyframes drum-beat {
   0%, 100% { transform: translateY(0) rotate(-8deg) scale(1); }
   50%      { transform: translateY(-6px) rotate(8deg) scale(1.15); }

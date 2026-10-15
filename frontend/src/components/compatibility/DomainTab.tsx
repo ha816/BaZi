@@ -4,7 +4,7 @@ import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
 import type { CompatTabProps } from "./types";
 
-// 종합 궁합 카드(TotalTab)도 같은 아이콘·순서·레이더를 쓴다
+// 아이콘·순서·레이더는 이 파일이 기준
 export const DOMAIN_ICONS: Record<string, string> = {
   연애: "💕",
   결혼: "💍",

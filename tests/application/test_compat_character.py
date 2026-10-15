@@ -49,9 +49,8 @@ def test_sipsin_union_drives_questions_and_fill_to_minimum():
     bases = [s["basis"] for s in sc]
     assert bases[:5] == ["比肩", "食神", "正財", "偏官", "正印"]  # 합집합, 십신 순서
     food = next(s for s in sc if s["basis"] == "食神")
-    assert food["who"] == "p1" and food["reason"].startswith("식신(食神)이 2개(상대 1개)")
+    assert food["who"] == "p1" and food["reason"] == "식신(食神) 기운이 더 뚜렷한 쪽 — 먹고 즐기는 여유가 더 강해요"  # 개수 미노출
     assert next(s for s in sc if s["basis"] == "正印")["who"] == "p2"
-    assert food["reason"].endswith("먹고 즐기는 여유가 더 강한 쪽")  # 받침 없는 말 뒤 '가'
     assert len(sc) == 6 and sc[5]["basis"] == "lead"  # 5개뿐이라 강약 질문으로 채움
 
 
@@ -63,9 +62,22 @@ def test_sipsin_question_text_depends_on_relation_and_cap():
     assert len(lover) == 10  # 최대 10
     assert lover[2]["q"] == "데이트 맛집 찾기를 맡는 쪽은?" and family[2]["q"] == "주말에 맛있는 걸 해 먹자고 하는 쪽은?"
     assert lover[2]["who"] == "p2"  # 食神 1 vs 3
-    assert lover[1]["reason"].startswith("겁재(劫財)가 1개")
+    assert lover[1]["reason"].startswith("겁재(劫財) 기운이 더 뚜렷한 쪽")
 
 
 def test_old_cache_without_sipsin_keeps_fixed_six():
     sc = build_compat_character(_result("戊", "庚"), "lover")["scenarios"]
     assert len(sc) == 6 and sc[0]["q"] == "싸우면 누가 먼저 사과할까?"
+
+
+def test_sipsin_score_predicts_with_tie_and_skips_weak():
+    # 새 스냅샷: 십신·지장간 점수(설문조사와 같은 점수)로 — 차이 5점 미만은 둘 다, 둘 다 8점 미만은 묻지 않음
+    r = _result("戊", "庚",
+                s1={"sipsin": {"食神": 1}, "sipsin_score": {"食神": 21.1, "比肩": 18.0, "正財": 3.0, "偏官": 9.0}},
+                s2={"sipsin": {"食神": 1}, "sipsin_score": {"食神": 8.5, "比肩": 15.0, "正財": 7.9, "偏官": 30.0}})
+    sc = {s["basis"]: s for s in build_compat_character(r, "lover")["scenarios"]}
+    assert sc["食神"]["who"] == "p1"
+    assert sc["比肩"]["who"] == "both" and sc["比肩"]["reason"] == "두 분 모두 비견(比肩) 기운이 비슷하게 있어 — 자존심과 독립심이 닮았어요"
+    assert sc["偏官"]["who"] == "p2"
+    assert "正財" not in sc  # 둘 다 8점 미만
+    assert all("개" not in s["reason"] for s in sc.values())

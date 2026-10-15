@@ -57,6 +57,7 @@ export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
               relations={pillar_relations}
               name1={name1}
               name2={name2}
+              animate
             />
 
             {samhap_completions.length > 0 && (

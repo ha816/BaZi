@@ -19,6 +19,7 @@ import DomainFortuneSection from "./tabs/DomainFortuneSection";
 import SajuChat from "./SajuChat";
 import SajuCharacterCard from "./SajuCharacterCard";
 import ResultIntro from "./ResultIntro";
+import NextTabCard from "./NextTabCard";
 import SelfQuizCard, { type SelfPick } from "./SelfQuizCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
@@ -38,30 +39,6 @@ const FEATURE_TABS = [
 
 type FeatureTab = typeof FEATURE_TABS[number];
 type FeatureId = FeatureTab["id"];
-
-/** 탭 맨 아래 "다음 이야기" — 다 읽은 뒤 엄지 닿는 자리에서 다음 탭으로 이어 준다. 내용 미리보기 없이 궁금증을 거는 제목(hook)만. 마지막 탭은 첫 탭(만세력)으로 */
-function NextTabCard({ tabs, active, quizDone, onGo }: { tabs: readonly FeatureTab[]; active: FeatureId; quizDone: boolean; onGo: (id: FeatureId) => void }) {
-  const i = tabs.findIndex((t) => t.id === active);
-  const next = tabs[(i + 1) % tabs.length];
-  const isLoop = i === tabs.length - 1;
-  return (
-    <button
-      type="button"
-      onClick={() => onGo(next.id)}
-      className="mt-6 w-full min-h-14 rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-3.5 text-left flex items-center gap-3 active:scale-[0.98] transition-transform"
-    >
-      <span className="text-3xl flex-shrink-0" aria-hidden>{next.emoji}</span>
-      <span className="flex-1 min-w-0">
-        <span className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--color-gold)]">
-          {isLoop ? "다 둘러봤어요 🎉" : "다음 이야기"}
-          {!isLoop && <span className="font-normal text-[var(--color-ink-faint)]">{i + 2}/{tabs.length} · {next.label}</span>}
-        </span>
-        <span className="block font-heading text-base font-bold leading-snug text-[var(--color-ink)] break-keep">{isLoop ? `처음으로 돌아가 ${next.label}부터 다시 보기` : next.id === "survey" && quizDone ? "답해 둔 설문, 내 사주와 몇 % 맞았을까?" : next.hook}</span>
-      </span>
-      <span className="flex-shrink-0 text-xl text-[var(--color-gold)]" aria-hidden>›</span>
-    </button>
-  );
-}
 
 interface Props {
   data: AnalysisResult;
@@ -316,7 +293,11 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
         {active === "ai"       && <AiTab           {...tabProps} />}
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 
-        <NextTabCard tabs={tabs} active={active} quizDone={quizSubmitted} onGo={handleTabChange} />
+        <NextTabCard
+          tabs={quizSubmitted ? tabs.map((t) => (t.id === "survey" ? { ...t, hook: "답해 둔 설문, 내 사주와 몇 % 맞았을까?" } : t)) : tabs}
+          active={active}
+          onGo={handleTabChange}
+        />
 
         <FeedbackBar
           key={`${active}:${profileId ?? ""}`}

@@ -16,6 +16,7 @@ from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.self_quiz import score_sipsin
 from kkachi.application.util.compatibility_meta import (
     DOMAIN_LABEL_BY_REL,
     RELATION_SHORT_LABEL,
@@ -266,6 +267,11 @@ class CompatibilityService:
             sibi_sinsal=list(natal.sibi_sinsal),
             strength_pct=natal.strength_pct,
             sipsin=dict(Counter(s.name for _, s in natal.sipsin)),
+            sipsin_score={name: round(v["score"], 1) for name, v in score_sipsin({
+                "pillars": [str(sb) for sb in natal.saju.pillars.values()],
+                "sipsin": [{"char": ch, "sipsin_name": s.name} for ch, s in natal.sipsin],
+                "jizan_gan": [[{"stem": ch, "sipsin_name": s.name, "weight": w} for ch, s, w, _ in pjg] for pjg in natal.jizan_gan],
+            }).items()},
         )
 
     def _compute_pillar_relations(

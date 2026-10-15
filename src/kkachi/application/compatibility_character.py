@@ -1,3 +1,4 @@
+from kkachi.application.self_quiz import YES_AT
 from kkachi.application.util.sipsin_meta import SIPSIN_ORDER, SIPSIN_TRAIT, sipsin_korean
 from kkachi.application.util.util import josa
 from kkachi.domain.ganji import Oheng, Pillar, Stem
@@ -145,25 +146,29 @@ _SIPSIN_Q: dict[str, dict[str, str]] = {
     "正印": {"lover": "아플 때 약 챙겨 주는 쪽은?", "friend": "새로 배운 걸 알려주는 쪽은?", "family": "아플 때 약 챙겨 주는 쪽은?"},
 }
 _MIN_Q, _MAX_Q = 6, 10
+_TIE = 5  # 두 사람 십신 점수 차가 이보다 작으면 '둘 다'
 
 
 def _sipsin_scenarios(s1: dict, s2: dict, rel: str) -> list[dict]:
-    """두 사람 십신 합집합 → 십신마다 질문 1개. 더 많이 가진 쪽이 예측 답, 같으면 둘 다"""
-    c1, c2 = s1.get("sipsin") or {}, s2.get("sipsin") or {}
+    """두 사람 십신 → 십신마다 질문 1개. 그 기운이 더 뚜렷한 쪽이 예측 답, 비슷하면 둘 다.
+    새 스냅샷은 십신·지장간 조합 점수(sipsin_score, 설문조사와 같은 점수)로 — 둘 다 기준(8점) 아래인 십신은 묻지 않는다.
+    점수가 없는 옛 캐시는 개수로. 근거 문장엔 개수·점수를 드러내지 않는다"""
+    sc1, sc2 = s1.get("sipsin_score"), s2.get("sipsin_score")
+    by_score = bool(sc1) and bool(sc2)
+    c1, c2 = (sc1, sc2) if by_score else (s1.get("sipsin") or {}, s2.get("sipsin") or {})
     out = []
     for sp in SIPSIN_ORDER:
         name = sp.name
-        n1, n2 = c1.get(name, 0), c2.get(name, 0)
-        if n1 == 0 and n2 == 0:
+        v1, v2 = c1.get(name, 0), c2.get(name, 0)
+        if (max(v1, v2) < YES_AT) if by_score else (v1 == 0 and v2 == 0):
             continue
-        who = _pick(n1, n2)
-        kor = f"{sipsin_korean(sp)}({name})" + josa(sipsin_korean(sp), "이", "가")
+        who = ("both" if abs(v1 - v2) < _TIE else _pick(v1, v2)) if by_score else _pick(v1, v2)
+        kor = f"{sipsin_korean(sp)}({name})"
         trait = SIPSIN_TRAIT[sp] + josa(SIPSIN_TRAIT[sp], "이", "가")
         if who == "both":
-            reason = f"두 분 모두 {kor} {n1}개씩 — {trait} 비슷해요"
+            reason = f"두 분 모두 {kor} 기운이 비슷하게 있어 — {trait} 닮았어요"
         else:
-            hi, lo = (n1, n2) if who == "p1" else (n2, n1)
-            reason = f"{kor} {hi}개(상대 {lo}개) — {trait} 더 강한 쪽"
+            reason = f"{kor} 기운이 더 뚜렷한 쪽 — {trait} 더 강해요"
         out.append({"q": _SIPSIN_Q[name].get(rel, _SIPSIN_Q[name]["lover"]), "who": who, "reason": reason, "basis": name})
     return out
 

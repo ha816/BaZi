@@ -5,7 +5,7 @@ import ShareButton from "@/components/ShareButton";
 import LoginRequired from "@/components/LoginRequired";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { CompatibilityInput, CompatibilityResult, PersonInput, Profile, RelationType } from "@/types/analysis";
 import {
   analyzeCompatibility,
@@ -53,7 +53,6 @@ function CompatibilityPageInner() {
   const [inviteId, setInviteId] = useState<string | null>(null);
   const [inviterName, setInviterName] = useState<string>("");
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   // 로그인 필수 — null=아직 모름(하이드레이션 중), ""=비로그인
   const storedMember = useStorageValue(MEMBER_ID_KEY);
@@ -125,7 +124,7 @@ function CompatibilityPageInner() {
     return toPersonInput(s);
   };
 
-  // 분석 페이지의 "다시 입력"과 같은 동작 — 결과를 지우고 폼으로, ?tab= 제거
+  // 분석 페이지의 "다시 입력"과 같은 동작 — 결과를 지우고 폼으로, ?tab=·?step= 제거(다음 결과가 인트로부터 뜨게)
   const handleReset = () => {
     narrativeAbortRef.current?.abort();
     setResult(null);
@@ -135,7 +134,8 @@ function CompatibilityPageInner() {
     setNarrativeLoading(false);
     const params = new URLSearchParams(searchParams.toString());
     params.delete("tab");
-    router.replace(params.size ? `${pathname}?${params.toString()}` : pathname, { scroll: false });
+    params.delete("step");
+    window.history.replaceState(null, "", params.size ? `${pathname}?${params.toString()}` : pathname);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

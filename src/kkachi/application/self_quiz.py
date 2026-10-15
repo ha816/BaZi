@@ -27,12 +27,13 @@ _PLACE = ["태어난 해", "태어난 달", "태어난 날", "태어난 시간"]
 _STEM_W = {0: 8, 1: 12, 3: 10}           # 년간·월간·시간 (일간은 나 자신이라 제외)
 _BRANCH_W = {0: 8, 1: 30, 2: 15, 3: 12}  # 년지·월지·일지·시지
 _TOUCHUL_BONUS = 5
-_YES_AT = 8
+YES_AT = 8
 _STRONG_AT = 20
 
 
-def _score(natal: dict) -> dict[str, dict]:
-    """십신 이름 → {score, best(가장 큰 자리 문구), best_w, touchul(드러난 천간 자리 문구 | None)}"""
+def score_sipsin(natal: dict) -> dict[str, dict]:
+    """십신 이름 → {score, best(가장 큰 자리 문구), best_w, touchul(드러난 천간 자리 문구 | None)}.
+    궁합 스냅샷(compatibility_service._snapshot)도 같은 점수를 쓴다 — 궁합 "이럴 때 두 분은?" 예측"""
     out = {sp.name: {"score": 0.0, "best": "", "best_w": 0.0, "touchul": None} for sp in SIPSIN_ORDER}
 
     def add(name: str, w: float, where: str):
@@ -90,11 +91,11 @@ def build_self_quiz(natal: dict) -> list[dict]:
     counts: dict[str, int] = {}
     for e in entries:
         counts[e.get("sipsin_name", "")] = counts.get(e.get("sipsin_name", ""), 0) + 1
-    scores = _score(natal)
+    scores = score_sipsin(natal)
     out = []
     for sp in SIPSIN_ORDER:
         s = scores[sp.name]
-        yes = s["score"] >= _YES_AT
+        yes = s["score"] >= YES_AT
         out.append({
             "q": _SELF_Q[sp], "basis": sp.name, "count": counts.get(sp.name, 0), "score": round(s["score"], 1),
             "predict": "yes" if yes else "no", "reason": _reason(sp, s, yes),

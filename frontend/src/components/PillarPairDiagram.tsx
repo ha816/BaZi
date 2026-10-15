@@ -192,9 +192,18 @@ interface Props {
   relations: PillarRelation[];
   name1: string;
   name2: string;
+  /** 등장 연출 — 시→일→월→년 기둥마다 위(첫 분)·아래(둘째 분) 글자가 도장처럼 찍히고, 그 기둥의 합·충 배지가 뒤따라 튀어나온다.
+   *  분석 사주팔자(PillarDetail animate)와 같은 ink-stamp */
+  animate?: boolean;
 }
 
-function PersonCell({ pillar }: { pillar: string }) {
+// 등장 연출 타이밍(초) — 기둥 간격은 분석 사주팔자와 같게, 둘째 분은 첫 분보다 조금 늦게, 배지는 두 분이 다 찍힌 뒤
+const COL_GAP = 0.275;
+const P2_LAG = 0.2;
+const BADGE_AT = 0.85;
+const stampAt = (sec: number | null) => (sec == null ? { className: "", style: {} } : { className: "ink-stamp", style: { animationDelay: `${sec}s` } });
+
+function PersonCell({ pillar, delay = null }: { pillar: string; delay?: number | null }) {
   if (!pillar) {
     return (
       <div className="flex flex-col items-center leading-tight text-[var(--color-ink-faint)]">
@@ -209,22 +218,22 @@ function PersonCell({ pillar }: { pillar: string }) {
   const branchColor = getElementInfo(BRANCH_ELEMENT[branch] ?? "").color;
   return (
     <div className="flex flex-col items-center leading-tight">
-      <span className="font-heading text-sm md:text-base font-bold" style={{ color: stemColor }}>
+      <span className={`font-heading text-sm md:text-base font-bold ${stampAt(delay).className}`} style={{ color: stemColor, ...stampAt(delay).style }}>
         {STEM_KOR[stem] ?? stem}({stem})
       </span>
-      <span className="font-heading text-sm md:text-base font-bold" style={{ color: branchColor }}>
+      <span className={`font-heading text-sm md:text-base font-bold ${stampAt(delay == null ? null : delay + 0.1).className}`} style={{ color: branchColor, ...stampAt(delay == null ? null : delay + 0.1).style }}>
         {BRANCH_KOR[branch] ?? branch}({branch})
       </span>
     </div>
   );
 }
 
-function RelationCell({ rels }: { rels: PillarRelation[] }) {
+function RelationCell({ rels, delay = null }: { rels: PillarRelation[]; delay?: number | null }) {
   if (rels.length === 0) {
     return <span className="text-[var(--color-ink-faint)] text-sm leading-none">·</span>;
   }
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className={`flex flex-col items-center gap-0.5 ${delay == null ? "" : "score-pop"}`} style={delay == null ? undefined : { animationDelay: `${delay}s` }}>
       {rels.map((r, i) => {
         const m = KIND_META[r.kind];
         if (!m) return null;
@@ -257,7 +266,9 @@ function formatLabel(label: string, kind: string): string {
   return `${ch1}${ch2}(${kor1}${kor2})${rest}`;
 }
 
-export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: Props) {
+export default function PillarPairDiagram({ p1, p2, relations, name1, name2, animate = false }: Props) {
+  // COLUMN_HEADERS 순서(시→일→월→년, 화면 왼쪽부터)대로
+  const colAt = (col: number, extra: number) => (animate ? col * COL_GAP + extra : null);
   const samePillarRels = (kor: string) =>
     relations.filter((r) => r.pillar1 === kor && r.pillar2 === kor);
 
@@ -287,23 +298,23 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2 }: P
         </thead>
         <tbody>
           <tr className="border-t border-[var(--color-border-light)]">
-            {COLUMN_HEADERS.map(({ kor, origIndex }) => (
+            {COLUMN_HEADERS.map(({ kor, origIndex }, col) => (
               <td key={`p1-${kor}`} className="py-2 px-1">
-                <PersonCell pillar={p1.pillars[origIndex] ?? ""} />
+                <PersonCell pillar={p1.pillars[origIndex] ?? ""} delay={colAt(col, 0)} />
               </td>
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]">
-            {COLUMN_HEADERS.map(({ kor, origIndex }) => (
+            {COLUMN_HEADERS.map(({ kor, origIndex }, col) => (
               <td key={`p2-${kor}`} className="py-2 px-1">
-                <PersonCell pillar={p2.pillars[origIndex] ?? ""} />
+                <PersonCell pillar={p2.pillars[origIndex] ?? ""} delay={colAt(col, P2_LAG)} />
               </td>
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]" style={{ backgroundColor: "var(--color-ivory)" }}>
-            {COLUMN_HEADERS.map(({ kor }) => (
+            {COLUMN_HEADERS.map(({ kor }, col) => (
               <td key={`rel-${kor}`} className="py-1.5 px-1">
-                <RelationCell rels={samePillarRels(kor)} />
+                <RelationCell rels={samePillarRels(kor)} delay={colAt(col, BADGE_AT)} />
               </td>
             ))}
           </tr>
