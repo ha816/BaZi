@@ -263,6 +263,9 @@ class KkachiService(InterpreterPort):
         natal = interpretation.natal
         post = interpretation.postnatal
         sm = post.summary
+        # 나의 캐릭터(V4) — 카드·OG·공유 문구의 "나는 ○○". 자연물 비유 name과 strength_pct는 싣지 않는다
+        ch = natal.character or {}
+        character = {k: ch[k] for k in ("key", "stem", "stem_korean", "element", "strong", "strength_label", "title", "line", "jobs", "jobs_avoid") if k in ch}
         sinsal: list[str] = []
         for s in natal.sinsal:
             if s["sinsal_korean"] not in sinsal:
@@ -283,6 +286,7 @@ class KkachiService(InterpreterPort):
             "yongshin": natal.yongshin_info,
             "pillar_summary": natal.pillar_summary,
             "sinsal": sinsal[:4],
+            "character": character or None,
             "summary": {
                 "me": sm.me, "energy": sm.energy, "yongshin": sm.yongshin, "year": sm.year, "caution": sm.caution,
             } if sm else {},

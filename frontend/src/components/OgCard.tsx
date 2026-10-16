@@ -22,11 +22,11 @@ const PILLAR_LABELS = ["년주", "월주", "일주", "시주"];
 const ELEMENTS = ["木", "火", "土", "金", "水"];
 
 /** 한 글자 — "병(丙)" 형태: 한글 음 크게 + 괄호 한자 작게, 오행색 */
-function Glyph({ korean, hanja, color }: { korean: string; hanja: string; color: string }) {
+function Glyph({ korean, hanja, color, size = 46 }: { korean: string; hanja: string; color: string; size?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", color, lineHeight: 1.1 }}>
-      <div style={{ display: "flex", fontSize: 46, fontWeight: 700 }}>{korean}</div>
-      <div style={{ display: "flex", fontSize: 28, fontWeight: 400, marginLeft: 2 }}>({hanja})</div>
+      <div style={{ display: "flex", fontSize: size, fontWeight: 700 }}>{korean}</div>
+      <div style={{ display: "flex", fontSize: Math.round(size * 0.6), fontWeight: 400, marginLeft: 2 }}>({hanja})</div>
     </div>
   );
 }
@@ -54,6 +54,21 @@ export function loadOgAssets(): Promise<OgAssets> {
   return assetsPromise;
 }
 
+const charArtCache = new Map<string, Promise<string | null>>();
+
+/** 나의 캐릭터 OG용 그림(public/kkachi/saju_character/og/{key}.jpg, 512px) → data URI. satori가 WebP를 못 읽어 JPEG를 따로 둔다. 없으면 null */
+export function loadCharacterArt(key: string): Promise<string | null> {
+  if (!/^[가-힣]_[강약]$/.test(key)) return Promise.resolve(null);
+  let art = charArtCache.get(key);
+  if (!art) {
+    art = readFile(join(process.cwd(), "public/kkachi/saju_character/og", `${key}.jpg`))
+      .then((buf) => `data:image/jpeg;base64,${buf.toString("base64")}`)
+      .catch(() => null);
+    charArtCache.set(key, art);
+  }
+  return art;
+}
+
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 const outer = {
@@ -75,66 +90,117 @@ const inner = {
   padding: "34px 44px",
 } as const;
 
-/** 공유 카드 — 이름 · 팔자 타일(오행색) · 오행 분포 · 한 줄 요약 · CTA */
-export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string }) {
+/** 팔자 타일 줄 — 년·월·일·시(시간 모름이면 ? 타일). size는 글자 크기, 타일 폭·여백은 그에 맞춰 */
+function PillarTiles({ card, size = 46 }: { card: ShareCard; size?: number }) {
+  const big = size >= 46;
+  const width = big ? 132 : 100;
+  return (
+    <div style={{ display: "flex", gap: big ? 14 : 10 }}>
+      {card.pillars.map((p, i) => {
+        const el = card.pillar_elements[i];
+        return (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              width,
+              borderRadius: 18,
+              background: IVORY_WARM,
+              border: `1px solid ${BORDER}`,
+              padding: big ? "10px 0 12px" : "8px 0 10px",
+              gap: 6,
+            }}
+          >
+            <div style={{ display: "flex", fontSize: big ? 18 : 16, color: INK_MUTED }}>{PILLAR_LABELS[i]}</div>
+            <Glyph korean={card.pillar_stems_korean?.[i] ?? ""} hanja={p[0]} color={getElementInfo(el?.stem_element ?? "").color} size={size} />
+            <Glyph korean={card.pillar_branches_korean?.[i] ?? ""} hanja={p[1]} color={getElementInfo(el?.branch_element ?? "").color} size={size} />
+          </div>
+        );
+      })}
+      {card.hour_unknown && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width,
+            borderRadius: 18,
+            border: `2px dashed ${BORDER}`,
+            color: INK_FAINT,
+          }}
+        >
+          <div style={{ display: "flex", fontSize: big ? 18 : 16 }}>시주</div>
+          <div style={{ display: "flex", fontSize: big ? 56 : 40, fontWeight: 700 }}>?</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 공유 카드 — 이름 · 팔자 타일(오행색) · 오행 분포 · 한 줄 요약 · CTA.
+ *  나의 캐릭터(V4)가 있으면 그림·유형명이 주인공: 왼쪽 그림, 오른쪽 유형명·한 줄·팔자 타일(작게)·선호하는 일. 오행 분포·신살·요약 줄은 뺀다 */
+export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; mascot: string; characterArt?: string | null }) {
   const who = card.name ? `${clip(card.name, 10)}님` : "나";
+  const ch = card.character;
+  const header = (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>사주까치</div>
+        <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 2 }}>{who}의 사주 카드</div>
+      </div>
+      <img src={mascot} alt="" width={88} height={88} style={{ borderRadius: 44 }} />
+    </div>
+  );
+  const footerLeft = (
+    <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>
+      {card.day_stem_korean}({card.day_stem}) 일간 · {card.strength_label} · 용신 {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
+    </div>
+  );
+
+  if (ch) {
+    const el = getElementInfo(ch.element);
+    return (
+      <div style={outer}>
+        <div style={{ ...inner, flexDirection: "column" }}>
+          {header}
+          <div style={{ display: "flex", flex: 1, marginTop: 16, gap: 32, alignItems: "center" }}>
+            {characterArt && <img src={characterArt} alt="" width={272} height={272} style={{ borderRadius: 24, border: `1px solid ${BORDER}` }} />}
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
+              <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: GOLD }}>{who}의 캐릭터 · {ch.stem_korean}({ch.stem}) 일간 · {ch.strength_label}</div>
+              <div style={{ display: "flex", fontSize: 48, fontWeight: 700, lineHeight: 1.15 }}>{clip(ch.title, 14)}</div>
+              <div style={{ display: "flex", fontSize: 24, color: INK_MUTED }}>{clip(ch.line, 40)}</div>
+              <div style={{ display: "flex", marginTop: 4 }}><PillarTiles card={card} size={34} /></div>
+              {ch.jobs.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                  <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>선호하는 일</div>
+                  {ch.jobs.slice(0, 3).map((j) => (
+                    <div key={j} style={{ display: "flex", fontSize: 18, fontWeight: 700, color: el.color, background: el.bgColor, border: `1px solid ${el.borderColor}`, borderRadius: 999, padding: "4px 12px" }}>{j}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
+            {footerLeft}
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나는 어떤 캐릭터일까? 30초 만에 →</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const maxCount = Math.max(1, ...ELEMENTS.map((e) => card.element_stats[e] ?? 0));
   const headline = clip(card.pillar_summary || card.summary.me || "", 76);
-
   return (
     <div style={outer}>
       <div style={{ ...inner, flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>사주까치</div>
-            <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 2 }}>{who}의 사주 카드</div>
-          </div>
-          <img src={mascot} alt="" width={88} height={88} style={{ borderRadius: 44 }} />
-        </div>
+        {header}
 
         <div style={{ display: "flex", flex: 1, marginTop: 24, gap: 36, alignItems: "center" }}>
-          <div style={{ display: "flex", gap: 14 }}>
-            {card.pillars.map((p, i) => {
-              const el = card.pillar_elements[i];
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    width: 132,
-                    borderRadius: 18,
-                    background: IVORY_WARM,
-                    border: `1px solid ${BORDER}`,
-                    padding: "10px 0 12px",
-                    gap: 6,
-                  }}
-                >
-                  <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{PILLAR_LABELS[i]}</div>
-                  <Glyph korean={card.pillar_stems_korean?.[i] ?? ""} hanja={p[0]} color={getElementInfo(el?.stem_element ?? "").color} />
-                  <Glyph korean={card.pillar_branches_korean?.[i] ?? ""} hanja={p[1]} color={getElementInfo(el?.branch_element ?? "").color} />
-                </div>
-              );
-            })}
-            {card.hour_unknown && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 132,
-                  borderRadius: 18,
-                  border: `2px dashed ${BORDER}`,
-                  color: INK_FAINT,
-                }}
-              >
-                <div style={{ display: "flex", fontSize: 18 }}>시주</div>
-                <div style={{ display: "flex", fontSize: 56, fontWeight: 700 }}>?</div>
-              </div>
-            )}
-          </div>
+          <PillarTiles card={card} />
 
           <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
             {ELEMENTS.map((e) => {
@@ -163,9 +229,7 @@ export function ShareOgImage({ card, mascot }: { card: ShareCard; mascot: string
         <div style={{ display: "flex", flexDirection: "column", marginTop: 18 }}>
           <div style={{ display: "flex", fontSize: 26, lineHeight: 1.4, color: INK }}>{headline}</div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>
-              {card.day_stem_korean}({card.day_stem}) 일간 · {card.strength_label} · 용신 {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
-            </div>
+            {footerLeft}
             <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 30초 만에 내 사주 보기 →</div>
           </div>
         </div>

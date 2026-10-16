@@ -153,10 +153,13 @@ export default function AnalysisPage() {
             actions={
               <>
                 {lastInput && (
+                  // 공유 문구는 캐릭터(V4)가 주인공 — "나는 ○○". 캐릭터 없는 옛 결과는 예전 문구
                   <ShareButton
                     create={() => createShare(lastInput, name)}
-                    title={`${name ? `${name}님` : "나"}의 사주 카드`}
-                    text={`${name ? `${name}님` : "나"}의 사주, 사주까치가 이렇게 봤어요. 나도 30초 만에 →`}
+                    title={result.natal.character?.title ? `${name ? `${name}님은` : "나는"} ${result.natal.character.title}` : `${name ? `${name}님` : "나"}의 사주 카드`}
+                    text={result.natal.character?.title
+                      ? `${name ? `${name}님은` : "나는"} '${result.natal.character.title}' — 사주까치가 뽑은 사주 캐릭터예요. 너는 어떤 캐릭터일까? 30초 만에 →`
+                      : `${name ? `${name}님` : "나"}의 사주, 사주까치가 이렇게 봤어요. 나도 30초 만에 →`}
                   />
                 )}
                 <button

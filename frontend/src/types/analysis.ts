@@ -637,6 +637,8 @@ export interface ShareCard {
   yongshin: { name: string; meaning: string };
   pillar_summary: string;
   sinsal: string[];
+  /** 나의 캐릭터(V4, 2026-10-16 이후 카드) — 그림 /kkachi/saju_character/{key}.webp, OG는 og/{key}.jpg. 옛 카드엔 없음 */
+  character?: { key: string; stem: string; stem_korean: string; element: string; strong: boolean; strength_label: string; title: string; line: string; jobs: string[]; jobs_avoid: string[] } | null;
   summary: { me?: string; energy?: string; yongshin?: string; year?: string; caution?: string };
 }
 

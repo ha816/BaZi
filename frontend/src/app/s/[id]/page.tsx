@@ -44,11 +44,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
   const who = card.name ? `${card.name}님` : "나";
-  const description = card.pillar_summary || card.summary.me || "사주까치가 본 사주 카드";
+  // 캐릭터(V4)가 있으면 "○○님은 든든한 수호자"가 제목 — 미리보기에서 유형명이 먼저 보이게
+  const title = card.character ? `${card.name ? `${card.name}님은` : "나는"} ${card.character.title}` : `${who}의 사주 카드`;
+  const description = card.character
+    ? [card.character.line, card.pillar_summary || card.summary.me].filter(Boolean).join(" · ")
+    : card.pillar_summary || card.summary.me || "사주까치가 본 사주 카드";
   return {
-    title: `${who}의 사주 카드`,
+    title,
     description,
-    openGraph: { siteName: "사주까치", locale: "ko_KR", type: "article", title: `${who}의 사주 카드 | 사주까치`, description },
+    openGraph: { siteName: "사주까치", locale: "ko_KR", type: "article", title: `${title} | 사주까치`, description },
     twitter: { card: "summary_large_image" },
     robots: { index: false },
   };
@@ -256,6 +260,10 @@ export default async function SharePage({ params }: Props) {
   if (card.kind === "compat") return <CompatShareView card={card} />;
   const who = card.name ? `${card.name}님` : "나";
   const maxCount = Math.max(1, ...ELEMENTS.map((e) => card.element_stats[e] ?? 0));
+  // 나의 캐릭터(V4) — 카드 맨 위. 그림은 서버 렌더라 onError 대신 파일 존재로 판단
+  const ch = card.character;
+  const chEl = ch ? getElementInfo(ch.element) : null;
+  const hasCharArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/saju_character", `${ch.key}.webp`));
   const lines = [
     { label: "나", text: card.summary.me },
     { label: "신살·운성", text: card.summary.energy },
@@ -274,6 +282,25 @@ export default async function SharePage({ params }: Props) {
             <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">{who}의 사주 카드</h1>
           </div>
         </header>
+
+        {ch && chEl && (
+          <section className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-4 text-center space-y-3">
+            {hasCharArt && (
+              <img src={`/kkachi/saju_character/${ch.key}.webp`} alt={ch.title} className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
+            )}
+            <p className="text-[11px] font-semibold text-[var(--color-gold)]">{who}의 캐릭터 · {ch.stem_korean}({ch.stem}) 일간 · {ch.strength_label}</p>
+            <p className="font-heading text-2xl font-bold leading-snug text-[var(--color-ink)] break-keep">{ch.title}</p>
+            <p className="text-sm leading-relaxed text-[var(--color-ink-muted)] break-keep">{ch.line}</p>
+            {ch.jobs.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <span className="text-[11px] text-[var(--color-ink-muted)] mr-0.5">선호하는 일</span>
+                {ch.jobs.map((j) => (
+                  <span key={j} className="rounded-full px-2.5 py-1 text-[11px] font-semibold break-keep" style={{ backgroundColor: chEl.bgColor, color: chEl.color, border: `1px solid ${chEl.borderColor}` }}>{j}</span>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="slide-card">
           <div className="slide-card__header">
@@ -350,10 +377,10 @@ export default async function SharePage({ params }: Props) {
         )}
 
         <section className="rounded-2xl bg-[var(--color-ink)] text-[var(--color-ivory)] p-5 text-center space-y-3">
-          <p className="font-heading text-lg font-bold">나도 30초 만에 내 사주 보기</p>
-          <p className="text-xs opacity-70">이름과 생년월일만 넣으면 팔자·올해 흐름·좋은 달까지. 로그인 없이.</p>
+          <p className="font-heading text-lg font-bold">{ch ? "나는 어떤 캐릭터일까?" : "나도 30초 만에 내 사주 보기"}</p>
+          <p className="text-xs opacity-70">{ch ? "이름과 생년월일만 넣으면 30초 만에 내 캐릭터와 올해 흐름까지. 로그인 없이." : "이름과 생년월일만 넣으면 팔자·올해 흐름·좋은 달까지. 로그인 없이."}</p>
           <Link href="/" className="block w-full py-3 rounded-lg bg-[var(--color-gold)] text-[var(--color-ink)] text-sm font-semibold hover:bg-[var(--color-gold-light)] transition-colors">
-            내 사주 보기
+            {ch ? "내 캐릭터 찾기" : "내 사주 보기"}
           </Link>
         </section>
       </div>

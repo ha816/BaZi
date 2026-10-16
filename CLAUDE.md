@@ -164,7 +164,7 @@ BaZi/
 │   │   ├── NextTabCard.tsx          # 탭 끝 "다음 이야기" 카드 공용(분석 ResultSlides · 궁합 CompatibilityResult) — 흥미 유발 제목(hook)만, 마지막 탭은 첫 탭으로
 │   │   ├── SelfQuizCard.tsx         # 설문조사(V3, 2026-10-13 "내 사주 맞춰 보기"에서 이름 변경) — 설문조사 탭(AI 풀이 앞) 선택형. 10문항 그렇다/아니다로 답한 뒤 한꺼번에 사주 예측과 비교 → "사주와 설문 응답의 일치율" % + 아래 KkachiTip으로 구간별 해설 한 문장(같은 답 수/10 — 신뢰도·사주 스타일 라벨은 2026-10-13 제거) + 문항별 일치(다른 문항 먼저·근거는 다른 문항에만, 일치 문항은 짧게)(상태는 ResultSlides, 서버 저장 없음). 인트로의 ?step=survey 화면에서도 같은 상태로 뜸
 │   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
-│   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 (서버 전용, fs)
+│   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 + 나의 캐릭터 그림 로더 loadCharacterArt(og/{key}.jpg, 키별 캐시) (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 7탭 정의(hook 포함)·?tab=·?step=(intro·scenario, 다른 파라미터 보존, pushState)·탭바·탭 끝 NextTabCard·탭 전환 시 첫 줄로 스크롤·캐시 기본값 한 번 채우기. 인트로·문답이 덮는 동안엔 탭 본문을 마운트하지 않음. 본문은 compatibility/
 │   │   ├── compatibility/           # CompatIntro(결과 직후 전체 화면: 두근두근 RevealGate → CompatCharacterBox 칭호·점수 → 까치 인사 → [이럴 때 두 분은?]/[궁합 분석 보기]) · CompatTotal(RevealGate·CharacterArt·CompatCharacterBox·CompatScoreCard) · ScenarioCard(이럴 때 두 분은?) · StrengthCard(신강·신약) · ZodiacTab(띠궁합) · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
@@ -195,7 +195,7 @@ BaZi/
 │   │   ├── push.ts               # getPushState/subscribePush/unsubscribePush — sw.js 등록 + VAPID 구독 + 서버 저장
 │   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
 │   └── types/analysis.ts
-├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), saju_character/(20유형 {일간}_{강|약}.webp 화면용 + Gemini 원본 .png), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
+├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), saju_character/(20유형 {일간}_{강|약}.webp 화면용 + Gemini 원본 .png + og/{key}.jpg 512px OG용 — satori가 WebP를 못 읽어 따로 둠), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
 ├── frontend/public/sw.js         # 서비스워커 — push 수신·클릭(/siun?src=push)만, 오프라인 캐시 없음
 ├── frontend/public/fonts/        # OG 이미지용 Noto Sans KR 400·700 서브셋 WOFF (한글 전체 + 코드에 쓰인 한자 242자, README 참고)
 ├── frontend/public/oheng/        # 오행 이미지 5종
@@ -315,7 +315,7 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], summary{me,energy,yongshin,year,caution} }  404 if 없음
+GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
 
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
@@ -512,7 +512,7 @@ erDiagram
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
-| `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: `compat/{key}.png` 있으면 그림·없으면 역할 이모지 + 칭호 + 역할 칩 + 설명 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
+| `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(맨 위 나의 캐릭터 상자 → 이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: `compat/{key}.png` 있으면 그림·없으면 역할 이모지 + 칭호 + 역할 칩 + 설명 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
 - **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
@@ -534,11 +534,12 @@ erDiagram
 ```
 결과 헤더 "공유" → POST /kkachi/shares (지금 입력값) → shares.payload = build_share_card() 스냅샷 → /s/{id}
   → navigator.share(제목·문구·링크) 또는 클립보드 → 패널: OG 이미지 미리보기 · 링크 복사 · 이미지로 공유(파일) · 이미지 저장
-받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + kind별 CTA(사주 "나도 30초 만에 내 사주 보기" / 시운 "나도 오늘 시운 보기" / 궁합 "우리 궁합도 보기") → 홈 QuickStartPost(궁합은 /compatibility)
+받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + kind별 CTA(사주 "나도 30초 만에 내 사주 보기", 캐릭터 있으면 "나는 어떤 캐릭터일까?" / 시운 "나도 오늘 시운 보기" / 궁합 "우리 궁합도 보기") → 홈 QuickStartPost(궁합은 /compatibility)
 카톡·슬랙 미리보기 → /s/{id}/opengraph-image (satori 1200×630, public/fonts 서브셋) — metadataBase = NEXT_PUBLIC_SITE_URL
 ```
 
 - 카드에는 생년월일·성별·오늘 줄이 없다. 받는 사람은 카드에 보이는 것만 본다. 링크는 만료 없음
+- **사주 카드의 나의 캐릭터(V4, 2026-10-16)**: `build_share_card()`가 `natal.character`에서 key·유형명·한 줄·선호하는 일을 실어 보낸다(자연물 비유 name·strength_pct 제외). 랜딩은 맨 위 캐릭터 상자(그림 `saju_character/{key}.webp`, 파일 존재 확인), OG는 왼쪽 그림(`og/{key}.jpg` data URI) + 유형명·한 줄·팔자 타일(작게)·선호하는 일 — 오행 분포·신살·요약 줄은 뺀다. 미리보기 제목·공유 문구는 "○○님은 든든한 수호자". 캐릭터 없는 옛 카드는 예전 레이아웃
 - OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수(레벨 색은 Tailwind emerald/amber/rose -800·-100 hex = 페이지 `FORECAST_LEVEL_META.badge`). 폰트 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나오니 금지 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →(`lib/relations.ts RELATION_GLYPH`). 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성. 궁합 점수 색 임계는 65/45(백엔드 라벨 80/65/45와 정렬). 궁합 OG의 캐릭터는 글자만 — "두 분은 {칭호}" 줄 + 일간 타일 아래 "= 광산(土)"(이모지·그림 없음)
 - 사이트 기본 OG(`app/opengraph-image.tsx`)는 브랜드 카드. `NEXT_PUBLIC_SITE_URL`이 없으면 OG URL이 localhost로 나가므로 배포 빌드 전 `.env.production` 확인
 

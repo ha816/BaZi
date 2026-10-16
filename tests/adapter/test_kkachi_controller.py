@@ -38,6 +38,9 @@ def test_share_roundtrip_exposes_card_only(client):
     card = client.get(f"/kkachi/shares/{res.json()['share_id']}").json()
     assert card["name"] == "승민" and len(card["pillars"]) == 4 and card["summary"]["me"]
     assert "birth_dt" not in card and "gender" not in card
+    # 나의 캐릭터(V4) — 戊 일간·신강 → 무_강. 자연물 비유 이름·세부 수치는 카드에 안 실음
+    assert card["character"]["key"] == "무_강" and card["character"]["title"] == "든든한 수호자"
+    assert card["character"]["jobs"] and "name" not in card["character"] and "strength_pct" not in card["character"]
     assert client.get(f"/kkachi/shares/{uuid4()}").status_code == 404
 
 
