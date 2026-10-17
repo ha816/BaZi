@@ -41,13 +41,13 @@ src/kkachi/
 
 frontend/src/
 ├── app/                     # Next.js App Router 페이지 13개 (/, /analysis, /chat, /compatibility(+/chat), /siun, /weather, /palmistry, /join, /my, /profile, /admin/feedback)
-├── components/              # React 컴포넌트 + tabs/ (결과 6탭) + tabs/natal/ (만세력 6섹션)
+├── components/              # React 컴포넌트 + tabs/ (분석 결과 9탭) + tabs/natal/ (만세력 섹션) + compatibility/ (궁합 결과 7탭)
 ├── lib/api.ts               # API 호출 함수 (스트리밍 포함)
 ├── lib/ganji.ts             # 천간·지지 표시 메타 SoT — 해석 분기 금지
 └── types/analysis.ts        # TypeScript 타입
 ```
 
-정확한 파일 트리·API 스펙·DB 스키마는 항상 `CLAUDE.md`를 기준으로 한다.
+정확한 파일 트리·API 스펙·DB 스키마는 항상 `CLAUDE.md`를 기준으로 한다. **화면 동작과 수용 기준은 `specs/<경로>/`를 기준으로 한다** — 화면을 바꾸기 전에 그 스펙을 읽고, 바꾼 뒤 같은 커밋에서 수용 기준·변경 이력을 갱신한다.
 
 ## 작업 원칙
 

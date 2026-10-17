@@ -2,7 +2,7 @@
 
 > 작성: 2026-09-12 · 갱신: 2026-10-09 (V2-2 궁합 공유 카드 칭호 · V3 일치율 판단 · 궁합/푸시 컨트롤러 테스트). 근거: `docs/research/` 4편(2026-04 벤치마크·리텐션·수익화·바이럴) 재검토 + 2026-09-12 코드 상태.
 > 사용법: §4 항목을 하나씩 진행하고, 끝나면 §8 진행 현황 표와 체크박스를 갱신한다. 새 항목은 §4 끝에 추가하고 §8에 한 줄 넣는다.
-> 원칙 문서: 코드 규칙은 `CLAUDE.md`, 리팩토링은 `docs/REFACTORING.md`, 화면 명세는 `docs/frontend/screen_spec.md`.
+> 원칙 문서: 코드 규칙은 `CLAUDE.md`, 리팩토링은 `docs/REFACTORING.md`, 화면·기능 스펙은 `specs/`(경로별 폴더, 템플릿은 `specs/README.md`).
 
 ---
 
@@ -289,7 +289,7 @@ V1로 공유 카드 3종(사주·시운·궁합)과 유입 동선이 깔렸다. 
 - 강약 판정을 먼저 바꿨다(2026-10-11, b553b85). 일간을 뺀 자리별 가중치에 지장간 비중을 곱하고 월지에 왕상휴수사를 섞어 `strength_pct`(0~100, 50 이상이면 신강)를 낸다. 원점수 42를 50%로 옮긴다. 무작위 2,000명 기준 신강 47.5%·신약 52.5%이고, 기존 판정이 뒤집힌 비율은 5.6%다. 일진·궁합 캐시는 2026-10-12에 삭제했다
 - 그림은 대표 직업으로 의인화한 까치다. 자연물 장면은 직감적이지 않아 버렸다. 원본 PNG와 화면용 1024px WebP를 `public/kkachi/saju_character/{일간}_{강|약}`에 둔다. Gemini 워터마크는 그대로 둔다
 - 화면 표기: 유형명과 한 줄 성향, "선호하는 일 | 선호하지 않는 일"(직업명 2~3개씩, 아이콘 없음), 기운 % 게이지. 자연물 비유 이름(우뚝 선 산 등)은 유치해서 노출하지 않는다(데이터에만 남김)
-- 유형표와 프롬프트: `docs/SAJU_CHARACTER_TYPES.md`, 복붙용 `docs/SAJU_CHARACTER_PROMPTS.md`. 코드 표는 `application/saju_character.py`
+- 유형표와 프롬프트: `docs/SAJU_CHARACTER_TYPES.md`(복붙용 통합 프롬프트는 같은 문서 §5, 2026-10-17 합침). 코드 표는 `application/saju_character.py`
 
 - [x] 강약 판정 개선(`strength_pct`) · [x] 20장 그림·WebP 최적화 · [x] 분석 한눈에 탭 `SajuCharacterCard` · [x] 신강·신약 카드를 만세력 탭 십신 위로 (2026-10-12)
 - [x] 2026-10-13: 카드 이름 **나의 캐릭터**, 만세력 탭 신강·신약 아래로 이동("확인하기"로 열림). 천간 슬롯 공개 연출은 분석 직후 인트로로
@@ -396,7 +396,7 @@ V1로 공유 카드 3종(사주·시운·궁합)과 유입 동선이 깔렸다. 
 - `docs/research/monetization_전환전략.md` — 가격 구조·페이월 (R3 이후 참고)
 - `docs/research/viral_공유전략.md` — 공유 카드 레이아웃, OG 이미지, 카카오 SDK, K-factor
 - `docs/research/saju_combined_systems.md` — MBTI 결합 (보류)
-- `docs/SAJU_CHARACTER_TYPES.md` · `docs/SAJU_CHARACTER_PROMPTS.md` — 사주 캐릭터 20유형 유형표·이미지 프롬프트 (V4)
+- `docs/SAJU_CHARACTER_TYPES.md` — 사주 캐릭터 20유형 유형표·이미지 프롬프트(복붙용 §5) (V4)
 - `docs/COMPAT_CHARACTER_TYPES.md` — 궁합 캐릭터 15종 유형표·칭호 조합·문답 규칙·이미지 카드 제작안
 - `docs/research/llm_해석엔진_전략.md` — 프롬프트 패턴, 모델 비용 비교
-- `CLAUDE.md` 제품 방향 · `docs/REFACTORING.md` · `docs/frontend/screen_spec.md`
+- `CLAUDE.md` 제품 방향 · `docs/REFACTORING.md` · `specs/`(화면·기능 스펙)

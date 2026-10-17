@@ -54,7 +54,7 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 - **본문 시작에 인트로 `KkachiTip` 필수**
 - 본문
 
-자세한 시각 가이드는 `docs/frontend/screen_spec.md` 참고.
+자세한 화면 약속은 `specs/<경로>/`(화면·기능 스펙) 참고.
 
 **페이지 틀도 하나다** (2026-09-28): 홈·풀스크린 챗을 뺀 모든 페이지는 `<main className="page"><div className="page__inner">` + `<PageHeader title description actions />`. 시운·분석·궁합·가입은 `page page--center`(세로 가운데). 페이지마다 제목 크기·여백·너비를 따로 정하지 않는다. "← 홈으로" 링크는 하단 탭이 대신하므로 두지 않는다.
 

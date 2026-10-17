@@ -1,4 +1,25 @@
-# 손금 분석 시나리오
+# 손금 분석
+
+| | |
+|---|---|
+| 상태 | 초안 — `docs/frontend`의 화면 명세·시나리오(코드를 설명한 글)를 2026-10-17에 옮겨 둔 것. 아직 스펙 형식(`specs/README.md` 템플릿: 규칙·수용 기준)으로 바꾸지 않았다 — 이 화면을 손댈 때 약속과 수용 기준으로 다시 쓴다 |
+| 화면 | `/palmistry` — 네비 미연결, URL 직접 진입 |
+
+## 화면 명세 (옛 screen_spec)
+
+**진입 조건:** 없음. 네비 미연결.
+
+```
+idle → preview → loading → result
+                        ↘ error (손 미감지 422 / 이미지 오류 400)
+```
+
+- `POST /palmistry/analyze` multipart `image`
+- 결과: `hand_element`(오행형) · `hand_type_korean` · `finger_ratio`/`aspect_ratio` · `line_scores{heart,head,life}` · `blocks[]`
+- 백엔드 필요 파일: `src/kkachi/resource/hand_landmarker.task` (git 미추적)
+
+---
+
 
 ## 관련 페이지 / API
 

@@ -1,4 +1,27 @@
-# 궁합 시나리오
+# 궁합 — 입력 (두 사람·관계 유형·연도)
+
+| | |
+|---|---|
+| 상태 | 초안 — `docs/frontend`의 화면 명세·시나리오(코드를 설명한 글)를 2026-10-17에 옮겨 둔 것. 아직 스펙 형식(`specs/README.md` 템플릿: 규칙·수용 기준)으로 바꾸지 않았다 — 이 화면을 손댈 때 약속과 수용 기준으로 다시 쓴다 |
+| 화면 | `/compatibility` 폼 단계(프로필·직접 입력·혼합·초대 링크). 결과 단계는 `specs/compatibility/result.md` |
+
+## 화면 명세 (옛 screen_spec)
+
+**진입 조건:** 로그인 필수 — 비로그인은 `LoginRequired` 카드 → `/join`(복귀 경로는 sessionStorage `kkachi_login_next`). 결제 게이트 없음.
+
+```
+PersonCard × 2 (프로필/직접) + 관계 유형(lover|friend|family) + 연도 → "궁합 보기"
+  → 둘 다 프로필: POST /compatibility (캐시)   그 외: POST /compatibility/direct
+  → CompatibilityResult 7탭(?tab=; 오늘의 궁합 탭 진입 시 GET /compatibility/daily, 프로필×2일 때만) + 즉시 POST /compatibility/narrative 스트리밍
+  → 헤더 "궁합 공유" → POST /compatibility/shares → /s/{id}
+  → sessionStorage kkachi_compat_input · kkachi_compat_names → CompatibilityChat FAB
+```
+
+- `?p1=&p2=` 딥링크: p1 기본 is_self, p2 기본 비-self
+- 결과 단계는 `specs/compatibility/result.md`
+
+---
+
 
 ## 관련 페이지 / API
 
@@ -37,30 +60,9 @@
 
 - 인물 1 프로필 / 인물 2 직접 입력 조합 가능 → `POST /compatibility/direct`
 
-## 시나리오 4 — 결과 표시 (7탭, `?tab=`)
+## 시나리오 4 — 결과 화면
 
-1. 결과가 폼을 대체. 헤더 "궁합 공유"(`POST /compatibility/shares` → `/s/{id}`) · "다시 입력"(결과 지우고 URL에서 `tab` 제거)
-2. `CompatibilityResult`(props: `data`, `name1`, `name2`, `relationType`, `memberId`·`profileId1`·`profileId2`(프로필×2일 때만, 제출 시점 스냅샷), `streamingNarrative`, `narrativeLoading`) → `components/compatibility/` 탭 파일
-
-   | 탭 (`?tab=`) | 내용 |
-   |---|---|
-   | 한눈에 `summary` | 맨 위 종합 궁합(점수·라벨·설명·`key_traits`·시간 미상 고지) + 탭별 한 줄 박스(`summary.pillars/element/sinsal/domain` + 오늘의 궁합). 박스를 누르면 그 탭. 옛 `?tab=total` 호환 |
-   | 팔자비교 `pillars` | 일주 관계 3칸 · 같은 기둥 4쌍 관계(`pillar_relations`, PillarPairDiagram) · 삼합 완성 · 바로 아래 오행 보완(오행 바×2·OhengPairDiagram·없는 오행·보완 문장·점수) |
-   | 성격·성질 `character` | 신살(귀인·신살: `shared_sinsal`·`unique_sinsal_1/2`, 십이신살 기둥별 비교: 스냅샷 `sibi_sinsal`) · 신강·신약(스냅샷 `strength`, `summary.strength/strength_p1/p2`) |
-   | 띠궁합 `zodiac` | 띠궁합(두 띠·배지·한 줄) · 사주지지(네 기둥 띠를 자리별로 + 다른 자리끼리 관계) · 십이지 충합(12띠 원·관계 풀이·삼합 세 번째 띠·두 분 모두와 맞는 띠) · 연도별 띠 궁합(4년 각자) — 결과의 `zodiac` |
-   | 영역별 `domain` | 레이더 + 영역 카드 4종(`domain_scores`: 연애·결혼·재물·직업 — 관계 유형별 `display_name`) 각각 `{score, level, narrative, pros[], cons[]}` + pros/cons 칩. 카드 순서는 프론트에서 고정(캐시 JSONB는 키 순서를 보존하지 않음) |
-   | 오늘의 궁합 `daily` | `GET /compatibility/daily?member_id&p1&p2` → 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출(직접 입력·혼합·초대는 6탭, `?tab=daily`면 종합). 결과는 state에 캐시 |
-   | AI 해석 `ai` | 결과 즉시 `POST /compatibility/narrative` 스트리밍 → 점진적으로 채워짐 (재분석 시 이전 스트림 abort) |
-
-3. `sessionStorage`에 `kkachi_compat_input`, `kkachi_compat_names` 저장 → 우하단 `CompatibilityChat` FAB 표시
-
-## 시나리오 5 — 궁합 상담 챗 (`/compatibility/chat`)
-
-1. FAB 클릭 → 풀스크린 챗 (BottomNav 숨김), 헤더에 `name1 ♥ name2`
-2. `sessionStorage["kkachi_compat_input"]` 없으면 "먼저 궁합 분석을 진행해주세요"
-3. 질문 → `POST /compatibility/chat { ...input, messages }` → 스트리밍 (최근 10개 메시지)
-
----
+결과 단계(인트로·문답·7탭·다음 이야기·공유)는 **`specs/compatibility/result.md`** 가 정식 스펙이다. 이 파일은 입력 폼까지만 다룬다.
 
 ## 데이터 흐름
 
@@ -101,8 +103,7 @@ POST /compatibility/narrative | /chat
 ## 미결 사항 / 개선 검토
 
 - [x] 영역별 궁합 카드 구조·시각화 추가 다듬기 (2026-10-02 탭 분리 + pros/cons 칩)
-- [ ] 공유·고유 신살 카드 포맷/톤 (이미지 키움 시도는 롤백 이력)
 - [x] 궁합 결과 공유 기능 (2026-09-28 공유 카드 `/s/{id}`)
-- [ ] 언제가 좋을까 — 두 사람 타이밍 교집합 탭 (ROADMAP V2-2 보류, 별도 모듈로)
-- [ ] 탭 전환마다 `listProfiles`·`getCompatInvite` 재호출 (`[searchParams]` 의존) — `p1`/`p2`/`invite` 값으로 의존성 좁히기
 - [ ] 프로필 1개만 있을 때 인물 2 자동 직접 입력 강제
+
+> 결과 화면 쪽 미결(언제가 좋을까 탭, 탭 전환마다 재호출, 신살 카드 포맷)은 `specs/compatibility/result.md` 6장으로 옮겼다.

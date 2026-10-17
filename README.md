@@ -10,7 +10,7 @@
 - **MCP**: FastMCP 서버를 `/mcp`에 마운트 (사주 컨텍스트·연간 운세·날씨 오행 도구 3종)
 - **아키텍처**: Hexagonal (Port & Adapter)
 
-개발 규칙·구조·API 상세는 [CLAUDE.md](CLAUDE.md), 제품 로드맵은 [docs/ROADMAP.md](docs/ROADMAP.md), 리팩토링 규칙은 [docs/REFACTORING.md](docs/REFACTORING.md), 화면 명세는 [docs/frontend/screen_spec.md](docs/frontend/screen_spec.md) 참고.
+개발 규칙·구조·API 상세는 [CLAUDE.md](CLAUDE.md), 제품 로드맵은 [docs/ROADMAP.md](docs/ROADMAP.md), 리팩토링 규칙은 [docs/REFACTORING.md](docs/REFACTORING.md), 화면·기능 스펙은 [specs/](specs/README.md) 참고.
 
 ## 빠른 시작
 
@@ -111,7 +111,8 @@ BaZi/
 ├── docker/docker-compose.yml # postgres:17 + healthcheck
 ├── scripts/db.sh            # DB 기동·마이그레이션·상태·초기화 스크립트 (/db 스킬이 사용)
 ├── scripts/send_daily_push.py · vapid_keygen.py   # 아침 알림 발송(cron) · VAPID 키 생성
-├── docs/                    # ROADMAP.md, REFACTORING.md, frontend/screen_spec.md, research/
+├── specs/                   # 화면·기능 스펙 — 페이지 경로별 폴더 (README.md에 템플릿·화면 지도)
+├── docs/                    # ROADMAP.md, REFACTORING.md, DEPLOY_PUSH.md, 캐릭터 유형표 2종, research/, llm_samples/
 ├── src/kkachi/
 │   ├── fastapi.py           # 앱 진입점 — 라우터 등록, CORS, MCP 마운트, local.toml 로드
 │   ├── container.py         # DI 컨테이너

@@ -1,4 +1,26 @@
-# 날씨 기운 시나리오
+# 날씨 기운
+
+| | |
+|---|---|
+| 상태 | 초안 — `docs/frontend`의 화면 명세·시나리오(코드를 설명한 글)를 2026-10-17에 옮겨 둔 것. 아직 스펙 형식(`specs/README.md` 템플릿: 규칙·수용 기준)으로 바꾸지 않았다 — 이 화면을 손댈 때 약속과 수용 기준으로 다시 쓴다 |
+| 화면 | `/weather` — 네비 미연결, URL 직접 진입 |
+
+## 화면 명세 (옛 screen_spec)
+
+**진입 조건:** 없음
+
+```
+navigator.geolocation → 실패 시 ipapi.co → "Seoul"
+→ GET /weather?city=…&days=… (lat/lon 직접 전달 가능)
+```
+
+- 로그인 시 `getDailyFortune(is_self 프로필)` → `yongshin` → KkachiTip 용신 하이라이트
+- 네비게이션에 연결되어 있지 않음
+
+**날씨→오행 매핑 (WMO):** 맑음 火 · 구름많음 土 · 흐림 金 · 안개 土 · 비/눈/소나기/뇌우 水 (木 매핑 없음)
+
+---
+
 
 ## 관련 페이지 / API
 

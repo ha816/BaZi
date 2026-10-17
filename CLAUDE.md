@@ -73,10 +73,10 @@ BaZi/
 │   ├── ROADMAP.md               # 제품 핵심 루프 로드맵 — 우선순위·진행 현황 (기능 추가 전 필독)
 │   ├── SAJU_CHARACTER_TYPES.md  # 사주 캐릭터 20유형(일간×신강/신약) 유형표·직업 의인화 이미지 프롬프트
 │   ├── COMPAT_CHARACTER_TYPES.md # 궁합 캐릭터 15종 유형표·칭호/문답 규칙·이미지 카드 제작안 (compatibility_character.py와 함께 갱신)
-│   ├── frontend/screen_spec.md  # 화면 명세
-│   ├── frontend/*/scenarios.md  # 화면별 시나리오
+│   │                            # (화면 명세·시나리오는 2026-10-17 specs/<경로>/ 로 옮김 — 아래 specs/ 참고)
 │   ├── llm_samples/             # LLM 리포트 프롬프트·해석 출력 샘플
 │   └── research/                # 리서치 문서
+├── specs/                       # 화면·기능 스펙 — 코드에 앞서는 약속 + 수용 기준 (2026-10-17 시작, 규칙·템플릿·화면 지도는 specs/README.md). 페이지 경로가 폴더, 단계·기능이 파일. 정식 스펙은 analysis/result.md · compatibility/result.md, 나머지(home·join·my·profile·analysis/input·chat·compatibility/input·chat·siun·weather·palmistry·admin·shared)는 옛 화면 명세를 옮긴 초안
 ├── src/kkachi/
 │   ├── fastapi.py               # 앱 + CORS + 라우터 8개 등록 + /mcp 마운트 + lifespan(local.toml 로드)
 │   ├── container.py             # DI Container — Repo·Adapter·Service Singleton
@@ -253,6 +253,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 - **리팩토링 작업 시 `docs/REFACTORING.md`를 먼저 읽을 것**
 - DB 기동·마이그레이션은 `/db` 스킬(`scripts/db.sh`)로 — 모델 변경 후 `alembic check` 드리프트 0 확인
 - API·페이지·DB 스키마를 바꾸면 이 문서의 해당 섹션도 같은 커밋에서 갱신
+- **화면·기능을 바꾸기 전에 `specs/<경로>/<단계>.md`가 있으면 먼저 읽고**, 바꾼 뒤 같은 커밋에서 그 스펙의 수용 기준·변경 이력을 갱신 (스펙과 코드가 어긋나면 스펙부터)
 
 **NEVER:**
 - `git push --force`

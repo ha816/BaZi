@@ -1,4 +1,40 @@
-# 사주 분석 시나리오
+# 사주 분석 — 입력 (프로필 선택·직접 입력)
+
+| | |
+|---|---|
+| 상태 | 초안 — `docs/frontend`의 화면 명세·시나리오(코드를 설명한 글)를 2026-10-17에 옮겨 둔 것. 아직 스펙 형식(`specs/README.md` 템플릿: 규칙·수용 기준)으로 바꾸지 않았다 — 이 화면을 손댈 때 약속과 수용 기준으로 다시 쓴다 |
+| 화면 | `/analysis` 폼 단계 (`/analysis/deep`은 redirect). 결과 단계는 `specs/analysis/result.md` |
+
+## 화면 명세 (옛 screen_spec)
+
+**진입 조건:** 없음 — 직접 입력은 비로그인 가능, 프로필 탭은 로그인 시 활성
+
+| 모드 | 조건 | API |
+|------|------|-----|
+| 저장된 프로필 | 로그인 + 프로필 있음 (기본 선택) | `POST /members/{id}/profiles/{pid}/analyze` (캐시) |
+| 직접 입력 | 기본 | `POST /kkachi/interpret` |
+
+```
+입력 → "프로필 저장" (로그인: 실제 저장 / 비로그인: 확인 단계) → "분석 시작"
+  → sessionStorage kkachi_analysis_input · kkachi_analysis_name (· kkachi_profile_input)
+  → ResultSlides
+재진입: sessionStorage 입력값 있으면 자동 재분석
+```
+
+**ResultSlides 탭:** 결과 단계는 `specs/analysis/result.md`.
+
+**출생시간 모름:** "모르겠어요" 선택 시 `hour_unknown` → 시주 없이 세 기둥으로 분석. 결과 상단 고지, 팔자 그리드 시주 자리 "?" 타일.
+
+**개선 포인트:** 비로그인 직접 입력은 FeedbackBar 전송 불가(버튼만 표시).
+
+---
+
+### `/analysis/deep`
+
+`router.replace("/analysis")`만 수행. 외부 링크 호환용. 삭제 시점 결정 필요.
+
+---
+
 
 ## 관련 페이지 / API
 
@@ -45,28 +81,9 @@
 
 ---
 
-## 시나리오 5 — 결과 탭 구성 (`ResultSlides`, `?tab=`)
+## 시나리오 5 — 결과 화면
 
-| id | 탭 | 컴포넌트 | 내용 |
-|----|----|----------|------|
-| `natal` | 만세력 | `NatalTab` | 사주팔자·십신·지장간·공망·십이운성·신살 (6 섹션) |
-| `yongshin` | 용신·삼재 | `YongshinTab` + `SamjaeTab` | 신강·신약, 용신·기신, 삼재 |
-| `daeun` | 시운(時運) | `DaeunTab` + `SeunTab` + `WolUnTab` + `FortuneTab` | 대운·세운·월운·충합·영역별 운 |
-| `zodiac` | 십이지신 | `ZodiacTab` | 사주지지 띠, 십이지 충합, 연도별 띠 궁합 |
-| `fengshui` | 풍수 | `FengShuiTab` | 팔택풍수 쿠아·8방위 길흉 |
-| `ai` | AI 풀이 | `AiTab` | `POST /kkachi/stream-report` 스트리밍 (Ollama 필요) |
-
-- 상단 sticky: 사주 4기둥 바 + feature 탭바
-- 모든 탭 하단 `FeedbackBar` 👍/👎 → `POST .../feedback` (memberId·profileId 있을 때만 전송, 직접 입력 비로그인은 버튼만 표시)
-- 우하단 `SajuChat` FAB → `/chat`
-
-## 시나리오 6 — 까치 상담 (`/chat`)
-
-1. FAB 클릭 → `/chat` 풀스크린 (BottomNav 숨김)
-2. `sessionStorage["kkachi_analysis_input"]` 없으면 "먼저 사주 분석을 진행해주세요" 안내
-3. 질문 입력 → `POST /kkachi/chat { ...input, name, messages }` → 스트리밍 응답 (최근 10개 메시지만 전송)
-
----
+결과 단계(인트로·설문·9탭·다음 이야기·피드백)는 **`specs/analysis/result.md`** 가 정식 스펙이다. 이 파일은 입력 폼까지만 다룬다.
 
 ## 데이터 흐름
 
@@ -96,6 +113,6 @@ POST /members/{id}/profiles/{pid}/analyze
 
 ## 미결 사항 / 개선 검토
 
-- [ ] 분석 연도 변경 시 결과 자동 갱신
-- [ ] 직접 입력(비로그인) 결과에서 피드백 전송 불가 — 익명 피드백 허용 여부
 - [ ] `/analysis/deep` redirect 페이지 삭제 시점
+
+> 결과 화면 쪽 미결(분석 연도 자동 갱신, 비로그인 피드백)은 `specs/analysis/result.md` 6장으로 옮겼다.
