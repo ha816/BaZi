@@ -1,6 +1,6 @@
 from kkachi.domain.natal import NatalInfo
 
-# 사주 캐릭터 20유형 — 일간(日干) 10 × 신강/신약. 표는 docs/SAJU_CHARACTER_TYPES.md와 같다(바꿀 때 함께 고친다).
+# 사주 캐릭터 20유형 — 일간(日干) 10 × 신강/신약. 표는 specs/analysis/character.md §3과 같다(바꿀 때 함께 고친다 — test_spec_table_matches_types가 대조).
 # 그림은 frontend/public/kkachi/saju_character/{key}.webp (key 예 "갑_강")
 # (캐릭터, 유형명, 한 줄 성향, 대표 직업(그림), 선호하는 일, 선호하지 않는 일)
 _TYPES: dict[tuple[str, bool], tuple[str, str, str, str, list[str], list[str]]] = {

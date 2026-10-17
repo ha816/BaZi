@@ -92,7 +92,7 @@ def build_compat_share_card(name1: str, name2: str, relation_type: str, result: 
         "shared_sinsal": (result.get("shared_sinsal") or [])[:3],
         "p1": day(result.get("pillar1_snapshot")),
         "p2": day(result.get("pillar2_snapshot")),
-        "character": character,  # 칭호·역할·설명(이름 채움) — docs/COMPAT_CHARACTER_TYPES.md §6-3
+        "character": character,  # 칭호·역할·설명(이름 채움) — specs/compatibility/character.md §7
     }
 
 

@@ -1,4 +1,9 @@
-from kkachi.application.compatibility_character import build_compat_character
+from pathlib import Path
+
+from kkachi.application.compatibility_character import _PAIR_NAME, _SAME_NAME, build_compat_character
+from kkachi.application.util.util import josa
+
+_SPEC = Path(__file__).parents[2] / "specs/compatibility/character.md"
 
 
 def _result(ds1: str, ds2: str, kinds=(), **snap) -> dict:
@@ -81,3 +86,17 @@ def test_sipsin_score_predicts_with_tie_and_skips_weak():
     assert sc["偏官"]["who"] == "p2"
     assert "正財" not in sc  # 둘 다 8점 미만
     assert all("개" not in s["reason"] for s in sc.values())
+
+
+def test_spec_table_matches_pair_names():
+    """specs/compatibility/character.md §3 표 = _PAIR_NAME·_SAME_NAME — 키(파일명)·역할·비유가 글자까지 같다"""
+    rows = {}
+    for line in _SPEC.read_text().splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 6 and len(cells[1]) == 8 and cells[1].endswith(".png`"):
+            rows[cells[1][1:3]] = cells
+    assert len(rows) == 15
+    for (a, b), (na, nb) in _PAIR_NAME.items():
+        assert rows[a + b][3:6] == [na, nb, f"{na}{josa(na, '과', '와')} {nb}"], a + b
+    for e, (phrase, word) in _SAME_NAME.items():
+        assert rows[e + e][3:5] == [word, phrase], e + e

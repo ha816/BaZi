@@ -6,9 +6,10 @@
 
 - **페이지 경로가 폴더**다 — `specs/analysis/`, `specs/compatibility/`, `specs/my/`, `specs/siun/`, `specs/s/`(공유 랜딩) … 홈은 `specs/home/`
 - 폴더 안은 **단계·기능 하나에 파일 하나** — 한 경로 안에 폼과 결과처럼 단계가 둘이면 `input.md`·`result.md`, 단계가 하나면 `index.md`. 여러 경로가 같이 쓰는 것(공유 카드 OG, 하단 탭바)은 `specs/shared/`
+- 화면이 쓰는 **백엔드 규칙**(캐릭터 유형표·칭호 조합·문답 규칙처럼 코드 상수가 지키는 약속)도 그 경로 폴더에 기능 파일로 — `analysis/character.md`, `compatibility/character.md`. 그림 프롬프트 같은 제작 자료는 그 파일 맨 아래 **부록**에 두어 화면을 고칠 때는 읽지 않아도 되게 한다
 - 번호를 붙이지 않는 살아있는 문서. 큰 변경은 맨 아래 "변경 이력"에 날짜와 한 줄
 - 바꾸기 전에 읽고, 바꾼 뒤 같은 커밋에서 갱신한다 (`CLAUDE.md` ALWAYS)
-- 우선순위·진행 현황은 `docs/ROADMAP.md`, 작업 규칙은 `docs/REFACTORING.md`, 리서치·배포·LLM 샘플·캐릭터 유형표처럼 화면 약속과 조금 떨어진 것도 `docs/` — 스펙에는 "무엇이 어떻게 동작하는가"만
+- 우선순위·진행 현황은 `docs/ROADMAP.md`, 작업 규칙은 `docs/REFACTORING.md`, 리서치·배포·LLM 샘플처럼 화면 약속과 떨어진 것은 `docs/` — 스펙에는 "무엇이 어떻게 동작하는가"만
 - 상태가 **초안**인 파일은 옛 화면 명세·시나리오(코드를 설명한 글)를 옮겨 둔 것 — 그 화면을 손댈 때 규칙·수용 기준 형식으로 다시 쓴다
 
 ## 섹션 템플릿
@@ -29,7 +30,7 @@
 - 수용 기준은 "~해야 한다"보다 **관찰 문장**으로 — "1페이지 5문항을 다 고르기 전에는 다음 버튼이 비활성이고 '이 페이지에 N개 남았어요'라고 쓰여 있다"
 - 숫자·문구는 코드와 글자까지 같게. 코드가 바뀌면 여기부터 고친다
 - 관련 코드·API는 머리 표에 적고 본문은 되도록 말로. 컴포넌트 이름은 독자가 그 파일로 가야 할 때만
-- 사주 해석 내용(문장·점수 규칙)은 백엔드 스펙 영역 — 화면 스펙에는 "어디에 무엇이 보이는가"까지만
+- 사주 해석 내용(문장·점수 규칙)은 화면 스펙이 아니라 기능 스펙(`*/character.md`처럼)에 — 화면 스펙에는 "어디에 무엇이 보이는가"까지만 적고 머리 표에서 그 기능 스펙을 가리킨다
 
 ## 화면 지도
 
@@ -39,9 +40,9 @@
 | `/join` | `join/index.md` | 초안 |
 | `/my` | `my/index.md` | 초안 |
 | `/profile` | `profile/index.md` | 초안 |
-| `/analysis` | `analysis/input.md` → `analysis/result.md` | 입력 초안 · **결과 정식** |
+| `/analysis` | `analysis/input.md` → `analysis/result.md` · `analysis/character.md`(캐릭터 20유형 규칙) | 입력 초안 · **결과·캐릭터 정식** |
 | `/chat` | `chat/index.md` | 초안 |
-| `/compatibility` | `compatibility/input.md` → `compatibility/result.md` | 입력 초안 · **결과 정식** |
+| `/compatibility` | `compatibility/input.md` → `compatibility/result.md` · `compatibility/character.md`(캐릭터 15종·칭호·문답 규칙) | 입력 초안 · **결과·캐릭터 정식** |
 | `/compatibility/chat` | `compatibility/chat.md` | 초안 |
 | `/siun` | `siun/index.md` | 초안 |
 | `/weather` | `weather/index.md` | 초안 |

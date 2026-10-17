@@ -7,6 +7,7 @@ from kkachi.domain.ganji import Stem
 from kkachi.domain.user import Gender, User
 
 _IMG_DIR = Path(__file__).parents[2] / "frontend/public/kkachi/saju_character"
+_SPEC = Path(__file__).parents[2] / "specs/analysis/character.md"
 
 
 def test_character_from_day_stem_and_strength():
@@ -24,3 +25,18 @@ def test_all_20_types_have_image():
         for strong in (True, False):
             assert (stem.name, strong) in _TYPES
             assert (_IMG_DIR / f"{stem.korean}_{'강' if strong else '약'}.webp").exists()
+
+
+def test_spec_table_matches_types():
+    """specs/analysis/character.md §3 표 = _TYPES — 유형명·한 줄·선호/비선호·대표 직업·캐릭터가 글자까지 같다"""
+    rows = {}
+    for line in _SPEC.read_text().splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) == 10 and cells[1].startswith("`") and "_" in cells[1]:
+            rows[cells[1].strip("`")] = cells
+    assert len(rows) == 20
+    for stem in Stem:
+        for strong in (True, False):
+            name, title, line, job, jobs, avoid = _TYPES[(stem.name, strong)]
+            c = rows[f"{stem.korean}_{'강' if strong else '약'}"]
+            assert c[4:] == [title, line, ", ".join(jobs), ", ".join(avoid), job, name], c[1]

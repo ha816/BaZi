@@ -71,12 +71,10 @@ BaZi/
 ├── docs/
 │   ├── REFACTORING.md           # 리팩토링 규칙 + hot spot 표
 │   ├── ROADMAP.md               # 제품 핵심 루프 로드맵 — 우선순위·진행 현황 (기능 추가 전 필독)
-│   ├── SAJU_CHARACTER_TYPES.md  # 사주 캐릭터 20유형(일간×신강/신약) 유형표·직업 의인화 이미지 프롬프트
-│   ├── COMPAT_CHARACTER_TYPES.md # 궁합 캐릭터 15종 유형표·칭호/문답 규칙·이미지 카드 제작안 (compatibility_character.py와 함께 갱신)
-│   │                            # (화면 명세·시나리오는 2026-10-17 specs/<경로>/ 로 옮김 — 아래 specs/ 참고)
+│   │                            # (화면 명세·시나리오·캐릭터 유형표 2종은 2026-10-17 specs/ 로 옮김 — 아래 specs/ 참고)
 │   ├── llm_samples/             # LLM 리포트 프롬프트·해석 출력 샘플
 │   └── research/                # 리서치 문서
-├── specs/                       # 화면·기능 스펙 — 코드에 앞서는 약속 + 수용 기준 (2026-10-17 시작, 규칙·템플릿·화면 지도는 specs/README.md). 페이지 경로가 폴더, 단계·기능이 파일. 정식 스펙은 analysis/result.md · compatibility/result.md, 나머지(home·join·my·profile·analysis/input·chat·compatibility/input·chat·siun·weather·palmistry·admin·shared)는 옛 화면 명세를 옮긴 초안
+├── specs/                       # 화면·기능 스펙 — 코드에 앞서는 약속 + 수용 기준 (2026-10-17 시작, 규칙·템플릿·화면 지도는 specs/README.md). 페이지 경로가 폴더, 단계·기능이 파일. 정식 스펙은 analysis/result.md · compatibility/result.md · analysis/character.md(사주 캐릭터 20유형 표·노출 규칙, 그림 프롬프트는 부록) · compatibility/character.md(궁합 캐릭터 15종·칭호·설명·문답 규칙 — compatibility_character.py와 함께 갱신), 나머지(home·join·my·profile·analysis/input·chat·compatibility/input·chat·siun·weather·palmistry·admin·shared)는 옛 화면 명세를 옮긴 초안
 ├── src/kkachi/
 │   ├── fastapi.py               # 앱 + CORS + 라우터 8개 등록 + /mcp 마운트 + lifespan(local.toml 로드)
 │   ├── container.py             # DI Container — Repo·Adapter·Service Singleton
@@ -101,7 +99,7 @@ BaZi/
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
 │   │   ├── compatibility_prompt.py   # format_chat_context·format_narrative_prompt — 궁합 결과 → LLM 챗 [데이터] 블록·종합해석 프롬프트
-│   │   ├── saju_character.py     # build_saju_character(natal) 사주 캐릭터 20유형(일간×신강/신약) → NatalResult.character {key(그림 saju_character/{key}.webp), name, title, line, job, jobs[3](선호하는 일), jobs_avoid[3](선호하지 않는 일), strength_pct…} — 표는 docs/SAJU_CHARACTER_TYPES.md와 함께 갱신
+│   │   ├── saju_character.py     # build_saju_character(natal) 사주 캐릭터 20유형(일간×신강/신약) → NatalResult.character {key(그림 saju_character/{key}.webp), name, title, line, job, jobs[3](선호하는 일), jobs_avoid[3](선호하지 않는 일), strength_pct…} — 표는 specs/analysis/character.md §3과 함께 갱신(test_spec_table_matches_types가 대조)
 │   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 설문조사 10문항 — 십신·지장간 조합 점수(천간 자리 가중 년8·월12·시10 + 지지 자리 가중 년8·월30·일15·시12 × 지장간 비중 + 투출 5, 신강·신약과 같은 가중)가 8점 이상이면 그렇다(2026-10-13, 300명 표본 평균 5.2개). 근거 문장은 개수 대신 자리·투출로 ("태어난 달 천간에 드러나고 지지에도 뿌리를 둔 …"). 지장간 없는 옛 결과는 지지 본기로 (V3, 설문으로 출생시간 추정 안 함)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5)
 │   │   ├── compatibility_character.py # build_compat_character(result dict, relation_type) 궁합 캐릭터 — 일간 오행 쌍 비유 칭호(장작과 모닥불 등 15종)·일주 합충 수식어·관계 유형별 커플/콤비/가족·설명 + "이럴 때 두 분은?" 문답 — 십신마다 1문항(6~10개, 모자라면 강약·신살 질문으로 채움). 예측은 스냅샷 `sipsin_score`(설문조사와 같은 십신·지장간 점수)로 더 뚜렷한 쪽, 차이 5점 미만은 둘 다, 둘 다 8점 미만인 십신은 묻지 않음(2026-10-15). 점수 없는 옛 캐시는 `sipsin` 개수로, 그것도 없으면 고정 6문항. 근거 문장엔 개수·점수 미노출
@@ -195,7 +193,7 @@ BaZi/
 │   │   ├── push.ts               # getPushState/subscribePush/unsubscribePush — sw.js 등록 + VAPID 구독 + 서버 저장
 │   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
 │   └── types/analysis.ts
-├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), saju_character/(20유형 {일간}_{강|약}.webp 화면용 + Gemini 원본 .png + og/{key}.jpg 512px OG용 — satori가 WebP를 못 읽어 따로 둠), compat/(궁합 캐릭터 15종 {오행}{오행}.webp + og/{key}.jpg, 같은 규격 — 2026-10-17 기준 그림 파일은 아직 없음, docs/COMPAT_CHARACTER_TYPES.md §7 프롬프트 → scripts/art_convert.sh), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
+├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), saju_character/(20유형 {일간}_{강|약}.webp 화면용 + Gemini 원본 .png + og/{key}.jpg 512px OG용 — satori가 WebP를 못 읽어 따로 둠), compat/(궁합 캐릭터 15종 {오행}{오행}.webp + og/{key}.jpg, 같은 규격 — 2026-10-17 기준 그림 파일은 아직 없음, specs/compatibility/character.md 부록 B 프롬프트 → scripts/art_convert.sh), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
 ├── frontend/public/sw.js         # 서비스워커 — push 수신·클릭(/siun?src=push)만, 오프라인 캐시 없음
 ├── frontend/public/fonts/        # OG 이미지용 Noto Sans KR 400·700 서브셋 WOFF (한글 전체 + 코드에 쓰인 한자 242자, README 참고)
 ├── frontend/public/oheng/        # 오행 이미지 5종

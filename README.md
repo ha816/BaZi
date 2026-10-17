@@ -111,8 +111,8 @@ BaZi/
 ├── docker/docker-compose.yml # postgres:17 + healthcheck
 ├── scripts/db.sh            # DB 기동·마이그레이션·상태·초기화 스크립트 (/db 스킬이 사용)
 ├── scripts/send_daily_push.py · vapid_keygen.py   # 아침 알림 발송(cron) · VAPID 키 생성
-├── specs/                   # 화면·기능 스펙 — 페이지 경로별 폴더 (README.md에 템플릿·화면 지도)
-├── docs/                    # ROADMAP.md, REFACTORING.md, DEPLOY_PUSH.md, 캐릭터 유형표 2종, research/, llm_samples/
+├── specs/                   # 화면·기능 스펙 — 페이지 경로별 폴더, 캐릭터 유형표도 여기 (README.md에 템플릿·화면 지도)
+├── docs/                    # ROADMAP.md, REFACTORING.md, DEPLOY_PUSH.md, research/, llm_samples/
 ├── src/kkachi/
 │   ├── fastapi.py           # 앱 진입점 — 라우터 등록, CORS, MCP 마운트, local.toml 로드
 │   ├── container.py         # DI 컨테이너

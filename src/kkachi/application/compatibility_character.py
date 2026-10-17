@@ -267,5 +267,5 @@ def build_compat_character(result: dict, relation_type: str = "lover") -> dict |
     desc = _DESC[kind][rel].format(a=a, b=b)
     if mood:
         desc += " " + _MOOD[mood][rel][1]
-    # key → 그림 frontend/public/kkachi/compat/{key}.png (docs/COMPAT_CHARACTER_TYPES.md 15종)
+    # key → 그림 frontend/public/kkachi/compat/{key}.webp (specs/compatibility/character.md §3 15종, 원본 .png → scripts/art_convert.sh)
     return {"title": title, "kind": kind, "key": key, "roles": roles, "desc": desc, "scenarios": _scenarios(result, rel, kind, a)}

@@ -6,7 +6,7 @@
 | 화면 | `/analysis` 에서 "분석 시작"을 누른 뒤, 또는 재진입 자동 분석 뒤의 결과 단계. 입력 폼(프로필 선택·직접 입력)은 `specs/analysis/input.md`(미작성) |
 | 관련 코드 | `frontend/src/components/ResultSlides.tsx`(오케스트레이터: 탭 정의·`?step=`·`?tab=`·탭바·다음 이야기·FeedbackBar) · `ResultIntro.tsx` · `SelfQuizCard.tsx` · `SajuCharacterCard.tsx`(RevealGate·나의 캐릭터 카드) · `NextTabCard.tsx` · `tabs/`(NatalTab→`natal/` 6섹션, EnergyTab, YongshinTab+SamjaeTab, TimingTab+DomainFortuneSection, DaeunTab+SeunTab+WolUnTab+FortuneTab, ZodiacTab, FengShuiTab, AiTab) · `PillarDetail.tsx`(팔자 등장 연출) · `SajuChat.tsx`(FAB) · `app/analysis/page.tsx`(헤더 공유·다시 입력·지난 연도 칩) |
 | 관련 API | `POST /kkachi/interpret`(직접 입력) · `POST /members/{m}/profiles/{p}/analyze`(프로필, 연도별 캐시) → `{ natal, postnatal, self_quiz }` · `GET …/analyses`(저장된 연도) · `POST /kkachi/stream-report`(AI 풀이 스트림) · `POST …/feedback` · `POST /kkachi/shares` → `/s/{id}` |
-| 관련 문서 | `docs/ROADMAP.md` V5(9개 탭을 끝까지)·V3(설문조사)·V4(캐릭터 20유형)·R2(시간 미상)·R3(택시)·R6(지난 연도) · `docs/SAJU_CHARACTER_TYPES.md` · `specs/analysis/input.md`(입력 폼·구현 이력, 옛 시나리오 문서) · `CLAUDE.md` "ResultSlides 탭 구성"·"만세력(NatalTab) 설계 원칙"(요약) |
+| 관련 문서 | `docs/ROADMAP.md` V5(9개 탭을 끝까지)·V3(설문조사)·V4(캐릭터 20유형)·R2(시간 미상)·R3(택시)·R6(지난 연도) · `specs/analysis/character.md`(캐릭터 20유형 표·노출 규칙, 그림 프롬프트는 부록) · `specs/analysis/input.md`(입력 폼·구현 이력, 옛 시나리오 문서) · `CLAUDE.md` "ResultSlides 탭 구성"·"만세력(NatalTab) 설계 원칙"(요약) |
 | 마지막 확인 | 2026-10-17 — 수용 기준 5·6·7·8·9·13(설문 부분)과 7의 탭바 아래 스크롤을 Playwright로 확인(10문항, 390px). 나머지는 코드 읽기로 확인 |
 
 ## 1. 목적

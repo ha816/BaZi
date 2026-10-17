@@ -6,7 +6,7 @@
 | 화면 | `/compatibility` 에서 "궁합 보기"를 누른 뒤의 결과 단계. 입력 폼은 `specs/compatibility/input.md`(미작성) |
 | 관련 코드 | `frontend/src/components/CompatibilityResult.tsx`(오케스트레이터: 탭 정의·`?step=`·`?tab=`·탭바·다음 이야기) · `components/compatibility/`(CompatIntro · ScenarioCard · CompatTotal(RevealGate·CompatCharacterBox·CompatCharacterCard·CompatScoreCard) · PillarsTab · ElementTab · SinsalTab · StrengthCard · ZodiacTab · DomainTab · DailyTab · NarrativeTab) · `app/compatibility/page.tsx`(헤더 공유·다시 입력, 폼 대체, AI 해석 스트림) · `PillarPairDiagram` · `OhengPairDiagram` · `NextTabCard` |
 | 관련 API | `POST /compatibility`(프로필×2, 캐시) · `POST /compatibility/direct`(직접·혼합) · `POST /compatibility/invites/{id}/resolve` → `CompatibilityResult` + `summary`·`character`·`zodiac`(응답 때 계산) · `POST /compatibility/narrative`(스트림) · `GET /compatibility/daily` · `POST /compatibility/shares` → `/s/{id}` |
-| 관련 문서 | `docs/ROADMAP.md` V6(분석에서 한 것을 궁합에도)·R5·V2-2 · `docs/COMPAT_CHARACTER_TYPES.md`(캐릭터 15종·문답 규칙·그림 프롬프트) · `specs/compatibility/input.md`(입력 폼·구현 이력, 옛 시나리오 문서) · `CLAUDE.md` 궁합 탭 구성 표(이 스펙과 같은 내용의 요약) |
+| 관련 문서 | `docs/ROADMAP.md` V6(분석에서 한 것을 궁합에도)·R5·V2-2 · `specs/compatibility/character.md`(캐릭터 15종·칭호·문답 규칙, 그림 프롬프트는 부록) · `specs/compatibility/input.md`(입력 폼·구현 이력, 옛 시나리오 문서) · `CLAUDE.md` 궁합 탭 구성 표(이 스펙과 같은 내용의 요약) |
 | 마지막 확인 | 2026-10-17 — 수용 기준 2·5·6·7·8·11·13과 9의 다시 답하기를 Playwright로 확인(8문항 커플, 390px). 1·3·4·9의 이어하기·10·12·14~20은 코드 읽기로 확인 |
 
 ## 1. 목적
@@ -151,7 +151,7 @@
 | 항목 | 누가 | 메모 |
 |---|---|---|
 | 문답 답 저장 여부 | 사용자 | 저장하면 공유 카드 "일치율"도 다시 검토(ROADMAP V3) |
-| 궁합 캐릭터 15장 + 드럼 까치 그림 반입 | 사용자(Gemini) | 프롬프트 `docs/COMPAT_CHARACTER_TYPES.md` §7 → `scripts/art_convert.sh`. 자리는 전부 준비됨 |
+| 궁합 캐릭터 15장 + 드럼 까치 그림 반입 | 사용자(Gemini) | 프롬프트 `specs/compatibility/character.md` 부록 B → `scripts/art_convert.sh`. 자리는 전부 준비됨 |
 | 두 분의 캐릭터 카드 내용 보강 | 사용자 검토 | 분석 카드의 선호하는 일·게이지에 대응하는 "잘 맞는 순간 / 부딪히기 쉬운 순간" 칩 — 15유형 문구 필요(백엔드·문서 동시) |
 | 탭별 👍/👎 피드백 바 | 사용자 | 분석엔 있고 궁합엔 없음. 프로필×2일 때 어느 프로필에 붙일지 |
 | 두 사람 월별 흐름 탭(분석 택시 대응) | 로드맵 | 새 기능 — V2-2 보류 상태 |
