@@ -162,7 +162,7 @@ BaZi/
 │   │   ├── ResultSlides.tsx         # 결과 오케스트레이터 — 9개 feature 탭(?tab=, 기본 natal. 한눈에 탭은 2026-10-13 제거 — 옛 ?tab=summary는 natal로) + 탭 끝 NextTabCard("다음 이야기" — 흥미 유발 제목 hook만, 내용 미리보기 없음) + FeedbackBar + SajuChat FAB. 탭 전환은 history.replaceState(서버 왕복 없음) + 새 탭 첫 줄로 스크롤
 │   │   ├── ResultIntro.tsx          # 분석 직후 전체 화면 인트로(?step=intro, 건너뛰기 가능) — 캐릭터 공개(SajuCharacterCard RevealGate 천간 슬롯) → 캐릭터 인사 말풍선 → [📋 설문조사 → ?step=survey] / [🗺️ 내 사주 분석 보기 → "운세 지도 펼치는 중…" → ?tab=natal]. 결과 단계는 한 페이지 안 주소(?step=)로 관리(pushState — 뒤로 가기로 설문 → 인트로). 새 결과(주소에 step·tab 없음)만 인트로, natal.character 없으면 생략. 설문 화면은 ResultSlides가 같은 전체 화면 틀로 SelfQuizCard를 띄움 — 제출해도 일치율은 여기서 안 보여주고 "답변 완료! 설문조사 탭에 숨겨 뒀어요" 화면만(일치율은 설문조사 탭에서 공개, 다음 이야기 카드도 "몇 % 맞았을까?"로 예고)
 │   │   ├── NextTabCard.tsx          # 탭 끝 "다음 이야기" 카드 공용(분석 ResultSlides · 궁합 CompatibilityResult) — 흥미 유발 제목(hook)만, 마지막 탭은 첫 탭으로
-│   │   ├── SelfQuizCard.tsx         # 설문조사(V3, 2026-10-13 "내 사주 맞춰 보기"에서 이름 변경) — 설문조사 탭(AI 풀이 앞) 선택형. 10문항 그렇다/아니다로 답한 뒤 한꺼번에 사주 예측과 비교 → "사주와 설문 응답의 일치율" % + 아래 KkachiTip으로 구간별 해설 한 문장(같은 답 수/10 — 신뢰도·사주 스타일 라벨은 2026-10-13 제거) + 문항별 일치(다른 문항 먼저·근거는 다른 문항에만, 일치 문항은 짧게)(상태는 ResultSlides, 서버 저장 없음). 인트로의 ?step=survey 화면에서도 같은 상태로 뜸
+│   │   ├── SelfQuizCard.tsx         # 설문조사(V3, 2026-10-13 "내 사주 맞춰 보기"에서 이름 변경) — 설문조사 탭(AI 풀이 앞) 선택형. 10문항 그렇다/아니다를 **5문항씩 2페이지**로 답하고(2026-10-17 — 페이지는 카드 안 상태, 처음엔 안 답한 첫 페이지부터, 이 페이지를 다 답해야 다음·이전은 링크, 넘기면 카드 첫 줄로 스크롤) 한꺼번에 사주 예측과 비교 → "사주와 설문 응답의 일치율" % + 아래 KkachiTip으로 구간별 해설 한 문장(같은 답 수/10 — 신뢰도·사주 스타일 라벨은 2026-10-13 제거) + 문항별 일치(다른 문항 먼저·근거는 다른 문항에만, 일치 문항은 짧게)(상태는 ResultSlides, 서버 저장 없음). 인트로의 ?step=survey 화면에서도 같은 상태로 뜸
 │   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 + 나의 캐릭터 그림 로더 loadCharacterArt(og/{key}.jpg, 키별 캐시) (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
@@ -562,7 +562,7 @@ erDiagram
 | `daeun` | 시운(時運) | `DaeunTab` + `SeunTab` + `WolUnTab` + `FortuneTab`(충합, 영역별 운) |
 | `zodiac` | 십이지신 | `ZodiacTab` |
 | `fengshui` | 풍수 | `FengShuiTab` |
-| `survey` | 설문조사 | `SelfQuizCard` (V3, 그렇다/아니다 10문항 → 사주와 설문 응답의 일치율 % + 문항별 일치, 2026-10-13 한눈에서 별도 탭으로). `self_quiz` 없는 옛 결과는 탭 숨김 |
+| `survey` | 설문조사 | `SelfQuizCard` (V3, 그렇다/아니다 10문항을 5문항씩 2페이지로 → 사주와 설문 응답의 일치율 % + 문항별 일치, 2026-10-13 한눈에서 별도 탭으로). `self_quiz` 없는 옛 결과는 탭 숨김 |
 | `ai` | AI 풀이 | `AiTab` → `/kkachi/stream-report` 스트리밍 (Ollama 없으면 에러 문구) |
 
 - 한눈에 탭은 2026-10-13 화면에서 뺐다(카드 코드도 2026-10-15 삭제). `postnatal.summary`(me·year·month·today·caution·energy·timing·yongshin·zodiac·fengshui)는 API에 그대로 두고, 나중에 탭별 요약을 LLM에 기본 요약으로 넘기는 데 쓴다. `summary_view` 이벤트는 더 이상 안 나감
@@ -577,7 +577,7 @@ erDiagram
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |
 | `domain` | 영역별 | `CompatScoreCard` + `DomainTab` | 맨 위 종합 궁합(총점·라벨·한 줄 설명·시간 미상 고지) · 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회 |
-| `scenario` | 이럴 때 | `ScenarioCard` | "이럴 때 두 분은?" — [이름1님 / 이름2님 / 둘 다]로 전부 답한 뒤 한꺼번에 비교 → "사주와 두 분 응답의 일치율" % + 까치 해설 한 문장 + 문항별(다른 문항 먼저·근거는 다른 문항에만). 신뢰도·사람별 사주 스타일 라벨은 2026-10-15 제거. 인트로 문답(`?step=scenario`)과 답·제출 상태 공유 — 인트로에서 제출하면 "답변 완료"만, 일치율은 이 탭에서. 문답 없는 옛 결과는 탭 숨김 |
+| `scenario` | 이럴 때 | `ScenarioCard` | "이럴 때 두 분은?" — [이름1님 / 이름2님 / 둘 다]로 5문항씩 페이지(6~10문항을 고르게 나눔, 2026-10-17)로 전부 답한 뒤 한꺼번에 비교 → "사주와 두 분 응답의 일치율" % + 까치 해설 한 문장 + 문항별(다른 문항 먼저·근거는 다른 문항에만). 신뢰도·사람별 사주 스타일 라벨은 2026-10-15 제거. 인트로 문답(`?step=scenario`)과 답·제출 상태 공유 — 인트로에서 제출하면 "답변 완료"만, 일치율은 이 탭에서. 문답 없는 옛 결과는 탭 숨김 |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |
 
 - **결과 직후 인트로**(`?step=intro`, 2026-10-15 — 분석 V5와 같은 흐름): 두근두근 드럼 게이트(드럼 까치 `/kkachi/drum_kkachi.png`, 없으면 🥁) → 1.2초 드럼롤 → 오행 캐릭터 상자(그림 `/kkachi/compat/{character.key}.png`, 없으면 역할 이모지 · 칭호 · 점수 · 역할 칩 · 설명) → 까치 인사 → [🤔 이럴 때 두 분은? `?step=scenario`] / [💞 궁합 분석 보기 → "인연 지도 펼치는 중…" → `?tab=pillars`]. 건너뛰기 가능, 새 결과(주소에 step·tab 없음)만. "다시 입력"은 `?tab=`·`?step=` 제거

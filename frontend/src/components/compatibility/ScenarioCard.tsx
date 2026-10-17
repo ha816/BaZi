@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
 import type { CompatTabProps } from "./types";
@@ -18,6 +19,9 @@ interface Props extends CompatTabProps {
 
 type Scenario = { q: string; who: "p1" | "p2" | "both"; reason: string };
 
+// 한 페이지 최대 문항 수 — 설문조사(SelfQuizCard)처럼 5문항씩. 문항이 6~10개로 들쭉날쭉해서 페이지 수를 먼저 정하고 고르게 나눈다(6→3+3, 7→4+3, 9→5+4)
+const PAGE_MAX = 5;
+
 // 일치율 구간별 해설 한 문장 — 신뢰도·사주 스타일 라벨은 2026-10-15 뺐다(분석 설문조사와 같게). 사주 해석이 아니라 일치율 안내
 function rateNote(rate: number) {
   if (rate >= 0.8) return "두 분의 실제 모습이 사주와 거의 같아요. 이 궁합 풀이를 믿고 참고해도 좋아요.";
@@ -25,14 +29,31 @@ function rateNote(rate: number) {
   return "두 분은 타고난 기운에 서로의 색을 더해 가는 사이예요. 풀이는 가볍게 참고하고, 서로가 아는 모습을 더 믿어 주세요.";
 }
 
-/** 이럴 때 두 분은? — [이름1 / 이름2 / 둘 다]로 전부 답한 뒤 한꺼번에 사주 예측과 맞춘다. 결과는 일치율 + 까치 해설 + 문항별(다른 문항 먼저) */
+/** 이럴 때 두 분은? — [이름1 / 이름2 / 둘 다]로 5문항씩 페이지를 넘기며 전부 답한 뒤 한꺼번에 사주 예측과 맞춘다. 결과는 일치율 + 까치 해설 + 문항별(다른 문항 먼저) */
 export default function ScenarioCard({ data, name1, name2, answers, onAnswer, submitted, onSubmit, onReset }: Props) {
   const list = (data.character?.scenarios ?? []) as Scenario[];
+  // 페이지는 화면 상태라 여기서만 든다. 처음 열 때는 아직 안 답한 문항이 있는 첫 페이지부터 (인트로에서 답하다 탭으로 와도 이어짐)
+  const pageCount = Math.max(1, Math.ceil(list.length / PAGE_MAX));
+  const pageSize = Math.max(1, Math.ceil(list.length / pageCount));
+  const firstOpen = list.findIndex((_, i) => !answers[i]);
+  const [page, setPage] = useState(Math.max(0, Math.floor((firstOpen < 0 ? list.length - 1 : firstOpen) / pageSize)));
+  const cardRef = useRef<HTMLDivElement>(null);
   if (list.length === 0) return null;
   const who = (w: string) => (w === "p1" ? `${name1}님` : w === "p2" ? `${name2}님` : "둘 다");
   const answered = list.filter((_, i) => answers[i]).length;
   const allAnswered = answered === list.length;
   const matched = list.filter((s, i) => answers[i] === s.who).length;
+
+  const cur = Math.min(page, pageCount - 1);
+  const start = cur * pageSize;
+  const pageList = list.slice(start, start + pageSize);
+  const pageLeft = pageList.filter((_, j) => !answers[start + j]).length;
+  const last = cur === pageCount - 1;
+  // 페이지를 넘기면 카드 첫 줄로 올린다 — 인트로 전체 화면에서는 그 안의 스크롤이 0으로 붙고, 탭에서는 고정 탭바(7탭 2줄 약 124px) 아래로(scroll-mt-36)
+  const goPage = (n: number) => {
+    setPage(n);
+    cardRef.current?.scrollIntoView({ block: "start" });
+  };
   const options: { pick: QuizPick; label: string }[] = [
     { pick: "p1", label: `${name1}님` },
     { pick: "p2", label: `${name2}님` },
@@ -40,50 +61,76 @@ export default function ScenarioCard({ data, name1, name2, answers, onAnswer, su
   ];
 
   return (
-    <div className="slide-card">
+    <div ref={cardRef} className="slide-card scroll-mt-36">
       <div className="slide-card__header flex items-center justify-between">
         <SectionHeader emoji="🤔" title="이럴 때 두 분은?" noMargin />
-        {!submitted && <span className="text-[10px] text-[var(--color-ink-faint)]">{answered}/{list.length} 답함</span>}
+        {!submitted && (
+          <span className="text-[10px] text-[var(--color-ink-faint)]">
+            {pageCount > 1 && <>{cur + 1}/{pageCount} 페이지 · </>}{answered}/{list.length} 답함
+          </span>
+        )}
       </div>
       <div className="divider" />
       <div className="slide-card__body space-y-3">
         {!submitted ? (
           <>
             <KkachiTip>실제 두 분은 어떤가요? 질문에 모두 답해 주시면, 사주가 미리 예측해 둔 답과 한꺼번에 맞춰 얼마나 맞는지 알려드려요.</KkachiTip>
-            {list.map((s, i) => (
-              <div key={i} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] p-3 space-y-2">
-                <p className="text-sm font-semibold leading-snug text-[var(--color-ink)] break-keep">Q{i + 1}. {s.q}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {options.map((o) => {
-                    const on = answers[i] === o.pick;
-                    return (
-                      <button
-                        key={o.pick}
-                        type="button"
-                        onClick={() => onAnswer(i, o.pick)}
-                        className={`py-3 rounded-lg border text-sm font-semibold truncate px-1 transition-colors ${
-                          on
-                            ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-ivory)]"
-                            : "border-[var(--color-border)] bg-white text-[var(--color-ink)] hover:border-[var(--color-gold-light)]"
-                        }`}
-                      >
-                        {o.label}
-                      </button>
-                    );
-                  })}
+            {pageList.map((s, j) => {
+              const i = start + j;
+              return (
+                <div key={i} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] p-3 space-y-2">
+                  <p className="text-sm font-semibold leading-snug text-[var(--color-ink)] break-keep">Q{i + 1}. {s.q}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {options.map((o) => {
+                      const on = answers[i] === o.pick;
+                      return (
+                        <button
+                          key={o.pick}
+                          type="button"
+                          onClick={() => onAnswer(i, o.pick)}
+                          className={`py-3 rounded-lg border text-sm font-semibold truncate px-1 transition-colors ${
+                            on
+                              ? "border-[var(--color-ink)] bg-[var(--color-ink)] text-[var(--color-ivory)]"
+                              : "border-[var(--color-border)] bg-white text-[var(--color-ink)] hover:border-[var(--color-gold-light)]"
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={!allAnswered}
-              className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 ${
-                allAnswered ? "btn-shimmer active:opacity-70" : "border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] text-[var(--color-ink-faint)]"
-              }`}
-            >
-              {allAnswered ? "🔮 사주 예측과 맞춰 보기" : `${list.length - answered}개 남았어요`}
-            </button>
+              );
+            })}
+            {/* 마지막 페이지 전에는 이 페이지를 다 답해야 다음으로, 마지막 페이지에서는 전부 답해야 맞춰 보기 (설문조사와 같은 규칙) */}
+            {last ? (
+              <button
+                type="button"
+                onClick={onSubmit}
+                disabled={!allAnswered}
+                className={`w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 ${
+                  allAnswered ? "btn-shimmer active:opacity-70" : "border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] text-[var(--color-ink-faint)]"
+                }`}
+              >
+                {allAnswered ? "🔮 사주 예측과 맞춰 보기" : `${list.length - answered}개 남았어요`}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => goPage(cur + 1)}
+                disabled={pageLeft > 0}
+                className={`w-full py-3 rounded-xl text-sm font-semibold ${
+                  pageLeft === 0 ? "bg-[var(--color-ink)] text-[var(--color-ivory)] active:opacity-70" : "border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] text-[var(--color-ink-faint)]"
+                }`}
+              >
+                {pageLeft === 0 ? `다음 문항으로 (${start + pageSize + 1}~${Math.min(list.length, start + pageSize * 2)}번) ›` : `이 페이지에 ${pageLeft}개 남았어요`}
+              </button>
+            )}
+            {cur > 0 && (
+              <button type="button" onClick={() => goPage(cur - 1)} className="block mx-auto text-xs text-[var(--color-ink-muted)] underline underline-offset-2">
+                ‹ 이전 문항 ({start - pageSize + 1}~{start}번)
+              </button>
+            )}
           </>
         ) : (
           <div className="space-y-3 score-pop">
@@ -108,7 +155,8 @@ export default function ScenarioCard({ data, name1, name2, answers, onAnswer, su
                   {!same && <p className="text-[11px] leading-snug text-[var(--color-ink-muted)] break-keep">근거: {s.reason}</p>}
                 </div>
               ))}
-            <button type="button" onClick={onReset} className="block mx-auto text-xs text-[var(--color-gold)] underline underline-offset-2">다시 답하기</button>
+            {/* 다시 답하면 첫 페이지부터 */}
+            <button type="button" onClick={() => { setPage(0); onReset(); }} className="block mx-auto text-xs text-[var(--color-gold)] underline underline-offset-2">다시 답하기</button>
           </div>
         )}
       </div>
