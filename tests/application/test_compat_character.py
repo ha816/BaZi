@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kkachi.application.compatibility_character import _PAIR_NAME, _SAME_NAME, build_compat_character
+from kkachi.application.compatibility_character import _MOMENTS, _PAIR_NAME, _SAME_NAME, build_compat_character
 from kkachi.application.util.util import josa
 
 _SPEC = Path(__file__).parents[2] / "specs/compatibility/character.md"
@@ -100,3 +100,18 @@ def test_spec_table_matches_pair_names():
         assert rows[a + b][3:6] == [na, nb, f"{na}{josa(na, '과', '와')} {nb}"], a + b
     for e, (phrase, word) in _SAME_NAME.items():
         assert rows[e + e][3:5] == [word, phrase], e + e
+
+
+def test_moments_three_plus_three_for_every_key_and_match_spec_table():
+    """15종마다 잘 맞는 순간 3 · 부딪히기 쉬운 순간 3 — specs/compatibility/character.md §5-1 표와 글자까지 같다"""
+    keys = {a + b for a, b in _PAIR_NAME} | {e + e for e in _SAME_NAME}
+    assert set(_MOMENTS) == keys and all(len(g) == 3 and len(h) == 3 for g, h in _MOMENTS.values())
+    rows = {}
+    for line in _SPEC.read_text().splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) == 5 and len(cells[1]) == 4 and cells[1].startswith("`") and cells[1][1:3] in keys:
+            rows[cells[1][1:3]] = cells
+    assert len(rows) == 15
+    for key, (good, hard) in _MOMENTS.items():
+        assert rows[key][3:5] == [" · ".join(good), " · ".join(hard)], key
+    assert build_compat_character(_result("甲", "丙"), "lover")["moments"] == {"good": list(_MOMENTS["木火"][0]), "hard": list(_MOMENTS["木火"][1])}

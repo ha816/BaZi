@@ -453,6 +453,8 @@ export interface CompatCharacter {
   key: string;
   roles: { token: string; name: string; element: string; emoji: string }[];
   desc: string;
+  /** 잘 맞는 순간 · 부딪히기 쉬운 순간 — 15종마다 3+3, 관계 유형 공통(2026-10-17) */
+  moments: { good: string[]; hard: string[] };
   /** 이럴 때 두 분은? — who: p1 | p2 | both */
   scenarios: { q: string; who: "p1" | "p2" | "both"; reason: string }[];
 }
@@ -681,7 +683,7 @@ export interface CompatShareCard {
   p1: { stem: string; korean: string; element: string; hour_unknown?: boolean };
   p2: { stem: string; korean: string; element: string; hour_unknown?: boolean };
   /** 궁합 캐릭터 칭호 — 이름은 채워져 있다. 옛 카드·일간 없음이면 없음 */
-  character?: { title: string; key: string; roles: { name: string; element: string; emoji: string }[]; desc: string } | null;
+  character?: { title: string; key: string; roles: { name: string; element: string; emoji: string }[]; desc: string; moments?: { good: string[]; hard: string[] } | null } | null;
 }
 
 export interface SelfQuizItem {

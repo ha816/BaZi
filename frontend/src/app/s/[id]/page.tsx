@@ -144,7 +144,7 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
   const ch = card.character;
-  // 15종 그림(specs/compatibility/character.md, compat/{key}.webp — 분석 캐릭터처럼 1024px WebP)은 아직 없을 수 있다 — 서버 렌더라 onError 대신 파일 존재로 판단
+  // 15종 그림(specs/compatibility/character.md §3, compat/{key}.webp — 분석 캐릭터처럼 1024px WebP)은 아직 없을 수 있다 — 서버 렌더라 onError 대신 파일 존재로 판단
   const hasArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/compat", `${ch.key}.webp`));
   return (
     <main className="page page--center">
@@ -188,6 +188,14 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
                   })}
                 </div>
                 <p className="text-sm leading-relaxed text-[var(--color-ink)]">{ch.desc}</p>
+                {!!ch.moments?.good?.length && (
+                  <div className="flex flex-wrap items-center justify-center gap-1.5">
+                    <span className="text-[11px] text-[var(--color-ink-muted)] mr-0.5">잘 맞는 순간</span>
+                    {ch.moments.good.map((m) => (
+                      <span key={m} className="rounded-full px-2.5 py-1 text-[11px] font-semibold break-keep text-[var(--color-gold)] bg-white border border-[var(--color-gold-light)]">{m}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             <div className="flex items-center gap-4">

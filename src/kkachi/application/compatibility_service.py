@@ -77,6 +77,7 @@ def build_compat_share_card(name1: str, name2: str, relation_type: str, result: 
         "key": ch["key"],
         "roles": [{"name": r["name"], "element": r["element"], "emoji": r["emoji"]} for r in ch["roles"]],
         "desc": ch["desc"].replace("{p1}", n1).replace("{p2}", n2),
+        "moments": ch.get("moments"),  # 랜딩은 잘 맞는 순간만 보여준다
     } if ch else None
     return {
         "kind": "compat",
