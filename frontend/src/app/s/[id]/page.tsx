@@ -144,8 +144,8 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
   const ch = card.character;
-  // 15종 그림(docs/COMPAT_CHARACTER_TYPES.md)은 아직 없을 수 있다 — 서버 렌더라 onError 대신 파일 존재로 판단
-  const hasArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/compat", `${ch.key}.png`));
+  // 15종 그림(docs/COMPAT_CHARACTER_TYPES.md, compat/{key}.webp — 분석 캐릭터처럼 1024px WebP)은 아직 없을 수 있다 — 서버 렌더라 onError 대신 파일 존재로 판단
+  const hasArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/compat", `${ch.key}.webp`));
   return (
     <main className="page page--center">
       <div className="page__inner">
@@ -166,7 +166,7 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
             {ch && (
               <div className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-4 text-center space-y-3">
                 {hasArt ? (
-                  <img src={`/kkachi/compat/${ch.key}.png`} alt="" className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
+                  <img src={`/kkachi/compat/${ch.key}.webp`} alt="" className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
                 ) : (
                   <div className="flex items-center justify-center gap-3 py-1 text-5xl" aria-hidden>
                     <span>{ch.roles[0]?.emoji}</span>

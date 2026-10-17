@@ -146,11 +146,11 @@
 | 항목 | 정한 값 |
 |---|---|
 | 수량 | **15장** (2장의 15종 그대로). 관계 유형·수식어·이름은 그림 위에 글자로 얹는다 |
-| 원본 규격 | 1080 × 1080 정사각 PNG. 가운데 1080 × 566 안에 두 까치를 모두 넣는다 (OG 1200 × 630으로 잘라 쓸 때 안전 영역) |
-| 위치 | `frontend/public/kkachi/compat/{A}{B}.png` (예: `compat/木火.png`, 같은 기운은 `compat/土土.png`) — 백엔드 `character.key`가 이 이름을 준다. 파일이 없으면 화면은 두 역할 이모지를 크게 띄운다 |
+| 원본 규격 | 정사각 PNG(Gemini 기본 2048 × 2048 그대로). 화면·OG 모두 정사각으로 넣으므로(사주 카드 V4와 같은 자리) 가로 띠 제약은 없다 — 두 까치를 가운데에, 사방 10% 여백 |
+| 위치 | 원본 `frontend/public/kkachi/compat/{A}{B}.png` (예: `compat/木火.png`, 같은 기운은 `compat/土土.png`) → `bash scripts/art_convert.sh frontend/public/kkachi/compat` 가 화면용 `compat/{key}.webp`(1024px)와 OG용 `compat/og/{key}.jpg`(512px)를 만든다 — 백엔드 `character.key`가 이 이름을 준다. 파일이 없으면 화면은 두 역할 이모지, OG는 글자만 |
 | 방향 | 그림은 A(주는 쪽)가 왼쪽. p1이 B 쪽이어도 같은 그림을 쓰고 역할 칩으로 누가 누구인지 보여준다 |
 | 스타일 | 기존 까치 그림(`good_kkachi.png`, `strength/신강.png`)과 같은 톤 — 갓을 쓴 까치, 수채화풍 배경, 따뜻한 색. 글자는 그림에 넣지 않는다 |
-| 크기 | 화면용은 한 장 300KB 이하로 줄여서 쓴다 (원본은 `kkachi/originals/`에 보관) |
+| 크기 | 화면용 WebP는 한 장 100KB 안팎(사주 캐릭터와 같음), OG용 JPG 50KB 안팎. 원본 PNG(6~7MB)는 사주 캐릭터처럼 같은 폴더에 함께 커밋 |
 
 ### 6-2. 그림 지시문 틀
 
@@ -178,7 +178,322 @@ OG 이미지(공유 링크 미리보기)는 satori로 그리므로 이모지를 
 
 ### 6-4. 적용 순서
 
-- [ ] 15장 그림 생성 → `frontend/public/kkachi/compat/` 에 넣기 (원본은 `originals/`)
+- [ ] 15장 그림 생성(§7 복붙용 프롬프트) → 원본 PNG를 `frontend/public/kkachi/compat/{key}.png`로 저장 → `bash scripts/art_convert.sh frontend/public/kkachi/compat` → WebP·JPG 확인
+- [ ] 드럼 치는 까치 `frontend/public/kkachi/drum_kkachi.png` (§7 마지막 프롬프트, 1024px로 줄여 저장) — 인트로 두근두근 화면. 없으면 기본 까치 + 🥁
 - [x] 한눈에 "두 분은" 박스에 그림 자리 — `compat/{key}.png`를 먼저 찾고 없으면 역할 이모지 (2026-10-03)
+- [x] OG 이미지에 궁합 캐릭터 그림 자리 (2026-10-17) — `compat/og/{key}.jpg`가 있으면 왼쪽 232px에 그림, 점수·일간 칸을 좁힘(`OgCard.CompatOgImage characterArt`, `loadCompatArt`). 파일만 넣으면 노출
 - [x] 궁합 공유 카드(`/s/{id}` kind=compat)·OG 이미지에 칭호·역할 넣기 (2026-10-09) — 백엔드 `build_compat_share_card().character`(title·key·roles·desc, 이름 채움·scenarios 제외). 페이지는 `compat/{key}.png`가 있으면 그림, 없으면 역할 이모지(서버 렌더라 파일 존재로 판단). OG는 글자만 — 헤더 아래 "두 분은 {칭호}" 줄 + 일간 타일 아래 "= 광산(土)" + 설명 첫 문장
 - [ ] 실기기에서 카톡 미리보기로 OG 확인
+
+---
+
+## 7. 복붙용 통합 프롬프트 (2026-10-17)
+
+사주 캐릭터(`docs/SAJU_CHARACTER_TYPES.md` §3)와 같은 방식 — 기준 그림 `frontend/public/kkachi/strength/신강.png`(또는 마음에 드는 사주 캐릭터 WebP 한 장)를 **첨부**하고 아래 블록을 그대로 붙여 넣는다. 결과에 글자가 들어가면 "remove all text"로 한 번 더. 저장 이름은 표의 파일명 그대로(`木火.png` …) → §6-4 변환 스크립트.
+
+공통 틀(참고용 — 아래 15개 블록에는 이미 들어가 있다):
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies {A 역할} ({A 오행}), the RIGHT magpie embodies {B 역할} ({B 오행}).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: {장면}
+```
+
+### 7-1. `木火.png` — 장작과 모닥불
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies firewood logs (Wood 木), the RIGHT magpie embodies a glowing campfire (Fire 火).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Night camp under stars. The left magpie carries a bundle of firewood and places a log onto the fire; the right magpie stands in front of the crackling campfire, lit up warm and bright, wings spread happily. Warm orange and amber palette, soft sparks.
+```
+
+### 7-2. `火土.png` — 햇볕과 들판
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies warm sunshine (Fire 火), the RIGHT magpie embodies a wide golden field (Earth 土).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: High noon over a golden grain field. The left magpie floats in the sky holding a small glowing sun like a lantern, beams falling on the field; the right magpie rests contentedly among tall ripe grain and a few pumpkins. Golden yellow and ochre palette.
+```
+
+### 7-3. `土金.png` — 광산과 보석
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a rocky mountain mine (Earth 土), the RIGHT magpie embodies a sparkling gemstone (Metal 金).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Entrance of a cozy mountain mine cave with lanterns. The left magpie wears a mining helmet and holds out a big sparkling gem it just found; the right magpie receives it and glitters like a jewel, with little sparkles around. Stone-brown and sapphire palette.
+```
+
+### 7-4. `金水.png` — 바위와 샘물
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a sturdy rock (Metal 金), the RIGHT magpie embodies a clear spring (Water 水).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Dawn in a quiet valley. The left magpie stands firm on a big smooth boulder; from beneath the rock a crystal-clear spring bubbles out into a small pool, where the right magpie drinks and splashes happily. Silver-blue and mint palette, misty morning light.
+```
+
+### 7-5. `水木.png` — 단비와 새싹
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies gentle spring rain (Water 水), the RIGHT magpie embodies a fresh sprout (Wood 木).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Spring meadow. The left magpie rides a small fluffy rain cloud and sprinkles gentle rain with a watering can; the right magpie stands beside a bright green sprout, spreading its wings like new leaves, droplets shining. Light green and sky-blue palette.
+```
+
+### 7-6. `木土.png` — 뿌리와 대지
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies deep tree roots (Wood 木), the RIGHT magpie embodies solid ground (Earth 土).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Cross-section view of a hillside. The left magpie sits on a tree whose roots reach deep into the earth, gripping it firmly; the right magpie rests inside the warm soil, hugging the roots with a cozy smile. Forest-green and warm brown palette.
+```
+
+### 7-7. `土水.png` — 둑과 강물
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a riverside levee (Earth 土), the RIGHT magpie embodies a flowing river (Water 水).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: A winding river seen from the bank. The left magpie stands on a sturdy earthen levee, guiding the water's path with a small flag; the right magpie floats along the river on a leaf boat, following the course cheerfully. Ochre and river-blue palette.
+```
+
+### 7-8. `水火.png` — 소나기와 불꽃
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a sudden rain shower (Water 水), the RIGHT magpie embodies a lively flame (Fire 火).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Two magpies face each other at close range: the left one sits on a small dark rain cloud with raindrops falling, the right one glows like a flame with little fire wisps; cute puffs of steam rise where rain meets fire. Playful tension, both grinning. Blue and red-orange palette.
+```
+
+### 7-9. `火金.png` — 용광로와 원석
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a blazing forge (Fire 火), the RIGHT magpie embodies raw ore turning into a tool (Metal 金).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: A blacksmith's workshop. The left magpie works the glowing forge with bellows and tongs, sparks flying; the right magpie, holding a rough ore stone, is halfway transformed into a shining polished tool, proud and sparkling. Ember-orange and steel-silver palette.
+```
+
+### 7-10. `金木.png` — 조각칼과 원목
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a carving knife (Metal 金), the RIGHT magpie embodies a block of wood (Wood 木).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: A woodcarver's studio with shavings on the floor. The left magpie holds a carving knife and shapes a wooden figure with focused care; the right magpie stands beside a log that is becoming a beautiful carved sculpture of itself, looking proud. Silver and warm wood-brown palette.
+```
+
+### 7-11. `木木.png` — 나란히 선 두 그루 나무
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a tall tree (Wood 木), the RIGHT magpie embodies a tall tree (Wood 木).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: A quiet forest. Two trees stand side by side; one magpie perches on each tree, both looking toward the same sunrise, branches intertwined above them. Deep and fresh green palette, soft morning light.
+```
+
+### 7-12. `火火.png` — 마주 보는 두 불꽃
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a bright lantern flame (Fire 火), the RIGHT magpie embodies a bright lantern flame (Fire 火).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Evening festival. Two magpies each hold a glowing paper lantern and face each other, smiling; their lights overlap into one bigger, brighter glow between them, sparks dancing. Red, orange and gold palette.
+```
+
+### 7-13. `土土.png` — 어깨를 맞댄 두 언덕
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a gentle hill (Earth 土), the RIGHT magpie embodies a gentle hill (Earth 土).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Two rounded hills side by side at sunset. A magpie sits on each hilltop, leaning shoulder to shoulder, watching the sunset together, tiny wildflowers on the slopes. Warm ochre, beige and sunset-pink palette, calm mood.
+```
+
+### 7-14. `金金.png` — 나란히 빛나는 두 칼날
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a gleaming sword (Metal 金), the RIGHT magpie embodies a gleaming sword (Metal 金).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Two magpies in matching silver armor stand back to back, each holding a shining sword raised in the same direction, guarding together, determined but cute. Silver-white and steel-blue palette, clean cool light.
+```
+
+### 7-15. `水水.png` — 만나서 하나 되는 두 물줄기
+
+```
+Use the attached image as the character reference. Draw TWO of the SAME chibi Korean magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference, for BOTH magpies.
+The two magpies are a pair: the LEFT magpie embodies a flowing stream (Water 水), the RIGHT magpie embodies a flowing stream (Water 水).
+Show the relationship through the scene and props — who gives, who receives, or how they stand together.
+Both must look friendly and happy with each other; the element motifs are props or background accents, not costumes.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background,
+warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), both magpies centered and fully visible, together about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+Scene: Two streams curve down a green valley and meet in a sparkling pool. One magpie rides each stream on a lily pad and they meet at the confluence with a joyful splash, wings touching. Deep blue and turquoise palette, fresh water light.
+```
+
+### 7-16. `drum_kkachi.png` — 두근두근 드럼 까치 (인트로 공개 전 화면, `CompatTotal.RevealGate`)
+
+```
+Use the attached image as the character reference. Redraw the SAME magpie character:
+a cute chibi Korean magpie wearing a black traditional Korean gat hat with a chin strap tied in a small bow,
+black-and-white plumage with blue-tinted wing feathers, big expressive amber eyes, small grey beak.
+Keep the character design, proportions, colors and the gat exactly the same as the reference.
+ANTHROPOMORPHIZE it: the magpie stands upright behind a small traditional Korean drum (buk), holding two drumsticks
+in its wings, mid-beat, eyes squeezed with excitement, cheeks blushing, little motion lines and heart-shaped sparkles
+around the drum — a playful "drumroll before the big reveal" moment.
+Style: the same as the reference — clean cartoon line art, soft painterly watercolor background in warm ivory and gold,
+gentle glow particles.
+Composition: square 1:1 (1024x1024), the magpie and drum centered, full body, about 60% of the image height,
+at least 10% empty margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+```
+
+저장: `frontend/public/kkachi/drum_kkachi.png` — 화면에서 160px 원형으로 쓰므로 `magick drum.png -resize 1024x1024 frontend/public/kkachi/drum_kkachi.png`로 줄여 둔다. 파일이 없으면 기본 까치 + 🥁 이모지로 대신한다.

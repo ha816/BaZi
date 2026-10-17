@@ -57,13 +57,13 @@ export function RevealGate({ name1, name2, onReveal }: { name1: string; name2: s
   );
 }
 
-/** 오행 캐릭터 그림 — compat/{key}.png, 없으면 두 사람 역할 이모지를 크게 */
+/** 오행 캐릭터 그림 — compat/{key}.webp(1024px, 분석 캐릭터와 같은 규격, scripts/art_convert.sh), 없으면 두 사람 역할 이모지를 크게 */
 function CharacterArt({ imgKey, emojis }: { imgKey: string; emojis: string[] }) {
   const [hasImg, setHasImg] = useState(true);
   if (hasImg) {
     return (
       <img
-        src={`/kkachi/compat/${imgKey}.png`}
+        src={`/kkachi/compat/${imgKey}.webp`}
         alt=""
         className="w-[min(14rem,26vh)] mx-auto aspect-square rounded-2xl object-cover"
         onError={() => setHasImg(false)}

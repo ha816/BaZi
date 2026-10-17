@@ -449,7 +449,7 @@ export interface CompatCharacter {
   /** 예: "끌리는 장작과 모닥불 커플" */
   title: string;
   kind: "generate" | "overcome" | "same";
-  /** 그림 키 — frontend/public/kkachi/compat/{key}.png (주는 쪽 오행 먼저, 예: 木火·土土) */
+  /** 그림 키 — frontend/public/kkachi/compat/{key}.webp(화면)·compat/og/{key}.jpg(OG) (주는 쪽 오행 먼저, 예: 木火·土土) */
   key: string;
   roles: { token: string; name: string; element: string; emoji: string }[];
   desc: string;
