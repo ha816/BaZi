@@ -7,7 +7,7 @@ import { getDailyCompat, type DailyCompat } from "@/lib/api";
 import { track } from "@/lib/track";
 import NextTabCard from "./NextTabCard";
 import CompatIntro from "./compatibility/CompatIntro";
-import { CompatScoreCard } from "./compatibility/CompatTotal";
+import { CompatCharacterCard, CompatScoreCard } from "./compatibility/CompatTotal";
 import DailyTab from "./compatibility/DailyTab";
 import DomainTab from "./compatibility/DomainTab";
 import ElementTab from "./compatibility/ElementTab";
@@ -35,7 +35,7 @@ interface Props {
 // 한눈에 탭은 2026-10-15 뺐다(분석과 같게) — 종합 카드·두근두근은 결과 직후 인트로, 점수는 영역별 탭 맨 위, 문답은 "이럴 때" 탭.
 // 탭별 한 줄(백엔드 summary)은 API에 남겨 LLM 기본 요약용으로. hook = 탭 끝 "다음 이야기" 제목
 const COMPAT_TABS = [
-  { id: "pillars",   emoji: "🧩", label: "팔자비교",   hook: "두 분의 여덟 글자는 어떻게 맞물릴까?" },   // 기둥 비교 + 오행 보완
+  { id: "pillars",   emoji: "🧩", label: "팔자비교",   hook: "두 분의 여덟 글자는 어떻게 맞물릴까?" },   // 기둥 비교 + 두 분의 캐릭터 + 오행 보완
   { id: "character", emoji: "🎭", label: "성격·성질",  hook: "두 분의 성격과 성질, 닮았을까 다를까?" },  // 신살 + 신강·신약
   { id: "zodiac",    emoji: "🐾", label: "띠궁합",     hook: "띠로 보면 두 분은 어떤 사이일까?" },
   { id: "domain",    emoji: "📊", label: "영역별",     hook: "영역별로 보면 어디가 가장 잘 맞을까?" },   // 종합 점수 + 영역 카드
@@ -219,6 +219,8 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
           {tab === "pillars" && (
             <div className="space-y-4">
               <PillarsTab {...tabProps} />
+              {/* 인트로에서 본 칭호·역할·설명을 기둥 비교 다음에 한 번 더 (2026-10-17) */}
+              <CompatCharacterCard {...tabProps} />
               <ElementTab {...tabProps} />
             </div>
           )}

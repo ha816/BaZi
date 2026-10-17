@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { RELATION_TYPE_LABEL } from "@/lib/constants";
 import { getElementInfo } from "@/lib/elementColors";
+import CollapsibleSectionHeader from "../CollapsibleSectionHeader";
+import KkachiTip from "../KkachiTip";
 import SectionHeader from "../SectionHeader";
 import type { CompatTabProps } from "./types";
 
@@ -107,6 +109,41 @@ export function CompatCharacterBox({ data, name1, name2, relationType }: CompatT
         })}
       </div>
       <p className="text-[13px] leading-relaxed text-[var(--color-ink)] break-keep">{fill(ch.desc)}</p>
+    </div>
+  );
+}
+
+// 일간 오행 쌍의 관계 종류 이름표 — 해석 문장은 백엔드 desc가 든다
+const KIND_LABEL: Record<string, string> = {
+  generate: "한쪽이 다른 쪽을 키워 주는 상생(相生)",
+  overcome: "한쪽이 다른 쪽을 다듬고 이끄는 상극(相剋)",
+  same: "닮은 기운이 나란히 선 비화(比和)",
+};
+
+/** 두 분의 캐릭터 카드 — 팔자비교 탭, 기둥 비교 카드 다음(2026-10-17). 인트로(CompatIntro)에서 본 칭호·역할·설명을 탭에서도 —
+ *  인트로를 건너뛰거나 ?tab=으로 다시 열어도 여기서 본다. 인트로에서 이미 공개한 것이라 "확인하기" 게이트 없이 바로 보여준다 */
+export function CompatCharacterCard(props: CompatTabProps) {
+  const { data, name1, name2 } = props;
+  const ch = data.character;
+  if (!ch) return null;
+  const [r1, r2] = ch.roles;
+  return (
+    <div className="slide-card">
+      <CollapsibleSectionHeader title="두 분의 캐릭터">
+        <p>
+          두 분을 상징하는 <strong className="text-[var(--color-ink)]">일간(日干)</strong>의 오행 짝으로 뽑은 궁합 캐릭터예요.
+          한쪽이 다른 쪽을 키워 주면 상생(相生), 다듬고 이끌면 상극(相剋), 같은 기운이면 비화(比和)로 나뉘고, 그 안의 15가지 비유 중 하나가 두 분의 칭호가 돼요.
+        </p>
+      </CollapsibleSectionHeader>
+      <div className="divider" />
+      <div className="slide-card__body space-y-3">
+        {r1 && r2 && (
+          <KkachiTip>
+            {`${name1}님은 ${r1.emoji} **${r1.name}**, ${name2}님은 ${r2.emoji} **${r2.name}** — ${KIND_LABEL[ch.kind] ?? "서로 다른 기운이 만난"} 사이예요.`}
+          </KkachiTip>
+        )}
+        <CompatCharacterBox {...props} />
+      </div>
     </div>
   );
 }

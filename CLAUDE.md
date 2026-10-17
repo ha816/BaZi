@@ -167,7 +167,7 @@ BaZi/
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 + 나의 캐릭터 그림 로더 loadCharacterArt(og/{key}.jpg, 키별 캐시) (서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 7탭 정의(hook 포함)·?tab=·?step=(intro·scenario, 다른 파라미터 보존, pushState)·탭바·탭 끝 NextTabCard·탭 전환 시 첫 줄로 스크롤·캐시 기본값 한 번 채우기. 인트로·문답이 덮는 동안엔 탭 본문을 마운트하지 않음. 본문은 compatibility/
-│   │   ├── compatibility/           # CompatIntro(결과 직후 전체 화면: 두근두근 RevealGate → CompatCharacterBox 칭호·점수 → 까치 인사 → [이럴 때 두 분은?]/[궁합 분석 보기]) · CompatTotal(RevealGate·CharacterArt·CompatCharacterBox·CompatScoreCard) · ScenarioCard(이럴 때 두 분은?) · StrengthCard(신강·신약) · ZodiacTab(띠궁합) · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
+│   │   ├── compatibility/           # CompatIntro(결과 직후 전체 화면: 두근두근 RevealGate → CompatCharacterBox 칭호·점수 → 까치 인사 → [이럴 때 두 분은?]/[궁합 분석 보기]) · CompatTotal(RevealGate·CharacterArt·CompatCharacterBox·CompatCharacterCard 두 분의 캐릭터 카드(팔자비교 탭, 2026-10-17)·CompatScoreCard) · ScenarioCard(이럴 때 두 분은?, 5문항씩 페이지) · StrengthCard(신강·신약) · ZodiacTab(띠궁합) · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
@@ -572,7 +572,7 @@ erDiagram
 ### 궁합 탭 구성 (`?tab=`, `CompatibilityResult` → `components/compatibility/`)
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
-| `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | 일주 관계 3칸(천간합·지지 육합·지지충) · `PillarPairDiagram`(같은 기둥끼리 합충) · 삼합 완성, 바로 아래 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
+| `pillars` | 팔자비교 | `PillarsTab` + `CompatCharacterCard` + `ElementTab` | `PillarPairDiagram`(같은 기둥끼리 합충) → 그 아래 일주 관계 3칸(천간합·지지 육합·지지충, 2026-10-17 그림 아래로) · 삼합 완성 → **두 분의 캐릭터** 카드(인트로의 칭호·역할·설명·점수를 탭에서도, 게이트 없음, 2026-10-17) → 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
 | `character` | 성격·성질 | `SinsalTab` + `StrengthCard` | 신살(神殺) 카드("귀인·신살" 함께/한쪽만 + 십이신살 기둥별 비교표) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 옛 `?tab=sinsal`도 여기로 |
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |
 | `domain` | 영역별 | `CompatScoreCard` + `DomainTab` | 맨 위 종합 궁합(총점·라벨·한 줄 설명·시간 미상 고지) · 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |

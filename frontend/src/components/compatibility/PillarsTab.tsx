@@ -11,7 +11,7 @@ const DAY_CHECKS = [
   { key: "branch_clash", label: "지지충(衝)", good: false },
 ] as const;
 
-/** 팔자비교 — 일주 관계 3칸 + 같은 기둥끼리 비교(합·충·형·해·파) + 삼합 완성 */
+/** 팔자비교 — 같은 기둥끼리 비교(합·충·형·해·파) 그림 → 그 아래 일주 관계 3칸 → 삼합 완성 (일주 3칸은 2026-10-17 그림 아래로 — 여덟 글자를 먼저 보고 일주끼리의 합·충을 확인) */
 export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
   const { pillar1_snapshot, pillar2_snapshot, pillar_relations, samhap_completions } = data;
   return (
@@ -28,6 +28,15 @@ export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
             <KkachiTip>
               {name1}님과 {name2}님의 팔자를 같은 기둥끼리 짝지어 봤어요. 일주(日柱)가 두 분 사이를 가장 크게 좌우하고, 그다음이 월주·시주·년주 순이에요.
             </KkachiTip>
+
+            <PillarPairDiagram
+              p1={pillar1_snapshot}
+              p2={pillar2_snapshot}
+              relations={pillar_relations}
+              name1={name1}
+              name2={name2}
+              animate
+            />
 
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
@@ -50,15 +59,6 @@ export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
               })}
               </div>
             </div>
-
-            <PillarPairDiagram
-              p1={pillar1_snapshot}
-              p2={pillar2_snapshot}
-              relations={pillar_relations}
-              name1={name1}
-              name2={name2}
-              animate
-            />
 
             {samhap_completions.length > 0 && (
               <div className="space-y-2">
