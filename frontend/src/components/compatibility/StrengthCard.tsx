@@ -63,7 +63,7 @@ export default function StrengthCard({ data, name1, name2 }: CompatTabProps) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="신강·신약(身強·身弱)">
-        <p>일간(日干)이 사주 전체에서 얼마나 힘 있는지 보여주는 척도예요. 나를 돕는 글자(같은 오행·나를 생하는 오행)가 많으면 <strong>신강</strong>, 적으면 <strong>신약</strong>이에요. 신강이면 자기 주도적인 추진력이, 신약이면 환경·사람의 도움을 활용하는 흐름이 두드러지고, 강약에 따라 용신이 정해져요. 두 분의 강약이 어떻게 어울리는지가 관계의 주도권과 호흡을 보여줘요.</p>
+        <p>일간(日干)이 얼마나 힘 있는지 보는 척도예요. 나를 돕는 글자가 많으면 <strong>신강</strong>, 적으면 <strong>신약</strong>이에요. 신강은 스스로 밀고 가는 힘, 신약은 도움을 끌어 쓰는 흐름이에요. 두 분의 조합이 관계의 주도권과 호흡을 보여줘요.</p>
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">

@@ -53,6 +53,7 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 - divider
 - **본문 시작에 인트로 `KkachiTip` 필수**
 - 본문
+- `CollapsibleSectionHeader`의 상세 설명(접힘)은 **폰 기준 4줄(390px에서 약 120자) 이내** — 더 길면 까치 팁이나 본문으로 옮긴다 (2026-10-18, 사용자 결정)
 
 자세한 화면 약속은 `specs/<경로>/`(화면·기능 스펙) 참고.
 

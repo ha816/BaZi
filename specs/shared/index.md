@@ -12,7 +12,7 @@
 | BottomNav | 하단 탭바 5개 | layout |
 | KkachiTip | 까치 말풍선 (`{name}님` 개인화) | 모든 결과 카드 인트로 |
 | LoadingSpinner | 로딩 | 전역 |
-| SectionHeader / CollapsibleSectionHeader / InlineCollapsibleHeader | 카드 헤더 3종 | 결과 탭 |
+| SectionHeader / CollapsibleSectionHeader / InlineCollapsibleHeader | 카드 헤더 3종 — 상세 설명(접힘)은 폰 기준 **4줄(390px에서 약 120자) 이내**, 더 길면 까치 팁·본문으로(2026-10-18) | 결과 탭 |
 | PageHeader + `.page`/`.page__inner` | 페이지 제목 줄(2xl·sm·액션) + 페이지 틀(py-8 px-4, max-w 42rem, gap 1.5rem). `.page--center`(세로 가운데, 내용이 화면보다 짧을 때만 효과)는 시운·분석·궁합·가입, `.page__inner--narrow`는 가입 폼 | 홈·챗 제외 전 페이지 |
 | InterpretSection | InterpretBlock[] 렌더 | 결과 탭, 손금 |
 | ScoreBar / DomainBarChart | 점수 바 | 시운, FortuneTab |

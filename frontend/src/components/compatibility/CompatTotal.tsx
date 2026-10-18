@@ -140,10 +140,7 @@ export function CompatCharacterCard(props: CompatTabProps) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="두 분의 캐릭터">
-        <p>
-          두 분을 상징하는 <strong className="text-[var(--color-ink)]">일간(日干)</strong>의 오행 짝으로 뽑은 궁합 캐릭터예요.
-          한쪽이 다른 쪽을 키워 주면 상생(相生), 다듬고 이끌면 상극(相剋), 같은 기운이면 비화(比和)로 나뉘고, 그 안의 15가지 비유 중 하나가 두 분의 칭호가 돼요.
-        </p>
+        <p>두 분의 <strong className="text-[var(--color-ink)]">일간(日干)</strong> 오행 짝으로 뽑은 궁합 캐릭터예요. 한쪽이 키워 주면 상생(相生), 다듬고 이끌면 상극(相剋), 같은 기운이면 비화(比和) — 그 안의 15가지 비유 중 하나가 두 분의 칭호예요.</p>
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-3">

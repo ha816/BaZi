@@ -105,7 +105,7 @@ export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="신살(神殺)">
-        <p>신살(神殺)은 사주에 깃든 특별한 기운으로, 옛날에는 길흉으로 봤지만 현대에는 <strong>개인의 캐릭터·역량</strong>으로 풀이해요. <strong>함께 가진 신살</strong>은 두 분이 같은 기운을 지녔다는 뜻이고, <strong>한쪽만 가진 신살</strong>은 그 분이 그 영역에서 상대를 받쳐주는 자리예요.</p>
+        <p>사주에 깃든 특별한 기운이에요. 옛날엔 길흉으로 봤지만 지금은 <strong>캐릭터와 역량</strong>으로 읽어요. 함께 가진 신살은 두 분이 같은 기운을 지녔다는 뜻, 한쪽만 가진 신살은 그 분이 그 영역에서 상대를 받쳐 준다는 뜻이에요.</p>
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">
@@ -192,16 +192,12 @@ export function SibiSinsalCard({ data, name1, name2 }: CompatTabProps) {
   const cols = Math.max(s1.length, s2.length);
   const sharedSibi = [...new Set(s1.filter(Boolean))].filter((n) => s2.includes(n));
   const tip = sharedSibi.length > 0
-    ? `두 분이 함께 지닌 십이신살은 **${sharedSibi.map((n) => `${n}(${SIBI_SINSAL_INFO[n]?.hanja ?? ""})`).join("·")}**이에요. 같은 십이신살을 둘 다 가지면 그 기운이 두 분 사이에서 더 또렷해져요 — 비슷한 상황에서 비슷하게 움직이고, 그 영역에서 서로를 잘 이해해요. 아래 표의 초록 칸이에요.`
+    ? `두 분이 함께 지닌 십이신살은 **${sharedSibi.map((n) => `${n}(${SIBI_SINSAL_INFO[n]?.hanja ?? ""})`).join("·")}**이에요. 같은 기운을 둘 다 가지면 그 기운이 두 분 사이에서 더 또렷해져요. 표의 초록 칸이고, 어떤 효과인지는 표 아래에 풀었어요.`
     : `두 분의 십이신살은 겹치지 않아요. 같은 기운은 없지만 각자 다른 자리의 기운으로 서로를 채워주는 사이예요. 표에서 ${name1}님과 ${name2}님의 기둥마다 어떤 기운이 흐르는지 나란히 비교해 보세요.`;
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="십이신살(十二神殺)">
-        <p>
-          십이신살(十二神殺)은 <strong>태어난 해의 띠(년지)</strong>를 기준으로 열두 지지마다 하나씩 붙는 열두 가지 기운이에요 — 겁살·재살·천살·지살·년살·월살·망신살·장성살·반안살·역마살·육해살·화개살.
-          네 기둥(년·월·일·시)에 하나씩 붙어서, 각 기둥이 뜻하는 자리(년주 조상·초년, 월주 부모·사회, 일주 나·배우자, 시주 자식·말년)에 어떤 기운이 흐르는지 봐요.
-          이름에 살(殺)이 붙지만 나쁜 뜻만은 아니고 <strong>그 자리의 성향과 리듬</strong>으로 읽어요. 두 분이 같은 십이신살을 지니면 그 기운을 둘 다 가진 셈이라, 비슷한 상황에서 비슷하게 움직이고 그 영역에서 서로를 잘 이해해요.
-        </p>
+        <p>태어난 해의 띠(년지) 기준으로 네 기둥에 하나씩 붙는 열두 기운이에요. 살(殺)이 붙어도 나쁜 뜻만은 아니고 <strong>그 기둥 자리의 성향과 리듬</strong>으로 읽어요. 같은 기운을 둘 다 지니면 그 영역에서 닮아요.</p>
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-3">
@@ -232,14 +228,27 @@ export function SibiSinsalCard({ data, name1, name2 }: CompatTabProps) {
           ))}
         </div>
         {sharedSibi.length > 0 && (
-          <div className="space-y-1.5">
-            <p className="text-[11px] text-[var(--color-ink-muted)]">두 분이 함께 지닌 기운 <span className="text-[var(--color-ink-faint)]">(초록 칸)</span></p>
-            {sharedSibi.map((n) => (
-              <div key={n} className="flex items-baseline gap-2 text-xs">
-                <span className="flex-shrink-0 px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 font-semibold">{n}</span>
-                <span className="text-[var(--color-ink-muted)] break-keep">{SHARED_SIBI_MEANING[n] ?? SIBI_SINSAL_INFO[n]?.meaning}</span>
-              </div>
-            ))}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-[var(--color-ink)]">겹치는 기운이 하는 일</p>
+            {sharedSibi.map((n) => {
+              // 각자 어느 기둥에 있는지 — 같은 자리에서 겹치면 더 또렷하다
+              const at1 = s1.map((v, i) => (v === n ? PILLAR_LABELS_SHORT[i].replace(/\(.*\)/, "") : "")).filter(Boolean);
+              const at2 = s2.map((v, i) => (v === n ? PILLAR_LABELS_SHORT[i].replace(/\(.*\)/, "") : "")).filter(Boolean);
+              const samePillar = s1.some((v, i) => v === n && s2[i] === n);
+              const info = SIBI_SINSAL_INFO[n];
+              return (
+                <div key={n} className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 space-y-1">
+                  <p className="text-sm font-bold text-emerald-800">
+                    {n}{info && <span className="font-normal text-emerald-700/70 ml-1">({info.hanja})</span>}
+                    {info && <span className="text-[11px] font-normal text-emerald-700 ml-2">{info.meaning}</span>}
+                  </p>
+                  <p className="text-[11px] text-emerald-700">
+                    {name1}님 {at1.join("·")} · {name2}님 {at2.join("·")}{samePillar ? " — 같은 자리에서 겹쳐 더 또렷해요" : ""}
+                  </p>
+                  <p className="text-xs leading-relaxed text-[var(--color-ink)] break-keep">{SHARED_SIBI_MEANING[n] ?? "같은 기운을 둘 다 지녀 그 영역에서 닮아요."}</p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

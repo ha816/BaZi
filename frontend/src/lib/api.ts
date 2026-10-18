@@ -342,6 +342,14 @@ export interface DailyCompat {
   score: number;
   level: string;
   headline: string;
+  /** 2026-10-18 보강 — 각자의 오늘(시운과 같은 compute_fortune, 날씨·대운 없이)·영역별 함께 문구·팁. 옛 응답엔 없을 수 있다 */
+  day_element?: string;
+  solar_term?: string | null;
+  son_eomneun_nal?: boolean;
+  persons?: { name: string; relation: string; relation_label: string; yongshin: string; yongshin_hit: boolean; score: number; level: string; headline: string; action: string; caution: string }[];
+  /** 재물·연애·직업·건강 — level은 두 사람 점수 중 낮은 쪽 기준(좋음·보통·주의) */
+  domains?: { key: string; score1: number; score2: number; level: string; label: string }[];
+  tips?: string[];
 }
 
 export async function getDailyCompat(memberId: string, p1: string, p2: string): Promise<DailyCompat> {
