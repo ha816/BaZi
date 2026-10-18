@@ -507,7 +507,7 @@ erDiagram
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", 결과 직후 전체 화면 인트로(`?step=intro`, 두근두근 → 캐릭터·점수 → [📋 설문조사]/[궁합 분석 보기]) 다음 **7탭**(팔자비교(+오행 보완)·성격·성질(신살+신강신약)·띠궁합·영역별(+종합 점수)·오늘의 궁합·이럴 때·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭), 탭 끝 "다음 이야기" + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", 결과 직후 전체 화면 인트로(`?step=intro`, 두근두근 → 캐릭터·점수 → [📋 설문조사]/[궁합 분석 보기]) 다음 **7탭**(성격(두 분의 캐릭터+신살+신강신약 — 첫 탭, 2026-10-18)·팔자비교(+오행 보완)·띠궁합·영역별(+종합 점수)·오늘의 궁합·설문조사·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭), 탭 끝 "다음 이야기" + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -572,15 +572,15 @@ erDiagram
 ### 궁합 탭 구성 (`?tab=`, `CompatibilityResult` → `components/compatibility/`)
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
-| `pillars` | 팔자비교 | `PillarsTab` + `CompatCharacterCard` + `ElementTab` | `PillarPairDiagram`(같은 기둥끼리 합충) → 그 아래 일주 관계 3칸(천간합·지지 육합·지지충, 2026-10-17 그림 아래로) · 삼합 완성 → **두 분의 캐릭터** 카드(인트로의 칭호·역할·설명·점수를 탭에서도 + 그 아래 잘 맞는 순간 | 부딪히기 쉬운 순간 칩 3+3 — 분석 카드의 선호하는 일에 대응, 게이트 없음, 2026-10-17) → 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
-| `character` | 성격·성질 | `SinsalTab` + `StrengthCard` | 신살(神殺) 카드("귀인·신살" 함께/한쪽만 + 십이신살 기둥별 비교표) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 옛 `?tab=sinsal`도 여기로 |
+| `character` | 성격 | `CompatCharacterCard` + `SinsalTab` + `StrengthCard` | **두 분의 캐릭터** 카드(인트로의 칭호·역할·설명·점수 + 잘 맞는 순간 \| 부딪히기 쉬운 순간 칩 3+3, 게이트 없음 — 2026-10-18 팔자비교에서 첫 탭 맨 위로) → 신살(神殺) 카드("귀인·신살" 함께/한쪽만 + 십이신살 기둥별 비교표) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 첫 탭 — 궁합 분석 보기·건너뛰기·옛 `?tab=summary/total/sinsal`도 여기로 |
+| `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | `PillarPairDiagram`(같은 기둥끼리 합충) → 그 아래 일주 관계 3칸(천간합·지지 육합·지지충, 2026-10-17 그림 아래로) · 삼합 완성 → 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |
 | `domain` | 영역별 | `CompatScoreCard` + `DomainTab` | 맨 위 종합 궁합(총점·라벨·한 줄 설명·시간 미상 고지) · 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진·점수·레벨·headline. **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회 |
 | `scenario` | 설문조사 | `ScenarioCard` | 설문조사(구 "이럴 때 두 분은?", 2026-10-18 분석과 같은 이름으로 — 탭 📋·카드 🔮) — [이름1님 / 이름2님 / 둘 다]로 5문항씩 페이지(6~10문항을 고르게 나눔, 2026-10-17)로 전부 답한 뒤 한꺼번에 비교 → "사주와 두 분 응답의 일치율" % + 까치 해설 한 문장 + 문항별(다른 문항 먼저·근거는 다른 문항에만). 신뢰도·사람별 사주 스타일 라벨은 2026-10-15 제거. 인트로 문답(`?step=scenario`)과 답·제출 상태 공유 — 인트로에서 제출하면 "답변 완료"만, 일치율은 이 탭에서. 문답 없는 옛 결과는 탭 숨김 |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |
 
-- **결과 직후 인트로**(`?step=intro`, 2026-10-15 — 분석 V5와 같은 흐름): 두근두근 게이트(두 사람 사주 캐릭터 실루엣 + "?" + ♥, 분석 게이트와 같게 2026-10-18) → 1.2초 드럼롤 → 오행 캐릭터 상자(두 사람 사주 캐릭터 그림 `/kkachi/saju_character/{roles[i].character_key}.webp` 나란히 + ♥, 없는 쪽은 역할 이모지 · 칭호 · 점수 · 역할 칩 · 설명 — 2026-10-18, 궁합 전용 그림 없음) → 까치 인사 → [📋 설문조사 `?step=scenario`] / [💞 궁합 분석 보기 → "인연 지도 펼치는 중…" → `?tab=pillars`]. 건너뛰기 가능, 새 결과(주소에 step·tab 없음)만. "다시 입력"은 `?tab=`·`?step=` 제거
+- **결과 직후 인트로**(`?step=intro`, 2026-10-15 — 분석 V5와 같은 흐름): 두근두근 게이트(두 사람 사주 캐릭터 실루엣 + "?" + ♥, 분석 게이트와 같게 2026-10-18) → 1.2초 드럼롤 → 오행 캐릭터 상자(두 사람 사주 캐릭터 그림 `/kkachi/saju_character/{roles[i].character_key}.webp` 나란히 + ♥, 없는 쪽은 역할 이모지 · 칭호 · 점수 · 역할 칩 · 설명 — 2026-10-18, 궁합 전용 그림 없음) → 까치 인사 → [📋 설문조사 `?step=scenario`] / [💞 궁합 분석 보기 → "인연 지도 펼치는 중…" → `?tab=character`(첫 탭 성격, 2026-10-18)]. 건너뛰기 가능, 새 결과(주소에 step·tab 없음)만. "다시 입력"은 `?tab=`·`?step=` 제거
 - 한눈에 탭은 2026-10-15 제거(옛 `?tab=summary`·`total`은 팔자비교로). 팔자비교 `PillarPairDiagram animate` — 시→일→월→년 기둥마다 두 분 글자가 도장처럼 찍히고 합·충 배지가 뒤따름(분석 사주팔자와 같은 ink-stamp)
 - 탭 전환은 `?tab=`만 바꾸고(`history.replaceState`) `invite`·`p1`·`p2`는 보존. `?tab=daily`인데 직접 입력·초대면 첫 탭으로. `tab_view{tab, page:"compat", has_profile}` 이벤트(새 이벤트 이름 없음)
 - 7탭일 때 탭바는 `.feature-tabbar--7`(모바일 4+3, sm 이상 한 줄), 6탭은 기본 한 줄. 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)

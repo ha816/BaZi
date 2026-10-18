@@ -35,8 +35,8 @@ interface Props {
 // 한눈에 탭은 2026-10-15 뺐다(분석과 같게) — 종합 카드·두근두근은 결과 직후 인트로, 점수는 영역별 탭 맨 위, 문답은 "설문조사" 탭(2026-10-18 "이럴 때"에서 분석과 같은 이름으로).
 // 탭별 한 줄(백엔드 summary)은 API에 남겨 LLM 기본 요약용으로. hook = 탭 끝 "다음 이야기" 제목
 const COMPAT_TABS = [
-  { id: "pillars",   emoji: "🧩", label: "팔자비교",   hook: "두 분의 여덟 글자는 어떻게 맞물릴까?" },   // 기둥 비교 + 두 분의 캐릭터 + 오행 보완
-  { id: "character", emoji: "🎭", label: "성격·성질",  hook: "두 분의 성격과 성질, 닮았을까 다를까?" },  // 신살 + 신강·신약
+  { id: "character", emoji: "🎭", label: "성격",       hook: "두 분의 성격, 닮았을까 다를까?" },        // 두 분의 캐릭터 + 신살 + 신강·신약 — 첫 탭(2026-10-18, 구 "성격·성질")
+  { id: "pillars",   emoji: "🧩", label: "팔자비교",   hook: "두 분의 여덟 글자는 어떻게 맞물릴까?" },   // 기둥 비교 + 오행 보완
   { id: "zodiac",    emoji: "🐾", label: "띠궁합",     hook: "띠로 보면 두 분은 어떤 사이일까?" },
   { id: "domain",    emoji: "📊", label: "영역별",     hook: "영역별로 보면 어디가 가장 잘 맞을까?" },   // 종합 점수 + 영역 카드
   { id: "daily",     emoji: "🌅", label: "오늘의 궁합", hook: "오늘 두 분의 기운은 어떨까?" },          // 프로필×2일 때만 (canDaily)
@@ -70,9 +70,9 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const hasScenario = (safe.character?.scenarios ?? []).length > 0;
   const tabs = COMPAT_TABS.filter((t) => (t.id !== "daily" || canDaily) && (t.id !== "scenario" || hasScenario));
   // ?tab=daily + 직접 입력 → 첫 탭
-  // 옛 링크 호환: 한눈에·종합→팔자비교, 오행 보완→팔자비교, 신살→성격·성질
-  const LEGACY_TAB: Record<string, CompatTabId> = { summary: "pillars", total: "pillars", element: "pillars", sinsal: "character" };
-  const tab: CompatTabId = tabs.find((t) => t.id === (LEGACY_TAB[tabParam ?? ""] ?? tabParam))?.id ?? "pillars";
+  // 옛 링크 호환: 한눈에·종합→성격(캐릭터 카드가 있는 첫 탭), 오행 보완→팔자비교, 신살→성격
+  const LEGACY_TAB: Record<string, CompatTabId> = { summary: "character", total: "character", element: "pillars", sinsal: "character" };
+  const tab: CompatTabId = tabs.find((t) => t.id === (LEGACY_TAB[tabParam ?? ""] ?? tabParam))?.id ?? "character";
   // 결과 단계(?step=) — intro: 두근두근 → 캐릭터·점수 → [설문조사]/[분석 보기], scenario: 설문조사(문답) 전체 화면, 없으면 탭(?tab=). 분석 ResultSlides와 같은 방식
   const stepParam = searchParams.get("step");
   // 새 결과(주소에 step·tab이 없음)만 인트로부터 — 새로고침한 ?tab=은 그대로
@@ -132,7 +132,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   // 단계 이동은 기록을 남긴다(pushState) — 폰 뒤로 가기로 문답 → 인트로로 돌아온다
   const goScenario = () => window.history.pushState(null, "", urlWith("scenario", null));
   const goTabs = () => {
-    window.history.pushState(null, "", urlWith(null, "pillars"));
+    window.history.pushState(null, "", urlWith(null, "character")); // 첫 탭 = 성격(2026-10-18)
     window.scrollTo({ top: 0 });
   };
 
@@ -216,18 +216,18 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
       {/* 인트로·문답이 덮고 있는 동안엔 탭 본문을 그리지 않는다 — 닫힌 뒤 마운트돼야 팔자비교 등장 연출이 사용자 눈앞에서 돈다 */}
       {!step && (
         <div ref={contentRef} className="space-y-4 [overflow-anchor:none]">
+          {tab === "character" && (
+            <div className="space-y-4">
+              {/* 인트로에서 본 칭호·역할·설명을 첫 탭 맨 위에 한 번 더 (2026-10-18 — 10-17엔 팔자비교 탭 기둥 비교 다음이었다) */}
+              <CompatCharacterCard {...tabProps} />
+              <SinsalTab {...tabProps} />
+              <StrengthCard {...tabProps} />
+            </div>
+          )}
           {tab === "pillars" && (
             <div className="space-y-4">
               <PillarsTab {...tabProps} />
-              {/* 인트로에서 본 칭호·역할·설명을 기둥 비교 다음에 한 번 더 (2026-10-17) */}
-              <CompatCharacterCard {...tabProps} />
               <ElementTab {...tabProps} />
-            </div>
-          )}
-          {tab === "character" && (
-            <div className="space-y-4">
-              <SinsalTab {...tabProps} />
-              <StrengthCard {...tabProps} />
             </div>
           )}
           {tab === "zodiac" && <ZodiacTab {...tabProps} />}
