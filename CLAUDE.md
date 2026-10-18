@@ -21,7 +21,7 @@ bash scripts/db.sh status | migrate "<메시지>" | reset --yes | down | logs [N
 # 백엔드 — 저장소 루트에서 실행 (src/kkachi/resource/local.toml 을 상대경로로 읽음)
 uv run uvicorn kkachi.fastapi:app --reload --port 8000
 
-# 프론트엔드 (npm run dev 는 .next 삭제 후 기동)
+# 프론트엔드 (2026-10-18부터 .next를 지우지 않는다 — 폰트는 로컬이라 구글 폰트 다운로드 없음)
 cd frontend && npm run dev
 
 # 테스트
@@ -51,7 +51,7 @@ bash scripts/deploy.sh   # 프론트 production 빌드 → backend·frontend 재
 - `src/kkachi/resource/hand_landmarker.task` (MediaPipe 손 랜드마크 모델, 7.8MB)는 **git 미추적** — 없으면 `/palmistry/analyze` 요청 시 실패. README의 curl 명령으로 다운로드.
 - `frontend/next.config.ts`: `/api/*` → `127.0.0.1:8000` rewrite, `allowedDevOrigins`(tailscale 호스트·LAN IP·127.0.0.1). **dev 서버는 이 목록에 없는 호스트로 열면 HMR·dev 자원이 막혀 화면이 비어 보인다** — 폰 등 다른 기기에서 볼 IP는 여기 추가. 프로덕션(`next start`)은 무관.
 - 이 머신은 `docker compose` 플러그인이 없고 `docker-compose` 바이너리만 있음 — `scripts/db.sh`가 둘을 자동 감지하므로 스크립트를 쓴다. launchd `com.kkachi.db`·`~/bin/kkachi-pg-backup.sh`도 같은 이유로 db.sh/자동 감지를 쓴다 (2026-09-18 수정).
-- 베타 프론트는 `next start`(production 빌드)로 떠 있다. `npm run dev`가 `.next`를 지우므로 베타를 살려둔 채 개발하려면 다른 포트·다른 체크아웃에서 하거나, 끝나고 `bash scripts/deploy.sh`로 다시 빌드한다.
+- 베타 프론트는 `next start`(production 빌드)로 떠 있다. `npm run dev`는 더 이상 `.next`를 지우지 않고(2026-10-18) Next 16은 dev 산출물을 `.next/dev`에 따로 두므로 같은 디렉터리에서 개발해도 빌드 결과가 사라지지 않는다. 베타에 반영하려면 `bash scripts/deploy.sh`로 다시 빌드한다.
 
 ### DB 작업 규칙 (`/db` 스킬, `.claude/skills/db/SKILL.md`)
 - 기동·마이그레이션·상태는 `bash scripts/db.sh <cmd>` 로만 한다. 손으로 `docker-compose up` + `alembic upgrade` 를 나눠 치지 않는다.
@@ -145,6 +145,7 @@ BaZi/
 │   │   ├── page.tsx                 # 홈 — 비로그인: QuickStartPost(30초 퀵스타트 폼) / 로그인: StoryTray · 프로필별 FortunePost(7일 예보) · VideoPost
 │   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx(사주/시운/궁합 kind 분기) · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
 │   │   ├── opengraph-image.tsx      # 사이트 기본 OG 이미지 (satori) · robots.ts(/s/ 색인 금지) · sitemap.ts
+│   │   ├── layout.tsx · fonts/      # 루트 레이아웃 — 화면 폰트는 next/font/local 서브셋 WOFF2(fonts/: Noto Sans KR·Noto Serif KR 가변, 상용 한글 2,350 + 코드의 한자 247; 빌드·dev가 구글 폰트를 받지 않음 2026-10-18, 재생성은 fonts/README.md)
 │   │   ├── analysis/page.tsx        # 사주 분석 — 프로필 선택 / 직접 입력 → ResultSlides (로그인 불필요)
 │   │   ├── analysis/deep/page.tsx   # /analysis 로 redirect 만 함 (구 심층 분석 경로 호환)
 │   │   ├── chat/page.tsx            # 까치 상담 풀스크린 챗 (sessionStorage 입력값 → /kkachi/chat)
@@ -195,7 +196,7 @@ BaZi/
 │   └── types/analysis.ts
 ├── frontend/public/kkachi/       # normal/good/caution 까치, icon-192/512(PWA), saju_character/(20유형 {일간}_{강|약}.webp 화면용 + Gemini 원본 .png + og/{key}.jpg 512px OG용 — satori가 WebP를 못 읽어 따로 둠), compat/(궁합 캐릭터 15종 {오행}{오행}.webp + og/{key}.jpg, 같은 규격 — 2026-10-17 기준 그림 파일은 아직 없음, specs/compatibility/character.md 부록 B 프롬프트 → scripts/art_convert.sh), sinsal/ sipsin/ sipgan/ zodiac/ strength/ samjae/ sibi_unseong/
 ├── frontend/public/sw.js         # 서비스워커 — push 수신·클릭(/siun?src=push)만, 오프라인 캐시 없음
-├── frontend/public/fonts/        # OG 이미지용 Noto Sans KR 400·700 서브셋 WOFF (한글 전체 + 코드에 쓰인 한자 242자, README 참고)
+├── frontend/public/fonts/        # OG 이미지용 Noto Sans KR 400·700 서브셋 WOFF (한글 전체 + 코드에 쓰인 한자 242자, README 참고) — 화면용은 src/app/fonts/
 ├── frontend/public/oheng/        # 오행 이미지 5종
 └── tests/
     ├── adapter/       # test_analyzer · test_fortune · test_sibi_unseong
@@ -539,7 +540,7 @@ erDiagram
 
 - 카드에는 생년월일·성별·오늘 줄이 없다. 받는 사람은 카드에 보이는 것만 본다. 링크는 만료 없음
 - **사주 카드의 나의 캐릭터(V4, 2026-10-16)**: `build_share_card()`가 `natal.character`에서 key·유형명·한 줄·선호하는 일을 실어 보낸다(자연물 비유 name·strength_pct 제외). 랜딩은 맨 위 캐릭터 상자(그림 `saju_character/{key}.webp`, 파일 존재 확인), OG는 왼쪽 그림(`og/{key}.jpg` data URI) + 유형명·한 줄·팔자 타일(작게)·선호하는 일 — 오행 분포·신살·요약 줄은 뺀다. 미리보기 제목·공유 문구는 "○○님은 든든한 수호자". 캐릭터 없는 옛 카드는 예전 레이아웃
-- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수(레벨 색은 Tailwind emerald/amber/rose -800·-100 hex = 페이지 `FORECAST_LEVEL_META.badge`). 폰트 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나오니 금지 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →(`lib/relations.ts RELATION_GLYPH`). 백엔드 문장에 새 한자를 쓰면 `public/fonts` 서브셋 재생성. 궁합 점수 색 임계는 65/45(백엔드 라벨 80/65/45와 정렬). 궁합 OG의 캐릭터는 "두 분은 {칭호}" 줄 + 일간 타일 아래 "= 광산(土)"(이모지 없음) + `compat/og/{key}.jpg`가 있으면 왼쪽 232px 그림(점수·일간 칸을 좁힘, 2026-10-17 — 사주 카드 V4와 같은 자리)
+- OG 이미지 규칙(`OgCard.tsx`): 자식 둘 이상인 div는 `display:flex`, CSS 변수 금지, 색은 상수(레벨 색은 Tailwind emerald/amber/rose -800·-100 hex = 페이지 `FORECAST_LEVEL_META.badge`). 폰트 서브셋에 없는 기호(✦ ✕ 이모지)는 빈 네모로 나오니 금지 — 쓸 수 있는 기호 ♥ ★ ✿ ✓ ※ →(`lib/relations.ts RELATION_GLYPH`). 백엔드 문장에 새 한자를 쓰면 `public/fonts`(OG)·`src/app/fonts`(화면, 2026-10-18 로컬 폰트) 서브셋 둘 다 재생성. 궁합 점수 색 임계는 65/45(백엔드 라벨 80/65/45와 정렬). 궁합 OG의 캐릭터는 "두 분은 {칭호}" 줄 + 일간 타일 아래 "= 광산(土)"(이모지 없음) + `compat/og/{key}.jpg`가 있으면 왼쪽 232px 그림(점수·일간 칸을 좁힘, 2026-10-17 — 사주 카드 V4와 같은 자리)
 - 사이트 기본 OG(`app/opengraph-image.tsx`)는 브랜드 카드. `NEXT_PUBLIC_SITE_URL`이 없으면 OG URL이 localhost로 나가므로 배포 빌드 전 `.env.production` 확인
 
 ### sessionStorage 키

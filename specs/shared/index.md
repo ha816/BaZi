@@ -43,6 +43,13 @@
 | `types/analysis.ts` | 전체 타입 (476 LOC, 분리 검토) |
 | `components/tabs/natal/data.ts` | `STEM_PROFILE`, `SIPSIN_INFO`, `UNSEONG_INFO`, `SINSAL_INFO`(9종), `SINSAL_COMBOS` 등 만세력 표시 메타 |
 
+## 폰트
+
+| 파일 | 역할 |
+|---|---|
+| `app/layout.tsx` + `app/fonts/*.woff2` | 화면 폰트 — Noto Sans KR(본문 `--font-noto-sans-kr`, 300~700)·Noto Serif KR(제목 `.font-heading`, 400~700) 가변 서브셋을 `next/font/local`로 읽는다. 상용 한글 2,350자 + 코드에 쓰인 한자 247자, 그 밖의 글자(드문 이름 음절 등)는 `fallback`의 시스템 폰트. 빌드·개발 서버가 구글 폰트를 받지 않는다(2026-10-18 — 조각 하나 타임아웃에 컴파일이 깨지던 문제). 재생성은 `app/fonts/README.md` |
+| `public/fonts/*.woff` | OG 이미지(satori) 폰트 — 한글 전체 + 한자, WOFF만 읽음 |
+
 ---
 
 ## 브라우저 스토리지 키
