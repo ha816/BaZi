@@ -5,11 +5,10 @@ import { RELATION_TYPE_LABEL } from "@/lib/constants";
 import { getElementInfo } from "@/lib/elementColors";
 import CollapsibleSectionHeader from "../CollapsibleSectionHeader";
 import KkachiTip from "../KkachiTip";
-import SectionHeader from "../SectionHeader";
 import type { CompatTabProps } from "./types";
 
 // 궁합 종합 — 2026-10-15 한눈에 탭을 빼면서 쪼갰다:
-// RevealGate·CompatCharacterBox는 결과 직후 인트로(CompatIntro), CompatScoreCard는 영역별 탭 맨 위
+// RevealGate·CompatCharacterBox는 결과 직후 인트로(CompatIntro). 종합 궁합 점수 카드는 2026-10-18 제거 — 점수는 인트로·캐릭터 카드에
 
 const FALLBACK_IMG = "/kkachi/good_kkachi.png";
 const DRUMROLL_MS = 1200;
@@ -171,35 +170,6 @@ export function CompatCharacterCard(props: CompatTabProps) {
               </div>
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** 종합 궁합 점수 카드 — 영역별 탭 맨 위. 총점·라벨·한 줄 설명 + 시간 미상 고지 */
-export function CompatScoreCard({ data, name1, name2 }: CompatTabProps) {
-  const { total_score, label, description, pillar1_snapshot, pillar2_snapshot } = data;
-  const unknown1 = !!pillar1_snapshot?.hour_unknown;
-  const unknown2 = !!pillar2_snapshot?.hour_unknown;
-  return (
-    <div className="slide-card">
-      <div className="slide-card__header">
-        <SectionHeader title="종합 궁합" noMargin />
-      </div>
-      <div className="divider" />
-      <div className="slide-card__body space-y-3">
-        <div className="flex items-center gap-4">
-          <div className="flex-shrink-0 text-center">
-            <p className="font-heading text-4xl font-bold leading-none text-[var(--color-ink)]">{total_score}<span className="text-sm font-normal text-[var(--color-ink-faint)]">점</span></p>
-            <p className="text-xs font-semibold text-[var(--color-gold)] mt-1">{label}</p>
-          </div>
-          <p className="flex-1 text-sm leading-relaxed text-[var(--color-ink-muted)] break-keep">{description}</p>
-        </div>
-        {(unknown1 || unknown2) && (
-          <p className="text-[11px] text-[var(--color-ink-muted)] rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-ivory-warm)] px-3 py-2">
-            🕰️ {unknown1 && unknown2 ? "두 분 모두" : unknown1 ? `${name1}님의` : `${name2}님의`} 출생시간이 없어 시주(時柱) 비교는 뺐어요. 세 기둥 기준 점수예요.
-          </p>
         )}
       </div>
     </div>

@@ -177,13 +177,7 @@ export default function ZodiacTab({ data, name1, name2 }: CompatTabProps) {
         <KkachiTip>{fill(data.summary?.zodiac || z.headline)}</KkachiTip>
       </Card>
 
-      {z.pillars && (
-        <Card title="사주지지(四柱地支)" detail={<p>사주의 네 기둥에는 지지(地支), 즉 띠가 하나씩 들어 있어요. 년주만이 아니라 네 개의 띠가 삶의 각 영역에 숨어 있어서, 두 분의 띠를 자리마다 맞대 보면 어느 영역에서 잘 맞고 어디서 부딪히는지 보여요.</p>}>
-          <KkachiTip>두 분의 네 기둥 띠를 같은 자리끼리 나란히 놓고, 다른 자리끼리 맺는 관계도 찾아봤어요.</KkachiTip>
-          <PillarZodiac pz={z.pillars} name1={name1} name2={name2} />
-        </Card>
-      )}
-
+      {/* 십이지 충합을 띠궁합 바로 다음에 — 사주지지는 그 뒤(2026-10-18, 사용자 지시) */}
       {c && (
         <Card
           title="십이지 충합(十二支 衝合)"
@@ -215,6 +209,13 @@ export default function ZodiacTab({ data, name1, name2 }: CompatTabProps) {
               <KkachiTip key={i} label={`${p.name}님 · ${p.info.korean}띠`}>{p.info.strength}</KkachiTip>
             ))}
           </div>
+        </Card>
+      )}
+
+      {z.pillars && (
+        <Card title="사주지지(四柱地支)" detail={<p>사주의 네 기둥에는 지지(地支), 즉 띠가 하나씩 들어 있어요. 년주만이 아니라 네 개의 띠가 삶의 각 영역에 숨어 있어서, 두 분의 띠를 자리마다 맞대 보면 어느 영역에서 잘 맞고 어디서 부딪히는지 보여요.</p>}>
+          <KkachiTip>두 분의 네 기둥 띠를 같은 자리끼리 나란히 놓고, 다른 자리끼리 맺는 관계도 찾아봤어요.</KkachiTip>
+          <PillarZodiac pz={z.pillars} name1={name1} name2={name2} />
         </Card>
       )}
 

@@ -7,7 +7,7 @@ import { getCompatForecast, type DailyCompat } from "@/lib/api";
 import { track } from "@/lib/track";
 import NextTabCard from "./NextTabCard";
 import CompatIntro from "./compatibility/CompatIntro";
-import { CompatCharacterCard, CompatScoreCard } from "./compatibility/CompatTotal";
+import { CompatCharacterCard } from "./compatibility/CompatTotal";
 import DailyTab from "./compatibility/DailyTab";
 import DomainTab from "./compatibility/DomainTab";
 import ElementTab from "./compatibility/ElementTab";
@@ -231,12 +231,8 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
             </div>
           )}
           {tab === "zodiac" && <ZodiacTab {...tabProps} />}
-          {tab === "domain" && (
-            <div className="space-y-4">
-              <CompatScoreCard {...tabProps} />
-              <DomainTab {...tabProps} />
-            </div>
-          )}
+          {/* 종합 궁합 카드(총점·라벨·한 줄)는 2026-10-18 뺐다 — 점수는 인트로·두 분의 캐릭터 카드에 있다(사용자 지시) */}
+          {tab === "domain" && <DomainTab {...tabProps} />}
           {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} forecast={forecast} failed={dailyFailed} />}
           {tab === "scenario" && (
             <ScenarioCard {...tabProps} {...scenarioProps} submitted={quizSubmitted} onSubmit={() => setQuizSubmitted(true)} />
