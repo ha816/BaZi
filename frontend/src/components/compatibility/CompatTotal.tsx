@@ -11,15 +11,23 @@ import type { CompatTabProps } from "./types";
 // 궁합 종합 — 2026-10-15 한눈에 탭을 빼면서 쪼갰다:
 // RevealGate·CompatCharacterBox는 결과 직후 인트로(CompatIntro), CompatScoreCard는 영역별 탭 맨 위
 
-// 드럼 치는 까치 그림 — 파일이 없으면 기본 까치 + 🥁 애니메이션으로 대신한다
-const DRUM_IMG = "/kkachi/drum_kkachi.png";
 const FALLBACK_IMG = "/kkachi/good_kkachi.png";
 const DRUMROLL_MS = 1200;
 
-/** 공개 전 — "두근두근 ○○님과 ○○님의 궁합은?" + 드럼 치는 까치 + 버튼 → 드럼롤 후 공개 */
-export function RevealGate({ name1, name2, onReveal }: { name1: string; name2: string; onReveal: () => void }) {
+/** 공개 전 실루엣 한 장 — 그 사람의 사주 캐릭터 그림을 흐리게 미리 보여 주며(그림도 미리 받아 둔다) "?"를 겹친다. 분석 RevealGate(SajuCharacterCard)와 같은 모양 */
+function Silhouette({ characterKey, rolling, delay }: { characterKey?: string | null; rolling: boolean; delay?: string }) {
+  const [src, setSrc] = useState(characterKey ? `/kkachi/saju_character/${characterKey}.webp` : FALLBACK_IMG);
+  return (
+    <div className={`relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--color-gold-faint)] ${rolling ? "char-silhouette--shake" : "animate-float"}`} style={{ animationDelay: delay }}>
+      <img src={src} alt="" className="w-full h-full object-cover char-silhouette" onError={() => setSrc(FALLBACK_IMG)} />
+      <span className={`absolute inset-0 flex items-center justify-center font-heading text-5xl font-bold text-white/90 ${rolling ? "opacity-0" : ""} transition-opacity`} aria-hidden>?</span>
+    </div>
+  );
+}
+
+/** 공개 전 — "두근두근 ○○님과 ○○님의 궁합은?" + 두 사람 캐릭터 실루엣("?" 겹침 — 2026-10-18 분석 게이트와 같게, 드럼 까치 그림은 폐기) + 버튼 → 1.2초 드럼롤 후 공개 */
+export function RevealGate({ name1, name2, roles, onReveal }: { name1: string; name2: string; roles: { character_key?: string | null }[]; onReveal: () => void }) {
   const [rolling, setRolling] = useState(false);
-  const [hasDrumImg, setHasDrumImg] = useState(true);
   const handle = () => {
     if (rolling) return;
     setRolling(true);
@@ -31,19 +39,10 @@ export function RevealGate({ name1, name2, onReveal }: { name1: string; name2: s
         두근두근 💓<br />
         <span className="text-[var(--color-gold)]">{name1}님</span>과 <span className="text-[var(--color-gold)]">{name2}님</span>의 궁합은?
       </p>
-      <div className="relative w-40 h-40">
-        <img
-          src={hasDrumImg ? DRUM_IMG : FALLBACK_IMG}
-          alt="드럼 치는 까치"
-          className={`w-40 h-40 rounded-full object-cover border-4 border-[var(--color-gold-faint)] ${rolling ? "heart-thump" : ""}`}
-          onError={() => setHasDrumImg(false)}
-        />
-        {!hasDrumImg && (
-          <>
-            <span className={`absolute -left-2 bottom-2 text-4xl drum-beat ${rolling ? "drum-beat--fast" : ""}`} aria-hidden>🥁</span>
-            <span className={`absolute -right-2 top-2 text-3xl drum-beat ${rolling ? "drum-beat--fast" : ""}`} style={{ animationDelay: "0.3s" }} aria-hidden>🥁</span>
-          </>
-        )}
+      <div className="flex items-center gap-3">
+        <Silhouette characterKey={roles[0]?.character_key} rolling={rolling} />
+        <span className="text-2xl text-[var(--color-gold-light)] heart-thump">♥</span>
+        <Silhouette characterKey={roles[1]?.character_key} rolling={rolling} delay="0.6s" />
       </div>
       <button
         type="button"
@@ -57,29 +56,38 @@ export function RevealGate({ name1, name2, onReveal }: { name1: string; name2: s
   );
 }
 
-/** 오행 캐릭터 그림 — compat/{key}.webp(1024px, 분석 캐릭터와 같은 규격, scripts/art_convert.sh), 없으면 두 사람 역할 이모지를 크게 */
-function CharacterArt({ imgKey, emojis }: { imgKey: string; emojis: string[] }) {
-  const [hasImg, setHasImg] = useState(true);
-  if (hasImg) {
+/** 한 사람의 사주 캐릭터 그림(일간×강약 20유형, saju_character/{character_key}.webp — 분석 결과와 같은 파일). 파일이 없거나 옛 결과라 키가 없으면 역할 이모지 */
+function Portrait({ characterKey, emoji, delay }: { characterKey?: string | null; emoji: string; delay: string }) {
+  const [broken, setBroken] = useState(false);
+  if (characterKey && !broken) {
     return (
       <img
-        src={`/kkachi/compat/${imgKey}.webp`}
+        src={`/kkachi/saju_character/${characterKey}.webp`}
         alt=""
-        className="w-[min(14rem,26vh)] mx-auto aspect-square rounded-2xl object-cover"
-        onError={() => setHasImg(false)}
+        className="w-[min(8.5rem,16vh)] aspect-square rounded-2xl object-cover char-reveal"
+        onError={() => setBroken(true)}
       />
     );
   }
   return (
-    <div className="flex items-center justify-center gap-3 py-1 text-5xl" aria-hidden>
-      <span className="drum-beat" style={{ animationDuration: "1.6s" }}>{emojis[0]}</span>
+    <span className="w-[min(8.5rem,16vh)] aspect-square flex items-center justify-center text-5xl drum-beat" style={{ animationDuration: "1.6s", animationDelay: delay }} aria-hidden>
+      {emoji}
+    </span>
+  );
+}
+
+/** 두 사람의 사주 캐릭터를 왼쪽 p1·오른쪽 p2로 나란히 + ♥ — 궁합 전용 그림(15종)은 만들지 않는다(2026-10-18, 사용자 결정). 인트로 상자·두 분의 캐릭터 카드·인트로 "펼치는 중" 화면이 같이 쓴다 */
+export function PairArt({ roles }: { roles: { emoji: string; character_key?: string | null }[] }) {
+  return (
+    <div className="flex items-center justify-center gap-2 py-1">
+      <Portrait characterKey={roles[0]?.character_key} emoji={roles[0]?.emoji ?? "🐦"} delay="0s" />
       <span className="text-2xl text-[var(--color-gold-light)] heart-thump">♥</span>
-      <span className="drum-beat" style={{ animationDuration: "1.6s", animationDelay: "0.4s" }}>{emojis[1]}</span>
+      <Portrait characterKey={roles[1]?.character_key} emoji={roles[1]?.emoji ?? "🐦"} delay="0.4s" />
     </div>
   );
 }
 
-/** 오행 캐릭터 상자(결과 직후 인트로) — 그림·"○○ 궁합 · 두 분은"·칭호·점수·각자 역할 칩·설명.
+/** 오행 캐릭터 상자(결과 직후 인트로) — 두 사람 사주 캐릭터 그림·"○○ 궁합 · 두 분은"·칭호·점수·각자 역할 칩·설명.
  *  폰 한 화면에 까치 인사·버튼까지 들어가게 촘촘하게. character 없는 옛 결과는 점수 + description */
 export function CompatCharacterBox({ data, name1, name2, relationType }: CompatTabProps) {
   const ch = data.character;
@@ -93,7 +101,7 @@ export function CompatCharacterBox({ data, name1, name2, relationType }: CompatT
   if (!ch) return <div className="text-center space-y-1">{score}<p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">{data.description}</p></div>;
   return (
     <div className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-3 text-center space-y-2">
-      <CharacterArt imgKey={ch.key} emojis={ch.roles.map((r) => r.emoji)} />
+      <PairArt roles={ch.roles} />
       <p className="text-[11px] font-semibold text-[var(--color-gold)]">{RELATION_TYPE_LABEL[relationType]} 궁합 · 두 분은</p>
       <p className="font-heading text-xl font-bold leading-snug text-[var(--color-ink)] break-keep">{ch.title}</p>
       {score}

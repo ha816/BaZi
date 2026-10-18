@@ -73,11 +73,6 @@ export function loadCharacterArt(key: string): Promise<string | null> {
   return /^[가-힣]_[강약]$/.test(key) ? loadArt(`saju_character/og/${key}.jpg`) : Promise.resolve(null);
 }
 
-/** 궁합 캐릭터(궁합 카드) — compat/og/{key}.jpg, key = 오행 두 글자(주는 쪽 먼저, 예 木火·土土). 그림이 들어오기 전엔 null → 글자만 */
-export function loadCompatArt(key: string): Promise<string | null> {
-  return /^[木火土金水]{2}$/.test(key) ? loadArt(`compat/og/${key}.jpg`) : Promise.resolve(null);
-}
-
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 const outer = {
@@ -323,7 +318,10 @@ export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: s
 
 /** 궁합 공유 카드 — 캐릭터 칭호 · 점수·라벨 · 두 사람 일간(역할) · 영역 점수 · 한 줄 · CTA.
  *  궁합 캐릭터 그림(compat/og/{key}.jpg)이 있으면 왼쪽에 232px로 넣고 점수·일간 칸을 좁힌다(2026-10-17, 사주 카드 V4와 같은 자리). 없으면 글자만 */
-export function CompatOgImage({ card, mascot, characterArt }: { card: CompatShareCard; mascot: string; characterArt?: string | null }) {
+export function CompatOgImage({ card, mascot, characterArts = [] }: { card: CompatShareCard; mascot: string; characterArts?: (string | null)[] }) {
+  // 두 사람 각자의 사주 캐릭터 OG 그림(saju_character/og/{character_key}.jpg, 2026-10-18 — 궁합 전용 그림 없음). 옛 카드는 빈 배열 → 글자만
+  const arts = characterArts.filter((a): a is string => !!a);
+  const hasArt = arts.length > 0;
   // 임계 65/45 = 백엔드 TOTAL_LABEL_BY_REL(80/65/45)과 맞춤
   const tone = card.total_score >= 65 ? LEVEL_COLORS["좋은 날"] : card.total_score >= 45 ? LEVEL_COLORS["평범한 날"] : LEVEL_COLORS["주의가 필요한 날"];
   const domains = Object.entries(card.domain_scores).slice(0, 4);
@@ -355,16 +353,20 @@ export function CompatOgImage({ card, mascot, characterArt }: { card: CompatShar
           </div>
         )}
 
-        <div style={{ display: "flex", flex: 1, marginTop: ch ? 14 : 22, gap: characterArt ? 24 : 32, alignItems: "center" }}>
-          {characterArt && <img src={characterArt} alt="" width={232} height={232} style={{ borderRadius: 24, border: `1px solid ${BORDER}` }} />}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: characterArt ? 180 : 240, gap: 8 }}>
+        <div style={{ display: "flex", flex: 1, marginTop: ch ? 14 : 22, gap: hasArt ? 24 : 32, alignItems: "center" }}>
+          {hasArt && (
+            <div style={{ display: "flex", gap: 10 }}>
+              {arts.map((a, i) => <img key={i} src={a} alt="" width={156} height={156} style={{ borderRadius: 20, border: `1px solid ${BORDER}` }} />)}
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: hasArt ? 180 : 240, gap: 8 }}>
             <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700 }}>
-              <div style={{ display: "flex", fontSize: characterArt ? 76 : 88, lineHeight: 1 }}>{card.total_score}</div>
+              <div style={{ display: "flex", fontSize: hasArt ? 76 : 88, lineHeight: 1 }}>{card.total_score}</div>
               <div style={{ display: "flex", fontSize: 26, color: INK_MUTED, marginLeft: 4 }}>점</div>
             </div>
             <div style={{ display: "flex", fontSize: 18, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 999, padding: "6px 16px" }}>{card.label}</div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, width: characterArt ? 170 : 190 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, width: hasArt ? 170 : 190 }}>
             {[{ name: n1, d: card.p1, role: ch?.roles[0] }, { name: n2, d: card.p2, role: ch?.roles[1] }].map(({ name, d, role }, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", borderRadius: 16, background: IVORY_WARM, border: `1px solid ${BORDER}`, padding: "8px 0" }}>
                 <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{clip(name, 8)}</div>

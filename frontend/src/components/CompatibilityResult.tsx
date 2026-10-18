@@ -32,7 +32,7 @@ interface Props {
 }
 
 // 순서 = 노출 순서. 라벨은 그리드 폭 때문에 한자 없이 짧게(한자 병기는 각 카드 제목에). 탭바 포맷은 ResultSlides와 동일(globals.css .feature-tabbar)
-// 한눈에 탭은 2026-10-15 뺐다(분석과 같게) — 종합 카드·두근두근은 결과 직후 인트로, 점수는 영역별 탭 맨 위, 문답은 "이럴 때" 탭.
+// 한눈에 탭은 2026-10-15 뺐다(분석과 같게) — 종합 카드·두근두근은 결과 직후 인트로, 점수는 영역별 탭 맨 위, 문답은 "설문조사" 탭(2026-10-18 "이럴 때"에서 분석과 같은 이름으로).
 // 탭별 한 줄(백엔드 summary)은 API에 남겨 LLM 기본 요약용으로. hook = 탭 끝 "다음 이야기" 제목
 const COMPAT_TABS = [
   { id: "pillars",   emoji: "🧩", label: "팔자비교",   hook: "두 분의 여덟 글자는 어떻게 맞물릴까?" },   // 기둥 비교 + 두 분의 캐릭터 + 오행 보완
@@ -40,7 +40,7 @@ const COMPAT_TABS = [
   { id: "zodiac",    emoji: "🐾", label: "띠궁합",     hook: "띠로 보면 두 분은 어떤 사이일까?" },
   { id: "domain",    emoji: "📊", label: "영역별",     hook: "영역별로 보면 어디가 가장 잘 맞을까?" },   // 종합 점수 + 영역 카드
   { id: "daily",     emoji: "🌅", label: "오늘의 궁합", hook: "오늘 두 분의 기운은 어떨까?" },          // 프로필×2일 때만 (canDaily)
-  { id: "scenario",  emoji: "🤔", label: "이럴 때",    hook: "이럴 때 두 분은? 사주가 맞혀 볼게요" },   // character.scenarios 있을 때만
+  { id: "scenario",  emoji: "📋", label: "설문조사",   hook: "사주가 두 분을 얼마나 맞힐까? (1분)" },   // character.scenarios 있을 때만 — 분석 설문조사와 같은 이름(2026-10-18)
   { id: "ai",        emoji: "✨", label: "AI 해석",    hook: "까치가 두 분의 궁합을 이야기로 풀어 드려요" },
 ] as const;
 type CompatTabId = (typeof COMPAT_TABS)[number]["id"];
@@ -73,7 +73,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   // 옛 링크 호환: 한눈에·종합→팔자비교, 오행 보완→팔자비교, 신살→성격·성질
   const LEGACY_TAB: Record<string, CompatTabId> = { summary: "pillars", total: "pillars", element: "pillars", sinsal: "character" };
   const tab: CompatTabId = tabs.find((t) => t.id === (LEGACY_TAB[tabParam ?? ""] ?? tabParam))?.id ?? "pillars";
-  // 결과 단계(?step=) — intro: 두근두근 → 캐릭터·점수 → [이럴 때 두 분은?]/[분석 보기], scenario: 문답 전체 화면, 없으면 탭(?tab=). 분석 ResultSlides와 같은 방식
+  // 결과 단계(?step=) — intro: 두근두근 → 캐릭터·점수 → [설문조사]/[분석 보기], scenario: 설문조사(문답) 전체 화면, 없으면 탭(?tab=). 분석 ResultSlides와 같은 방식
   const stepParam = searchParams.get("step");
   // 새 결과(주소에 step·tab이 없음)만 인트로부터 — 새로고침한 ?tab=은 그대로
   const [freshResult] = useState(() => !stepParam && !tabParam);
@@ -85,7 +85,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const [dailyFailed, setDailyFailed] = useState(false);
   // 인트로에서 두근두근을 이미 열었는지 — 문답에서 뒤로 돌아오면 인사부터. 결과가 바뀌면 이 뷰가 다시 마운트되어 다시 가려진다
   const [scoreRevealed, setScoreRevealed] = useState(false);
-  // 이럴 때 두 분은? 사용자 답 — 인트로 문답과 "이럴 때" 탭이 같이 쓴다. 화면 안에서만 쓰고 서버에 보내지 않는다
+  // 설문조사(이럴 때 두 분은?) 사용자 답 — 인트로 문답과 설문조사 탭이 같이 쓴다. 화면 안에서만 쓰고 서버에 보내지 않는다
   const [quiz, setQuiz] = useState<Record<number, QuizPick>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
@@ -160,10 +160,10 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
         />
       )}
       {step === "scenario" && (
-        <div ref={scenarioRef} className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="이럴 때 두 분은?">
+        <div ref={scenarioRef} className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="설문조사">
           <div className="min-h-full max-w-md mx-auto px-4 pt-4 flex flex-col">
             <div className="flex items-center justify-between h-10">
-              <span className="text-xs font-semibold text-[var(--color-gold)]">🤔 이럴 때 두 분은?</span>
+              <span className="text-xs font-semibold text-[var(--color-gold)]">📋 설문조사</span>
               {!quizSubmitted && (
                 <button type="button" onClick={goTabs} className="px-3 py-2 -mr-3 text-xs text-[var(--color-ink-faint)]">
                   분석 바로 보기 ›
@@ -181,7 +181,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
                 <p className="font-heading text-2xl font-bold text-[var(--color-ink)]">답변 완료!</p>
                 <p className="text-sm leading-relaxed text-[var(--color-ink-muted)] break-keep">
                   사주가 두 분을 얼마나 맞혔는지는<br />
-                  <strong className="text-[var(--color-ink)]">🤔 이럴 때 탭</strong>에 숨겨 뒀어요.<br />
+                  <strong className="text-[var(--color-ink)]">📋 설문조사 탭</strong>에 숨겨 뒀어요.<br />
                   궁합 분석을 먼저 보고 확인해 보세요.
                 </p>
               </div>
@@ -245,7 +245,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
             <NarrativeTab narrative={safe.narrative} streamingNarrative={streamingNarrative} narrativeLoading={narrativeLoading} />
           )}
           <NextTabCard
-            tabs={quizSubmitted ? tabs.map((t) => (t.id === "scenario" ? { ...t, hook: "답해 둔 문답, 사주와 몇 % 맞았을까?" } : t)) : tabs}
+            tabs={quizSubmitted ? tabs.map((t) => (t.id === "scenario" ? { ...t, hook: "답해 둔 설문조사, 사주와 몇 % 맞았을까?" } : t)) : tabs}
             active={tab}
             onGo={setTab}
           />

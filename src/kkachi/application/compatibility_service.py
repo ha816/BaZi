@@ -75,7 +75,7 @@ def build_compat_share_card(name1: str, name2: str, relation_type: str, result: 
     character = {
         "title": ch["title"],
         "key": ch["key"],
-        "roles": [{"name": r["name"], "element": r["element"], "emoji": r["emoji"]} for r in ch["roles"]],
+        "roles": [{"name": r["name"], "element": r["element"], "emoji": r["emoji"], "character_key": r.get("character_key")} for r in ch["roles"]],  # character_key = 그 사람 사주 캐릭터 그림
         "desc": ch["desc"].replace("{p1}", n1).replace("{p2}", n2),
         "moments": ch.get("moments"),  # 랜딩은 잘 맞는 순간만 보여준다
     } if ch else None

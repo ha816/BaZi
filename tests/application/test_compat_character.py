@@ -89,11 +89,12 @@ def test_sipsin_score_predicts_with_tie_and_skips_weak():
 
 
 def test_spec_table_matches_pair_names():
-    """specs/compatibility/character.md §3 표 = _PAIR_NAME·_SAME_NAME — 키(파일명)·역할·비유가 글자까지 같다"""
+    """specs/compatibility/character.md §3 표 = _PAIR_NAME·_SAME_NAME — 유형 키·역할·비유가 글자까지 같다"""
+    keys = {a + b for a, b in _PAIR_NAME} | {e + e for e in _SAME_NAME}
     rows = {}
     for line in _SPEC.read_text().splitlines():
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) >= 6 and len(cells[1]) == 8 and cells[1].endswith(".png`"):
+        if len(cells) >= 6 and len(cells[1]) == 4 and cells[1][1:3] in keys:
             rows[cells[1][1:3]] = cells
     assert len(rows) == 15
     for (a, b), (na, nb) in _PAIR_NAME.items():
@@ -115,3 +116,11 @@ def test_moments_three_plus_three_for_every_key_and_match_spec_table():
     for key, (good, hard) in _MOMENTS.items():
         assert rows[key][3:5] == [" · ".join(good), " · ".join(hard)], key
     assert build_compat_character(_result("甲", "丙"), "lover")["moments"] == {"good": list(_MOMENTS["木火"][0]), "hard": list(_MOMENTS["木火"][1])}
+
+
+def test_roles_carry_each_persons_saju_character_key():
+    """그림은 두 사람 각자의 사주 캐릭터 — 일간×강약(strength_pct 50 기준), 점수가 없는 옛 캐시는 신강·신약 라벨로"""
+    ch = build_compat_character(_result("甲", "丙"), "lover")
+    assert [r["character_key"] for r in ch["roles"]] == ["갑_강", "병_약"]
+    old = _result("戊", "庚", s1={"strength_pct": None}, s2={"strength_pct": None})
+    assert [r["character_key"] for r in build_compat_character(old, "friend")["roles"]] == ["무_강", "경_약"]

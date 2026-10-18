@@ -144,8 +144,13 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
   const ch = card.character;
-  // 15종 그림(specs/compatibility/character.md §3, compat/{key}.webp — 분석 캐릭터처럼 1024px WebP)은 아직 없을 수 있다 — 서버 렌더라 onError 대신 파일 존재로 판단
-  const hasArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/compat", `${ch.key}.webp`));
+  // 그림은 두 사람 각자의 사주 캐릭터(saju_character/{character_key}.webp, 분석 결과와 같은 파일 — 궁합 전용 그림은 만들지 않음 2026-10-18).
+  // 서버 렌더라 onError 대신 파일 존재로 판단. 옛 카드는 character_key가 없어 역할 이모지
+  const arts = (ch?.roles ?? []).map((ro) => (ro.character_key && existsSync(join(process.cwd(), "public/kkachi/saju_character", `${ro.character_key}.webp`)) ? `/kkachi/saju_character/${ro.character_key}.webp` : null));
+  const portrait = (i: number) => {
+    const src = arts[i];
+    return src ? <img src={src} alt="" className="w-[8.5rem] aspect-square rounded-2xl object-cover" /> : <span className="text-5xl">{ch?.roles[i]?.emoji}</span>;
+  };
   return (
     <main className="page page--center">
       <div className="page__inner">
@@ -165,15 +170,11 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
           <div className="slide-card__body space-y-4">
             {ch && (
               <div className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-4 text-center space-y-3">
-                {hasArt ? (
-                  <img src={`/kkachi/compat/${ch.key}.webp`} alt="" className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
-                ) : (
-                  <div className="flex items-center justify-center gap-3 py-1 text-5xl" aria-hidden>
-                    <span>{ch.roles[0]?.emoji}</span>
-                    <span className="text-xl text-[var(--color-gold-light)]">{glyph}</span>
-                    <span>{ch.roles[1]?.emoji}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-center gap-2 py-1" aria-hidden>
+                  {portrait(0)}
+                  <span className="text-xl text-[var(--color-gold-light)]">{glyph}</span>
+                  {portrait(1)}
+                </div>
                 <p className="text-[11px] font-semibold text-[var(--color-gold)]">두 분은</p>
                 <p className="font-heading text-2xl font-bold leading-snug text-[var(--color-ink)]">{ch.title}</p>
                 <div className="flex justify-center gap-2 flex-wrap">

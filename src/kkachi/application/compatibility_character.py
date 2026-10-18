@@ -283,10 +283,16 @@ def build_compat_character(result: dict, relation_type: str = "lover") -> dict |
     rel = relation_type if relation_type in _SUFFIX else "lover"
     mood = _day_mood(result)
     title, kind, roles, a, b, key = _title(e1, e2, mood, rel)
+    # 그림은 두 사람 각자의 사주 캐릭터(일간×강약 20유형, saju_character/{character_key}.webp) — 궁합 전용 그림은 만들지 않는다(2026-10-18).
+    # 강약은 스냅샷 strength_pct 50 기준, 점수가 없는 옛 캐시는 strength_label로 (saju_character.build_saju_character와 같은 키)
+    for ro, snap in zip(roles, (s1, s2)):
+        pct = snap.get("strength_pct")
+        strong = pct >= 50 if pct is not None else "신강" in (snap.get("strength_label") or "")
+        ro["character_key"] = f"{Stem.from_char(snap['day_stem']).korean}_{'강' if strong else '약'}"
     desc = _DESC[kind][rel].format(a=a, b=b)
     if mood:
         desc += " " + _MOOD[mood][rel][1]
-    # key → 그림 frontend/public/kkachi/compat/{key}.webp (specs/compatibility/character.md §3 15종, 원본 .png → scripts/art_convert.sh)
+    # key → 유형 키 15종(specs/compatibility/character.md §3·§5-1 순간 칩 기준) — 그림 키가 아니다. 그림은 roles[i].character_key
     good, hard = _MOMENTS[key]
     return {"title": title, "kind": kind, "key": key, "roles": roles, "desc": desc,
             "moments": {"good": list(good), "hard": list(hard)}, "scenarios": _scenarios(result, rel, kind, a)}

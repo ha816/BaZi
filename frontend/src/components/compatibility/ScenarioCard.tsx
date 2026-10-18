@@ -8,7 +8,7 @@ import type { CompatTabProps } from "./types";
 export type QuizPick = "p1" | "p2" | "both";
 
 interface Props extends CompatTabProps {
-  /** 질문 번호 → 사용자가 고른 답 (오케스트레이터가 결과 단위로 들고 있음 — 인트로 문답·이럴 때 탭 공유). 서버에 보내지 않는다 */
+  /** 질문 번호 → 사용자가 고른 답 (오케스트레이터가 결과 단위로 들고 있음 — 인트로 문답·설문조사 탭 공유). 서버에 보내지 않는다 */
   answers: Record<number, QuizPick>;
   onAnswer: (i: number, pick: QuizPick) => void;
   /** 다 고르고 "사주와 맞춰 보기"를 눌렀는지 — 누르기 전엔 사주 예측을 숨긴다 */
@@ -29,7 +29,7 @@ function rateNote(rate: number) {
   return "두 분은 타고난 기운에 서로의 색을 더해 가는 사이예요. 풀이는 가볍게 참고하고, 서로가 아는 모습을 더 믿어 주세요.";
 }
 
-/** 이럴 때 두 분은? — [이름1 / 이름2 / 둘 다]로 5문항씩 페이지를 넘기며 전부 답한 뒤 한꺼번에 사주 예측과 맞춘다. 결과는 일치율 + 까치 해설 + 문항별(다른 문항 먼저) */
+/** 설문조사(구 "이럴 때 두 분은?", 2026-10-18 분석과 같은 이름으로) — [이름1 / 이름2 / 둘 다]로 5문항씩 페이지를 넘기며 전부 답한 뒤 한꺼번에 사주 예측과 맞춘다. 결과는 일치율 + 까치 해설 + 문항별(다른 문항 먼저) */
 export default function ScenarioCard({ data, name1, name2, answers, onAnswer, submitted, onSubmit, onReset }: Props) {
   const list = (data.character?.scenarios ?? []) as Scenario[];
   // 페이지는 화면 상태라 여기서만 든다. 처음 열 때는 아직 안 답한 문항이 있는 첫 페이지부터 (인트로에서 답하다 탭으로 와도 이어짐)
@@ -63,7 +63,7 @@ export default function ScenarioCard({ data, name1, name2, answers, onAnswer, su
   return (
     <div ref={cardRef} className="slide-card scroll-mt-36">
       <div className="slide-card__header flex items-center justify-between">
-        <SectionHeader emoji="🤔" title="이럴 때 두 분은?" noMargin />
+        <SectionHeader emoji="🔮" title="설문조사" noMargin />
         {!submitted && (
           <span className="text-[10px] text-[var(--color-ink-faint)]">
             {pageCount > 1 && <>{cur + 1}/{pageCount} 페이지 · </>}{answered}/{list.length} 답함

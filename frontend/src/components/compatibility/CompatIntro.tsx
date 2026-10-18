@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CompatCharacterBox, RevealGate } from "./CompatTotal";
+import { CompatCharacterBox, PairArt, RevealGate } from "./CompatTotal";
 import type { CompatTabProps } from "./types";
 
 const OPENING_MS = 1300;
@@ -11,13 +11,13 @@ interface Props extends CompatTabProps {
   /** 이미 공개했으면(문답에서 뒤로 돌아옴) 드럼롤 없이 인사부터 */
   revealed: boolean;
   onReveal: () => void;
-  /** "이럴 때 두 분은?" 문항이 있을 때만 — 없으면 "궁합 분석 보기" 하나 */
+  /** 설문조사("이럴 때 두 분은?" 문답) 문항이 있을 때만 — 없으면 "궁합 분석 보기" 하나 */
   onScenario?: () => void;
   onDone: () => void;
 }
 
 /** 궁합 결과 직후 한 장(?step=intro) — 두근두근 드럼롤 → 캐릭터 칭호·점수 공개 → 까치 인사
- *  → [이럴 때 두 분은? ?step=scenario] / [궁합 분석 보기 → "인연 지도 펼치는 중…"] (분석 ResultIntro와 같은 흐름, 건너뛰기 가능) */
+ *  → [📋 설문조사 ?step=scenario] / [궁합 분석 보기 → "인연 지도 펼치는 중…"] (분석 ResultIntro와 같은 흐름·같은 이름, 건너뛰기 가능) */
 export default function CompatIntro({ revealed, onReveal, onScenario, onDone, ...props }: Props) {
   const { data, name1, name2 } = props;
   const [phase, setPhase] = useState<"gate" | "hello" | "opening">(revealed ? "hello" : "gate");
@@ -42,7 +42,7 @@ export default function CompatIntro({ revealed, onReveal, onScenario, onDone, ..
 
         <div className="flex-1 flex flex-col justify-center py-4">
           {phase === "gate" && (
-            <RevealGate name1={name1} name2={name2} onReveal={() => { onReveal(); setPhase("hello"); }} />
+            <RevealGate name1={name1} name2={name2} roles={data.character?.roles ?? []} onReveal={() => { onReveal(); setPhase("hello"); }} />
           )}
 
           {phase === "hello" && (
@@ -56,7 +56,7 @@ export default function CompatIntro({ revealed, onReveal, onScenario, onDone, ..
                 <div className="flex-1 rounded-2xl rounded-tl-sm bg-white border border-[var(--color-border-light)] px-3.5 py-2.5 text-sm leading-relaxed text-[var(--color-ink)] break-keep">
                   <p><strong>{name1}님</strong>과 <strong>{name2}님</strong>의 궁합을 풀어드릴게요.</p>
                   {onScenario && (
-                    <p className="mt-1 text-[var(--color-ink-muted)]">아래 &quot;이럴 때 두 분은?&quot;에 답하면 사주가 두 분을 얼마나 맞히는지 알려드려요. (바로 분석으로 가도 되구요)</p>
+                    <p className="mt-1 text-[var(--color-ink-muted)]">아래 설문조사를 하면 사주가 두 분을 얼마나 맞히는지 알려드려요. (바로 분석으로 가도 되구요)</p>
                   )}
                 </div>
               </div>
@@ -69,7 +69,7 @@ export default function CompatIntro({ revealed, onReveal, onScenario, onDone, ..
                       onClick={onScenario}
                       className="w-full py-3.5 rounded-xl text-base font-semibold active:opacity-70 border border-[var(--color-border)] bg-white text-[var(--color-ink)]"
                     >
-                      🤔 이럴 때 두 분은?
+                      📋 설문조사
                     </button>
                   )}
                   <button
@@ -86,11 +86,7 @@ export default function CompatIntro({ revealed, onReveal, onScenario, onDone, ..
 
           {phase === "opening" && (
             <div className="flex flex-col items-center gap-6 text-center">
-              <div className="flex gap-3 text-3xl">
-                <span className="drum-beat" style={{ animationDuration: "1s" }}>{data.character?.roles[0]?.emoji ?? "🐦"}</span>
-                <span className="heart-thump text-2xl text-[var(--color-gold-light)]">♥</span>
-                <span className="drum-beat" style={{ animationDuration: "1s", animationDelay: "0.3s" }}>{data.character?.roles[1]?.emoji ?? "🐦"}</span>
-              </div>
+              <PairArt roles={data.character?.roles ?? []} />
               <p className="font-heading text-lg text-[var(--color-ink-light)] break-keep">
                 두 분의 인연 지도를<br />펼치는 중…
               </p>

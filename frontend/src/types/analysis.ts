@@ -449,13 +449,14 @@ export interface CompatCharacter {
   /** 예: "끌리는 장작과 모닥불 커플" */
   title: string;
   kind: "generate" | "overcome" | "same";
-  /** 그림 키 — frontend/public/kkachi/compat/{key}.webp(화면)·compat/og/{key}.jpg(OG) (주는 쪽 오행 먼저, 예: 木火·土土) */
+  /** 유형 키 15종(주는 쪽 오행 먼저, 예: 木火·土土) — 순간 칩 기준. 그림 키가 아니다(2026-10-18: 궁합 전용 그림 없음) */
   key: string;
-  roles: { token: string; name: string; element: string; emoji: string }[];
+  /** character_key = 그 사람의 사주 캐릭터 키(예 무_강) → 그림 /kkachi/saju_character/{character_key}.webp(분석 결과와 같은 파일) */
+  roles: { token: string; name: string; element: string; emoji: string; character_key: string }[];
   desc: string;
   /** 잘 맞는 순간 · 부딪히기 쉬운 순간 — 15종마다 3+3, 관계 유형 공통(2026-10-17) */
   moments: { good: string[]; hard: string[] };
-  /** 이럴 때 두 분은? — who: p1 | p2 | both */
+  /** 설문조사(이럴 때 두 분은?) 문답 — who: p1 | p2 | both */
   scenarios: { q: string; who: "p1" | "p2" | "both"; reason: string }[];
 }
 
@@ -683,7 +684,7 @@ export interface CompatShareCard {
   p1: { stem: string; korean: string; element: string; hour_unknown?: boolean };
   p2: { stem: string; korean: string; element: string; hour_unknown?: boolean };
   /** 궁합 캐릭터 칭호 — 이름은 채워져 있다. 옛 카드·일간 없음이면 없음 */
-  character?: { title: string; key: string; roles: { name: string; element: string; emoji: string }[]; desc: string; moments?: { good: string[]; hard: string[] } | null } | null;
+  character?: { title: string; key: string; roles: { name: string; element: string; emoji: string; character_key?: string | null }[]; desc: string; moments?: { good: string[]; hard: string[] } | null } | null;
 }
 
 export interface SelfQuizItem {

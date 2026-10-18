@@ -24,8 +24,8 @@ def test_compat_share_card_carries_character_with_names_filled():
         **_RESULT,
         "character": {
             "title": "끌리는 장작과 모닥불 커플", "kind": "generate", "key": "木火",
-            "roles": [{"token": "{p1}", "name": "장작", "element": "木", "emoji": "🌳"},
-                      {"token": "{p2}", "name": "모닥불", "element": "火", "emoji": "🔥"}],
+            "roles": [{"token": "{p1}", "name": "장작", "element": "木", "emoji": "🌳", "character_key": "갑_강"},
+                      {"token": "{p2}", "name": "모닥불", "element": "火", "emoji": "🔥", "character_key": "병_약"}],
             "desc": "{p1}님이 {p2}님을 아낌없이 키워주는 사랑이에요.",
             "moments": {"good": ["새 일을 시작할 때"], "hard": ["한쪽만 애쓸 때"]},
             "scenarios": [{"q": "q", "who": "p1", "reason": "r"}],
@@ -34,7 +34,7 @@ def test_compat_share_card_carries_character_with_names_filled():
     card = build_compat_share_card("승민", "", "lover", result)
     ch = card["character"]
     assert ch["title"] == "끌리는 장작과 모닥불 커플" and ch["key"] == "木火"
-    assert ch["roles"] == [{"name": "장작", "element": "木", "emoji": "🌳"}, {"name": "모닥불", "element": "火", "emoji": "🔥"}]
+    assert ch["roles"] == [{"name": "장작", "element": "木", "emoji": "🌳", "character_key": "갑_강"}, {"name": "모닥불", "element": "火", "emoji": "🔥", "character_key": "병_약"}]
     assert ch["desc"] == "승민님이 두 번째 분님을 아낌없이 키워주는 사랑이에요."  # 빈 이름은 '두 번째 분'
     assert ch["moments"] == {"good": ["새 일을 시작할 때"], "hard": ["한쪽만 애쓸 때"]}
     assert "scenarios" not in ch and "token" not in ch["roles"][0]
