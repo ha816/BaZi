@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| 상태 | 살아있음 — 2026-10-03 작성(`docs/COMPAT_CHARACTER_TYPES.md`), 2026-10-17 `specs/compatibility/`로 옮기며 스펙 형식으로. 사주 캐릭터 `specs/analysis/character.md`와 짝 |
+| 상태 | 살아있음 — 2026-10-03 작성(`docs/COMPAT_CHARACTER_TYPES.md`), 2026-10-17 `specs/compatibility/`로 옮기며 스펙 형식으로, 2026-10-18 그림을 두 사람 사주 캐릭터로·카드 정리. 사주 캐릭터 `specs/analysis/character.md`와 짝 |
 | 화면 | 궁합 결과 인트로 공개 상자 · 성격 탭 "두 분의 캐릭터" 카드(맨 위) · 문답 "이럴 때 두 분은?" · 공유 랜딩 `/s/{id}`(kind=compat) · OG 이미지. 그림은 두 사람 각자의 사주 캐릭터(`specs/analysis/character.md`) 재사용. 화면 안 순서·게이트는 `specs/compatibility/result.md`가 정하고, 이 문서는 **유형·칭호·설명·문답이 정해지는 규칙과 무엇을 노출하는가**를 정한다 |
 | 관련 코드 | `src/kkachi/application/compatibility_character.py`(`build_compat_character` — `_PAIR_NAME`·`_SAME_NAME`·`_MOOD`·`_SUFFIX`·`_DESC`·`_SIPSIN_Q`·`_scenarios`) · `application/util/sipsin_meta.py`(`SIPSIN_ORDER`·`SIPSIN_TRAIT`, 설문조사와 공용) · `self_quiz.py`(`YES_AT` = 8) · `compatibility_service.py`(`build_compat_share_card().character`) · `frontend/src/components/compatibility/CompatTotal.tsx`(`CompatCharacterBox`·`CompatCharacterCard`·`CharacterArt`) · `CompatIntro.tsx` · `ScenarioCard.tsx` · `OgCard.tsx`(`CompatOgImage`·`loadCompatArt`) · `app/s/[id]/page.tsx` · `tests/application/test_compat_character.py` · `scripts/art_convert.sh` |
 | 관련 API | `POST /compatibility` · `POST /compatibility/direct` · `POST /compatibility/invites/{id}/resolve` → `character {title, kind, key, roles[2]{token, name, element, emoji, character_key}, desc, moments{good[3], hard[3]}, scenarios[6~10]}`(응답 때마다 계산, 캐시에 저장 안 함) · `POST /compatibility/shares` → `/s/{id}`의 `card.character`(title·key·roles{name, element, emoji, character_key}·desc·moments — 이름 채움, scenarios 제외) |
