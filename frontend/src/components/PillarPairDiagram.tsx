@@ -1,64 +1,10 @@
 "use client";
 
-import React from "react";
 import type { PillarRelation, PillarSnapshot } from "@/types/analysis";
 import { BRANCH_ELEMENT, BRANCH_KOR, STEM_ELEMENT, STEM_KOR } from "@/lib/ganji";
 import { getElementInfo } from "@/lib/elementColors";
 import KkachiTip from "./KkachiTip";
 
-const OHENG_GENERATES: Record<string, string> = {
-  "木": "火", "火": "土", "土": "金", "金": "水", "水": "木",
-};
-const OHENG_OVERCOMES: Record<string, string> = {
-  "木": "土", "火": "金", "土": "水", "金": "木", "水": "火",
-};
-
-function describeMainElementRelation(
-  p1Main: string, p2Main: string, name1: string, name2: string,
-): React.ReactNode | null {
-  if (!p1Main || !p2Main) return null;
-  const info1 = getElementInfo(p1Main);
-  const info2 = getElementInfo(p2Main);
-  const el1 = <span style={{ color: info1.color }}>{p1Main}({info1.korean})</span>;
-  const el2 = <span style={{ color: info2.color }}>{p2Main}({info2.korean})</span>;
-
-  if (p1Main === p2Main) {
-    return (
-      <>
-        두 분 모두 {el1} 기운을 주인공으로 가졌어요. 결이 비슷해 공감대는 넓지만, 같은 색끼리 부딪치면 경쟁심이 생길 수 있으니 서로의 영역을 인정해주는 게 좋아요.
-      </>
-    );
-  }
-  if (OHENG_GENERATES[p1Main] === p2Main) {
-    return (
-      <>
-        {name1}님의 {el1}이 {name2}님의 {el2}을 키워주는 상생(相生) 관계예요. {name1}님이 자연스럽게 받쳐주고 {name2}님이 그 에너지로 빛나는, 위에서 흘려보내고 아래에서 받아 자라는 파트너예요.
-      </>
-    );
-  }
-  if (OHENG_GENERATES[p2Main] === p1Main) {
-    return (
-      <>
-        {name2}님의 {el2}이 {name1}님의 {el1}을 키워주는 상생(相生) 관계예요. {name2}님이 토양을 만들어주면 {name1}님이 그 위에서 자라나며 서로 성장시켜주는 든든한 파트너예요.
-      </>
-    );
-  }
-  if (OHENG_OVERCOMES[p1Main] === p2Main) {
-    return (
-      <>
-        {name1}님의 {el1}이 {name2}님의 {el2}을 다스리는 상극(相剋) 관계예요. 주도권 갈등은 있을 수 있지만, {name1}님이 {name2}님의 거친 면을 다듬어주고 방향을 잡아주는 자극이 강한 사이예요.
-      </>
-    );
-  }
-  if (OHENG_OVERCOMES[p2Main] === p1Main) {
-    return (
-      <>
-        {name2}님의 {el2}이 {name1}님의 {el1}을 다스리는 상극(相剋) 관계예요. 긴장감과 마찰은 있지만, {name2}님이 {name1}님의 욕심을 잡아주며 강한 끌림으로 변화를 만드는 사이예요.
-      </>
-    );
-  }
-  return null;
-}
 
 const KIND_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
   // 길(吉) — 녹색 계열
@@ -81,13 +27,6 @@ const COLUMN_HEADERS: { kor: string; han: string; origIndex: number }[] = [
   { kor: "월주", han: "月柱", origIndex: 1 },
   { kor: "년주", han: "年柱", origIndex: 0 },
 ];
-
-const PILLAR_CONTEXT: Record<string, string> = {
-  "시주": "자녀·노년",
-  "일주": "본인·배우자",
-  "월주": "부모·성장환경",
-  "년주": "가문·사회 배경",
-};
 
 // 기둥별 lead-in 문구 — 한 화면 안에서 자연스러운 변주
 const PILLAR_LEAD_IN: Record<string, string> = {
@@ -190,8 +129,6 @@ interface Props {
   p1: PillarSnapshot;
   p2: PillarSnapshot;
   relations: PillarRelation[];
-  name1: string;
-  name2: string;
   /** 등장 연출 — 시→일→월→년 기둥마다 위(첫 분)·아래(둘째 분) 글자가 도장처럼 찍히고, 그 기둥의 합·충 배지가 뒤따라 튀어나온다.
    *  분석 사주팔자(PillarDetail animate)와 같은 ink-stamp */
   animate?: boolean;
@@ -266,7 +203,7 @@ function formatLabel(label: string, kind: string): string {
   return `${ch1}${ch2}(${kor1}${kor2})${rest}`;
 }
 
-export default function PillarPairDiagram({ p1, p2, relations, name1, name2, animate = false }: Props) {
+export default function PillarPairDiagram({ p1, p2, relations, animate = false }: Props) {
   // COLUMN_HEADERS 순서(시→일→월→년, 화면 왼쪽부터)대로
   const colAt = (col: number, extra: number) => (animate ? col * COL_GAP + extra : null);
   const samePillarRels = (kor: string) =>
@@ -275,10 +212,6 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2, ani
   const groupedExplanations = COLUMN_HEADERS
     .map(({ kor }) => ({ pillar: kor, rels: samePillarRels(kor) }))
     .filter((g) => g.rels.length > 0);
-
-  const mainElementIntro = describeMainElementRelation(
-    p1.my_main_element, p2.my_main_element, name1, name2,
-  );
 
   return (
     <div className="space-y-3">
@@ -322,19 +255,12 @@ export default function PillarPairDiagram({ p1, p2, relations, name1, name2, ani
       </table>
     </div>
 
+      {/* 그림 아래 까치 팁은 기둥별 합·충·형·해·파 풀이만 — 서두 문장과 주오행 상생·상극 문단은 2026-10-18 뺐다(두 분의 캐릭터·오행 보완 카드와 겹침, 사용자 지시) */}
       <KkachiTip>
-        두 분의 사주팔자를 위·아래로 나란히 펼쳤어요.
-        {mainElementIntro && (
-          <>
-            <span className="block mt-1.5" />
-            <span className="block">{mainElementIntro}</span>
-            <span className="block mt-1.5" />
-          </>
-        )}
         {groupedExplanations.length === 0 ? (
-          <> 이번엔 같은 기둥에서 부딪치는 합·충은 없었어요.</>
+          <>이번엔 같은 기둥에서 부딪치는 합·충은 없었어요.</>
         ) : (
-          <> {groupedExplanations.map(({ pillar, rels }, pi) => {
+          <>{groupedExplanations.map(({ pillar, rels }, pi) => {
             const summary = pickPillarSummary(rels);
             return (
               <span key={pillar}>

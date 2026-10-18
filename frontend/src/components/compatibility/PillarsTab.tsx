@@ -33,8 +33,6 @@ export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
               p1={pillar1_snapshot}
               p2={pillar2_snapshot}
               relations={pillar_relations}
-              name1={name1}
-              name2={name2}
               animate
             />
 
