@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { CompatibilityResult, RelationType } from "@/types/analysis";
-import { getDailyCompat, type DailyCompat } from "@/lib/api";
+import { getCompatForecast, type DailyCompat } from "@/lib/api";
 import { track } from "@/lib/track";
 import NextTabCard from "./NextTabCard";
 import CompatIntro from "./compatibility/CompatIntro";
@@ -37,9 +37,9 @@ interface Props {
 const COMPAT_TABS = [
   { id: "character", emoji: "🎭", label: "성격",       hook: "두 분의 성격, 닮았을까 다를까?" },        // 두 분의 캐릭터 + 신살 + 신강·신약 — 첫 탭(2026-10-18, 구 "성격·성질")
   { id: "pillars",   emoji: "🧩", label: "팔자비교",   hook: "두 분의 여덟 글자는 어떻게 맞물릴까?" },   // 기둥 비교 + 오행 보완
-  { id: "domain",    emoji: "📊", label: "영역별",     hook: "영역별로 보면 어디가 가장 잘 맞을까?" },   // 종합 점수 + 영역 카드
-  { id: "daily",     emoji: "🌅", label: "오늘의 궁합", hook: "오늘 두 분의 기운은 어떨까?" },          // 프로필×2일 때만 (canDaily)
-  { id: "zodiac",    emoji: "🐾", label: "띠궁합",     hook: "띠로 보면 두 분은 어떤 사이일까?" },     // 설문조사 바로 앞(2026-10-18)
+  { id: "daily",     emoji: "🌅", label: "시운",       hook: "오늘 두 분의 기운은 어떨까?" },          // 프로필×2일 때만 (canDaily) — 2026-10-18 "오늘의 궁합" → 시운
+  { id: "zodiac",    emoji: "🐾", label: "띠궁합",     hook: "띠로 보면 두 분은 어떤 사이일까?" },
+  { id: "domain",    emoji: "📊", label: "종합점수",   hook: "두 분의 궁합은 몇 점일까? 영역별로도 봐요" },   // 종합 점수 + 영역 카드 — 설문조사 바로 앞(2026-10-18 "영역별" → 종합점수)
   { id: "scenario",  emoji: "📋", label: "설문조사",   hook: "사주가 두 분을 얼마나 맞힐까? (1분)" },   // character.scenarios 있을 때만 — 분석 설문조사와 같은 이름(2026-10-18)
   { id: "ai",        emoji: "✨", label: "AI 해석",    hook: "까치가 두 분의 궁합을 이야기로 풀어 드려요" },
 ] as const;
@@ -81,7 +81,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const tabbarRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const scenarioRef = useRef<HTMLDivElement>(null);
-  const [daily, setDaily] = useState<DailyCompat | null>(null);
+  const [forecast, setForecast] = useState<DailyCompat[] | null>(null);
   const [dailyFailed, setDailyFailed] = useState(false);
   // 인트로에서 두근두근을 이미 열었는지 — 문답에서 뒤로 돌아오면 인사부터. 결과가 바뀌면 이 뷰가 다시 마운트되어 다시 가려진다
   const [scoreRevealed, setScoreRevealed] = useState(false);
@@ -89,12 +89,12 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
   const [quiz, setQuiz] = useState<Record<number, QuizPick>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
-  // 오늘의 궁합은 한눈에·오늘의 궁합 탭이 함께 쓰므로 결과당 한 번만 받는다
+  // 시운 탭 — 오늘부터 14일을 결과당 한 번만 받는다(2026-10-18, 전엔 오늘 하루 GET /daily)
   useEffect(() => {
     if (!memberId || !profileId1 || !profileId2) return;
     let alive = true;
-    getDailyCompat(memberId, profileId1, profileId2)
-      .then((d) => { if (alive) setDaily(d); })
+    getCompatForecast(memberId, profileId1, profileId2)
+      .then((d) => { if (alive) setForecast(d.days); })
       .catch(() => { if (alive) setDailyFailed(true); });
     return () => { alive = false; };
   }, [memberId, profileId1, profileId2]);
@@ -237,7 +237,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
               <DomainTab {...tabProps} />
             </div>
           )}
-          {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} daily={daily} failed={dailyFailed} />}
+          {tab === "daily" && canDaily && <DailyTab name1={name1} name2={name2} forecast={forecast} failed={dailyFailed} />}
           {tab === "scenario" && (
             <ScenarioCard {...tabProps} {...scenarioProps} submitted={quizSubmitted} onSubmit={() => setQuizSubmitted(true)} />
           )}

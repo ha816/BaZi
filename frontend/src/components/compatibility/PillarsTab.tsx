@@ -11,7 +11,7 @@ const DAY_CHECKS = [
   { key: "branch_clash", label: "지지충(衝)", good: false },
 ] as const;
 
-/** 팔자비교 — 같은 기둥끼리 비교(합·충·형·해·파) 그림 → 그 아래 일주 관계 3칸 → 삼합 완성 (일주 3칸은 2026-10-17 그림 아래로 — 여덟 글자를 먼저 보고 일주끼리의 합·충을 확인) */
+/** 팔자비교 — 같은 기둥끼리 비교(합·충·형·해·파) 그림 → 그 아래 일주 관계 3칸(하나라도 있을 때만) → 삼합 완성 (일주 3칸은 2026-10-17 그림 아래로 — 여덟 글자를 먼저 보고 일주끼리의 합·충을 확인) */
 export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
   const { pillar1_snapshot, pillar2_snapshot, pillar_relations, samhap_completions } = data;
   return (
@@ -36,6 +36,8 @@ export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
               animate
             />
 
+            {/* 일주 관계 3칸은 천간합·육합·충 중 하나라도 있을 때만 — 셋 다 "–"면 자리만 차지한다(2026-10-18, 사용자 지시) */}
+            {DAY_CHECKS.some(({ key }) => data[key]) && (
             <div className="space-y-1.5">
               <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
                 일주(日柱) 관계 <span className="font-normal text-[var(--color-ink-faint)] ml-1">두 분의 일주끼리</span>
@@ -57,6 +59,7 @@ export default function PillarsTab({ data, name1, name2 }: CompatTabProps) {
               })}
               </div>
             </div>
+            )}
 
             {samhap_completions.length > 0 && (
               <div className="space-y-2">

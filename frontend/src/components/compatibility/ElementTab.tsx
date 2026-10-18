@@ -48,13 +48,19 @@ function ElementBar({ snapshot, label }: { snapshot: PillarSnapshot; label: stri
   );
 }
 
-/** 오행 보완 — 두 사람 오행 분포(주오행·강약·용신) · 합산 오각형 · 없는 오행 · 서로 채워주는 기운 */
+/** 오행 보완 — 까치 팁(서로 채워주는 기운·과중한 기운 한 문단) · 두 사람 오행 분포(주오행·강약·용신) · 합산 오각형 · 없는 오행 · 보완 점수 */
 export default function ElementTab({ data, name1, name2 }: CompatTabProps) {
   const { pillar1_snapshot, pillar2_snapshot, element_complement } = data;
   const lacks = [
     { name: name1, lacks: element_complement.p1_lacks },
     { name: name2, lacks: element_complement.p2_lacks },
   ].filter((x) => x.lacks.length > 0);
+  // 까치 팁 하나에 채워주는 기운·과중한 기운을 모두 — 2026-10-18 아래쪽에 따로 있던 팁 2~3개를 합치고, 일반 설명 팁은 상세 설명과 겹쳐 뺐다(사용자 지시)
+  const summary = [
+    element_complement.p2_provides.length > 0 && `${name2}님이 ${elementsToKor(element_complement.p2_provides)} 기운으로 ${name1}님의 부족함을 채워줘요.`,
+    element_complement.p1_provides.length > 0 && `${name1}님이 ${elementsToKor(element_complement.p1_provides)} 기운으로 ${name2}님의 부족함을 채워줘요.`,
+    element_complement.overlap_strong.length > 0 && `두 분 모두 ${elementsToKor(element_complement.overlap_strong)} 기운이 과중해 충돌이 생길 수 있어요.`,
+  ].filter(Boolean).join(" ") || "오행 구성이 비슷한 균형 관계예요.";
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="오행 보완(五行)">
@@ -66,9 +72,7 @@ export default function ElementTab({ data, name1, name2 }: CompatTabProps) {
           <KkachiTip>이 결과에는 두 사주의 오행 데이터가 없어요. 종합·영역별 탭은 그대로 볼 수 있어요.</KkachiTip>
         ) : (
           <>
-            <KkachiTip>
-              한쪽에 부족한 오행을 상대가 가지고 있으면 서로를 채워주는 사이가 돼요. 반대로 같은 오행이 둘 다 강하면 충돌이 잦을 수 있어요.
-            </KkachiTip>
+            <KkachiTip>{summary}</KkachiTip>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <ElementBar snapshot={pillar1_snapshot} label={`${name1}님`} />
@@ -99,29 +103,6 @@ export default function ElementTab({ data, name1, name2 }: CompatTabProps) {
                 ))}
               </div>
             )}
-
-            <div className="space-y-2">
-              {element_complement.p2_provides.length > 0 && (
-                <KkachiTip>
-                  {name2}님이 {elementsToKor(element_complement.p2_provides)} 기운으로 {name1}님의 부족함을 채워줘요.
-                </KkachiTip>
-              )}
-              {element_complement.p1_provides.length > 0 && (
-                <KkachiTip>
-                  {name1}님이 {elementsToKor(element_complement.p1_provides)} 기운으로 {name2}님의 부족함을 채워줘요.
-                </KkachiTip>
-              )}
-              {element_complement.overlap_strong.length > 0 && (
-                <KkachiTip>
-                  두 분 모두 {elementsToKor(element_complement.overlap_strong)} 기운이 과중해 충돌이 생길 수 있어요.
-                </KkachiTip>
-              )}
-              {element_complement.p1_provides.length === 0 &&
-                element_complement.p2_provides.length === 0 &&
-                element_complement.overlap_strong.length === 0 && (
-                  <KkachiTip>오행 구성이 비슷한 균형 관계예요.</KkachiTip>
-                )}
-            </div>
 
             <p className="text-[10px] text-[var(--color-ink-faint)]">
               오행 보완 점수 <span className="font-semibold text-[var(--color-gold)]">{element_complement.score >= 0 ? "+" : ""}{element_complement.score}</span> (종합 점수에 반영)

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Literal
 from uuid import UUID
 
@@ -241,3 +241,34 @@ async def daily_compat(
     natal1, _ = saju_svc.analyze(u1, date.today().year)
     natal2, _ = saju_svc.analyze(u2, date.today().year)
     return compute_daily_compat(natal1, natal2, date.today(), prof1.name, prof2.name)
+
+
+@compatibility_router.get("/forecast")
+@inject
+async def compat_forecast(
+    member_id: UUID,
+    p1: UUID,
+    p2: UUID,
+    days: int = 14,
+    profile_port: ProfilePort = Depends(Provide[Container.profile_repo]),
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
+) -> dict:
+    """두 프로필의 오늘부터 N일 궁합 시운(기본 14, 최대 31). 각 날은 /daily와 같은 모양 — 궁합 결과 시운 탭용(2026-10-18)."""
+    prof1 = await profile_port.get(p1)
+    prof2 = await profile_port.get(p2)
+    if prof1 is None or prof2 is None:
+        raise HTTPException(status_code=404, detail="프로필을 찾을 수 없습니다.")
+    if prof1.member_id != member_id or prof2.member_id != member_id:
+        raise HTTPException(status_code=403, detail="본인 프로필만 조회할 수 있습니다.")
+    u1 = User(name=prof1.name, gender=prof1.gender, birth_dt=prof1.birth_dt, city=prof1.city, hour_unknown=prof1.birth_hour_unknown)
+    u2 = User(name=prof2.name, gender=prof2.gender, birth_dt=prof2.birth_dt, city=prof2.city, hour_unknown=prof2.birth_hour_unknown)
+    today = date.today()
+    analyzed: dict[int, tuple] = {}  # 연도가 바뀌면 세운이 달라지므로 연도별로 한 번씩
+    out = []
+    for i in range(max(1, min(days, 31))):
+        target = today + timedelta(days=i)
+        if target.year not in analyzed:
+            analyzed[target.year] = (saju_svc.analyze(u1, target.year)[0], saju_svc.analyze(u2, target.year)[0])
+        natal1, natal2 = analyzed[target.year]
+        out.append(compute_daily_compat(natal1, natal2, target, prof1.name, prof2.name))
+    return {"days": out}

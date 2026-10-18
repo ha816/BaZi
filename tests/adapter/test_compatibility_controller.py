@@ -120,3 +120,13 @@ def test_daily_is_owner_only(client):
     assert set(res.json()) >= {"date", "day_pillar", "score", "level", "headline"}
     assert client.get("/compatibility/daily", params={"member_id": str(STRANGER), "p1": str(P1.id), "p2": str(P2.id)}).status_code == 403
     assert client.get("/compatibility/daily", params={"member_id": str(OWNER), "p1": str(P1.id), "p2": str(uuid4())}).status_code == 404
+
+
+def test_forecast_returns_days_in_order_owner_only(client):
+    res = client.get("/compatibility/forecast", params={"member_id": str(OWNER), "p1": str(P1.id), "p2": str(P2.id), "days": 5})
+    assert res.status_code == 200
+    days = res.json()["days"]
+    assert len(days) == 5 and [d["date"] for d in days] == sorted(d["date"] for d in days)
+    assert set(days[0]) >= {"date", "day_pillar", "score", "level", "headline", "persons", "domains", "tips"}
+    assert len(client.get("/compatibility/forecast", params={"member_id": str(OWNER), "p1": str(P1.id), "p2": str(P2.id), "days": 99}).json()["days"]) == 31
+    assert client.get("/compatibility/forecast", params={"member_id": str(STRANGER), "p1": str(P1.id), "p2": str(P2.id)}).status_code == 403

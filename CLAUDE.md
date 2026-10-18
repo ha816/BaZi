@@ -348,6 +348,7 @@ POST /compatibility/invites  { person1, relation_type } → { invite_id }  (초�
 GET  /compatibility/invites/{id}          → { name, relation_type }  (민감정보 제외)
 POST /compatibility/invites/{id}/resolve  { person2, year } → CompatibilityResult
 GET  /compatibility/daily    ?member_id&p1&p2 → { date, day_pillar, score, level, headline, day_element, solar_term, son_eomneun_nal, persons[2]{name, relation(육합·삼합·같음·보통·충), relation_label, yongshin, yongshin_hit, score, level, headline, action, caution}, domains[4]{key(재물·연애·직업·건강), score1, score2, level(낮은 쪽 기준), label}, tips[≤3] }  (오늘의 궁합, 소유자 검증 — 2026-10-18 각자의 오늘은 compute_fortune 재사용, 날씨·대운 없이; 앞 5개 필드는 홈 배지가 씀)
+GET  /compatibility/forecast ?member_id&p1&p2&days=14 → { days: [ /daily 모양 × N ] }  (오늘부터 N일, 최대 31, 연도 바뀌면 그 해 natal로. 궁합 결과 시운 탭용, 2026-10-18)
 
 # 기타
 GET  /weather                ?city=Seoul&days=7&lat&lon → DailyWeather[] (days 최대 14, 응답에 과거 14일 포함)
@@ -507,7 +508,7 @@ erDiagram
 | `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
-| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", 결과 직후 전체 화면 인트로(`?step=intro`, 두근두근 → 캐릭터·점수 → [📋 설문조사]/[궁합 분석 보기]) 다음 **7탭**(성격(두 분의 캐릭터+신살+신강신약 — 첫 탭, 2026-10-18)·팔자비교(+오행 보완)·영역별(+종합 점수)·오늘의 궁합·띠궁합·설문조사·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭), 탭 끝 "다음 이야기" + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
+| `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "궁합 공유"(→ `/s/{id}`)·"다시 입력", 결과 직후 전체 화면 인트로(`?step=intro`, 두근두근 → 캐릭터·점수 → [📋 설문조사]/[궁합 분석 보기]) 다음 **7탭**(성격(두 분의 캐릭터+신살+신강신약 — 첫 탭, 2026-10-18)·팔자비교(+오행 보완)·시운(오늘의 궁합)·띠궁합·종합점수(영역별, 구 이름)·설문조사·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭), 탭 끝 "다음 이야기" + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
 | `/compatibility/chat` | 궁합 상담 챗 (sessionStorage `kkachi_compat_*`) | — |
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
@@ -573,10 +574,10 @@ erDiagram
 | id | 라벨 | 컴포넌트 | 내용 |
 |----|------|---------|------|
 | `character` | 성격 | `CompatCharacterCard` + `SinsalTab` + `StrengthCard` | **두 분의 캐릭터** 카드(까치 팁 → 상자: 두 사람 그림·칭호·역할 칩("관계 유형 · 두 분은" 줄·점수·설명은 인트로 상자에만) → 까치 팁(설명) → 잘 맞는 순간 \| 부딪히기 쉬운 순간 칩 3+3, 게이트 없음 — 2026-10-18 팔자비교에서 첫 탭 맨 위로) → 신살(神殺) 카드(까치 팁은 함께 가진 신살 + 공통 특징 한 문장(SHARED_SINSAL_TRAIT 9종 관형형) → 함께 가진 신살 그룹 → 둘째 까치 팁(각자만 가진 신살이 상대를 받쳐 주는 자리, UNIQUE_SINSAL_ROLE) → ○○님만 가진 신살 그룹(그룹 제목만, 카드 배지·"귀인·신살" 소제목 없음 2026-10-18)) (십이신살 표는 2026-10-18 궁합에서 제외 — 신살 카드와 겹치고 관계 정보가 얇아서; 각자 것은 분석 만세력) · 신강·신약 카드(확인하기 → 두 사람 그림·게이지 + 강약 조합 + 사람별 풀이). 첫 탭 — 궁합 분석 보기·건너뛰기·옛 `?tab=summary/total/sinsal`도 여기로 |
-| `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | `PillarPairDiagram`(같은 기둥끼리 합충) → 그 아래 일주 관계 3칸(천간합·지지 육합·지지충, 2026-10-17 그림 아래로) · 삼합 완성 → 오행 보완 카드(사람별 오행 바·`OhengPairDiagram`·없는 오행·보완 문장·점수). 옛 `?tab=element`도 여기로 |
+| `pillars` | 팔자비교 | `PillarsTab` + `ElementTab` | `PillarPairDiagram`(같은 기둥끼리 합충) → 그 아래 일주 관계 3칸(천간합·지지 육합·지지충 — 하나라도 있을 때만, 2026-10-18; 2026-10-17 그림 아래로) · 삼합 완성 → 오행 보완 카드(까치 팁 하나에 채워주는 기운·과중 문장 → 사람별 오행 바·`OhengPairDiagram`·없는 오행 칩·점수, 2026-10-18 팁 합침). 옛 `?tab=element`도 여기로 |
 | `zodiac` | 띠궁합 | `ZodiacTab` | 분석 십이지신 탭과 같은 순서 4카드 — ① 띠궁합(두 띠·배지·한 줄) ② 사주지지(四柱地支)(네 기둥 띠를 같은 자리끼리 표 + 다른 자리끼리 맺는 관계 ≤6 + 16쌍 합·충 한 줄, `zodiac.pillars`) ③ 십이지 충합(十二支 衝合)(12띠 원에 두 사람 자리·관계선·삼합 세 번째 띠 점선·두 분 모두와 합인 띠 + 관계 제목·풀이 + 각자 띠 강점, `zodiac.chunghap`) ④ 연도별 띠 궁합(확인하기 → 4년×각자) |
-| `domain` | 영역별 | `CompatScoreCard` + `DomainTab` | 맨 위 종합 궁합(총점·라벨·한 줄 설명·시간 미상 고지) · 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
-| `daily` | 오늘의 궁합 | `DailyTab` | `GET /compatibility/daily` — 오늘 일진(절기·손없는 날 배지)·점수·레벨·headline → 두 분 각자의 오늘 타일(각자 점수·일진과 일지 관계·용신 여부·아침 한 마디) → 함께하기 좋은 영역 4줄(낮은 쪽 기준 색 + 함께 문구) → 팁 ≤3 → 시운 링크 (2026-10-18 보강). **프로필×2일 때만** 탭 노출. 요청은 오케스트레이터가 결과당 1회 |
+| `domain` | 종합점수(구 영역별, 2026-10-18 — 설문조사 바로 앞) | `CompatScoreCard` + `DomainTab` | 맨 위 종합 궁합(총점·라벨·한 줄 설명·시간 미상 고지) · 레이더 · 영역 카드 4(점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
+| `daily` | 시운(구 오늘의 궁합, 2026-10-18 — 카드 제목 시운(時運)) | `DailyTab` | `GET /compatibility/forecast`(14일, 결과당 1회) — 시운 화면(/siun)과 같은 틀: 오늘·내일·모레·글피 탭 → 일진 오행 색 히어로(headline + ✦ 함께 할 것(첫 팁) + ✕ 피할 것(주의 영역 문구), 간지·궁합 점수) → 두 분 각자의 그날 타일 → 영역 막대 2열(낮은 쪽 점수) → 레벨·손없는 날·절기 배지 + ✦ 팁 → 주간 궁합 시운 7일 목록(누르면 그날) + 2주 안에 함께하기 좋은 날 3(시운 링크 없음). 다른 날은 문장의 "오늘"을 그 날 이름으로 치환. **프로필×2일 때만** 탭 노출 |
 | `scenario` | 설문조사 | `ScenarioCard` | 설문조사(구 "이럴 때 두 분은?", 2026-10-18 분석과 같은 이름으로 — 탭 📋·카드 🔮) — [이름1님 / 이름2님 / 둘 다]로 5문항씩 페이지(6~10문항을 고르게 나눔, 2026-10-17)로 전부 답한 뒤 한꺼번에 비교 → "사주와 두 분 응답의 일치율" % + 까치 해설 한 문장 + 문항별(다른 문항 먼저·근거는 다른 문항에만). 신뢰도·사람별 사주 스타일 라벨은 2026-10-15 제거. 인트로 문답(`?step=scenario`)과 답·제출 상태 공유 — 인트로에서 제출하면 "답변 완료"만, 일치율은 이 탭에서. 문답 없는 옛 결과는 탭 숨김 |
 | `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |
 

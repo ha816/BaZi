@@ -356,6 +356,11 @@ export async function getDailyCompat(memberId: string, p1: string, p2: string): 
   return request<DailyCompat>(`/compatibility/daily?member_id=${memberId}&p1=${p1}&p2=${p2}`);
 }
 
+/** 궁합 시운 — 오늘부터 N일(기본 14, 최대 31). 각 날은 getDailyCompat과 같은 모양. 궁합 결과 시운 탭용(2026-10-18) */
+export async function getCompatForecast(memberId: string, p1: string, p2: string, days = 14): Promise<{ days: DailyCompat[] }> {
+  return request<{ days: DailyCompat[] }>(`/compatibility/forecast?member_id=${memberId}&p1=${p1}&p2=${p2}&days=${days}`);
+}
+
 export async function createCompatInvite(person1: PersonInput, relationType: RelationType): Promise<{ invite_id: string }> {
   return request<{ invite_id: string }>("/compatibility/invites", {
     method: "POST",
