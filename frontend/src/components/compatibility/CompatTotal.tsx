@@ -89,7 +89,8 @@ export function PairArt({ roles }: { roles: { emoji: string; character_key?: str
 
 /** 오행 캐릭터 상자(결과 직후 인트로) — 두 사람 사주 캐릭터 그림·"○○ 궁합 · 두 분은"·칭호·점수·각자 역할 칩·설명.
  *  폰 한 화면에 까치 인사·버튼까지 들어가게 촘촘하게. character 없는 옛 결과는 점수 + description */
-export function CompatCharacterBox({ data, name1, name2, relationType }: CompatTabProps) {
+export function CompatCharacterBox({ data, name1, name2, relationType, compact = false }: CompatTabProps & { compact?: boolean }) {
+  // compact(두 분의 캐릭터 카드, 2026-10-18): 인트로에서 이미 본 "관계 유형 · 두 분은" 줄·점수·설명을 빼고 그림·칭호·역할 칩만 — 설명은 카드가 칩 위 까치 팁으로 보여 준다
   const ch = data.character;
   const fill = (t: string) => t.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2);
   const score = (
@@ -102,9 +103,9 @@ export function CompatCharacterBox({ data, name1, name2, relationType }: CompatT
   return (
     <div className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-3 text-center space-y-2">
       <PairArt roles={ch.roles} />
-      <p className="text-[11px] font-semibold text-[var(--color-gold)]">{RELATION_TYPE_LABEL[relationType]} 궁합 · 두 분은</p>
+      {!compact && <p className="text-[11px] font-semibold text-[var(--color-gold)]">{RELATION_TYPE_LABEL[relationType]} 궁합 · 두 분은</p>}
       <p className="font-heading text-xl font-bold leading-snug text-[var(--color-ink)] break-keep">{ch.title}</p>
-      {score}
+      {!compact && score}
       <div className="flex justify-center gap-2 flex-wrap">
         {ch.roles.map((ro, i) => {
           const info = getElementInfo(ro.element);
@@ -116,7 +117,7 @@ export function CompatCharacterBox({ data, name1, name2, relationType }: CompatT
           );
         })}
       </div>
-      <p className="text-[13px] leading-relaxed text-[var(--color-ink)] break-keep">{fill(ch.desc)}</p>
+      {!compact && <p className="text-[13px] leading-relaxed text-[var(--color-ink)] break-keep">{fill(ch.desc)}</p>}
     </div>
   );
 }
@@ -130,7 +131,7 @@ const KIND_LABEL: Record<string, string> = {
 
 /** 두 분의 캐릭터 카드 — 성격 탭 맨 위(2026-10-18; 10-17엔 팔자비교 탭 기둥 비교 다음). 인트로(CompatIntro)에서 본 칭호·역할·설명을 탭에서도 —
  *  인트로를 건너뛰거나 ?tab=으로 다시 열어도 여기서 본다. 인트로에서 이미 공개한 것이라 "확인하기" 게이트 없이 바로 보여준다.
- *  상자 아래 잘 맞는 순간 | 부딪히기 쉬운 순간 칩(백엔드 moments 3+3)은 분석 카드의 선호하는 일 | 선호하지 않는 일에 대응 — 인트로 상자에는 넣지 않는다(한 화면) */
+ *  상자는 compact(관계 유형 줄·점수·설명 없음 — 인트로에서 본 것), 설명은 칩 위 까치 팁. 잘 맞는 순간 | 부딪히기 쉬운 순간 칩(백엔드 moments 3+3)은 분석 카드의 선호하는 일 | 선호하지 않는 일에 대응 — 인트로 상자에는 넣지 않는다(한 화면) */
 export function CompatCharacterCard(props: CompatTabProps) {
   const { data, name1, name2 } = props;
   const ch = data.character;
@@ -151,7 +152,9 @@ export function CompatCharacterCard(props: CompatTabProps) {
             {`${name1}님은 ${r1.emoji} **${r1.name}**, ${name2}님은 ${r2.emoji} **${r2.name}** — ${KIND_LABEL[ch.kind] ?? "서로 다른 기운이 만난"} 사이예요.`}
           </KkachiTip>
         )}
-        <CompatCharacterBox {...props} />
+        <CompatCharacterBox {...props} compact />
+        {/* 설명은 상자 안이 아니라 까치 팁으로, 잘 맞는 순간 칩 바로 위에 (2026-10-18, 사용자 지시) */}
+        <KkachiTip>{ch.desc.replace(/\{p1\}/g, name1).replace(/\{p2\}/g, name2)}</KkachiTip>
         {ch.moments && (
           <div className="grid grid-cols-2 rounded-xl border border-[var(--color-border-light)] divide-x divide-[var(--color-border-light)] text-center">
             <div className="px-2 py-2.5">

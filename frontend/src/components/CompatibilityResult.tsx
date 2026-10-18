@@ -13,7 +13,7 @@ import DomainTab from "./compatibility/DomainTab";
 import ElementTab from "./compatibility/ElementTab";
 import NarrativeTab from "./compatibility/NarrativeTab";
 import PillarsTab from "./compatibility/PillarsTab";
-import SinsalTab from "./compatibility/SinsalTab";
+import SinsalTab, { SibiSinsalCard } from "./compatibility/SinsalTab";
 import StrengthCard from "./compatibility/StrengthCard";
 import ScenarioCard, { type QuizPick } from "./compatibility/ScenarioCard";
 import ZodiacTab from "./compatibility/ZodiacTab";
@@ -221,6 +221,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
               {/* 인트로에서 본 칭호·역할·설명을 첫 탭 맨 위에 한 번 더 (2026-10-18 — 10-17엔 팔자비교 탭 기둥 비교 다음이었다) */}
               <CompatCharacterCard {...tabProps} />
               <SinsalTab {...tabProps} />
+              <SibiSinsalCard {...tabProps} />
               <StrengthCard {...tabProps} />
             </div>
           )}

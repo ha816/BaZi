@@ -3,10 +3,10 @@
 | | |
 |---|---|
 | 상태 | 살아있음 — 2026-10-03 작성(`docs/COMPAT_CHARACTER_TYPES.md`), 2026-10-17 `specs/compatibility/`로 옮기며 스펙 형식으로. 사주 캐릭터 `specs/analysis/character.md`와 짝 |
-| 화면 | 궁합 결과 인트로 공개 상자 · 팔자비교 탭 "두 분의 캐릭터" 카드 · 문답 "이럴 때 두 분은?" · 공유 랜딩 `/s/{id}`(kind=compat) · OG 이미지. 그림은 두 사람 각자의 사주 캐릭터(`specs/analysis/character.md`) 재사용. 화면 안 순서·게이트는 `specs/compatibility/result.md`가 정하고, 이 문서는 **유형·칭호·설명·문답이 정해지는 규칙과 무엇을 노출하는가**를 정한다 |
+| 화면 | 궁합 결과 인트로 공개 상자 · 성격 탭 "두 분의 캐릭터" 카드(맨 위) · 문답 "이럴 때 두 분은?" · 공유 랜딩 `/s/{id}`(kind=compat) · OG 이미지. 그림은 두 사람 각자의 사주 캐릭터(`specs/analysis/character.md`) 재사용. 화면 안 순서·게이트는 `specs/compatibility/result.md`가 정하고, 이 문서는 **유형·칭호·설명·문답이 정해지는 규칙과 무엇을 노출하는가**를 정한다 |
 | 관련 코드 | `src/kkachi/application/compatibility_character.py`(`build_compat_character` — `_PAIR_NAME`·`_SAME_NAME`·`_MOOD`·`_SUFFIX`·`_DESC`·`_SIPSIN_Q`·`_scenarios`) · `application/util/sipsin_meta.py`(`SIPSIN_ORDER`·`SIPSIN_TRAIT`, 설문조사와 공용) · `self_quiz.py`(`YES_AT` = 8) · `compatibility_service.py`(`build_compat_share_card().character`) · `frontend/src/components/compatibility/CompatTotal.tsx`(`CompatCharacterBox`·`CompatCharacterCard`·`CharacterArt`) · `CompatIntro.tsx` · `ScenarioCard.tsx` · `OgCard.tsx`(`CompatOgImage`·`loadCompatArt`) · `app/s/[id]/page.tsx` · `tests/application/test_compat_character.py` · `scripts/art_convert.sh` |
 | 관련 API | `POST /compatibility` · `POST /compatibility/direct` · `POST /compatibility/invites/{id}/resolve` → `character {title, kind, key, roles[2]{token, name, element, emoji, character_key}, desc, moments{good[3], hard[3]}, scenarios[6~10]}`(응답 때마다 계산, 캐시에 저장 안 함) · `POST /compatibility/shares` → `/s/{id}`의 `card.character`(title·key·roles{name, element, emoji, character_key}·desc·moments — 이름 채움, scenarios 제외) |
-| 관련 문서 | `docs/ROADMAP.md` V2-2(궁합 탭 고도화)·V6(분석에서 한 것을 궁합에도)·V3(설문조사와 같은 십신 표) · `specs/compatibility/result.md`(인트로·팔자비교 탭·문답 화면 순서) · `specs/analysis/character.md` |
+| 관련 문서 | `docs/ROADMAP.md` V2-2(궁합 탭 고도화)·V6(분석에서 한 것을 궁합에도)·V3(설문조사와 같은 십신 표) · `specs/compatibility/result.md`(인트로·성격 탭·문답 화면 순서) · `specs/analysis/character.md` |
 | 마지막 확인 | 2026-10-18 — 두 캐릭터 그림을 인트로·카드·랜딩·OG에서 Playwright로 확인. §3 표는 `_PAIR_NAME`·`_SAME_NAME`과, §5-1 표는 `_MOMENTS`와 테스트로 대조. 수용 기준 1~4·9(글자)는 `uv run pytest tests/application/test_compat_character.py`, 9(화면)는 Playwright 스크린샷, 5~8은 코드 읽기 |
 
 ## 1. 목적
@@ -165,7 +165,7 @@
 
 ## 7. 화면·공유 카드에서 보이는 것
 
-어디에 어떤 순서로 보이는지는 `specs/compatibility/result.md`(§3 인트로 3, 팔자비교 탭 ②, 문답, 수용 기준 2·13·19). 여기서는 **무엇을 쓰고 무엇을 숨기는가**만.
+어디에 어떤 순서로 보이는지는 `specs/compatibility/result.md`(§3 인트로 3, 성격 탭 ①, 문답, 수용 기준 2·13·19). 여기서는 **무엇을 쓰고 무엇을 숨기는가**만.
 
 카드에 얹는 글자(화면·공유 카드 공통)
 
@@ -183,7 +183,7 @@
 |---|---|---|
 | 두근두근 게이트(공개 전) | 두 사람 사주 캐릭터 **실루엣**(흐림 + "?" 겹침, 가운데 ♥ — 분석 게이트와 같은 모양, 2026-10-18) | "두근두근 💓 / ○○님과 ○○님의 궁합은?" + [💞 두 분의 궁합 확인하기] |
 | 인트로 공개 상자(드럼롤 뒤) | 두 사람의 사주 캐릭터 그림 나란히 + ♥(`saju_character/{character_key}.webp`, 왼쪽 p1·오른쪽 p2, 2026-10-18) — 그림이 없는 쪽만 역할 이모지 | 위 표 전부 + 까치 인사. 순간 칩은 없음(폰 한 화면 유지). 캐릭터가 없는 옛 결과는 점수 + 한 줄만 |
-| 팔자비교 탭 "두 분의 캐릭터" 카드 | 같은 상자 | 까치 팁 "○○님은 이모지 **역할**, ○○님은 이모지 **역할** — 상생/상극/비화 한 줄 사이예요" + 같은 상자 → 그 아래 **잘 맞는 순간 \| 부딪히기 쉬운 순간** 칩 두 칸(3 + 3, §5-1). 게이트 없음 |
+| 성격 탭 "두 분의 캐릭터" 카드(맨 위, 2026-10-18) | 같은 두 그림 | 까치 팁 "○○님은 이모지 **역할**, ○○님은 이모지 **역할** — 상생/상극/비화 한 줄 사이예요" + 상자(그림·칭호·역할 칩 — "관계 유형 · 두 분은" 줄·점수·설명은 인트로 상자에만) → 까치 팁(설명 문장) → **잘 맞는 순간 \| 부딪히기 쉬운 순간** 칩 두 칸(3 + 3, §5-1). 게이트 없음 |
 | 설문조사 카드(문답, 2026-10-18 "이럴 때 두 분은?"에서 이름 바꿈) | — | 질문 · [이름1님 / 이름2님 / 둘 다] · 맞춘 뒤 일치율·해설·문항별 근거(§6) |
 | 공유 랜딩 `/s/{id}` 종합 궁합 카드 | 같은 두 캐릭터 그림(서버가 파일 존재로 판단), `character_key`가 없는 옛 카드는 역할 이모지 | 칭호 박스 · 역할 칩 · 설명 · 잘 맞는 순간 칩 3개(부딪히기 쉬운 순간은 공유 카드에 넣지 않음) |
 | OG 이미지 | 두 사람의 사주 캐릭터 OG 그림(`saju_character/og/{character_key}.jpg`) 156px 둘을 왼쪽에(점수 칸 240→180, 일간 타일 190→170), 옛 카드는 글자만 | 헤더 아래 "두 분은 {칭호}" + 일간 타일 아래 "= 광산(土)" + 설명 첫 문장. **이모지 없음**(satori), 순간 칩 없음 |
@@ -216,7 +216,7 @@
 6. 인트로 상자·두 분의 캐릭터 카드·공유 랜딩에 두 사람의 사주 캐릭터 그림이 왼쪽 p1·오른쪽 p2로 보이고 가운데 ♥가 있다. 분석 결과 인트로에서 본 내 캐릭터와 같은 그림이다. 그림 파일을 지우면 그 자리만 역할 이모지로 돌아간다. OG 왼쪽에는 두 사람의 OG 그림이 들어가고 점수·일간 칸이 좁아지며, `character_key`가 없는 옛 카드는 글자만이다.
 7. OG 어디에도 이모지가 없고, 역할은 "○○님 = 광산(土)"처럼 글자다.
 8. 공유 카드 `card.character`에는 `scenarios`가 없고 `desc`와 `roles`의 `{p1}`·`{p2}`가 두 사람 이름으로 채워져 있다. `moments`는 그대로 실린다.
-9. 두 분의 캐릭터 카드 상자 아래에 "잘 맞는 순간" 3개 \| "부딪히기 쉬운 순간" 3개 칩이 두 칸으로 있고, 인트로 상자와 OG에는 없다. 공유 랜딩 상자에는 잘 맞는 순간 3개만 있다. 문구는 §5-1 표와 글자까지 같다.
+9. 두 분의 캐릭터 카드 상자에는 "관계 유형 · 두 분은" 줄·점수·설명이 없고(인트로 상자에만), 설명은 상자 아래 까치 팁에, 그 아래 "잘 맞는 순간" 3개 \| "부딪히기 쉬운 순간" 3개 칩이 두 칸으로 있다. 인트로 상자와 OG에는 칩이 없다. 공유 랜딩 상자에는 잘 맞는 순간 3개만 있다. 문구는 §5-1 표와 글자까지 같다.
 
 ## 10. 열린 결정
 
@@ -229,6 +229,7 @@
 
 | 날짜 | 변경 | 왜 |
 |---|---|---|
+| 2026-10-18 | 두 분의 캐릭터 카드를 성격(구 성격·성질) 탭 맨 위로 옮기고, 카드 상자에서 "관계 유형 · 두 분은" 줄·점수·설명을 빼고(인트로에서 본 것) 설명은 잘 맞는 순간 칩 위 까치 팁으로 | 사용자 지시 |
 | 2026-10-18 | 그림을 **두 사람 각자의 사주 캐릭터**로(`roles[i].character_key`, 인트로 상자·두 분의 캐릭터 카드·공유 랜딩·OG·인트로 "펼치는 중") — 궁합 전용 15장 제작 보류, `compat/{key}` 그림 분기·`loadCompatArt` 제거, §3 표의 파일명 열을 키로. 두근두근 게이트도 드럼 까치 대신 두 캐릭터 실루엣 + "?"(분석 게이트와 같게, 드럼 까치 프롬프트 폐기). 문답의 화면 이름을 설문조사로 | 그림 20장이 이미 있고 톤이 통일됨, 15장 제작 비용·시간(사용자 결정) |
 | 2026-10-17 | 두 분의 캐릭터 카드 보강 — 잘 맞는 순간 \| 부딪히기 쉬운 순간 칩(15종 × 3 + 3, `character.moments`, §5-1), 공유 랜딩 상자에 잘 맞는 순간 3개 | 분석 카드의 선호하는 일 칩에 대응(V6, 사용자 지시) |
 | 2026-10-17 | `docs/COMPAT_CHARACTER_TYPES.md` → `specs/compatibility/character.md`. 목적·노출 규칙·수용 기준 추가, 문답 절을 2026-10-15 화면(3지선다·일치율)과 점수 규칙(8점·5점)에 맞게 고침, 그림 제작안·복붙용 프롬프트는 부록으로, 15종 키·역할 대조 테스트 | 유형표·칭호·문답 규칙은 코드가 지키는 약속이라 스펙(사용자 결정) |
