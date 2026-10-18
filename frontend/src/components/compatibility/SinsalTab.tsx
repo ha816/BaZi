@@ -15,6 +15,19 @@ const SHARED_SINSAL_MEANING: Record<string, string> = {
   "문창귀인": "학문·문서 코드가 통해 함께 성장하는 인연",
 };
 
+// 함께 가진 신살을 까치 팁 한 문장으로 풀 때 쓰는 관형형 — "…하는, …하는 사이예요" (카드 밑줄 SHARED_SINSAL_MEANING은 명사형이라 따로 둔다)
+const SHARED_SINSAL_TRAIT: Record<string, string> = {
+  "천을귀인": "위기 때 서로를 든든히 지켜 주는",
+  "월덕귀인": "갈등 없이 평화롭게 흐르는",
+  "천덕귀인": "복이 두텁게 깃드는",
+  "도화살": "서로에게 끌리는 매력이 강한",
+  "역마살": "함께 움직이고 변화를 즐기는",
+  "화개살": "예술·학문 코드가 깊게 통하는",
+  "백호살": "에너지가 강해 큰일을 함께 도모하는",
+  "장성살": "리더십과 야망이 통하는",
+  "문창귀인": "학문·문서 코드가 통해 함께 성장하는",
+};
+
 const UNIQUE_SINSAL_ROLE: Record<string, string> = {
   "천을귀인": "위기 때 든든하게 지켜주는 자리",
   "월덕귀인": "갈등을 부드럽게 조율해주는 자리",
@@ -23,7 +36,7 @@ const UNIQUE_SINSAL_ROLE: Record<string, string> = {
   "역마살": "새로운 기회·이동을 끌어오는 자리",
   "화개살": "예술·정신적 깊이를 더해주는 자리",
   "백호살": "강한 추진력으로 일을 밀어붙이는 자리",
-  "장성살": "방향을 잡고 이끌어주는 리더 자리",
+  "장성살": "방향을 잡고 이끌어주는 자리",
   "문창귀인": "공부·문서·전문성을 받쳐주는 자리",
 };
 
@@ -80,12 +93,24 @@ const PERSON1_ACCENT = { bg: "#fef3c7", border: "#fbbf24", footColor: "#b45309" 
 
 const PERSON2_ACCENT = { bg: "#ccfbf1", border: "#5eead4", footColor: "#0f766e" };
 
-/** 신살 — 까치 팁(함께·각자 가진 신살 개수) · 함께 가진 신살(같은 기운) · 한쪽만 가진 신살(상대를 받쳐주는 자리). 십이신살은 2026-10-18 궁합에서 뺐다 — 신살 카드와 네 별이 겹치고 나머지는 관계 정보가 얇다(각자 것은 분석 만세력에서, 사용자 결정).
+/** 신살 — 까치 팁(함께 가진 신살 + 공통 특징 한 문장) · 함께 가진 신살(같은 기운) · 까치 팁(각자만 가진 신살이 상대를 받쳐 주는 자리) · 한쪽만 가진 신살(상대를 받쳐주는 자리). 십이신살은 2026-10-18 궁합에서 뺐다 — 신살 카드와 네 별이 겹치고 나머지는 관계 정보가 얇다(각자 것은 분석 만세력에서, 사용자 결정).
  *  2026-10-18: "귀인·신살" 소제목, 그룹 제목 옆 소제목("두 분이 같은 기운"·"○○님을 받쳐주는 자리"), 카드마다 붙던 "★ 함께"·"○○님" 배지, 설명 앞의 "○○님이 ○○님에게"는 까치 팁·그룹 제목과 겹쳐서 뺐다 */
 export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
   const { shared_sinsal, unique_sinsal_1, unique_sinsal_2 } = data;
   const empty = shared_sinsal.length === 0 && unique_sinsal_1.length === 0 && unique_sinsal_2.length === 0;
-  const tip = `${shared_sinsal.length > 0 ? `두 분이 함께 가진 신살은 **${shared_sinsal.join("·")}**이고, ` : "두 분이 함께 가진 신살은 없고, "}${name1}님만 가진 신살이 ${unique_sinsal_1.length}개, ${name2}님만 가진 신살이 ${unique_sinsal_2.length}개예요. 함께 가진 건 같은 기운, 한쪽만 가진 건 그 분이 상대를 받쳐주는 자리예요.`;
+  // 까치 팁 = 함께 가진 신살 + 그 공통 특징을 한 문장으로(2026-10-18, 사용자 지시). 각자 개수·일반 설명은 넣지 않는다(그룹 제목·상세 설명과 겹침)
+  const traits = shared_sinsal.map((s) => SHARED_SINSAL_TRAIT[s]).filter(Boolean);
+  const tip = shared_sinsal.length > 0
+    ? `두 분은 신살로 보면 **${shared_sinsal.join("·")}**을 함께 지녔어요${traits.length ? ` — ${traits.join(", ")} 사이예요.` : "."}`
+    : "두 분이 함께 가진 신살은 없어요. 각자 가진 신살이 서로 다른 자리를 채워 줘요.";
+  // 두 번째 까치 팁(함께 가진 신살 아래) = 각자만 가진 신살이 상대를 받쳐 주는 자리를 한 사람 한 문장으로(2026-10-18, 사용자 지시)
+  const personLine = (me: string, other: string, list: string[]) => {
+    if (list.length === 0) return "";
+    const roles = list.map((s) => (UNIQUE_SINSAL_ROLE[s] ?? "").replace(/ 자리$/, "")).filter(Boolean);
+    const ro = list[list.length - 1].endsWith("살") ? "로" : "으로";
+    return `${me}님은 **${list.join("·")}**${ro} ${roles.length ? `${roles.join(", ")} 자리에서 ` : ""}${other}님을 받쳐 줘요.`;
+  };
+  const personTip = [personLine(name1, name2, unique_sinsal_1), personLine(name2, name1, unique_sinsal_2)].filter(Boolean).join(" ");
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="신살(神殺)">
@@ -116,6 +141,8 @@ export default function SinsalTab({ data, name1, name2 }: CompatTabProps) {
                 </div>
               </div>
             )}
+
+            {personTip && <KkachiTip>{personTip}</KkachiTip>}
 
             {unique_sinsal_1.length > 0 && (
               <div className="space-y-2">
