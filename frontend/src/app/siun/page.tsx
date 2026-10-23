@@ -4,6 +4,7 @@
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoginRequired from "@/components/LoginRequired";
+import LuckySeal from "@/components/LuckySeal";
 import ShareButton from "@/components/ShareButton";
 import { useEffect, useState } from "react";
 import { listProfiles, getForecast, getFeedbackMap, postFeedback, createDailyShare } from "@/lib/api";
@@ -151,9 +152,11 @@ export default function SiunPage() {
                       {toKorean(data.day_pillar)}
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-1.5">
+                  <div className="relative flex items-baseline gap-1.5">
                     <span className="text-xs text-[var(--color-ink-muted)]">종합</span>
                     <span className="font-heading text-3xl font-bold leading-none text-[var(--color-ink)]">{data.total_score}</span>
+                    {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
+                    {data.level === "좋은 날" && <LuckySeal key={data.date} className="absolute -top-9 -right-5" size={50} />}
                   </div>
                 </div>
               </>
@@ -403,10 +406,10 @@ export default function SiunPage() {
             !loading && loggedIn && memberId && profile ? (
               <ShareButton
                 key={profile.id}
-                label={profile.is_self ? "나의 시운 공유" : `${profile.name}의 시운 공유`}
+                label="공유"
                 create={() => createDailyShare(memberId, profile.id)}
                 title={`${profile.is_self ? "나" : `${profile.name}님`}의 오늘 시운`}
-                text={`${profile.is_self ? "오늘 내 시운" : `${profile.name}님의 오늘 시운`}${todayFortune ? ` ${todayFortune.total_score}점` : ""}, 사주까치가 이렇게 봤어요. 나도 오늘 시운 보기 →`}
+                text={`${profile.is_self ? "오늘 내 시운" : `${profile.name}님의 오늘 시운`}${todayFortune ? ` ${todayFortune.total_score}점` : ""}, 사주까치가 이렇게 봤어요. 나도 오늘의 행운 보기 →`}
                 channel="daily"
               />
             ) : undefined

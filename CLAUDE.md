@@ -543,7 +543,7 @@ erDiagram
 ```
 결과 헤더 "공유" → POST /kkachi/shares (지금 입력값) → shares.payload = build_share_card() 스냅샷 → /s/{id}
   → navigator.share(제목·문구·링크) 또는 클립보드 → 패널: OG 카드 미리보기 + 닫기(버튼들은 2026-10-23 제거 — 공유 시트와 같은 일을 한 번 더 해서)
-받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + kind별 CTA(사주 "나도 30초 만에 내 사주 보기", 캐릭터 있으면 "나는 어떤 캐릭터일까?" / 시운 "나도 오늘 시운 보기" / 궁합 "우리 궁합도 보기") → 홈 QuickStartPost(궁합은 /compatibility)
+받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + kind별 CTA(사주 "나도 30초 만에 내 사주 보기", 캐릭터 있으면 "나는 어떤 캐릭터일까?" / 시운 "나도 오늘의 행운 보기" / 궁합 "우리 궁합도 보기") → 홈 QuickStartPost(궁합은 /compatibility)
 카톡·슬랙 미리보기 → /s/{id}/opengraph-image (satori 1200×630, public/fonts 서브셋) — metadataBase = NEXT_PUBLIC_SITE_URL
 ```
 

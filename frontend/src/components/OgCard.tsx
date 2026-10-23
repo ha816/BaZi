@@ -68,6 +68,17 @@ function loadArt(relPath: string): Promise<string | null> {
   return art;
 }
 
+/** 운수대통 직인(시운 카드, 좋은 날) — kkachi/seal/unsu_daetong.png(투명 PNG) */
+export function loadSealArt(): Promise<string | null> {
+  const rel = "seal/unsu_daetong.png";
+  let art = artCache.get(rel);
+  if (!art) {
+    art = readFile(join(process.cwd(), "public/kkachi", rel)).then((b) => `data:image/png;base64,${b.toString("base64")}`).catch(() => null);
+    artCache.set(rel, art);
+  }
+  return art;
+}
+
 /** 나의 캐릭터(사주 카드, V4) — saju_character/og/{artKey}.jpg. artKey = 일간_강|약[_여](여성판, 2026-10-23), 없으면 유형 키 그림 */
 export async function loadCharacterArt(key: string, artKey?: string | null): Promise<string | null> {
   const ok = (k?: string | null): k is string => !!k && /^[가-힣]_[강약](_여)?$/.test(k);
@@ -264,63 +275,47 @@ const fmtDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 
 /** 시운 공유 카드 — 일진 타일 · 점수/레벨 · 아침 한 마디 · 날씨/절기 · CTA */
-export function DailyOgImage({ card, mascot }: { card: DailyShareCard; mascot: string }) {
+export function DailyOgImage({ card, mascot, seal }: { card: DailyShareCard; mascot: string; seal?: string | null }) {
   const el = getElementInfo(card.day_element);
   const lv = LEVEL_COLORS[card.level] ?? LEVEL_COLORS["평범한 날"];
   const k = card.day_pillar_korean;
-  const badges = [
-    card.solar_term ? `절기 ${card.solar_term}` : "",
-    card.weather ? `${card.weather.condition} · ${getElementInfo(card.weather.element).korean}(${card.weather.element}) 기운` : "",
-    card.son_eomneun_nal ? "손없는 날" : "",
-    card.yongshin ? `용신 ${getElementInfo(card.yongshin).korean}(${card.yongshin})` : "",
-  ].filter(Boolean);
-
+  // 2026-10-23 사주 카드와 같은 기준으로 — 큰 제목 대신 날짜·이름 한 줄, 일진·점수를 키우고,
+  // 잘리던 절기·날씨·용신 줄은 빼고 구분선 밑 한 줄에 까치·"사주까치" | CTA
   return (
     <div style={outer}>
       <div style={{ ...inner, flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>{fmtDate(card.date)}</div>
-            <div style={{ display: "flex", fontSize: 44, fontWeight: 700, marginTop: 2 }}>{clip(card.name, 10)}님의 오늘 시운</div>
-          </div>
-          <BrandMark mascot={mascot} />
+        <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>
+          {clip(card.name, 10)}님의 {fmtDate(card.date).replace(" (", "(")} 시운
         </div>
 
-        <div style={{ display: "flex", flex: 1, marginTop: 22, gap: 32, alignItems: "center" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              width: 150,
-              borderRadius: 18,
-              background: IVORY_WARM,
-              border: `1px solid ${BORDER}`,
-              padding: "10px 0 12px",
-              gap: 6,
-            }}
-          >
-            <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>일진</div>
-            <Glyph korean={k[0] ?? ""} hanja={card.day_pillar[0] ?? ""} color={el.color} />
-            <Glyph korean={k[1] ?? ""} hanja={card.day_pillar[1] ?? ""} color={el.color} />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 200, gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700 }}>
-              <div style={{ display: "flex", fontSize: 72, lineHeight: 1 }}>{card.total_score}</div>
-              <div style={{ display: "flex", fontSize: 24, color: INK_MUTED, marginLeft: 4 }}>점</div>
+        {/* 점수가 맨 왼쪽 주인공, 일진은 한 줄 언급만. 좋은 날이면 점수 위에 "운수대통" 직인(정지 그림 — 애니메이션은 랜딩에서), 2026-10-23 */}
+        <div style={{ display: "flex", flex: 1, gap: 44, alignItems: "center" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 300, gap: 14, position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700, paddingTop: 18 }}>
+              <div style={{ display: "flex", fontSize: 150, lineHeight: 1 }}>{card.total_score}</div>
+              <div style={{ display: "flex", fontSize: 36, color: INK_MUTED, marginLeft: 6 }}>점</div>
             </div>
-            <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: lv.fg, background: lv.bg, borderRadius: 999, padding: "6px 16px" }}>{card.level}</div>
+            <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: lv.fg, background: lv.bg, borderRadius: 999, padding: "8px 22px" }}>{card.level}</div>
+            {card.level === "좋은 날" && seal && (
+              <img src={seal} alt="" width={120} height={120} style={{ position: "absolute", top: -14, right: -14, transform: "rotate(-12deg)" }} />
+            )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 12 }}>
-            <div style={{ display: "flex", fontSize: 30, fontWeight: 700, lineHeight: 1.35 }}>{clip(card.headline, 60)}</div>
-            {card.action && <div style={{ display: "flex", fontSize: 23, color: INK, lineHeight: 1.35 }}>할 것 · {clip(card.action, 44)}</div>}
-            {card.caution && <div style={{ display: "flex", fontSize: 23, color: INK_MUTED, lineHeight: 1.35 }}>피할 것 · {clip(card.caution, 44)}</div>}
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 14 }}>
+            <div style={{ display: "flex", fontSize: 22, color: INK_MUTED }}>
+              오늘의 일진&nbsp;<span style={{ color: el.color, fontWeight: 700 }}>{k}({card.day_pillar})</span>
+            </div>
+            <div style={{ display: "flex", fontSize: 34, fontWeight: 700, lineHeight: 1.35, wordBreak: "keep-all" }}>{clip(card.headline, 48)}</div>
+            {card.action && <div style={{ display: "flex", fontSize: 25, color: INK, lineHeight: 1.4, wordBreak: "keep-all" }}>할 것: {clip(card.action, 40)}</div>}
+            {card.caution && <div style={{ display: "flex", fontSize: 25, color: INK_MUTED, lineHeight: 1.4, wordBreak: "keep-all" }}>피할 것: {clip(card.caution, 40)}</div>}
           </div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{clip(badges.join(" · "), 36)}</div>
-          <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 오늘 시운 보기 →</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
+            <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
+          </div>
+          <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 오늘의 행운 보기 →</div>
         </div>
       </div>
     </div>

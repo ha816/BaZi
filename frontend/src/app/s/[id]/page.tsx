@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import KkachiTip from "@/components/KkachiTip";
+import LuckySeal from "@/components/LuckySeal";
 import SectionHeader from "@/components/SectionHeader";
 import { FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import { RELATION_GLYPH } from "@/lib/relations";
@@ -71,6 +72,7 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
   const meta = FORECAST_LEVEL_META[card.level] ?? FORECAST_LEVEL_META["평범한 날"];
   const el = getElementInfo(card.day_element);
   const k = card.day_pillar_korean;
+  const lucky = card.level === "좋은 날";
   const badges = [
     card.solar_term ? `🌿 절기 ${card.solar_term}` : "",
     card.weather ? `${card.weather.condition} · ${getElementInfo(card.weather.element).korean}(${card.weather.element}) 기운` : "",
@@ -84,8 +86,8 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
         <header className="flex items-center gap-3">
           <img src="/kkachi/icon-192.png" alt="사주까치" className="w-12 h-12 rounded-full" />
           <div>
-            <p className="text-xs font-semibold text-[var(--color-gold)]">사주까치 · {fmtDate(card.date)}</p>
-            <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">{who}의 오늘 시운</h1>
+            <p className="text-xs font-semibold text-[var(--color-gold)]">사주까치</p>
+            <h1 className="font-heading text-2xl font-bold text-[var(--color-ink)]">{who}의 {fmtDate(card.date).replace(" (", "(")} 시운</h1>
           </div>
         </header>
 
@@ -95,27 +97,25 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
           </div>
           <div className="divider" />
           <div className="slide-card__body space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] px-5 py-3 text-center">
-                <p className="text-[10px] text-[var(--color-ink-muted)] mb-1">일진</p>
-                {[0, 1].map((i) => (
-                  <p key={i} className="font-heading leading-tight whitespace-nowrap" style={{ color: el.color }}>
-                    <span className="text-2xl font-bold">{k[i] ?? ""}</span>
-                    <span className="text-sm">({card.day_pillar[i]})</span>
-                  </p>
-                ))}
-              </div>
-              <div className="space-y-1">
-                <p className="font-heading text-3xl font-bold text-[var(--color-ink)]">
-                  {card.total_score}<span className="text-base font-normal text-[var(--color-ink-muted)]">점</span>
+            {/* 점수가 주인공(맨 왼쪽), 일진은 한 줄 언급만 — 좋은 날이면 점수 위에 "운수대통" 직인이 찍힌다(2026-10-23, 사용자 지시) */}
+            <div className="flex items-center gap-5 seal-thud">
+              <div className="relative pr-6 pt-3">
+                <p className="font-heading text-6xl font-bold leading-none text-[var(--color-ink)]">
+                  {card.total_score}<span className="text-lg font-normal text-[var(--color-ink-muted)] ml-0.5">점</span>
                 </p>
-                <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full ${meta.badge}`}>{meta.icon} {card.level}</span>
+                {lucky && <LuckySeal className="absolute -top-4 -right-5" size={60} />}
+              </div>
+              <div className="space-y-1.5">
+                <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${meta.badge}`}>{meta.icon} {card.level}</span>
+                <p className="text-xs text-[var(--color-ink-muted)]">
+                  오늘의 일진 <span className="font-semibold" style={{ color: el.color }}>{k}({card.day_pillar})</span>
+                </p>
               </div>
             </div>
             <div className="space-y-1.5">
               <p className="text-base font-semibold leading-snug text-[var(--color-ink)]">{card.headline}</p>
-              {card.action && <p className="text-sm text-[var(--color-ink)]">✦ 할 것 · {card.action}</p>}
-              {card.caution && <p className="text-sm text-[var(--color-ink-light)]">✕ 피할 것 · {card.caution}</p>}
+              {card.action && <p className="text-sm text-[var(--color-ink)]">✦ 할 것: {card.action}</p>}
+              {card.caution && <p className="text-sm text-[var(--color-ink-light)]">✕ 피할 것: {card.caution}</p>}
             </div>
             {badges.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -129,7 +129,7 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
         </section>
 
         <section className="rounded-2xl bg-[var(--color-ink)] text-[var(--color-ivory)] p-5 text-center space-y-3">
-          <p className="font-heading text-lg font-bold">나도 오늘 시운 보기</p>
+          <p className="font-heading text-lg font-bold">나도 오늘의 행운 보기</p>
           <p className="text-xs opacity-70">이름과 생년월일만 넣으면 내 사주와 오늘의 흐름까지, 30초면 돼요. 등록하면 매일 아침 한 마디도 받아요.</p>
           <Link href="/" className="block w-full py-3 rounded-lg bg-[var(--color-gold)] text-[var(--color-ink)] text-sm font-semibold hover:bg-[var(--color-gold-light)] transition-colors">
             내 사주 보기

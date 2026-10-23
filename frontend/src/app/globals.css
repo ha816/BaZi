@@ -218,8 +218,18 @@ body {
   100% { opacity: 1; transform: scale(1); }
 }
 .ink-stamp { display: inline-block; animation: ink-stamp 0.6s ease-out both; } /* 글자 하나가 찍히는 시간 */
+/* 운수대통 직인 — 좋은 날 시운 공유 페이지에서 점수 위로 쾅 찍힌다(2026-10-23). 크게 떠 있다가 내려와 살짝 눌리고 기울어진 채 멈춘다 */
+@keyframes seal-stamp {
+  0%   { opacity: 0; transform: scale(2.4) rotate(-28deg); }
+  55%  { opacity: 1; transform: scale(0.9) rotate(-10deg); }
+  72%  { transform: scale(1.06) rotate(-13deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-12deg); }
+}
+.seal-stamp { animation: seal-stamp 0.55s cubic-bezier(0.2, 0.7, 0.3, 1.2) 0.5s both; }
+@keyframes seal-thud { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, 2px); } 50% { transform: translate(1px, -1px); } }
+.seal-thud { animation: seal-thud 0.25s ease-out 0.82s both; }
 @media (prefers-reduced-motion: reduce) {
-  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp { animation: none !important; }
+  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp, .seal-stamp, .seal-thud { animation: none !important; }
 }
 
 /* Glow pulse — 용신 reveal 등 */

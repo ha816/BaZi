@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { BrandOgImage, CompatOgImage, DailyOgImage, OG_SIZE, ShareOgImage, loadCharacterArt, loadOgAssets } from "@/components/OgCard";
+import { BrandOgImage, CompatOgImage, DailyOgImage, OG_SIZE, ShareOgImage, loadCharacterArt, loadOgAssets, loadSealArt } from "@/components/OgCard";
 import { fetchShare } from "./share";
 
 export const alt = "사주까치 공유 카드";
@@ -17,9 +17,11 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const compatArts = compat?.character
     ? await Promise.all(compat.character.roles.map((r) => (r.character_key ? loadCharacterArt(r.character_key, r.art_key) : Promise.resolve(null))))
     : [];
+  // 좋은 날 시운 카드는 점수 위에 운수대통 직인(2026-10-23)
+  const sealArt = card?.kind === "daily" && card.level === "좋은 날" ? await loadSealArt() : null;
   return new ImageResponse(
     !card ? <BrandOgImage mascot={mascot} />
-      : card.kind === "daily" ? <DailyOgImage card={card} mascot={mascot} />
+      : card.kind === "daily" ? <DailyOgImage card={card} mascot={mascot} seal={sealArt} />
       : card.kind === "compat" ? <CompatOgImage card={card} mascot={mascot} characterArts={compatArts} />
       : <ShareOgImage card={card} mascot={mascot} characterArt={characterArt} />,
     { ...OG_SIZE, fonts },
