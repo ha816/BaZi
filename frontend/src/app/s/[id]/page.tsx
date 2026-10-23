@@ -15,6 +15,14 @@ type Props = { params: Promise<{ id: string }> };
 const PILLAR_LABELS = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"];
 const ELEMENTS = ["木", "火", "土", "金", "水"];
 
+/** 캐릭터 그림 웹 경로 — 서버 렌더라 onError 대신 파일 존재로 판단. 여성판(art_key) → 유형 키 그림 → 없으면 null (2026-10-23) */
+function charArtFile(artKey?: string | null, key?: string | null): string | null {
+  for (const k of [artKey, key]) {
+    if (k && existsSync(join(process.cwd(), "public/kkachi/saju_character", `${k}.webp`))) return `/kkachi/saju_character/${k}.webp`;
+  }
+  return null;
+}
+
 const fmtDate = (iso: string) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 
@@ -146,7 +154,7 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
   const ch = card.character;
   // 그림은 두 사람 각자의 사주 캐릭터(saju_character/{character_key}.webp, 분석 결과와 같은 파일 — 궁합 전용 그림은 만들지 않음 2026-10-18).
   // 서버 렌더라 onError 대신 파일 존재로 판단. 옛 카드는 character_key가 없어 역할 이모지
-  const arts = (ch?.roles ?? []).map((ro) => (ro.character_key && existsSync(join(process.cwd(), "public/kkachi/saju_character", `${ro.character_key}.webp`)) ? `/kkachi/saju_character/${ro.character_key}.webp` : null));
+  const arts = (ch?.roles ?? []).map((ro) => charArtFile(ro.art_key, ro.character_key));
   const portrait = (i: number) => {
     const src = arts[i];
     return src ? <img src={src} alt="" className="w-[8.5rem] aspect-square rounded-2xl object-cover" /> : <span className="text-5xl">{ch?.roles[i]?.emoji}</span>;
@@ -272,7 +280,7 @@ export default async function SharePage({ params }: Props) {
   // 나의 캐릭터(V4) — 카드 맨 위. 그림은 서버 렌더라 onError 대신 파일 존재로 판단
   const ch = card.character;
   const chEl = ch ? getElementInfo(ch.element) : null;
-  const hasCharArt = !!ch && existsSync(join(process.cwd(), "public/kkachi/saju_character", `${ch.key}.webp`));
+  const charArt = ch ? charArtFile(ch.art_key, ch.key) : null;
   const lines = [
     { label: "나", text: card.summary.me },
     { label: "신살·운성", text: card.summary.energy },
@@ -294,8 +302,8 @@ export default async function SharePage({ params }: Props) {
 
         {ch && chEl && (
           <section className="rounded-2xl border border-[var(--color-gold-light)] bg-[var(--color-gold-faint)] px-4 py-4 text-center space-y-3">
-            {hasCharArt && (
-              <img src={`/kkachi/saju_character/${ch.key}.webp`} alt={ch.title} className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
+            {charArt && (
+              <img src={charArt} alt={ch.title} className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
             )}
             <p className="text-[11px] font-semibold text-[var(--color-gold)]">{who}의 캐릭터 · {ch.stem_korean}({ch.stem}) 일간 · {ch.strength_label}</p>
             <p className="font-heading text-2xl font-bold leading-snug text-[var(--color-ink)] break-keep">{ch.title}</p>

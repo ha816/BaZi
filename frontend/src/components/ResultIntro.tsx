@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { SajuCharacter } from "@/types/analysis";
 import { RevealGate, FALLBACK_IMG } from "@/components/SajuCharacterCard";
+import { charArtSrc, onCharArtError } from "@/lib/characterArt";
 
 const ELEMENTS = ["나무", "불", "흙", "쇠", "물"];
 const OPENING_MS = 1300;
@@ -24,7 +25,7 @@ interface Props {
 export default function ResultIntro({ character: c, name, year, revealed, onReveal, onSurvey, onDone }: Props) {
   const [phase, setPhase] = useState<"gate" | "hello" | "opening">(revealed ? "hello" : "gate");
   const who = name ? `${name}님` : "당신";
-  const img = `/kkachi/saju_character/${c.key}.webp`;
+  const img = charArtSrc(c.art_key, c.key);
 
   useEffect(() => {
     if (phase !== "opening") return;
@@ -55,7 +56,7 @@ export default function ResultIntro({ character: c, name, year, revealed, onReve
                 src={img}
                 alt={c.title}
                 className="w-[min(15rem,27vh)] mx-auto aspect-square rounded-2xl object-cover char-reveal"
-                onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+                onError={onCharArtError(c.key, FALLBACK_IMG)}
               />
               <div className="space-y-1 score-pop" style={{ animationDelay: "0.35s" }}>
                 <p className="text-xs font-semibold text-[var(--color-gold)]">{who}의 캐릭터</p>

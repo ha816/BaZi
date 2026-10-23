@@ -7,10 +7,18 @@ from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.saju_character import character_art_key
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.domain.interpretation import INTERPRETATION_VERSION
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender, User
+
+
+def _apply_art_key(result: dict, is_male: bool) -> None:
+    """캐시된 분석 결과의 캐릭터 그림 키를 프로필 성별로 맞춘다(여성판 그림, 2026-10-23)."""
+    ch = (result.get("natal") or {}).get("character")
+    if ch and ch.get("key"):
+        ch["art_key"] = character_art_key(ch["key"], is_male)
 
 
 class ProfileService:
@@ -88,6 +96,7 @@ class ProfileService:
                 summary.update(self.saju_service.today_summary(natal, postnatal, profile.name))
                 await self.analysis_port.save(profile_id, year, cached.result)
             cached.result["self_quiz"] = build_self_quiz(cached.result.get("natal") or {})  # 옛 캐시에도
+            _apply_art_key(cached.result, profile.gender.is_male)  # 옛 캐시엔 art_key가 없고, 프로필 성별이 바뀌었을 수도
             return cached.result
 
         # 캐시 없음 또는 응답 구조가 바뀐 옛 캐시(version 불일치) → 전체 재계산

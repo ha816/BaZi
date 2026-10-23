@@ -5,6 +5,7 @@ import type { SajuCharacter } from "@/types/analysis";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 import KkachiTip from "@/components/KkachiTip";
 import { getElementInfo } from "@/lib/elementColors";
+import { charArtSrc, nextCharArtSrc, onCharArtError } from "@/lib/characterArt";
 
 const ELEMENT_READING: Record<string, string> = { 木: "목", 火: "화", 土: "토", 金: "금", 水: "수" };
 export const FALLBACK_IMG = "/kkachi/normal_kkachi_00.png";
@@ -37,7 +38,7 @@ export function RevealGate({ c, name, onReveal }: { c: SajuCharacter; name?: str
   const [spinning, setSpinning] = useState(false);
   const [landed, setLanded] = useState(false);
   const [idx, setIdx] = useState(0);
-  const [imgSrc, setImgSrc] = useState(`/kkachi/saju_character/${c.key}.webp`);
+  const [imgSrc, setImgSrc] = useState(charArtSrc(c.art_key, c.key));
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
@@ -71,7 +72,7 @@ export function RevealGate({ c, name, onReveal }: { c: SajuCharacter; name?: str
           src={imgSrc}
           alt=""
           className="w-full h-full object-cover char-silhouette"
-          onError={() => setImgSrc(FALLBACK_IMG)}
+          onError={() => setImgSrc((cur) => nextCharArtSrc(cur, c.key, FALLBACK_IMG))}
         />
         <span className={`absolute inset-0 flex items-center justify-center font-heading text-6xl font-bold text-white/90 ${spinning ? "opacity-0" : ""} transition-opacity`} aria-hidden>?</span>
       </div>
@@ -129,10 +130,10 @@ export default function SajuCharacterCard({ character: c, name }: Props) {
           {`일간(日干) **${c.stem_korean}${ELEMENT_READING[c.element] ?? ""}(${c.stem}${c.element})**에 기운의 세기 **${c.strength_label}**을 더해 만든 ${name ? `${name}님의` : "이 사주의"} 까치 캐릭터예요.`}
         </KkachiTip>
         <img
-          src={`/kkachi/saju_character/${c.key}.webp`}
+          src={charArtSrc(c.art_key, c.key)}
           alt={c.title}
           className="w-full aspect-square rounded-xl object-cover char-reveal"
-          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMG; }}
+          onError={onCharArtError(c.key, FALLBACK_IMG)}
         />
         <div className="text-center space-y-1 score-pop" style={{ animationDelay: "0.35s" }}>
           <p className="font-heading text-xl font-bold text-[var(--color-ink)]">{c.title}</p>

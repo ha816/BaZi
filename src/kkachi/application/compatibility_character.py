@@ -1,3 +1,4 @@
+from kkachi.application.saju_character import character_art_key
 from kkachi.application.self_quiz import YES_AT
 from kkachi.application.util.sipsin_meta import SIPSIN_ORDER, SIPSIN_TRAIT, sipsin_korean
 from kkachi.application.util.util import josa
@@ -274,8 +275,9 @@ def _scenarios(result: dict, rel: str, kind: str, a: str) -> list[dict]:
     return base
 
 
-def build_compat_character(result: dict, relation_type: str = "lover") -> dict | None:
-    """궁합 캐릭터 칭호·역할·설명 + 이럴 때 두 분은? 문답. 일간 정보가 없으면 None"""
+def build_compat_character(result: dict, relation_type: str = "lover", males: tuple[bool, bool] | None = None) -> dict | None:
+    """궁합 캐릭터 칭호·역할·설명 + 이럴 때 두 분은? 문답. 일간 정보가 없으면 None.
+    males = (첫 번째 분 남성?, 두 번째 분 남성?) — 그림 키 art_key(여성은 `_여`)에 쓴다. 없으면 남성판(옛 동작)"""
     s1, s2 = result.get("pillar1_snapshot"), result.get("pillar2_snapshot")
     e1, e2 = _day_element(s1), _day_element(s2)
     if not e1 or not e2:
@@ -285,10 +287,11 @@ def build_compat_character(result: dict, relation_type: str = "lover") -> dict |
     title, kind, roles, a, b, key = _title(e1, e2, mood, rel)
     # 그림은 두 사람 각자의 사주 캐릭터(일간×강약 20유형, saju_character/{character_key}.webp) — 궁합 전용 그림은 만들지 않는다(2026-10-18).
     # 강약은 스냅샷 strength_pct 50 기준, 점수가 없는 옛 캐시는 strength_label로 (saju_character.build_saju_character와 같은 키)
-    for ro, snap in zip(roles, (s1, s2)):
+    for ro, snap, male in zip(roles, (s1, s2), males or (True, True)):
         pct = snap.get("strength_pct")
         strong = pct >= 50 if pct is not None else "신강" in (snap.get("strength_label") or "")
         ro["character_key"] = f"{Stem.from_char(snap['day_stem']).korean}_{'강' if strong else '약'}"
+        ro["art_key"] = character_art_key(ro["character_key"], male)  # 그림 파일 키 — 여성은 여성판(2026-10-23)
     desc = _DESC[kind][rel].format(a=a, b=b)
     if mood:
         desc += " " + _MOOD[mood][rel][1]

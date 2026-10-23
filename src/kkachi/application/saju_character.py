@@ -27,13 +27,21 @@ _TYPES: dict[tuple[str, bool], tuple[str, str, str, str, list[str], list[str]]] 
 }
 
 
-def build_saju_character(natal: NatalInfo) -> dict:
+def character_art_key(key: str, is_male: bool = True) -> str:
+    """그림 파일 키 — 남성은 유형 키 그대로(갑_강), 여성은 `_여`를 붙인 여성판(갑_강_여, 2026-10-23).
+    화면은 이 파일이 없으면 유형 키 그림으로 떨어진다. 유형 키(`key`)는 그대로 — 표·테스트·궁합 유형과 무관"""
+    return key if is_male else f"{key}_여"
+
+
+def build_saju_character(natal: NatalInfo, is_male: bool = True) -> dict:
     """일간 × 신강/신약 → 캐릭터 유형 (그림 키·이름·유형명·한 줄·선호하는 일/선호하지 않는 일)"""
     stem = natal.saju.stem_of_day_pillar
     strong = natal.is_strong
     name, title, line, job, jobs, jobs_avoid = _TYPES[(stem.name, strong)]
+    key = f"{stem.korean}_{'강' if strong else '약'}"
     return {
-        "key": f"{stem.korean}_{'강' if strong else '약'}",
+        "key": key,
+        "art_key": character_art_key(key, is_male),
         "stem": stem.name,
         "stem_korean": stem.korean,
         "element": stem.element.name,

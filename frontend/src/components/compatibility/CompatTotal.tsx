@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { RELATION_TYPE_LABEL } from "@/lib/constants";
 import { getElementInfo } from "@/lib/elementColors";
+import { charArtSrc, nextCharArtSrc } from "@/lib/characterArt";
 import CollapsibleSectionHeader from "../CollapsibleSectionHeader";
 import KkachiTip from "../KkachiTip";
 import type { CompatTabProps } from "./types";
@@ -14,18 +15,18 @@ const FALLBACK_IMG = "/kkachi/good_kkachi.png";
 const DRUMROLL_MS = 1200;
 
 /** 공개 전 실루엣 한 장 — 그 사람의 사주 캐릭터 그림을 흐리게 미리 보여 주며(그림도 미리 받아 둔다) "?"를 겹친다. 분석 RevealGate(SajuCharacterCard)와 같은 모양 */
-function Silhouette({ characterKey, rolling, delay }: { characterKey?: string | null; rolling: boolean; delay?: string }) {
-  const [src, setSrc] = useState(characterKey ? `/kkachi/saju_character/${characterKey}.webp` : FALLBACK_IMG);
+function Silhouette({ characterKey, artKey, rolling, delay }: { characterKey?: string | null; artKey?: string | null; rolling: boolean; delay?: string }) {
+  const [src, setSrc] = useState(characterKey ? charArtSrc(artKey, characterKey) : FALLBACK_IMG);
   return (
     <div className={`relative w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--color-gold-faint)] ${rolling ? "char-silhouette--shake" : "animate-float"}`} style={{ animationDelay: delay }}>
-      <img src={src} alt="" className="w-full h-full object-cover char-silhouette" onError={() => setSrc(FALLBACK_IMG)} />
+      <img src={src} alt="" className="w-full h-full object-cover char-silhouette" onError={() => setSrc((cur) => nextCharArtSrc(cur, characterKey, FALLBACK_IMG))} />
       <span className={`absolute inset-0 flex items-center justify-center font-heading text-5xl font-bold text-white/90 ${rolling ? "opacity-0" : ""} transition-opacity`} aria-hidden>?</span>
     </div>
   );
 }
 
 /** 공개 전 — "두근두근 ○○님과 ○○님의 궁합은?" + 두 사람 캐릭터 실루엣("?" 겹침 — 2026-10-18 분석 게이트와 같게, 드럼 까치 그림은 폐기) + 버튼 → 1.2초 드럼롤 후 공개 */
-export function RevealGate({ name1, name2, roles, onReveal }: { name1: string; name2: string; roles: { character_key?: string | null }[]; onReveal: () => void }) {
+export function RevealGate({ name1, name2, roles, onReveal }: { name1: string; name2: string; roles: { character_key?: string | null; art_key?: string | null }[]; onReveal: () => void }) {
   const [rolling, setRolling] = useState(false);
   const handle = () => {
     if (rolling) return;
@@ -39,9 +40,9 @@ export function RevealGate({ name1, name2, roles, onReveal }: { name1: string; n
         <span className="text-[var(--color-gold)]">{name1}님</span>과 <span className="text-[var(--color-gold)]">{name2}님</span>의 궁합은?
       </p>
       <div className="flex items-center gap-3">
-        <Silhouette characterKey={roles[0]?.character_key} rolling={rolling} />
+        <Silhouette characterKey={roles[0]?.character_key} artKey={roles[0]?.art_key} rolling={rolling} />
         <span className="text-2xl text-[var(--color-gold-light)] heart-thump">♥</span>
-        <Silhouette characterKey={roles[1]?.character_key} rolling={rolling} delay="0.6s" />
+        <Silhouette characterKey={roles[1]?.character_key} artKey={roles[1]?.art_key} rolling={rolling} delay="0.6s" />
       </div>
       <button
         type="button"
@@ -56,15 +57,16 @@ export function RevealGate({ name1, name2, roles, onReveal }: { name1: string; n
 }
 
 /** 한 사람의 사주 캐릭터 그림(일간×강약 20유형, saju_character/{character_key}.webp — 분석 결과와 같은 파일). 파일이 없거나 옛 결과라 키가 없으면 역할 이모지 */
-function Portrait({ characterKey, emoji, delay }: { characterKey?: string | null; emoji: string; delay: string }) {
-  const [broken, setBroken] = useState(false);
-  if (characterKey && !broken) {
+function Portrait({ characterKey, artKey, emoji, delay }: { characterKey?: string | null; artKey?: string | null; emoji: string; delay: string }) {
+  // 여성판(art_key) → 유형 키 그림 → 역할 이모지 순으로 떨어진다
+  const [src, setSrc] = useState<string | null>(characterKey ? charArtSrc(artKey, characterKey) : null);
+  if (src) {
     return (
       <img
-        src={`/kkachi/saju_character/${characterKey}.webp`}
+        src={src}
         alt=""
         className="w-[min(8.5rem,16vh)] aspect-square rounded-2xl object-cover char-reveal"
-        onError={() => setBroken(true)}
+        onError={() => setSrc((cur) => { const next = nextCharArtSrc(cur ?? "", characterKey, ""); return next || null; })}
       />
     );
   }
@@ -76,12 +78,12 @@ function Portrait({ characterKey, emoji, delay }: { characterKey?: string | null
 }
 
 /** 두 사람의 사주 캐릭터를 왼쪽 p1·오른쪽 p2로 나란히 + ♥ — 궁합 전용 그림(15종)은 만들지 않는다(2026-10-18, 사용자 결정). 인트로 상자·두 분의 캐릭터 카드·인트로 "펼치는 중" 화면이 같이 쓴다 */
-export function PairArt({ roles }: { roles: { emoji: string; character_key?: string | null }[] }) {
+export function PairArt({ roles }: { roles: { emoji: string; character_key?: string | null; art_key?: string | null }[] }) {
   return (
     <div className="flex items-center justify-center gap-2 py-1">
-      <Portrait characterKey={roles[0]?.character_key} emoji={roles[0]?.emoji ?? "🐦"} delay="0s" />
+      <Portrait characterKey={roles[0]?.character_key} artKey={roles[0]?.art_key} emoji={roles[0]?.emoji ?? "🐦"} delay="0s" />
       <span className="text-2xl text-[var(--color-gold-light)] heart-thump">♥</span>
-      <Portrait characterKey={roles[1]?.character_key} emoji={roles[1]?.emoji ?? "🐦"} delay="0.4s" />
+      <Portrait characterKey={roles[1]?.character_key} artKey={roles[1]?.art_key} emoji={roles[1]?.emoji ?? "🐦"} delay="0.4s" />
     </div>
   );
 }

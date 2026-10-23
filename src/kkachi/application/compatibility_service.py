@@ -76,7 +76,7 @@ def build_compat_share_card(name1: str, name2: str, relation_type: str, result: 
     character = {
         "title": ch["title"],
         "key": ch["key"],
-        "roles": [{"name": r["name"], "element": r["element"], "emoji": r["emoji"], "character_key": r.get("character_key")} for r in ch["roles"]],  # character_key = 그 사람 사주 캐릭터 그림
+        "roles": [{"name": r["name"], "element": r["element"], "emoji": r["emoji"], "character_key": r.get("character_key"), "art_key": r.get("art_key")} for r in ch["roles"]],  # character_key = 그 사람 사주 캐릭터 그림
         "desc": ch["desc"].replace("{p1}", n1).replace("{p2}", n2),
         "moments": ch.get("moments"),  # 랜딩은 잘 맞는 순간만 보여준다
     } if ch else None
@@ -134,7 +134,7 @@ class CompatibilityService:
         result = asdict(self._compute(natal1, natal2, postnatal1, postnatal2, relation_type))
         result["summary"] = build_compat_summary(result)
         result["zodiac"] = build_compat_zodiac(result, year)
-        result["character"] = build_compat_character(result, relation_type)
+        result["character"] = build_compat_character(result, relation_type, (user1.gender.is_male, user2.gender.is_male))
         return result
 
     def build_chat_context(
@@ -168,20 +168,22 @@ class CompatibilityService:
     ) -> dict:
         lo, hi = (pid1, pid2) if str(pid1) < str(pid2) else (pid2, pid1)
 
-        cached = await self._compatibility_port.get(lo, hi, year)
-        if cached:
-            result_dict = self._apply_relation_prose(cached.result, relation_type)
-            result_dict["summary"] = build_compat_summary(result_dict)  # 옛 캐시에도 붙도록 매번 계산
-            result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
-            result_dict["character"] = build_compat_character(result_dict, relation_type)
-            return result_dict
-
+        # 프로필은 캐시 히트여도 읽는다 — 캐릭터 그림(여성판)을 성별로 고르려고(2026-10-23)
         profile1 = await self._profile_port.get(pid1)
         profile2 = await self._profile_port.get(pid2)
         if profile1 is None:
             raise ValueError(f"Profile {pid1} not found")
         if profile2 is None:
             raise ValueError(f"Profile {pid2} not found")
+        males = (profile1.gender.is_male, profile2.gender.is_male)
+
+        cached = await self._compatibility_port.get(lo, hi, year)
+        if cached:
+            result_dict = self._apply_relation_prose(cached.result, relation_type)
+            result_dict["summary"] = build_compat_summary(result_dict)  # 옛 캐시에도 붙도록 매번 계산
+            result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
+            result_dict["character"] = build_compat_character(result_dict, relation_type, males)
+            return result_dict
 
         user1 = User(name=profile1.name, gender=profile1.gender, birth_dt=profile1.birth_dt, city=profile1.city, hour_unknown=profile1.birth_hour_unknown)
         user2 = User(name=profile2.name, gender=profile2.gender, birth_dt=profile2.birth_dt, city=profile2.city, hour_unknown=profile2.birth_hour_unknown)
@@ -194,7 +196,7 @@ class CompatibilityService:
         await self._compatibility_port.save(lo, hi, year, result_dict)
         result_dict["summary"] = build_compat_summary(result_dict)
         result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
-        result_dict["character"] = build_compat_character(result_dict, relation_type)
+        result_dict["character"] = build_compat_character(result_dict, relation_type, males)
         return result_dict
 
     def _apply_relation_prose(self, result_dict: dict, rel: RelationType) -> dict:

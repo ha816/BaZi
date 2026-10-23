@@ -89,7 +89,7 @@ class NatalService:
             element_stats={o.name: c for o, c in natal.element_stats.items()},
             strength_pct=natal.strength_pct,
             strength_label=natal.strength_label,
-            character=build_saju_character(natal),
+            character=build_saju_character(natal, is_male=is_male),
             my_element={"name": natal.my_main_element.name, "meaning": natal.my_main_element.meaning},
             yongshin_info={"name": natal.yongshin.name, "meaning": natal.yongshin.meaning},
             kisin_info={"name": kisin.name, "meaning": kisin.meaning},
@@ -265,7 +265,7 @@ class KkachiService(InterpreterPort):
         sm = post.summary
         # 나의 캐릭터(V4) — 카드·OG·공유 문구의 "나는 ○○". 자연물 비유 name과 strength_pct는 싣지 않는다
         ch = natal.character or {}
-        character = {k: ch[k] for k in ("key", "stem", "stem_korean", "element", "strong", "strength_label", "title", "line", "jobs", "jobs_avoid") if k in ch}
+        character = {k: ch[k] for k in ("key", "art_key", "stem", "stem_korean", "element", "strong", "strength_label", "title", "line", "jobs", "jobs_avoid") if k in ch}
         sinsal: list[str] = []
         for s in natal.sinsal:
             if s["sinsal_korean"] not in sinsal:

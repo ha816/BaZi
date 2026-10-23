@@ -68,9 +68,14 @@ function loadArt(relPath: string): Promise<string | null> {
   return art;
 }
 
-/** 나의 캐릭터(사주 카드, V4) — saju_character/og/{key}.jpg, key = 일간_강|약 */
-export function loadCharacterArt(key: string): Promise<string | null> {
-  return /^[가-힣]_[강약]$/.test(key) ? loadArt(`saju_character/og/${key}.jpg`) : Promise.resolve(null);
+/** 나의 캐릭터(사주 카드, V4) — saju_character/og/{artKey}.jpg. artKey = 일간_강|약[_여](여성판, 2026-10-23), 없으면 유형 키 그림 */
+export async function loadCharacterArt(key: string, artKey?: string | null): Promise<string | null> {
+  const ok = (k?: string | null): k is string => !!k && /^[가-힣]_[강약](_여)?$/.test(k);
+  if (ok(artKey) && artKey !== key) {
+    const art = await loadArt(`saju_character/og/${artKey}.jpg`);
+    if (art) return art;
+  }
+  return ok(key) ? loadArt(`saju_character/og/${key}.jpg`) : null;
 }
 
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
