@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from kkachi.adapter.inner.streaming import text_stream
+from kkachi.application.ai_report_service import AiReportService
 from kkachi.application.compatibility_daily import compute_daily_compat
 from kkachi.application.compatibility_service import CompatibilityService, build_compat_share_card
 from kkachi.application.kkachi_service import KkachiService
@@ -134,25 +136,22 @@ class CompatibilityNarrativeRequest(BaseModel):
     person2: PersonInput
     year: int
     relation_type: RelationTypeStr = "lover"
+    # 프로필×2면 둘 다 — 글을 compatibilities 캐시에 저장해 두고 다음에 그대로 준다(POST /compatibility 응답의 narratives)
+    profile_id_1: UUID | None = None
+    profile_id_2: UUID | None = None
 
 
 @compatibility_router.post("/narrative")
 @inject
 async def compatibility_narrative(
     req: CompatibilityNarrativeRequest,
-    svc: CompatibilityService = Depends(Provide[Container.compatibility_service]),
+    ai_svc: AiReportService = Depends(Provide[Container.ai_report_service]),
 ) -> StreamingResponse:
-    user1 = _to_user(req.person1)
-    user2 = _to_user(req.person2)
-    prompt = svc.build_narrative_prompt(user1, user2, req.year, req.relation_type)
-
-    async def generate():
-        llm = svc._llm_port
-        if llm and llm.available:
-            async for chunk in llm.stream_interpret(prompt):
-                yield chunk
-
-    return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
+    """AI 해석 스트림 — 생성 중이면 나눠 받고, 끝난 글은 캐시. Ollama가 꺼져 있으면 503."""
+    pair = (req.profile_id_1, req.profile_id_2) if req.profile_id_1 and req.profile_id_2 else None
+    return await text_stream(
+        ai_svc.stream_compat(_to_user(req.person1), _to_user(req.person2), req.year, req.relation_type, pair),
+    )
 
 
 class InviteCreateRequest(BaseModel):

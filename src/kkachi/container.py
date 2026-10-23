@@ -18,9 +18,11 @@ from kkachi.adapter.outer.natal_adapter import NatalAdapter
 from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
 from kkachi.adapter.outer.push.webpush_adapter import WebPushAdapter
 from kkachi.adapter.outer.weather_adapter import WeatherAdapter
+from kkachi.application.ai_report_service import AiReportService
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
+from kkachi.application.llm_stream_hub import LlmStreamHub
 from kkachi.application.member_service import MemberService
 from kkachi.application.payment_service import PaymentService
 from kkachi.application.profile_service import ProfileService
@@ -99,6 +101,17 @@ class Container(containers.DeclarativeContainer):
         compatibility_port=compatibility_repo,
         saju_service=kkachi_service,
         llm_port=ollama_adapter,
+    )
+    # AI 풀이·AI 해석 — 생성 공유·캐시(analyses/compatibilities JSONB, 직접 입력은 메모리)
+    llm_stream_hub = providers.Singleton(LlmStreamHub)
+    ai_report_service = providers.Singleton(
+        AiReportService,
+        saju_service=kkachi_service,
+        compatibility_service=compatibility_service,
+        analysis_port=analysis_repo,
+        compatibility_port=compatibility_repo,
+        llm_port=ollama_adapter,
+        hub=llm_stream_hub,
     )
     weather_adapter = providers.Singleton(WeatherAdapter)
     fortune_service = providers.Singleton(

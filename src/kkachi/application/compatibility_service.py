@@ -156,8 +156,11 @@ class CompatibilityService:
     ) -> str:
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)
-        result = self._compute(natal1, natal2, postnatal1, postnatal2, relation_type)
-        return format_narrative_prompt(result, natal1, natal2, relation_type)
+        result = asdict(self._compute(natal1, natal2, postnatal1, postnatal2, relation_type))
+        result["summary"] = build_compat_summary(result)
+        result["zodiac"] = build_compat_zodiac(result, year)
+        result["character"] = build_compat_character(result, relation_type)
+        return format_narrative_prompt(result, user1, user2, year, relation_type)
 
     async def analyze_compatibility(
         self, pid1: UUID, pid2: UUID, year: int,

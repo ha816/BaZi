@@ -223,6 +223,19 @@ class CompatibilityRepo(CompatibilityPort):
             c = result.scalar_one_or_none()
             return _to_compatibility(c) if c else None
 
+    async def update_result(self, pid1: UUID, pid2: UUID, year: int, result: dict) -> None:
+        async with self._sf() as session:
+            await session.execute(
+                update(CompatibilityModel)
+                .where(
+                    CompatibilityModel.profile_id_1 == pid1,
+                    CompatibilityModel.profile_id_2 == pid2,
+                    CompatibilityModel.year == year,
+                )
+                .values(result=result)
+            )
+            await session.commit()
+
 
 class FeedbackRepo(FeedbackPort):
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]):

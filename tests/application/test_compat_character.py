@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from kkachi.application.compatibility_character import _MOMENTS, _PAIR_NAME, _SAME_NAME, build_compat_character
+from kkachi.application.compatibility_character import (
+    _MOMENTS,
+    _PAIR_NAME,
+    _SAME_NAME,
+    build_compat_character,
+)
 from kkachi.application.util.util import josa
 
 _SPEC = Path(__file__).parents[2] / "specs/compatibility/character.md"

@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from kkachi.adapter.inner.streaming import text_stream
+from kkachi.application.ai_report_service import AiReportService
 from kkachi.application.kkachi_service import KkachiService
-from kkachi.application.report_builder import LlmReportBuilder
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
@@ -95,19 +96,10 @@ async def chat(
 @inject
 async def stream_report(
     req: AnalysisRequest,
-    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
+    ai_svc: AiReportService = Depends(Provide[Container.ai_report_service]),
 ) -> StreamingResponse:
-    user = _make_user(req)
-    natal_info, postnatal_info = saju_svc.analyze(user, req.analysis_year)
-    interpretation = await saju_svc.interpret(natal_info, postnatal_info, user=user, name=req.name)
-    report_md = LlmReportBuilder().build(interpretation.natal, interpretation.postnatal, user, req.name)
-
-    async def generate():
-        if saju_svc._llm_port and saju_svc._llm_port.available:
-            async for chunk in saju_svc._llm_port.stream_interpret(report_md):
-                yield chunk
-
-    return StreamingResponse(generate(), media_type="text/plain; charset=utf-8")
+    """AI 풀이 스트림(직접 입력) — 같은 입력이 생성 중이면 나눠 받고, 최근 글은 메모리 캐시. Ollama가 꺼져 있으면 503."""
+    return await text_stream(ai_svc.stream_analysis(_make_user(req), req.name, req.analysis_year))
 
 
 @kkachi_router.post("/shares", status_code=201)

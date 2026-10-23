@@ -1,469 +1,251 @@
+"""AI 풀이 프롬프트 — 룰 엔진 결과를 LLM이 '한 편의 이야기'로 엮을 수 있는 짧은 자료 시트로 만든다.
+
+2026-10-23 개편: 카드 본문(성격·오행·운세 블록 등)을 통째로 싣던 7,000토큰짜리 레포트를 버리고
+탭마다 한두 줄의 구조화된 자료(≈1,800토큰)만 준다 — 첫 토큰까지 99초 → 20초대, 출력은 5섹션 700~900자.
+프롬프트가 바뀌면 REPORT_PROMPT_VERSION을 올린다(analyses 캐시의 옛 글은 버리고 다시 만든다).
+"""
 from kkachi.application.timing_rules import timing_digest
-from kkachi.domain.interpretation import (
-    InterpretBlock,
-    NatalResult,
-    PostnatalResult,
-)
+from kkachi.domain.ganji import Branch, Stem
+from kkachi.domain.interpretation import NatalResult, PostnatalResult
 from kkachi.domain.user import Gender, User
 
-_PILLAR_LABELS = ["년주(年柱)", "월주(月柱)", "일주(日柱)", "시주(時柱)"]
-_GUIDE_KEYS = [("color", "색상"), ("direction", "방향"), ("career", "직업"), ("daily", "일상")]
+REPORT_PROMPT_VERSION = 3  # 3: 형식 뼈대(### 제목) 추가, qwen3.8 기본 (2026-10-23)
 
-_SIPSIN_GROUPS: list[tuple[str, str, list[str]]] = [
-    ("比劫(비겁)", "자아·동료·경쟁", ["比肩", "劫財"]),
-    ("食傷(식상)", "표현·재능·자유", ["食神", "傷官"]),
-    ("財星(재성)", "재물·결과·확장", ["偏財", "正財"]),
-    ("官星(관성)", "직장·명예·규율", ["偏官", "正官"]),
-    ("印星(인성)", "학문·후원·정신", ["偏印", "正印"]),
+_PILLARS = ["년주", "월주", "일주", "시주"]
+SIPSIN_KOR = {"比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관", "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관", "偏印": "편인", "正印": "정인"}
+_ELEMENT_KOR = {"木": "나무", "火": "불", "土": "흙", "金": "쇠", "水": "물"}
+_LEVEL_KOR = {"high": "좋음", "medium": "보통", "low": "주의"}
+_SIPSIN_GROUPS: list[tuple[str, str, list[str], str]] = [
+    ("비겁", "자아·동료", ["比肩", "劫財"], "무비겁 — 동료·경쟁 관계 약함"),
+    ("식상", "표현·재능", ["食神", "傷官"], "무식상 — 표현 출구 부족"),
+    ("재성", "재물·결과", ["偏財", "正財"], "무재 — 직접 돈벌이보다 조직 안에서 인정받는 쪽이 유리"),
+    ("관성", "직장·규율", ["偏官", "正官"], "무관 — 자유로운 행보"),
+    ("인성", "학문·후원", ["偏印", "正印"], "무인성 — 멘토·학습으로 보완"),
 ]
 
-_SIPSIN_MISSING_NOTE: dict[str, str] = {
-    "比劫(비겁)": "무비겁(無比劫) — 동료·경쟁 관계 약함, 자기 정체성 흔들리기 쉬움",
-    "食傷(식상)": "무식상(無食傷) — 자기표현·재능 출구 부족, 답답함 누적되기 쉬움",
-    "財星(재성)": "무재(無財) — 직접 돈벌이보다 조직 안 인정으로 풀어가는 게 유리",
-    "官星(관성)": "무관(無官) — 규율·자리 욕구 약함, 자유로운 행보가 자연스러움",
-    "印星(인성)": "무인성(無印星) — 윗사람 도움·정신적 안식 부족, 멘토·학습으로 보완 필요",
-}
+
+def kor_ganji(ganji: str) -> str:
+    """'己卯' → '기묘(己卯)'. 모르는 글자는 그대로."""
+    if len(ganji) < 2:
+        return ganji
+    s, b = ganji[0], ganji[1]
+    try:
+        return f"{Stem[s].korean}{Branch[b].korean}({ganji})"
+    except KeyError:
+        return ganji
+
+
+def kor_sipsin(name: str) -> str:
+    """'偏印' → '편인(偏印)'."""
+    return f"{SIPSIN_KOR[name]}({name})" if name in SIPSIN_KOR else name
+
+
+def kor_element(ch: str) -> str:
+    """'木' → '나무(木)'."""
+    return f"{_ELEMENT_KOR[ch]}({ch})" if ch in _ELEMENT_KOR else ch
 
 
 class LlmReportBuilder:
-    """NatalResult + PostnatalResult를 외부 LLM 입력용 markdown 레포트로 변환한다."""
+    """NatalResult + PostnatalResult → LLM 입력 마크다운(쓰는 법 + 섹션 + 자료)."""
 
-    def build(
-        self, natal: NatalResult, postnatal: PostnatalResult, user: User, name: str = ""
-    ) -> str:
-        sections = [
-            self._intro(),
-            self._user_section(user, name, postnatal.year),
-            self._summary_section(postnatal),
-            self._manseryeok_section(natal),
-            self._yongshin_samjae_section(natal, postnatal),
-            self._siun_section(postnatal),
-            self._zodiac_section(natal, postnatal),
-            self._fengshui_section(natal),
+    def build(self, natal: NatalResult, postnatal: PostnatalResult, user: User, name: str = "") -> str:
+        who = f"{name}님" if name else "당신"
+        parts = [
+            self._guide(natal, postnatal, who),
+            "## 자료",
+            self._basic(user, name, postnatal.year, natal.hour_unknown),
+            self._palja(natal, who),
+            self._yongshin(natal, postnatal),
+            self._siun(postnatal),
+            self._zodiac(natal, postnatal),
+            self._fengshui(natal),
         ]
-        return "\n\n".join(s for s in sections if s)
+        return "\n\n".join(p for p in parts if p) + self._TAIL
 
-    def _intro(self) -> str:
+    # ── 쓰는 법 ──────────────────────────────────────────────────────────
+    def _guide(self, n: NatalResult, p: PostnatalResult, who: str) -> str:
+        character = (n.character or {}).get("title", "")
+        char_hint = f" 캐릭터 이름 '{character}'을 한 번 쓰세요." if character else ""
+        hour_rule = (
+            "- 출생시간 미상: 시주 없이 세 기둥으로 본 자료예요. 자녀·말년(시주) 이야기는 하지 말고, "
+            "시간을 알면 더 볼 수 있다고 한 번만 말하세요.\n"
+            if n.hour_unknown else ""
+        )
         return (
-            "# 사주 분석 레포트\n"
+            f"# {who} 사주 풀이 자료 ({p.year}년)\n"
             "\n"
-            "이 레포트는 사주명리학 룰 엔진이 산출한 데이터와 한국어 풀이를 정리한 것입니다. "
-            "종합조언은 제외했고, **만세력·용신·삼재·시운·십이지신·풍수** 5개 영역의 핵심을 담았습니다.\n"
+            "## 쓰는 법 (반드시 지킬 것)\n"
+            f"- 아래 자료는 사주까치 룰 엔진이 계산한 결론이에요. {who}은 결과 화면의 탭(만세력·신살·운성·용신·삼재·택시·시운·십이지신·풍수)에서 "
+            "이 내용을 카드로 이미 봤어요. 같은 문장을 되풀이하지 말고, 탭 사이를 잇는 한 편의 이야기와 '그래서 지금 무엇을 할지'를 쓰세요.\n"
+            "- 분량: 전체 800~1,000자. 아래 5개 섹션을 순서대로, 각 섹션은 `### 제목` 한 줄 뒤에 3~4문장(필요하면 불릿 최대 3개). 섹션의 첫 문장이 결론이에요.\n"
+            f"- 문체: 구어체 존댓말('~해요'). 상대는 '{who}'이라고 부르세요.\n"
+            "- 용어: 우리말을 먼저 쓰고 한자는 괄호 안에만 — 예 '물(水)', '겁재(劫財)', '을해(乙亥)'. 괄호 밖에 한자·중국어·일본어·영어를 쓰지 마세요. "
+            "'合'·'月'처럼 한 글자만 한자로 바꾸는 것도 안 돼요.\n"
+            "- 근거: 핵심 주장 뒤에 짧은 괄호 — 예 (겁재 해), (무재), (2028년 용신해). 달은 '이번 달' 대신 '10월'처럼 월 이름으로 쓰세요.\n"
+            "- 금지: 표(|), '사주에 따르면'·'데이터에 따르면'·'자료에 따르면' 같은 말, 자료에 없는 추측(질병 진단·단정 예언), 막연한 격려, 총평을 두 번 쓰는 것.\n"
+            f"{hour_rule}"
             "\n"
-            "## 해석 가이드\n"
+            "## 섹션\n"
+            f"1. `### 나는 어떤 사람` — 일간·기운 세기·오행의 많고 적음·십신 분포·신살을 한 사람의 캐릭터로.{char_hint}\n"
+            "2. `### 지금 흐름` — 대운·올해 세운·충합·삼재를 묶어 올해가 인생 흐름의 어느 자리인지.\n"
+            "3. `### 영역별 전략` — 시운의 '영역 점수'(재물운·관록운·학문운·재능운·인연운) 중 가장 높은 곳과 낮은 곳을 골라 할 일 하나·하지 말 일 하나. 달 이야기는 여기서 하지 않아요.\n"
+            "4. `### 앞으로 열두 달` — '택시' 자료(이직·직업, 연애·결혼, 이사·계약, 시험·공부, 투자·재물, 건강)에서 좋은 달 2~3개와 피할 달 1~2개를 '몇 월에 무엇'으로.\n"
+            "5. `### 개운 한 가지` — 용신 색·방향·습관과 풍수 길방 중에서 오늘 당장 할 수 있는 행동 하나.\n"
+            "마지막 줄에 `**한 줄 총평**: ` 뒤에 비유 한 문장을 쓰고, 그 뒤에는 아무것도 쓰지 마세요.\n"
             "\n"
-            "이 데이터를 바탕으로 사용자에게 **자연스러운 한국어로 통합 해석**을 제공해주세요.\n"
-            "\n"
-            "### 문체 규칙 (반드시 따를 것)\n"
-            "\n"
-            "- **각 섹션은 핵심 한 줄로 시작**: `👉 \"...\"` 형식의 굵은 결론 먼저, 근거는 뒤에\n"
-            "- **짧은 블록 유지**: 연속 3줄 넘는 문단 금지. 문단 대신 짧은 문장 + 불릿 조합 사용\n"
-            "- **근거 병기**: 핵심 주장 뒤에 반드시 `(정관 강함)`, `(무재 구조)` 같은 근거 괄호 추가\n"
-            "- **✔/❌ 가이드**: 해도 좋은 것 / 하지 말아야 할 것 구분에 사용\n"
-            "- **전문용어 금지**: 식상·관성 같은 용어는 '표현력', '직장운' 같이 먼저 쓰고 `(식상)` 괄호 병기\n"
-            "- **구어체 존댓말**: '~입니다', '~해요' 혼용 가능. '~하십시오'는 1회 이하\n"
-            "- **마크다운 표(`|...|`) 금지**: 나열은 한 줄에 하나씩 불릿으로 작성. 예: `- 5월 癸巳 (용신·충): 새 시도 좋음`\n"
-            "\n"
-            "### 다뤄야 할 8개 섹션\n"
-            "\n"
-            "1. **본질·자아** — 일간·일주·십이운성·음양을 묶어 '이 사람이 어떤 사람인지' 한 단락\n"
-            "2. **에너지 분석** — 오행 과다·결핍 + 십신 카테고리 결핍(無財·無印 등)이 만드는 삶의 패턴\n"
-            "3. **신살의 힘** — 보유 신살 콤보의 강점·주의점. 없으면 생략\n"
-            "4. **올해 핵심 전략** — 세운+대운 십신, 충·합, 영역점수를 통합한 전략 방향\n"
-            "5. **재물·성취** — 재성 유무 + 영역점수 + 가까운 용신해를 쓴 실질 조언\n"
-            "6. **월별 상세 가이드** — 다가올 6개월 월운에서 충·용신·전환점만 짚기 (불릿 형식)\n"
-            "7. **건강·심리** — 오행 과다·결핍의 신체·심리 영향 + 실천 처방 1~2가지\n"
-            "8. **풍수·개운법** — 길/흉 방위 + 결핍 오행 보완 + 추천 인맥 띠\n"
-            "\n"
-            "마지막에 **메타포 한 줄 총평**: 이 사람의 사주를 비유로 압축 + 지금 당장 할 수 있는 행동 하나.\n"
-            "막연한 격려 금지. 데이터에 근거한 구체적 지침으로 마무리하세요."
+            "## 형식 (이 뼈대를 그대로 채우세요 — 제목 줄 `### `을 빼먹지 마세요)\n"
+            "### 나는 어떤 사람\n(3~4문장)\n\n### 지금 흐름\n(3~4문장)\n\n### 영역별 전략\n(3~4문장)\n\n"
+            "### 앞으로 열두 달\n(3~4문장)\n\n### 개운 한 가지\n(3~4문장)\n\n**한 줄 총평**: (비유 한 문장)"
         )
 
-    def _user_section(self, user: User, name: str, year: int) -> str:
+    _TAIL = "\n\n(답은 처음부터 끝까지 한국어로만 쓰세요. 중국어 문장이 한 줄이라도 섞이면 안 돼요.)"
+
+    # ── 자료 ─────────────────────────────────────────────────────────────
+    def _basic(self, user: User, name: str, year: int, hour_unknown: bool) -> str:
         gender = "남성" if user.gender == Gender.MALE else "여성"
-        birth = user.birth_dt.strftime("%Y-%m-%d %H:%M")
-        return (
-            "## 기본 정보\n"
-            f"- 이름: {name or '(미입력)'}\n"
-            f"- 성별: {gender}\n"
-            f"- 생년월일시: {birth}\n"
-            f"- 분석 연도: {year}년"
-        )
+        birth = user.birth_dt.strftime("%Y-%m-%d") + (" (시간 미상)" if hour_unknown else user.birth_dt.strftime(" %H:%M"))
+        return f"### 기본\n- 이름 {name or '(미입력)'} · {gender} · {birth} · 분석 연도 {year}년"
 
-    def _summary_section(self, p: PostnatalResult) -> str:
-        if not p.summary:
-            return ""
-        sm = p.summary
-        rows = [("나", sm.me), ("신살·운성", sm.energy), ("용신·삼재", sm.yongshin), ("택시(擇時)", sm.timing), ("올해", sm.year), ("이번 달", sm.month), ("오늘", sm.today), ("조심", sm.caution), ("십이지신", sm.zodiac), ("풍수", sm.fengshui)]
-        lines = [
-            "## 까치 한눈에 (룰 엔진 다섯 줄 요약)",
-            "",
-            "사용자는 결과 화면 맨 위에서 아래 다섯 줄을 먼저 봅니다. 통합 해석의 첫 문단은 이 결론과 어긋나지 않아야 하며, 같은 말을 반복하지 말고 근거와 행동을 덧붙이세요.",
-            "",
-        ]
-        lines += [f"- {label}: {text}" for label, text in rows if text]
-        return "\n".join(lines)
-
-    def _manseryeok_section(self, n: NatalResult) -> str:
-        lines = ["## 만세력(萬歲曆) — 사주팔자 8글자", ""]
-        if n.hour_unknown:
-            lines += ["> 출생시간 미상 — 시주(時柱)를 제외한 세 기둥(三柱) 6글자 기준입니다. 자녀·말년(시주) 영역은 언급하지 말고, 시간을 알면 더 볼 수 있다고 한 번만 안내하세요.", ""]
-        lines.append("### 4기둥(四柱)")
-        for i, p in enumerate(n.pillars):
-            stem, branch = (p[0], p[1]) if len(p) >= 2 else ("", "")
-            stem_kor = n.pillar_stems_korean[i] if i < len(n.pillar_stems_korean) else ""
-            branch_kor = n.pillar_branches_korean[i] if i < len(n.pillar_branches_korean) else ""
-            stem_el = n.pillar_elements[i].get("stem_element", "") if i < len(n.pillar_elements) else ""
-            branch_el = n.pillar_elements[i].get("branch_element", "") if i < len(n.pillar_elements) else ""
-            day_marker = " ← 일간(나)" if i == 2 else ""
-            lines.append(
-                f"- {_PILLAR_LABELS[i]}: {p}({stem_kor}{branch_kor}) — 천간 {stem}({stem_el}) / 지지 {branch}({branch_el}){day_marker}"
-            )
-        lines.append(f"- 일간 음양: {n.day_stem_yin_yang}")
-
-        lines.extend(["", "### 오행(五行) 분포"])
-        for el in ("木", "火", "土", "金", "水"):
-            lines.append(f"- {el}: {n.element_stats.get(el, 0)}개")
-        if n.pillar_summary:
-            lines.append(f"\n> {n.pillar_summary}")
-
-        if n.sipsin:
-            lines.extend(["", "### 십신(十神)"])
-            for s in n.sipsin:
-                lines.append(self._format_sipsin_entry(s))
-            if n.narratives.get("sipsin_story"):
-                lines.append(f"\n> {n.narratives['sipsin_story']}")
-
-            lines.extend(["", "### 십신 카테고리 분포 (5그룹)"])
-            for label, role, members in _SIPSIN_GROUPS:
-                count = sum(1 for s in n.sipsin if s.get("sipsin_name") in members)
-                if count == 0:
-                    note = _SIPSIN_MISSING_NOTE.get(label, "")
-                    lines.append(f"- {label}: 0개 ⚠ {note}")
-                else:
-                    intensity = " (강세)" if count >= 3 else (" (보통)" if count == 2 else "")
-                    lines.append(f"- {label}: {count}개 — {role}{intensity}")
-
-        if n.sibi_unseong:
-            lines.extend(["", "### 십이운성(十二運星)"])
-            for u in n.sibi_unseong:
-                lines.append(
-                    f"- {u.get('pillar','')}: {u.get('unseong_korean','')}({u.get('unseong_name','')})"
-                    f" — {u.get('meaning','')} (강도: {u.get('strength','')})"
-                )
-            if n.narratives.get("unseong_story"):
-                lines.append(f"\n> {n.narratives['unseong_story']}")
-
-        if n.sinsal:
-            lines.extend(["", "### 신살(神殺)"])
-            for ss in n.sinsal:
-                lines.append(f"- {ss.get('branch','')}: {ss.get('sinsal_korean','')} — {ss.get('meaning','')}")
-            if n.narratives.get("sinsal_narrative"):
-                lines.append(f"\n> {n.narratives['sinsal_narrative']}")
-
-        if n.jizan_gan:
-            lines.extend(["", "### 지장간(地藏干)"])
-            for i, group in enumerate(n.jizan_gan):
-                if not group:
-                    continue
-                items = [
-                    f"{g.get('stem','')}({g.get('stem_korean','')}, {g.get('weight',0)}일, "
-                    f"{g.get('sipsin_name','')}, {g.get('role','')})"
-                    for g in group
-                ]
-                lines.append(f"- {_PILLAR_LABELS[i]}: {', '.join(items)}")
-
-        if any(n.gongmang):
-            lines.extend(["", "### 공망(空亡)"])
-            gongmang_pillars = [_PILLAR_LABELS[i] for i, g in enumerate(n.gongmang) if g]
-            lines.append(f"- 공망인 자리: {', '.join(gongmang_pillars)}")
-
-        if n.sibi_sinsal:
-            lines.extend(["", "### 십이신살(十二神殺)"])
-            pairs = [
-                f"{_PILLAR_LABELS[i]}: {n.sibi_sinsal[i]}"
-                for i in range(min(4, len(n.sibi_sinsal)))
-                if n.sibi_sinsal[i]
-            ]
-            if pairs:
-                lines.append("- " + " / ".join(pairs))
-
-        if n.personality:
-            lines.extend(["", "### 성격 분석"])
-            lines.extend(self._blocks_to_lines(n.personality))
-
-        if n.element_balance:
-            lines.extend(["", "### 오행 균형 풀이"])
-            lines.extend(self._blocks_to_lines(n.element_balance))
-
-        extra = []
-        if n.narratives.get("pillar_tip"):
-            extra.append(f"> 사주팔자 풀이: {n.narratives['pillar_tip']}")
-        if n.narratives.get("ohaeng_tip"):
-            extra.append(f"> 오행 풀이: {n.narratives['ohaeng_tip']}")
-        if extra:
-            lines.append("")
-            lines.extend(extra)
-
-        return "\n".join(lines)
-
-    def _yongshin_samjae_section(self, n: NatalResult, p: PostnatalResult) -> str:
-        lines = ["## 용신·삼재(用神·三災)", ""]
-        lines.append("### 신강·신약(身強·身弱)")
-        lines.append(f"- {n.strength_label} (기운 {n.strength_pct:g}%, 50% 이상이면 신강)")
+    def _palja(self, n: NatalResult, who: str) -> str:
+        lines = ["### 사주팔자"]
+        cols = []
+        for i, g in enumerate(n.pillars):
+            sk = n.pillar_stems_korean[i] if i < len(n.pillar_stems_korean) else ""
+            bk = n.pillar_branches_korean[i] if i < len(n.pillar_branches_korean) else ""
+            cols.append(f"{_PILLARS[i]} {sk}{bk}({g})" + (" ← 일간=나" if i == 2 else ""))
+        lines.append(("- 세 기둥(三柱) · 시주 없음: " if n.hour_unknown else "- 네 기둥: ") + " · ".join(cols))
+        elems = " ".join(f"{_ELEMENT_KOR[e]}{n.element_stats.get(e, 0)}" for e in ("木", "火", "土", "金", "水"))
+        lines.append(f"- 일간 {n.day_stem_korean}({n.day_stem}) {n.day_stem_yin_yang} · 오행 분포 {elems}" + (f" · {n.pillar_summary}" if n.pillar_summary else ""))
+        strength = f"- 기운 세기 {n.strength_pct:g}% {n.strength_label}"
         if n.narratives.get("strength_tip"):
-            lines.append(f"> {n.narratives['strength_tip']}")
-
-        lines.extend(["", "### 용신·기신(用神·忌神)"])
-        lines.append(
-            f"- 용신(用神): {n.yongshin_info.get('name','')}({n.yongshin_info.get('meaning','')})"
-            " — 균형을 잡아주는 도움 오행"
-        )
-        lines.append(
-            f"- 기신(忌神): {n.kisin_info.get('name','')}({n.kisin_info.get('meaning','')})"
-            " — 멀리해야 할 오행"
-        )
-        if n.narratives.get("yongshin_tip"):
-            lines.append(f"> {n.narratives['yongshin_tip']}")
-
-        if n.yongshin_guide:
-            lines.extend(["", "### 용신 활용 가이드"])
-            for k, label in _GUIDE_KEYS:
-                v = n.yongshin_guide.get(k, "")
-                if v:
-                    lines.append(f"- {label}: {v}")
-        if n.kisin_guide:
-            lines.extend(["", "### 기신 회피 가이드"])
-            for k, label in _GUIDE_KEYS:
-                v = n.kisin_guide.get(k, "")
-                if v:
-                    lines.append(f"- {label}: {v}")
-
-        if p.yongshin:
-            lines.extend(["", "### 용신 풀이"])
-            lines.extend(self._blocks_to_lines(p.yongshin))
-
-        lines.extend(["", "### 삼재(三災) — 12년 주기 액운기"])
-        if p.samjae:
-            lines.append(
-                f"- 현재 상태: {p.samjae.get('type','')} 흐름"
-                f" (생년 지지 {p.samjae.get('birth_branch','')}, 올해 지지 {p.samjae.get('year_branch','')})"
-            )
+            strength += f" — {n.narratives['strength_tip']}"
+        lines.append(strength)
+        c = n.character or {}
+        if c.get("title"):
+            jobs = "·".join(c.get("jobs") or [])
+            lines.append(f"- 캐릭터 '{c['title']}'({c.get('name', '')}) — {c.get('line', '')}" + (f" · 어울리는 일 {jobs}" if jobs else ""))
+        if n.sipsin:
+            groups = []
+            for label, role, members, missing in _SIPSIN_GROUPS:
+                cnt = sum(1 for s in n.sipsin if s.get("sipsin_name") in members)
+                if cnt == 0:
+                    groups.append(f"{label} 0({missing})")
+                else:
+                    groups.append(f"{label} {cnt}" + ("(강세)" if cnt >= 3 else "") + f" {role}")
+            line = "- 십신: " + " · ".join(groups)
+            if n.narratives.get("sipsin_story"):
+                line += f"\n  - {n.narratives['sipsin_story']}"
+            lines.append(line)
+        if n.sibi_unseong:
+            lines.append("- 십이운성: " + " · ".join(
+                f"{u.get('pillar', '')} {u.get('unseong_korean', '')}({u.get('unseong_name', '')})" for u in n.sibi_unseong
+            ))
+        if n.sinsal:
+            seen: dict[str, str] = {}
+            for ss in n.sinsal:
+                seen.setdefault(ss.get("sinsal_korean", ""), "·".join(str(ss.get("meaning", "")).split("·")[:2]))
+            lines.append("- 신살: " + " · ".join(f"{k}({v})" for k, v in seen.items() if k))
         else:
-            lines.append("- 올해는 삼재 시기가 아닙니다.")
-        if p.samjae_fortune:
-            lines.append("")
-            lines.extend(self._blocks_to_lines(p.samjae_fortune))
-
+            lines.append("- 신살: 없음")
+        gm = [_PILLARS[i] for i, g in enumerate(n.gongmang) if g and i < 4]
+        if gm:
+            lines.append(f"- 공망(空亡): {'·'.join(gm)} — 그 자리의 기운이 비어 담담한 태도가 좋은 자리")
         return "\n".join(lines)
 
-    def _siun_section(self, p: PostnatalResult) -> str:
-        lines = ["## 시운(時運) — 대운·세운·월운", ""]
+    def _yongshin(self, n: NatalResult, p: PostnatalResult) -> str:
+        yi, ki = n.yongshin_info, n.kisin_info
+        yg, kg = n.yongshin_guide or {}, n.kisin_guide or {}
+        lines = ["### 용신·삼재"]
+        lines.append(
+            f"- 용신 {yi.get('meaning', '')}({yi.get('name', '')}) — 색 {yg.get('color', '')} · 방향 {yg.get('direction', '')} · "
+            f"일상 {yg.get('daily', '')} · 직업 {yg.get('career', '')}"
+        )
+        lines.append(f"- 기신 {ki.get('meaning', '')}({ki.get('name', '')}) — 피할 색 {kg.get('color', '')} · 방향 {kg.get('direction', '')}")
+        if n.narratives.get("yongshin_tip"):
+            lines.append(f"- {n.narratives['yongshin_tip'].replace('**', '')}")
+        elif p.nearest_yongshin_year:
+            lines.append(f"- 가까운 용신의 해 {p.nearest_yongshin_year}년")
+        if p.samjae:
+            try:
+                birth_b, year_b = Branch[p.samjae.get("birth_branch", "")].korean, Branch[p.samjae.get("year_branch", "")].korean
+            except KeyError:
+                birth_b, year_b = p.samjae.get("birth_branch", ""), p.samjae.get("year_branch", "")
+            lines.append(f"- 삼재: {p.year}년은 {p.samjae.get('type', '')} (생년 지지 {birth_b}({p.samjae.get('birth_branch', '')}) · 올해 {year_b}({p.samjae.get('year_branch', '')}))")
+        else:
+            lines.append(f"- 삼재: {p.year}년은 삼재 아님")
+        return "\n".join(lines)
 
-        lines.append("### 현재 대운(大運)")
+    def _siun(self, p: PostnatalResult) -> str:
+        lines = ["### 시운(時運)"]
         if p.current_daeun:
             cd = p.current_daeun
-            tag = " — 용신 기운 있음" if p.yongshin_in_daeun else ""
-            lines.append(f"- {cd['ganji']} ({cd['start_age']}세 ~ {cd['end_age']}세){tag}")
-        else:
-            lines.append("- 현재 대운 정보 없음")
-
-        if p.daeun_sipsin:
-            lines.extend(["", "### 대운 천간·지지 십신"])
-            for s in p.daeun_sipsin:
-                lines.append(self._format_sipsin_entry(s))
-
+            sips = " · ".join(f"{s.get('sipsin_korean', '')}({s.get('domain', '')})" for s in p.daeun_sipsin) if p.daeun_sipsin else ""
+            lines.append(
+                f"- 대운(10년): 현재 {kor_ganji(cd['ganji'])} {cd['start_age']}~{cd['end_age']}세 — {sips}"
+                + (" · 용신 기운 있음" if p.yongshin_in_daeun else "")
+            )
         if p.daeun:
-            lines.extend(["", "### 대운 전체 흐름"])
-            for d in p.daeun:
-                marker = " ★현재" if d.get("is_current") else ""
-                yong = " ✨용신" if d.get("has_yongshin") else ""
-                lines.append(f"- {d['ganji']} ({d['start_age']}~{d['end_age']}세){marker}{yong}")
-
-        lines.extend(["", f"### {p.year}년 세운(歲運)"])
-        seun_tag = " — 용신 기운 있음" if p.yongshin_in_seun else ""
-        lines.append(f"- 세운 간지: {p.seun_ganji}{seun_tag}")
-        lines.append("- 천간: " + self._format_sipsin_entry(p.seun_stem, prefix=False))
-        lines.append("- 지지: " + self._format_sipsin_entry(p.seun_branch, prefix=False))
-
-        clashes_combines = [
-            ("세운 충", p.seun_clashes),
-            ("세운 합", p.seun_combines),
-            ("대운 충", p.daeun_clashes),
-            ("대운 합", p.daeun_combines),
-        ]
-        if any(items for _, items in clashes_combines):
-            lines.extend(["", "### 충(衝)·합(合)"])
-            narrative_to_labels: dict[str, list[str]] = {}
-            for label, items in clashes_combines:
-                for c in items:
-                    text = c.get("narrative") or f"{c.get('incoming','')}↔{c.get('target','')}"
-                    narrative_to_labels.setdefault(text, []).append(label)
-            for text, labels in narrative_to_labels.items():
-                lines.append(f"- {' / '.join(labels)}: {text}")
-
-        if p.upcoming_months:
-            lines.extend(["", "### 다가올 6개월 월운(月運)"])
-            for m in p.upcoming_months[:6]:
-                marker = " ✨용신" if m.get("matches_yongshin") else ""
-                lines.append(
-                    f"- {m['year']}년 {m['month']}월 {m['ganji']} "
-                    f"(천간 {m.get('stem_element','')} / 지지 {m.get('branch_element','')}){marker}"
-                )
-
-        if p.timing:
-            lines.extend(["", "### 언제가 좋을까 — 영역별 12개월 타이밍 (룰 엔진)", "사용자가 '언제'를 물으면 아래 달을 근거로 답하세요."])
-            lines += [f"- {line}" for line in timing_digest(p.timing)]
-
+            flow = " ".join(
+                f"{kor_ganji(d['ganji'])}{d['start_age']}~{d['end_age']}{'★' if d.get('is_current') else ''}{'✨' if d.get('has_yongshin') else ''}"
+                for d in p.daeun
+            )
+            lines.append(f"- 대운 흐름(★현재 ✨용신): {flow}")
+        seun = f"- 올해 {p.year}년 {kor_ganji(p.seun_ganji)}: 천간 {p.seun_stem.get('sipsin_korean', '')} · 지지 {p.seun_branch.get('sipsin_korean', '')}"
+        if p.seun_stem.get("timing_meaning"):
+            seun += f" — {p.seun_stem['timing_meaning']}"
+        seun += " · 용신 기운 " + ("있음" if p.yongshin_in_seun else "없음")
+        lines.append(seun)
+        texts: list[str] = []
+        for label, items in (("세운 충", p.seun_clashes), ("세운 합", p.seun_combines), ("대운 충", p.daeun_clashes), ("대운 합", p.daeun_combines)):
+            for c in items:
+                t = c.get("narrative") or f"{c.get('incoming', '')}↔{c.get('target', '')}"
+                if t and all(t not in x for x in texts):
+                    texts.append(f"{label}: {t}")
+        lines.append("- 충·합: " + (" / ".join(texts[:4]) if texts else "올해 특별한 충·합 없음"))
         if p.domain_scores:
-            lines.extend(["", "### 영역별 운세 점수"])
-            for domain, score in p.domain_scores.items():
-                lines.append(
-                    f"- {domain}: {score.get('score','')}점 ({score.get('level','')})"
-                    f" — {score.get('reason','')}"
-                )
-
-        if p.nearest_yongshin_year:
-            lines.extend(["", f"### 가까운 용신의 해\n- {p.nearest_yongshin_year}년"])
-
-        for title, blocks in [
-            ("올해 운세 해석", p.annual_fortune),
-            ("영역별 운세 해석", p.fortune_by_domain),
-            ("대운 흐름 해석", p.major_fortune),
-            ("인간관계 해석", p.relationships),
-        ]:
-            if blocks:
-                lines.extend(["", f"### {title}"])
-                lines.extend(self._blocks_to_lines(blocks))
-
+            lines.append("- 영역 점수: " + " · ".join(
+                f"{d} {v.get('score', '')}({_LEVEL_KOR.get(v.get('level', ''), v.get('level', ''))}, {str(v.get('reason', ''))[:30]})"
+                for d, v in p.domain_scores.items()
+            ))
+        if p.upcoming_months:
+            lines.append("- 이번 달부터 6개월: " + " · ".join(
+                f"{m['month']}월 {kor_ganji(m['ganji'])} {m.get('stem_sipsin', {}).get('sipsin_korean', '')}{'✨용신' if m.get('matches_yongshin') else ''}"
+                for m in p.upcoming_months[:6]
+            ))
+        if p.timing:
+            lines.append("- 택시(擇時, 앞으로 12개월 영역별 좋은 달·피할 달):")
+            lines += [f"  - {line}" for line in timing_digest(p.timing)]
         return "\n".join(lines)
 
-    def _zodiac_section(self, n: NatalResult, p: PostnatalResult) -> str:
+    def _zodiac(self, n: NatalResult, p: PostnatalResult) -> str:
         z = n.zodiac
         if not z:
             return ""
-        lines = ["## 십이지신(十二支神)", ""]
-
         info = z.year_info
-        lines.append("### 년주(年柱) 띠")
-        lines.append(f"- 띠: {info.korean}({z.year_branch}) — 키워드: {info.keyword}")
-        if info.traits:
-            lines.append(f"- 기질: {', '.join(info.traits)}")
-        if info.strength:
-            lines.append(f"- 강점: {info.strength}")
-        if info.weakness:
-            lines.append(f"- 약점: {info.weakness}")
-
-        lines.extend(["", "### 4기둥 띠"])
-        for pz in z.pillar_zodiacs:
-            mark = " ← 년주(사회적 자아)" if pz.is_year else ""
-            lines.append(
-                f"- {pz.pillar_label}: {pz.info.korean}({pz.branch}) — 역할: {pz.role},"
-                f" 기운: {pz.info.keyword}{mark}"
-            )
-
-        if z.pillar_pairs:
-            lines.extend(["", "### 4기둥 충·합 관계"])
-            for pp in z.pillar_pairs:
-                lines.append(
-                    f"- {pp.pillar_label_a} {pp.zodiac_a}({pp.branch_a}) ↔ "
-                    f"{pp.pillar_label_b} {pp.zodiac_b}({pp.branch_b}): {pp.relation_label}"
-                )
-        if z.pillar_tip:
-            lines.append(f"\n> {z.pillar_tip}")
-
-        rel_groups: dict[str, list[str]] = {}
+        lines = ["### 십이지신", f"- 띠: {info.korean}띠({z.year_branch}) — {info.keyword}"]
+        groups: dict[str, list[str]] = {}
         for r in z.relations:
             if r.relation in ("나", "보통"):
                 continue
-            rel_groups.setdefault(r.relation_label, []).append(f"{r.info.korean}({r.branch})")
-        if rel_groups:
-            lines.extend(["", "### 12띠 충합 분류 (년주 기준)"])
-            for label, items in rel_groups.items():
-                lines.append(f"- {label}: {', '.join(items)}")
-
-        if z.samhap:
-            lines.extend(["", "### 년주 삼합 그룹"])
-            lines.append(
-                f"- {z.samhap.label}: {', '.join(z.samhap.members)}"
-                f" (4기둥 안 포함: {'예' if z.samhap.in_pillars else '아니오'})"
-            )
-
+            groups.setdefault(r.relation_label, []).append(f"{r.info.korean}({r.branch})")
+        if groups:
+            lines.append("- 띠 관계: " + " · ".join(f"{k} {'·'.join(v)}" for k, v in groups.items()))
         if p.year_zodiac_relations:
-            lines.extend(["", "### 연도별 띠 흐름 (4년)"])
-            for r in p.year_zodiac_relations:
-                lines.append(
-                    f"- {r['year']}년 {r['kor']}띠({r['branch']}, {r['ganji']}): {r['relation']}"
-                    f" — {r['desc']}"
-                )
-            if p.year_zodiac_narrative:
-                lines.append(f"\n> {p.year_zodiac_narrative}")
-
+            lines.append("- 연도별: " + " · ".join(f"{r['year']} {r['kor']}띠 {r['relation']}" for r in p.year_zodiac_relations)
+                         + (f" — {p.year_zodiac_narrative}" if p.year_zodiac_narrative else ""))
         return "\n".join(lines)
 
-    def _fengshui_section(self, n: NatalResult) -> str:
+    def _fengshui(self, n: NatalResult) -> str:
         f = n.feng_shui
         if not f:
             return ""
-        lines = ["## 풍수(風水) — 본명괘 기반", ""]
-        lines.append("### 본명괘(本命卦)")
-        lines.append(f"- 괘 번호: {f.kua_number}")
-        lines.append(
-            f"- 8괘: {f.trigram.char}({f.trigram.reading}) — "
-            f"오행 {f.trigram.element_korean}({f.trigram.element})"
-        )
-        if f.trigram.description:
-            lines.append(f"- 의미: {f.trigram.description}")
-        group_kor = "동사명" if f.is_eastern else "서사명"
-        lines.append(f"- 그룹: {f.group} ({group_kor})")
-
-        if f.lucky_directions:
-            lines.extend(["", "### 길방(吉方)"])
-            for d in f.lucky_directions:
-                lines.append(f"- {d.kind_korean}({d.kind_han}): {d.direction} — {d.meaning}")
-
-        if f.unlucky_directions:
-            lines.extend(["", "### 흉방(凶方)"])
-            for d in f.unlucky_directions:
-                lines.append(f"- {d.kind_korean}({d.kind_han}): {d.direction} — {d.meaning}")
-            if f.avoid_advice:
-                lines.append(f"> {f.avoid_advice}")
-
-        if f.interior_intro or f.interior_tips:
-            lines.extend(["", "### 인테리어 팁"])
-            if f.interior_intro:
-                lines.append(f"> {f.interior_intro}")
-            for tip in f.interior_tips:
-                if tip.label:
-                    lines.append(f"- {tip.label}: {tip.text}")
-                else:
-                    lines.append(f"- {tip.text}")
-
+        lucky = " · ".join(f"{d.kind_korean} {d.direction}({d.meaning})" for d in f.lucky_directions)
+        unlucky = "·".join(d.direction for d in f.unlucky_directions)
+        lines = [
+            "### 풍수",
+            f"- 본명괘 {f.trigram.reading}({f.trigram.char})·{f.trigram.element_korean}({f.trigram.element}) {f.group} — 길방 {lucky} / 흉방 {unlucky}",
+        ]
+        tips = [t.label for t in f.interior_tips if t.label]
+        if tips:
+            lines.append("- 배치: " + " · ".join(tips))
         return "\n".join(lines)
-
-    @staticmethod
-    def _format_sipsin_entry(s: dict, prefix: bool = True) -> str:
-        char = s.get("char", "")
-        name = s.get("sipsin_name", "")
-        kor = s.get("sipsin_korean", "")
-        domain = s.get("domain", "")
-        head = f"{char} → {kor}({name})" if kor else f"{char} → {name}"
-        suffix = f" — {domain}" if domain else ""
-        return f"- {head}{suffix}" if prefix else f"{head}{suffix}"
-
-    @staticmethod
-    def _blocks_to_lines(blocks: list[InterpretBlock]) -> list[str]:
-        out: list[str] = []
-        for b in blocks:
-            if b.category:
-                out.append(f"**[{b.category}]**")
-            if b.description:
-                out.append(b.description)
-            for tip in b.tips:
-                if tip.label:
-                    out.append(f"- {tip.label}: {tip.text}")
-                else:
-                    out.append(f"- {tip.text}")
-            out.append("")
-        return out

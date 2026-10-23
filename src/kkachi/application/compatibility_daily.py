@@ -1,6 +1,12 @@
 from datetime import date
 
-from kkachi.application.fortune_rules import _get_day_stembrach, _get_solar_term, _is_son_eomneun_nal, _level_domain, compute_fortune
+from kkachi.application.fortune_rules import (
+    _get_day_stembrach,
+    _get_solar_term,
+    _is_son_eomneun_nal,
+    _level_domain,
+    compute_fortune,
+)
 from kkachi.domain.ganji import SAMHAP_GROUPS, Branch, Pillar
 from kkachi.domain.natal import NatalInfo
 

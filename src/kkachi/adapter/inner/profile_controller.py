@@ -3,8 +3,11 @@ from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from kkachi.adapter.inner.streaming import text_stream
+from kkachi.application.ai_report_service import AiReportService
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.feedback_port import FeedbackPort
 from kkachi.application.profile_service import ProfileService
@@ -154,6 +157,24 @@ async def analyze_profile(
         return await svc.analyze_profile(profile_id, req.year, member_id=member_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+class AiReportRequest(BaseModel):
+    year: int = 2026
+
+
+@profile_router.post("/{profile_id}/ai-report")
+@inject
+async def stream_ai_report(
+    member_id: UUID,
+    profile_id: UUID,
+    req: AiReportRequest,
+    svc: ProfileService = Depends(Provide[Container.profile_service]),
+    ai_svc: AiReportService = Depends(Provide[Container.ai_report_service]),
+) -> StreamingResponse:
+    """AI 풀이 스트림(프로필) — analyses 캐시에 글이 있으면 한 번에, 없으면 생성하며 끝나면 저장. Ollama가 꺼져 있으면 503."""
+    profile = await _owned_profile(svc, member_id, profile_id)
+    return await text_stream(ai_svc.stream_profile_analysis(profile, req.year))
 
 
 @profile_router.get("/{profile_id}/daily")
