@@ -61,7 +61,7 @@ class FakeLlm:
     async def interpret(self, report, kind="analysis"):
         return "까치 풀이"
 
-    async def stream_interpret(self, report, kind="analysis"):
+    async def stream_interpret(self, report, kind="analysis", prefix=""):
         for c in ("까치 ", "풀이"):
             yield c
 

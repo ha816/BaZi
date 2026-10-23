@@ -17,15 +17,15 @@ _KKACHI_SYSTEM = (
     "사용자가 읽기 쉬운 한국어 이야기로 바꿔 주는 일을 해요.\n"
     "- 반드시 한국어(한글)로만 쓰고, 한자는 우리말 뒤 괄호 안에만 — 예 물(水). 중국어·일본어·영어 단어는 쓰지 않아요.\n"
     "- 자료에 없는 사실을 지어내지 않아요. 표를 쓰지 않아요. '사주에 따르면'·'자료에 따르면' 같은 말을 쓰지 않아요.\n"
-    "- 자료 맨 앞 '쓰는 법'의 분량·섹션·문체를 그대로 따라요. 섹션 제목은 `### `로 시작하고, 마지막 줄은 한 줄 총평 하나예요."
+    "- 자료 맨 앞 '쓰는 법'의 분량·섹션·문체를 그대로 따라요. 섹션 제목은 `### `로 시작하고, 마지막 섹션에서 끝내요(총평·맺음말 없음)."
 )
 
 # kind별 시스템 프롬프트·출력 토큰 상한 — analysis: AI 풀이(/kkachi/stream-report), compat: 궁합 AI 해석(/compatibility/narrative)
-# 한국어는 qwen2.5에서 글자당 약 1토큰 — analysis 700~900자+마크다운 → 1200, compat 500~700자 → 900
+# qwen3.8은 한국어 글자당 약 0.8토큰 — analysis 1,000~1,200자+마크다운 → 1700, compat 900~1,200자 → 1600 (여유 포함)
 _SYSTEM = {"analysis": _KKACHI_SYSTEM, "compat": _KKACHI_SYSTEM}
-_NUM_PREDICT = {"chat": 500, "advice": 500, "analysis": 1200, "compat": 900}
+_NUM_PREDICT = {"chat": 500, "advice": 500, "analysis": 1700, "compat": 1600}
 _KEEP_ALIVE = "30m"  # 탭을 오가는 동안 모델을 내리지 않게(20GB 재적재 수십 초)
-_NUM_CTX = 8192  # AI 풀이 프롬프트 ≈3,300토큰 + 출력 1,200 — Ollama 기본 4096이면 앞부분이 잘린다
+_NUM_CTX = 8192  # AI 풀이 프롬프트 ≈2,900토큰 + 출력 1,700 — Ollama 기본 4096이면 앞부분이 잘린다
 
 
 class OllamaAdapter(LlmPort):
@@ -125,6 +125,14 @@ class OllamaAdapter(LlmPort):
         async for chunk in self._stream(self._payload(messages, "chat", True, await self._think()), timeout=120.0):
             yield chunk
 
-    async def stream_interpret(self, report: str, kind: str = "analysis") -> AsyncIterator[str]:
-        async for chunk in self._stream(self.interpret_payload(report, kind, think=await self._think()), timeout=300.0):
+    async def stream_interpret(self, report: str, kind: str = "analysis", prefix: str = "") -> AsyncIterator[str]:
+        """prefix가 있으면 assistant 메시지로 넣어 모델이 그 뒤를 이어 쓰게 하고, 스트림 맨 앞에 prefix를 내보낸다."""
+        payload = self.interpret_payload(report, kind, think=await self._think())
+        if prefix:
+            payload["messages"].append({"role": "assistant", "content": prefix})
+        first = True
+        async for chunk in self._stream(payload, timeout=300.0):
+            if first and prefix:
+                yield prefix
+            first = False
             yield chunk

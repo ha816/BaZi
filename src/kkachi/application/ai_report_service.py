@@ -14,7 +14,10 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from uuid import UUID
 
-from kkachi.application.compatibility_prompt import NARRATIVE_PROMPT_VERSION
+from kkachi.application.compatibility_prompt import (
+    NARRATIVE_FIRST_HEADING,
+    NARRATIVE_PROMPT_VERSION,
+)
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.hanja import koreanize_stream
 from kkachi.application.kkachi_service import KkachiService
@@ -22,7 +25,11 @@ from kkachi.application.llm_stream_hub import LlmStreamHub
 from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.llm_port import LlmPort
-from kkachi.application.report_builder import REPORT_PROMPT_VERSION, LlmReportBuilder
+from kkachi.application.report_builder import (
+    REPORT_FIRST_HEADING,
+    REPORT_PROMPT_VERSION,
+    LlmReportBuilder,
+)
 from kkachi.application.util.compatibility_meta import RelationType
 from kkachi.domain.profile import Profile
 from kkachi.domain.user import User
@@ -82,7 +89,7 @@ class AiReportService:
     async def _produce_analysis(self, user: User, name: str, year: int) -> AsyncIterator[str]:
         llm = self._llm()
         report = await self.build_analysis_report(user, name, year)
-        async for chunk in koreanize_stream(llm.stream_interpret(report, "analysis")):
+        async for chunk in koreanize_stream(llm.stream_interpret(report, "analysis", prefix=REPORT_FIRST_HEADING)):
             yield chunk
 
     async def stream_analysis(self, user: User, name: str, year: int) -> AsyncIterator[str]:
@@ -125,7 +132,7 @@ class AiReportService:
     async def _produce_compat(self, user1: User, user2: User, year: int, relation_type: RelationType) -> AsyncIterator[str]:
         llm = self._llm()
         prompt = self._compat.build_narrative_prompt(user1, user2, year, relation_type)
-        async for chunk in koreanize_stream(llm.stream_interpret(prompt, "compat")):
+        async for chunk in koreanize_stream(llm.stream_interpret(prompt, "compat", prefix=NARRATIVE_FIRST_HEADING)):
             yield chunk
 
     async def stream_compat(

@@ -2,8 +2,7 @@
 import ReactMarkdown from "react-markdown";
 import type { NatalResult, PostnatalResult, Summary } from "@/types/analysis";
 import type { AiReportState } from "@/lib/useAiReport";
-import SectionHeader from "@/components/SectionHeader";
-import KkachiTip from "@/components/KkachiTip";
+import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
 
 interface Props {
   natal: NatalResult;
@@ -19,12 +18,23 @@ const SUMMARY_ROWS: Array<[keyof Summary, string]> = [
   ["month", "이번 달"], ["today", "오늘"], ["caution", "조심"], ["zodiac", "십이지신"], ["fengshui", "풍수"],
 ];
 
+// 한 줄 총평은 보여 주지 않는다(2026-10-23, 품질이 낮아 사용자 결정으로 제거) — 프롬프트에서 뺐고, 혹시 섞여 오는 줄은 떼어 버린다
+const VERDICT_LINE = /^[ \t]*(?:[-*][ \t]*)?\*\*한 줄 총평\*\*[ \t]*[:：][ \t]*(.+)$/m;
+
+function splitVerdict(text: string): { verdict: string; body: string } {
+  const m = text.match(VERDICT_LINE);
+  if (!m) return { verdict: "", body: text };
+  const body = (text.slice(0, m.index) + text.slice((m.index ?? 0) + m[0].length)).replace(/\n[ \t]*-{3,}[ \t]*\n*$/, "\n").trimEnd();
+  return { verdict: m[1].replace(/\*\*/g, "").trim(), body };
+}
+
 const RETRY_CLASS = "ml-1 px-2.5 py-1 rounded-lg border border-[var(--color-border-light)] text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-gold)] hover:border-[var(--color-gold)] transition-colors";
 
 export default function AiTab({ postnatal, name, ai }: Props) {
-  const text = ai?.text ?? "";
+  const rawText = ai?.text ?? "";
+  const { body: text } = splitVerdict(rawText);
   const status = ai?.status ?? "idle";
-  const waiting = (status === "idle" || status === "streaming") && !text;
+  const waiting = (status === "idle" || status === "streaming") && !rawText;
   const summary = postnatal.summary;
   const rows = summary
     ? SUMMARY_ROWS.map(([key, label]) => [label, summary[key]] as const).filter(([, v]) => !!v)
@@ -33,15 +43,13 @@ export default function AiTab({ postnatal, name, ai }: Props) {
   return (
     <div className="space-y-4">
       <div className="slide-card">
-        <div className="slide-card__header">
-          <SectionHeader title="까치의 AI 사주 풀이" noMargin />
-        </div>
+        <CollapsibleSectionHeader title="까치의 AI 사주 풀이">
+          <p>
+            {name ? `${name}님의 ` : ""}사주팔자·오행·용신·대운·세운 데이터를 까치가 한 편의 글로 풀어드려요.
+          </p>
+        </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-3">
-          <KkachiTip>
-            {name ? `${name}님의 ` : ""}사주팔자·오행·용신·대운·세운 데이터를 까치가 한 편의 글로 풀어드려요.
-            룰 엔진이 계산한 구조 위에 AI가 이야기를 입혀요.
-          </KkachiTip>
 
           {status === "unavailable" && !text && (
             <p className="text-sm text-[var(--color-ink-faint)] leading-relaxed">

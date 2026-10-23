@@ -35,7 +35,7 @@ class FakeLlm:
     async def interpret(self, report, kind="analysis"):
         return "까치 풀이"
 
-    async def stream_interpret(self, report, kind="analysis"):
+    async def stream_interpret(self, report, kind="analysis", prefix=""):
         self.calls.append((kind, report))
         for c in ("까치 ", "풀이 ", f"#{len(self.calls)}"):
             await asyncio.sleep(0)
