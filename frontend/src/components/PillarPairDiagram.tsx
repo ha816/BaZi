@@ -129,6 +129,9 @@ interface Props {
   p1: PillarSnapshot;
   p2: PillarSnapshot;
   relations: PillarRelation[];
+  /** 가로 행 왼쪽 이름 칸 — "○○님" (2026-10-23, 누구의 팔자인지 보이게). 없으면 이름 칸 없이 */
+  name1?: string;
+  name2?: string;
   /** 등장 연출 — 시→일→월→년 기둥마다 위(첫 분)·아래(둘째 분) 글자가 도장처럼 찍히고, 그 기둥의 합·충 배지가 뒤따라 튀어나온다.
    *  분석 사주팔자(PillarDetail animate)와 같은 ink-stamp */
   animate?: boolean;
@@ -203,7 +206,11 @@ function formatLabel(label: string, kind: string): string {
   return `${ch1}${ch2}(${kor1}${kor2})${rest}`;
 }
 
-export default function PillarPairDiagram({ p1, p2, relations, animate = false }: Props) {
+export default function PillarPairDiagram({ p1, p2, relations, name1, name2, animate = false }: Props) {
+  const showNames = !!(name1 || name2);
+  const nameCell = (text: string) => (
+    <th scope="row" className="py-2 px-1 text-[11px] font-semibold text-[var(--color-ink)] text-center break-keep leading-tight">{text}</th>
+  );
   // COLUMN_HEADERS 순서(시→일→월→년, 화면 왼쪽부터)대로
   const colAt = (col: number, extra: number) => (animate ? col * COL_GAP + extra : null);
   const samePillarRels = (kor: string) =>
@@ -217,8 +224,15 @@ export default function PillarPairDiagram({ p1, p2, relations, animate = false }
     <div className="space-y-3">
     <div className="rounded-xl border border-[var(--color-border-light)] overflow-hidden">
       <table className="w-full text-center border-collapse" style={{ tableLayout: "fixed" }}>
+        {showNames && (
+          <colgroup>
+            <col style={{ width: "3.75rem" }} />
+            {COLUMN_HEADERS.map(({ kor }) => <col key={kor} />)}
+          </colgroup>
+        )}
         <thead>
           <tr style={{ backgroundColor: "var(--color-ivory)" }}>
+            {showNames && <th aria-hidden />}
             {COLUMN_HEADERS.map(({ kor, han }) => (
               <th
                 key={kor}
@@ -231,6 +245,7 @@ export default function PillarPairDiagram({ p1, p2, relations, animate = false }
         </thead>
         <tbody>
           <tr className="border-t border-[var(--color-border-light)]">
+            {showNames && nameCell(`${name1 || "첫 번째 분"}님`)}
             {COLUMN_HEADERS.map(({ kor, origIndex }, col) => (
               <td key={`p1-${kor}`} className="py-2 px-1">
                 <PersonCell pillar={p1.pillars[origIndex] ?? ""} delay={colAt(col, 0)} />
@@ -238,6 +253,7 @@ export default function PillarPairDiagram({ p1, p2, relations, animate = false }
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]">
+            {showNames && nameCell(`${name2 || "두 번째 분"}님`)}
             {COLUMN_HEADERS.map(({ kor, origIndex }, col) => (
               <td key={`p2-${kor}`} className="py-2 px-1">
                 <PersonCell pillar={p2.pillars[origIndex] ?? ""} delay={colAt(col, P2_LAG)} />
@@ -245,6 +261,7 @@ export default function PillarPairDiagram({ p1, p2, relations, animate = false }
             ))}
           </tr>
           <tr className="border-t border-[var(--color-border-light)]" style={{ backgroundColor: "var(--color-ivory)" }}>
+            {showNames && <th scope="row" className="py-1.5 px-1 text-[10px] font-medium text-[var(--color-ink-muted)] text-center">관계</th>}
             {COLUMN_HEADERS.map(({ kor }, col) => (
               <td key={`rel-${kor}`} className="py-1.5 px-1">
                 <RelationCell rels={samePillarRels(kor)} delay={colAt(col, BADGE_AT)} />
