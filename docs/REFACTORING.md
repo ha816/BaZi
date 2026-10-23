@@ -64,16 +64,20 @@ CLAUDE.md의 *Anti-bloat rules* 가 **새 코드를 짤 때**의 룰이라면, �
 - Port (ABC) → Adapter (구현) 한 방향. Application 레이어가 Adapter를 직접 import 금지 (DI Container 경유)
 - Controller (`adapter/inner/`) 는 thin — 검증/HTTP 변환만, 비즈니스 로직 금지
 
-## 5. 현재 hot spot (2026-09 기준)
+## 5. 현재 hot spot (2026-10-23 기준)
 
-알면 우선순위 판단이 쉬워진다. 5월 표의 NatalTab(970→27)·fortune_service(462→97)·natal_adapter(447→192) 분할은 완료됨. CompatibilityResult(679→~110, `components/compatibility/` 7탭)도 2026-10-02 완료. compatibility_service(1153→597: 문장 표 `util/compatibility_meta` · 문장 생성 `compatibility_prose` · LLM 프롬프트 `compatibility_prompt`)는 2026-10-09 완료 — 출력 스냅샷 39건 동일 확인.
+알면 우선순위 판단이 쉬워진다. 5월 표의 NatalTab(970→27)·fortune_service(462→97)·natal_adapter(447→192) 분할은 완료됨. CompatibilityResult(679→~110, `components/compatibility/` 7탭)도 2026-10-02 완료. compatibility_service(1153→597: 문장 표 `util/compatibility_meta` · 문장 생성 `compatibility_prose` · LLM 프롬프트 `compatibility_prompt`)는 2026-10-09 완료 — 출력 스냅샷 39건 동일 확인. 2026-10-23: 린트 경고의 안 쓰는 코드 정리(eslint 48 → 34, 남은 건 `<img>` 33·홈 3), 공유 카드 아랫줄 `BrandFooter` 하나로.
 
 | 파일 | LOC | 문제 | 권장 액션 |
 |------|-----|------|-----------|
-| `src/kkachi/application/compatibility_service.py` | 594 | 오케스트레이션(캐시·prose 재적용·공유 카드)과 점수 계산(`_compute_*` 6개 + 영역별 `_score_*` 4개, 2026-10-09 분할)이 한 파일 | 점수 계산을 `compatibility_scoring.py`로 옮길지 검토 — `test_compatibility`가 `svc._compute_*`를 직접 부르므로 테스트도 함께. 스냅샷 비교 필수 |
+| `frontend/src/types/analysis.ts` | 714 | 사주·궁합·운세·회원·공유 카드 타입 전부 한 파일(9월 476에서 계속 늘어남) | 도메인별 파일 분리(`types/{analysis,compat,fortune,share,member}.ts`) — import 경로 영향이 커서 한 커밋에 기계적으로 |
 | `src/kkachi/domain/ganji.py` | 653 | enum + 변환로직 + 지장간/한글 매핑 혼재 | 변환은 `application/util/`로 이동 |
-| `frontend/src/types/analysis.ts` | 476 | 사주·궁합·운세·회원 타입 전부 한 파일 | 도메인별 파일 분리 검토 (import 경로 영향 큼, 낮은 우선순위) |
-| `src/kkachi/application/report_builder.py` | 448 | 6개 섹션 포맷팅 | 단일 책임 보존 결정(5/24). LLM 파이프 확장 시 재고 |
+| `src/kkachi/application/compatibility_service.py` | 607 | 오케스트레이션(캐시·prose 재적용·공유 카드)과 점수 계산(`_compute_*` 6개 + 영역별 `_score_*` 4개)이 한 파일 | 점수 계산을 `compatibility_scoring.py`로 — `test_compatibility`가 `svc._compute_*`를 직접 부르므로 테스트도 함께. 스냅샷 비교 필수 |
+| `frontend/src/app/siun/page.tsx` | 501 | 페이지 안에 `renderDailyContent`(히어로·대운 그리드·시간별 날씨·영역)와 주간 목록·지난주 리뷰가 다 있음 | `components/siun/`으로 날 하루 카드·주간 목록 분리 |
+| `fortune_rules.py` | 479 | 일진 점수·문장 템플릿 | 문장 템플릿이 늘면 표로 분리 |
+| `frontend/src/app/page.tsx` | 438 | 홈 피드(스토리 트레이·포스트 4종) + 안 쓰는 `WeatherPost`·`weatherCity`·`activeId` | **다음 작업(홈 개선)에서 정리** |
+| `frontend/src/lib/api.ts` | 430 | API 함수 전부 | 도메인별 분리는 types 분리와 함께 |
+| `frontend/src/components/OgCard.tsx` | ~395 | OG 4종(사주·시운·궁합·기본) | 400 넘으면 카드별 파일 |
 | `frontend/src/components/tabs/ZodiacTab.tsx` | 417 | 십이지신·충합·연도별 궁합 3영역 | 섹션 분리 검토 |
 
 ## 6. PR 작성 규칙

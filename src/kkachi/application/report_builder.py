@@ -36,14 +36,6 @@ def kor_ganji(ganji: str) -> str:
         return ganji
 
 
-def kor_sipsin(name: str) -> str:
-    """'偏印' → '편인(偏印)'."""
-    return f"{SIPSIN_KOR[name]}({name})" if name in SIPSIN_KOR else name
-
-
-def kor_element(ch: str) -> str:
-    """'木' → '나무(木)'."""
-    return f"{_ELEMENT_KOR[ch]}({ch})" if ch in _ELEMENT_KOR else ch
 
 
 class LlmReportBuilder:
