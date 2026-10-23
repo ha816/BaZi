@@ -24,6 +24,7 @@ from kkachi.application.util.compatibility_meta import (
     label_for,
     level_for,
 )
+from kkachi.application.util.util import josa
 from kkachi.domain.compatibility import CompatibilityResult, PillarRelation, PillarSnapshot
 from kkachi.domain.ganji import (
     SAMHAP_GROUPS,
@@ -530,10 +531,10 @@ class CompatibilityService:
         strongest2 = max(natal2.element_stats, key=lambda o: natal2.element_stats.get(o, 0))
         if strongest2.generates == natal1.yongshin:
             score += 8
-            pros.append(_signal("element", f"상대 {strongest2.name}이 내 용신({natal1.yongshin.name}) 도움"))
+            pros.append(_signal("element", f"상대 {strongest2.meaning}({strongest2.name}){josa(strongest2.meaning, '이', '가')} 내 용신({natal1.yongshin.name}) 도움"))
         if strongest1.generates == natal2.yongshin:
             score += 8
-            pros.append(_signal("element", f"내 {strongest1.name}이 상대 용신({natal2.yongshin.name}) 도움"))
+            pros.append(_signal("element", f"내 {strongest1.meaning}({strongest1.name}){josa(strongest1.meaning, '이', '가')} 상대 용신({natal2.yongshin.name}) 도움"))
         if both_in:
             score += 4
             pros.append(_signal("sipsin", "두 분 모두 인성 — 정서적 안정"))
