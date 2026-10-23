@@ -22,7 +22,6 @@ export default function YongshinTab({ natal, postnatal }: Props) {
   const yongshinInfo = getElementInfo(natal.yongshin_info.name);
   const kisinName = natal.kisin_info.name;
   const kisinInfo = kisinName ? getElementInfo(kisinName) : null;
-  const guide = natal.yongshin_guide;
 
   const seunStemIdx = STEM_ORDER.indexOf(postnatal.seun_ganji[0]);
   const seunBranchIdx = BRANCH_ORDER.indexOf(postnatal.seun_ganji[1]);

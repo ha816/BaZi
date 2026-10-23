@@ -194,25 +194,6 @@ function DirectionCompass({
   );
 }
 
-function UnluckyCard({ d }: { d: UnluckyDirection }) {
-  const col = UNLUCKY_COLOR[d.kind_korean] ?? UNLUCKY_COLOR["화해"];
-  return (
-    <div
-      className="rounded-lg p-2.5 border flex flex-col items-center text-center gap-1"
-      style={{ backgroundColor: col.bg, borderColor: col.border }}
-    >
-      <span className="text-base">{DIRECTION_EMOJI[d.direction] ?? "🧭"}</span>
-      <span className="text-sm font-bold leading-none" style={{ color: col.ink }}>{d.direction}</span>
-      <span className="text-[10px] font-semibold leading-tight" style={{ color: col.ink }}>
-        {d.kind_korean}
-        <span className="block text-[8px] opacity-70">({d.kind_han})</span>
-      </span>
-      <p className="text-[9px] leading-tight" style={{ color: col.ink, opacity: 0.8 }}>
-        {d.meaning.split("—")[0].trim()}
-      </p>
-    </div>
-  );
-}
 
 export default function FengShuiTab({ natal, name }: Props) {
   const fs = natal.feng_shui;

@@ -30,7 +30,6 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   // defaultLongitude가 비동기로 들어올 때 반영
   if (defaultLongitude != null && longitude === "") {
@@ -48,14 +47,9 @@ export default function AnalysisForm({ onSubmit, onSave, loading, defaultCity, d
 
   const handleSave = async () => {
     if (onSave) {
-      setSaving(true);
-      try {
-        const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
-        const time = hourOpt?.time ?? "12:00";
-        await onSave(name.trim(), gender, `${birthDate}T${time}:00`, defaultCity ?? "Seoul", selectedHour === "");
-      } finally {
-        setSaving(false);
-      }
+      const hourOpt = HOUR_OPTIONS.find((h) => h.value === selectedHour);
+      const time = hourOpt?.time ?? "12:00";
+      await onSave(name.trim(), gender, `${birthDate}T${time}:00`, defaultCity ?? "Seoul", selectedHour === "");
     }
     setSaved(true);
   };

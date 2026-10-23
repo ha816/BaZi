@@ -52,7 +52,6 @@ function formatDate(dateStr: string): string {
 
 export default function WeatherPage() {
   const [city, setCity] = useState("Seoul");
-  const [displayCity, setDisplayCity] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [days, setDays] = useState<DayWeather[]>([]);
   // 마지막으로 불러온 위치 키 — 현재 키와 다르면 로딩 중 (effect 안 setLoading 대체)
@@ -78,19 +77,18 @@ export default function WeatherPage() {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          setDisplayCity("현재 위치");
         },
         () => {
           // GPS 거부/실패 → ipapi.co fallback
           detectLocation().then((loc) => {
-            if (loc?.city) { setCity(loc.city); setDisplayCity(loc.city); }
+            if (loc?.city) { setCity(loc.city); }
           });
         },
         { timeout: 5000 }
       );
     } else {
       detectLocation().then((loc) => {
-        if (loc?.city) { setCity(loc.city); setDisplayCity(loc.city); }
+        if (loc?.city) { setCity(loc.city); }
       });
     }
   }, []);

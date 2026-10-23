@@ -21,20 +21,6 @@ const IconHeart = () => (
     <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
   </svg>
 );
-const IconHand = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 11V7a2 2 0 00-4 0v4" />
-    <path d="M14 10V5a2 2 0 00-4 0v5" />
-    <path d="M10 9V4a2 2 0 00-4 0v7" />
-    <path d="M6 13V9" />
-    <path d="M6 13c0 3.5 2 6 6 6s6-2.5 6-6v-2h-1" />
-  </svg>
-);
-const IconCloud = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 10a6 6 0 00-11.9-1A4 4 0 104 17h14a3 3 0 000-6z" />
-  </svg>
-);
 const IconSun = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="4" />

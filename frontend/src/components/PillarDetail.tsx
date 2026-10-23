@@ -13,7 +13,6 @@ const SIPSIN_KOR: Record<string, string> = {
 
 interface Props {
   pillars: string[];
-  dayStem: string;
   pillarElements?: PillarElementInfo[];
   basic?: boolean;
   pillarSummary?: string;
@@ -36,7 +35,7 @@ const PILLAR_SUB = ["조상·사회", "부모·성장", "나·배우자", "자�
 const PILLAR_TERMS = ["년주", "월주", "일주", "시주"];
 const PILLAR_TERMS_HAN = ["年柱", "月柱", "日柱", "時柱"];
 
-export default function PillarDetail({ pillars, dayStem, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false, jizanGan, gongmang, animate = false }: Props) {
+export default function PillarDetail({ pillars, pillarElements, basic = false, pillarSummary, highlightBranches = false, highlightDayStem = false, jizanGan, gongmang, animate = false }: Props) {
   // 시주(origI 3)부터 차례로 — 화면 왼쪽(시)에서 오른쪽(년)으로
   const order = (origI: number) => 3 - origI;
   const rise = (origI: number) => (animate ? { className: "pillar-rise", style: { animationDelay: `${order(origI) * RISE_GAP}s` } } : { className: "", style: {} });

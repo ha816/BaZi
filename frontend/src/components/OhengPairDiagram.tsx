@@ -11,9 +11,7 @@ const GEUK_PAIRS: [number, number][] = [[0,2],[1,3],[2,4],[3,0],[4,1]];
 
 // 사람 색 — 오행 색과 충돌하지 않는 앰버/청록
 const P1_COLOR = "#F59E0B";       // amber-500
-const P1_COLOR_FADE = "#FDE68A";  // amber-200
 const P2_COLOR = "#14B8A6";       // teal-500
-const P2_COLOR_FADE = "#99F6E4";  // teal-200
 
 const CX = 120, CY = 110, PR = 82, NR = 20;
 

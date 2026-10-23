@@ -297,7 +297,7 @@ export default function SiunPage() {
           <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-1">
             <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">주간 시운</p>
             <div className="divide-y divide-[var(--color-border-light)]">
-              {forecast.slice(todayIdx, todayIdx + 7).map((day, idx) => {
+              {forecast.slice(todayIdx, todayIdx + 7).map((day) => {
                 const w = day.weather;
                 if (!w) return null;
                 const m = elMeta(w.element);

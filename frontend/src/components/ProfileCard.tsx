@@ -42,7 +42,7 @@ export default function ProfileCard({ profile, memberId, onDelete, onUpdate, onS
   const [editBirthDate, setEditBirthDate] = useState(_dateFromDatetime(profile.birth_dt));
   const [editHour, setEditHour] = useState(profile.birth_hour_unknown ? "" : _hourFromDatetime(profile.birth_dt));
   const [editGender, setEditGender] = useState<"male" | "female">(profile.gender);
-  const [editCity, setEditCity] = useState(profile.city);
+  const [editCity] = useState(profile.city);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 

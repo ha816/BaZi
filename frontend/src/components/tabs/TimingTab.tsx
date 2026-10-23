@@ -39,7 +39,7 @@ export default function TimingTab({ postnatal, name }: Props) {
   const timing = postnatal.timing ?? {};
   const domains = Object.keys(timing);
   const [domain, setDomain] = useState(domains[0] ?? "");
-  const months = timing[domain] ?? [];
+  const months = useMemo(() => postnatal.timing?.[domain] ?? [], [postnatal.timing, domain]);
   const firstGood = months.find((m) => m.level === "좋음");
   const [selected, setSelected] = useState<number>(0);
 

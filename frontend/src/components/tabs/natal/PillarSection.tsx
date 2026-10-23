@@ -51,7 +51,7 @@ export default function PillarSection({ natal }: Props) {
           사주의 4기둥 8글자가 펼쳐지는 큰 지도예요. 위쪽 천간(天干)은 마음·뜻을, 아래쪽 지지(地支)는 환경·시간을 나타내요. 그 중 일주의 천간(日干)이 바로 나 자신입니다.
         </KkachiTip>
 
-        <PillarDetail pillars={natal.pillars} dayStem={natal.day_stem} basic highlightDayStem animate />
+        <PillarDetail pillars={natal.pillars} basic highlightDayStem animate />
 
         <div className="rounded-xl p-4 space-y-3 border border-[var(--color-border-light)]"
           style={{ backgroundColor: "var(--color-card)" }}>
