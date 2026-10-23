@@ -107,7 +107,6 @@
 | 항목 | 누가 | 메모 |
 |---|---|---|
 | 선호하는 일·선호하지 않는 일 직업명 다듬기 | 사용자 | 2026-10-11 1차 정리(라벨·직업명). 남은 어색한 항목은 §3 표와 `_TYPES` 동시에 |
-| 남성 기준 까치 `originals/까치_남.png` | 사용자(그림) | 부록 E-0 프롬프트. 여성 기준 `까치_여.png`와 짝 — 남성판 새 그림을 만들 때 기준 |
 | 그림 재생성(워터마크·짝 일관성) | 사용자 | 지금 20장은 Gemini 원본 그대로. 다시 만들면 부록 D 프롬프트 → `scripts/art_convert.sh` |
 
 ## 8. 변경 이력
@@ -662,7 +661,7 @@ Illustrator. Paint-smudged smock (keep only the gat, no beret), painting a dream
 
 ### E-0. 남성 기준 까치 (1회, 여성 기준과 짝)
 
-`originals/까치_여.png`(자세·배경·화풍) + `strength/신강.png`(갓 모양) 두 장을 첨부한다. 결과는 `originals/까치_남.png`. 남성판 새 그림을 만들 때 첫 장면 참고 대신 기준으로 쓴다.
+`originals/까치_여.png`(자세·배경·화풍) + `strength/신강.png`(갓 모양) 두 장을 첨부한다. 결과는 `originals/까치_남.png`(2026-10-23 완료). 남성판 새 그림을 만들 때 첫 장면 참고 대신 기준으로 쓴다.
 
 ```
 Two images are attached.
