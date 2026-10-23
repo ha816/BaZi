@@ -19,6 +19,9 @@ def build_daily_share_card(name: str, is_self: bool, fortune: dict) -> dict:
     headline = fortune.get("headline", "")
     if headline.startswith(f"{name}님, "):
         headline = headline[len(name) + 3:]
+    # 카드 맨 위가 이미 "오늘 시운"이라 문장 앞 "오늘은 "은 뺀다(2026-10-23, 사용자 지시) — 시운 화면 문장은 그대로
+    if headline.startswith("오늘은 "):
+        headline = headline[len("오늘은 "):]
     w = fortune.get("weather") or None
     return {
         "kind": "daily",

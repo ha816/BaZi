@@ -175,19 +175,19 @@ def compute_fortune(
         raw += 25
         reasons.append(f"오늘 일간({day_stem.name})이 용신({yong.name}) 오행")
         factors.append((25,
-            f"오늘은 용신 {yong.name}({yong.meaning}) 기운이 그대로 들어오는 날이에요.",
+            f"오늘은 용신 {yong.meaning}({yong.name}) 기운이 그대로 들어오는 날이에요.",
             "미뤄둔 시작이 있다면 오늘 첫걸음을 떼세요.", ""))
     elif day_element.generates == yong:
         raw += 15
         reasons.append("오늘 일간이 용신을 生함")
         factors.append((15,
-            f"오늘 일진이 용신 {yong.name}({yong.meaning}) 기운을 살려주는 날이에요.",
+            f"오늘 일진이 용신 {yong.meaning}({yong.name}) 기운을 살려주는 날이에요.",
             f"{OHENG_GUIDE[yong]['color'].split('·')[0]} 계열 소품 하나를 곁에 두세요.", ""))
     elif day_element.overcomes == yong or yong.overcomes == day_element:
         raw -= 15
         reasons.append("오늘 일간이 용신을 剋함")
         factors.append((-15,
-            f"오늘 일진이 용신 {yong.name}({yong.meaning}) 기운을 누르는 날이에요.",
+            f"오늘 일진이 용신 {yong.meaning}({yong.name}) 기운을 누르는 날이에요.",
             "오늘은 새 일보다 마무리와 정리에 집중하세요.",
             "큰 결정과 새 계약은 하루 미루세요."))
 
@@ -240,7 +240,7 @@ def compute_fortune(
             raw += 10
             reasons.append(f"날씨({weather['condition']})가 용신 오행과 일치")
             factors.append((10,
-                f"날씨({cond})까지 용신 {yong.name}({yong.meaning}) 기운과 맞는 날이에요.",
+                f"날씨({cond})까지 용신 {yong.meaning}({yong.name}) 기운과 맞는 날이에요.",
                 "밖으로 나가 오늘 날씨의 기운을 직접 받으세요.", ""))
         elif weather_el.generates == yong:
             raw += 5
@@ -252,7 +252,7 @@ def compute_fortune(
             raw -= 8
             reasons.append(f"날씨({weather['condition']})가 용신을 剋함")
             factors.append((-8,
-                f"날씨({cond})가 용신 {yong.name}({yong.meaning}) 기운을 누르는 날이에요.",
+                f"날씨({cond})가 용신 {yong.meaning}({yong.name}) 기운을 누르는 날이에요.",
                 "", "날씨 기운이 용신을 누르니 실내에서 컨디션을 지키세요."))
 
     total_score = max(0, min(100, raw))

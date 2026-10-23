@@ -12,6 +12,6 @@ def test_daily_share_card_strips_name_and_adds_korean_reading():
     card = build_daily_share_card("승민", True, _FORTUNE)
     assert card["kind"] == "daily" and card["is_self"] is True
     assert card["day_pillar_korean"] == "병오"
-    assert card["headline"] == "오늘은 불의 기운이 용신과 만나는 날이에요"
+    assert card["headline"] == "불의 기운이 용신과 만나는 날이에요"  # 이름 접두와 "오늘은 "(카드 제목과 겹침, 2026-10-23)을 뺀다
     assert card["tips"] == ["a", "b"] and card["weather"] == {"condition": "맑음", "element": "火", "temperature": 21}
     assert not {"description", "domain_scores", "hours", "birth_dt"} & set(card)
