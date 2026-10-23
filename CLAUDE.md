@@ -6,7 +6,7 @@
 
 - **백엔드**: Python 3.13 + FastAPI + sajupy + SQLAlchemy(asyncpg) + Alembic
 - **프론트엔드**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4
-- **LLM**: Ollama 로컬 호출 (`OllamaAdapter`, 기본 모델 `qwen2.5:32b`) — 스트리밍 AI 풀이·챗·궁합 종합해석
+- **LLM**: Ollama 로컬 호출 (`OllamaAdapter`, 기본 모델 `qwen3.8:27b` — 2026-10-23 qwen2.5:32b에서 교체, thinking은 `think:false`로 끔) — 스트리밍 AI 풀이·챗·궁합 종합해석. AI 풀이·AI 해석 글은 `AiReportService`+`LlmStreamHub`가 생성을 나눠 주고 캐시한다(2026-10-23)
 - **MCP**: FastMCP 서버 `/mcp` 마운트 (도구 3종)
 - **아키텍처**: Hexagonal Architecture (Port & Adapter), dependency-injector Singleton
 - **패키지 관리**: uv (Python), npm (Node)
@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 144 tests
+uv run pytest            # 160 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -40,7 +40,7 @@ bash scripts/deploy.sh   # 프론트 production 빌드 → backend·frontend 재
 | `src/kkachi/resource/local.toml` | `[toss] secret_key` | Toss 결제 confirm |
 | `src/kkachi/resource/local.toml` | `[korea_weather_api]`, `[ipapi_api]`, `[api-key] openai` | **미사용** (코드에서 참조 없음) |
 | env | `KKACHI_CORS_ORIGINS` (기본 `http://localhost:3000`), `KKACHI_CORS_ORIGIN_REGEX` | CORS |
-| env | `OLLAMA_BASE_URL` (기본 `http://localhost:11434`), `OLLAMA_MODEL` (기본 `qwen2.5:32b`) | LLM |
+| env | `OLLAMA_BASE_URL` (기본 `http://localhost:11434`), `OLLAMA_MODEL` (기본 `qwen3.8:27b`, Ollama ≥0.32 필요 — 이 Mac은 0.40.9) | LLM |
 | env | `KKACHI_VAPID_PUBLIC_KEY`·`KKACHI_VAPID_PRIVATE_KEY`·`KKACHI_VAPID_SUBJECT` | Web Push. 미설정이면 `/push/*` 503, 프론트 알림 버튼 숨김. **local.toml에 넣지 않는다** (`scripts/vapid_keygen.py`) |
 | env | `KKACHI_ADMIN_TOKEN` | `/admin/push/send-daily?dry_run=false` 실발송 헤더 |
 | `frontend/.env.local` | `NEXT_PUBLIC_API_URL` (기본 `http://localhost:8000`) | 프론트 → API |
@@ -98,7 +98,9 @@ BaZi/
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
-│   │   ├── compatibility_prompt.py   # format_chat_context·format_narrative_prompt — 궁합 결과 → LLM 챗 [데이터] 블록·종합해석 프롬프트
+│   │   ├── ai_report_service.py      # AiReportService — AI 풀이(직접 입력·프로필)·AI 해석 글 생성과 캐시(analyses.ai_report · compatibilities.narratives[relation] · 메모리) (2026-10-23)
+│   │   ├── compatibility_prompt.py   # format_chat_context·format_narrative_prompt(v2 자료 시트: 두 사람·캐릭터·기둥 관계·영역 장단점, 이름 호칭) + NARRATIVE_PROMPT_VERSION
+│   │   ├── llm_stream_hub.py         # LlmStreamHub — 같은 키의 동시 요청에 한 생성을 나눠 주고, 끊겨도 끝까지 만들어 on_complete로 저장 + 직접 입력용 메모리 캐시 64개
 │   │   ├── saju_character.py     # build_saju_character(natal) 사주 캐릭터 20유형(일간×신강/신약) → NatalResult.character {key(그림 saju_character/{key}.webp), name, title, line, job, jobs[3](선호하는 일), jobs_avoid[3](선호하지 않는 일), strength_pct…} — 표는 specs/analysis/character.md §3과 함께 갱신(test_spec_table_matches_types가 대조)
 │   │   ├── self_quiz.py              # build_self_quiz(natal 결과 dict) 설문조사 10문항 — 십신·지장간 조합 점수(천간 자리 가중 년8·월12·시10 + 지지 자리 가중 년8·월30·일15·시12 × 지장간 비중 + 투출 5, 신강·신약과 같은 가중)가 8점 이상이면 그렇다(2026-10-13, 300명 표본 평균 5.2개). 근거 문장은 개수 대신 자리·투출로 ("태어난 달 천간에 드러나고 지지에도 뿌리를 둔 …"). 지장간 없는 옛 결과는 지지 본기로 (V3, 설문으로 출생시간 추정 안 함)
 │   │   ├── compatibility_daily.py    # compute_daily_compat() 오늘의 궁합 (홈 배지·R5) + 2026-10-18 각자의 오늘(compute_fortune 재사용)·영역별 함께 문구(_TOGETHER)·팁
@@ -107,7 +109,7 @@ BaZi/
 │   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 {pillars, element, strength, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
-│   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → LLM 프롬프트용 마크다운
+│   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → AI 풀이 자료 시트(쓰는 법·5섹션·탭별 한두 줄, ≈3,300토큰; 2026-10-23 v2) + REPORT_PROMPT_VERSION · kor_ganji/kor_sipsin
 │   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
 │   │   │                             #   fortune, weather, payment, feedback, llm, event, push(PushPort·PushSenderPort)
 │   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음 + build_summary)
@@ -116,10 +118,11 @@ BaZi/
 │   │   └── util/                     # util.py(year_to_ganji, branch_relation, josa…) · sipsin_meta · clash_combine_meta · zodiac_meta · compatibility_meta(RelationType, 관계 유형별 라벨·영역 문장 표, level_for/label_for)
 │   └── adapter/
 │       ├── inner/
-│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · chat · stream-report · shares POST/GET(결과 공유 카드)
+│       │   ├── kkachi_controller.py        # prefix /kkachi — interpret · chat · stream-report(AiReportService) · shares POST/GET(결과 공유 카드)
+│       │   ├── streaming.py                # text_stream — 첫 조각을 먼저 받아 본 뒤 StreamingResponse(+ Cache-Control no-transform: 프록시 버퍼링 방지), 실패면 503 (Ollama 꺼짐 안내용)
 │       │   ├── member_controller.py        # /members
-│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·analyze·analyses·daily·forecast·feedback(POST/GET)
-│       │   ├── compatibility_controller.py # /compatibility — ""·direct·chat·narrative
+│       │   ├── profile_controller.py       # /members/{id}/profiles — CRUD·PATCH·analyze·ai-report(AI 풀이 스트림, 캐시)·analyses·daily·forecast·feedback(POST/GET)
+│       │   ├── compatibility_controller.py # /compatibility — ""·direct·chat·narrative(+profile_id_1/2 → 글 캐시)
 │       │   ├── payment_controller.py       # /payments — prepare·confirm
 │       │   ├── palmistry_controller.py     # POST /palmistry/analyze (MediaPipe 랜드마크 + OpenCV 손금선 밀도)
 │       │   ├── weather_controller.py       # GET /weather
@@ -131,7 +134,7 @@ BaZi/
 │           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→경도 내부 룩업, sajupy 호출)
 │           ├── postnatal_adapter.py        # PostnatalAdapter — 세운·대운·월운·충합·영역점수(reason 포함)·삼재
 │           ├── weather_adapter.py          # Open-Meteo geocoding + forecast (past_days=14), WMO → 오행
-│           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret
+│           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret(kind=analysis|compat) · interpret_payload(벤치용). 시스템 프롬프트 _KKACHI_SYSTEM, num_predict analysis 1200/compat 900, keep_alive 30m
 │           ├── push/webpush_adapter.py     # WebPushAdapter (pywebpush, VAPID env) — 404/410이면 구독 소멸 반환
 │           └── db/
 │               ├── models.py       # MemberModel · ProfileModel · AnalysisModel · FortuneModel · CompatibilityModel
@@ -191,6 +194,7 @@ BaZi/
 │   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
 │   │   ├── track.ts              # 행동 이벤트 track(name, props) — 세션 UUID + fire-and-forget
 │   │   ├── useStorageValue.ts    # localStorage/sessionStorage를 hydration-safe하게 읽는 훅(useSyncExternalStore) + parseStored — 마운트 effect 안 setState 금지
+│   │   ├── useAiReport.ts        # AI 풀이 스트림 상태 — 분석 페이지가 결과 직후 start()로 미리 시작, 탭을 오가도 유지, 직접 입력은 sessionStorage kkachi_ai_report 캐시, 503 → unavailable (2026-10-23)
 │   │   ├── push.ts               # getPushState/subscribePush/unsubscribePush — sw.js 등록 + VAPID 구독 + 서버 저장
 │   │   ├── elementColors.ts · zodiac.ts · glossary.ts · relations.ts · constants.ts · location.ts
 │   └── types/analysis.ts
@@ -230,8 +234,11 @@ POST /members/{id}/profiles/{pid}/analyze
   → ProfileService.analyze_profile → analyses(profile_id, year) 캐시 우선 → 없으면 위 파이프라인 후 저장
      캐시 히트여도 summary.today_date가 오늘이 아니면 오늘 줄만 재계산해 upsert (summary 없는 옛 캐시는 전체 재계산)
 
-POST /kkachi/stream-report  (AI 풀이 탭)
-  → analyze + interpret → LlmReportBuilder.build() 마크다운 → OllamaAdapter.stream_interpret → text/plain 스트림
+POST /kkachi/stream-report  (AI 풀이 탭, 직접 입력)  ·  POST /members/{id}/profiles/{pid}/ai-report  (프로필)
+  → AiReportService: 캐시(프로필 analyses.result.ai_report / 직접 입력 메모리 64개)가 있으면 그대로 →
+     없으면 analyze + interpret → LlmReportBuilder.build() 자료 시트 → OllamaAdapter.stream_interpret("analysis")
+     → LlmStreamHub가 같은 키의 동시 요청에 한 생성을 나눠 주고, 클라이언트가 끊겨도 끝까지 만들어 저장 → text/plain 스트림
+     첫 조각 전에 실패(Ollama 꺼짐)면 503 {detail}. 프론트는 결과 직후 미리 시작(useAiReport)하고 탭을 오가도 글을 유지
 
 POST /kkachi/chat  (까치 상담)
   → analyze + interpret → KkachiService.build_chat_context() → system prompt → OllamaAdapter.stream_chat
@@ -274,10 +281,10 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 **우선순위·진행 현황은 `docs/ROADMAP.md`가 정식 출처** (2026-09-12 핵심 루프 재정의: F0 측정 → R1 요약 카드 → R2 시간 모름 → R3 타이밍 리포트 → R4 알림 → R5 궁합 공유 → R6 연속성). 제품 기능을 추가하기 전에 ROADMAP §4·§5를 먼저 본다.
 
 ### ① 하이브리드 해석 엔진 (Rule + LLM) — 구현됨
-- Rule 엔진(Interpreter 13개) → 구조화 데이터 → `LlmReportBuilder` 마크다운 → Ollama가 자연어로 변환
-- 진입점: AI 풀이 탭(`/kkachi/stream-report`), 까치 상담(`/kkachi/chat`), 궁합 종합해석(`/compatibility/narrative`)·궁합 챗
-- LLM은 해석 생성기가 아닌 **언어 변환기**. 한국어 강제·225자 제한·"사주에 따르면" 금지 규칙이 시스템 프롬프트에 있음
-- 다음: 프롬프트 품질, 응답 지연(`num_predict` 500/700, `keep_alive` 10m) 튜닝
+- Rule 엔진(Interpreter 13개) → 구조화 데이터 → `LlmReportBuilder` 자료 시트(2026-10-23 v2: 쓰는 법 + 5섹션 지시 + 탭별 한두 줄, 약 3,300토큰 — v1은 카드 본문을 통째로 실은 7,250토큰) → Ollama가 한 편의 글로
+- 진입점: AI 풀이 탭(`/kkachi/stream-report`·프로필 `/ai-report`), 까치 상담(`/kkachi/chat`), 궁합 종합해석(`/compatibility/narrative`)·궁합 챗
+- LLM은 해석 생성기가 아닌 **언어 변환기**. 공통 시스템 프롬프트 `_KKACHI_SYSTEM`(까치 해설가, 한글만·한자는 괄호 안·표 금지·"사주에 따르면" 금지), 분량·섹션은 자료의 "쓰는 법"이 정함. 챗은 225자 제한
+- 2026-10-23: 생성 공유·캐시(`AiReportService`·`LlmStreamHub`), 결과 직후 미리 시작, Ollama 꺼짐 503. 샘플 3개 기준 AI 풀이 첫 글자 66~99초 → 31~36초, 전체 129~163초 → 73~80초, 700토큰 잘림 2/3 → 0. 같은 날 V2-3 비교로 기본 모델을 `qwen3.8:27b`로 교체(생성 23~25토큰/초, qwen2.5:32b의 2배; AI 풀이 전체 39~47초, 궁합 31~36초; `### ` 제목은 프롬프트의 형식 뼈대로 고정). 프롬프트 버전은 `REPORT_PROMPT_VERSION`·`NARRATIVE_PROMPT_VERSION`(3)
 
 ### ② 점수 근거 시각화 (Domain Scores) — 백엔드 구현됨
 - `PostnatalAdapter._get_domain_scores` → `{score, level, reason}` (reason = 세운·대운 십신 근거 문장)
@@ -312,7 +319,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 # 사주 해석 (kkachi_controller, prefix /kkachi)
 POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul", longitude?, name="", hour_unknown=false }
                              → { natal: NatalResult, postnatal: PostnatalResult, self_quiz: [{q, basis, count, score, predict: yes|no, reason}] }  (self_quiz = 설문조사 10문항, 프로필 /analyze 응답에도 붙음)
-POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이)
+POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이 — 같은 입력·이름은 메모리 캐시, Ollama 꺼짐 503)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
 GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
@@ -328,7 +335,8 @@ GET    ""                    → Profile[]
 GET    /{pid}
 PATCH  /{pid}                { name, gender, birth_dt, city, birth_hour_unknown } — 출생정보 변경 시 analyses·fortunes 캐시 삭제
 DELETE /{pid}                → 204 (is_self 프로필은 409)
-POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선)
+POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선) + ai_report{text,version,model,created_at}(AI 풀이를 한 번 만든 뒤)
+POST   /{pid}/ai-report      { year=2026 } → text/plain 스트림 (AI 풀이 — 캐시가 있으면 한 번에, 없으면 생성하며 analyses에 저장. 소유자만, Ollama 꺼짐 503)
 POST   /{pid}/set-self       → Profile  기본 프로필(나) 지정 — 같은 회원의 다른 프로필은 is_self=false (캐시 유지)
 GET    /{pid}/analyses       → [{ year, created_at }]  캐시된 연도 목록 — "지난 연도 다시 보기" (R6)
 GET    /{pid}/daily          → Fortune dict (오늘, fortunes 캐시 + 날씨 없으면 재계산)
@@ -341,7 +349,7 @@ GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
 #   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }(화면 노출 없음 — 2026-10-15 한눈에 탭 제거, LLM 기본 요약용으로 유지), character { title, kind, key(유형 키 예 木火 — 그림 키 아님), roles[2]{token, name, element, emoji, character_key(그 사람 사주 캐릭터 키 예 무_강 → 그림 saju_character/{character_key}.webp, 2026-10-18)}, desc, moments{good[3], hard[3]}, scenarios[6~10]{q, who:p1|p2|both, reason, basis} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
-POST /compatibility/narrative 같은 요청 → text/plain 스트림 (LLM 종합해석)
+POST /compatibility/narrative 같은 요청 + profile_id_1?·profile_id_2? → text/plain 스트림 (LLM 종합해석 — 프로필 id 둘을 주면 compatibilities.result.narratives[relation_type]에 저장돼 다음 POST /compatibility 응답에 실림. Ollama 꺼짐 503)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간 p1/p2{stem,korean,element(일간 글자 오행),hour_unknown}·특징·character{title,key,roles[{name,element,emoji,character_key}],desc(이름 채움),moments{good,hard}}) → /s/{share_id}
 POST /compatibility/invites  { person1, relation_type } → { invite_id }  (초대자 정보 저장, 30일 TTL) — 생성 UI는 2026-09-28 제거, ?invite= 링크 처리만 유지
@@ -564,7 +572,7 @@ erDiagram
 | `zodiac` | 십이지신 | `ZodiacTab` |
 | `fengshui` | 풍수 | `FengShuiTab` |
 | `survey` | 설문조사 | `SelfQuizCard` (V3, 그렇다/아니다 10문항을 5문항씩 2페이지로 → 사주와 설문 응답의 일치율 % + 문항별 일치, 2026-10-13 한눈에서 별도 탭으로). `self_quiz` 없는 옛 결과는 탭 숨김 |
-| `ai` | AI 풀이 | `AiTab` → `/kkachi/stream-report` 스트리밍 (Ollama 없으면 에러 문구) |
+| `ai` | AI 풀이 | `AiTab` — 페이지(`useAiReport`)가 결과 직후 미리 시작한 스트림을 보여 준다(탭을 오가도 유지, 직접 입력은 sessionStorage·프로필은 서버 캐시 → 다시 안 만듦). 기다리는 동안 `postnatal.summary` 10줄 "글이 오는 동안 먼저 보는 요약", 503이면 "까치 서버(Ollama)가 켜져 있을 때 제공돼요" + [다시 시도] (2026-10-23) |
 
 - 한눈에 탭은 2026-10-13 화면에서 뺐다(카드 코드도 2026-10-15 삭제). `postnatal.summary`(me·year·month·today·caution·energy·timing·yongshin·zodiac·fengshui)는 API에 그대로 두고, 나중에 탭별 요약을 LLM에 기본 요약으로 넘기는 데 쓴다. `summary_view` 이벤트는 더 이상 안 나감
 - 모든 탭 하단에 `FeedbackBar` (memberId·profileId 있을 때만 전송), 우하단 `SajuChat` FAB → `/chat`.
@@ -579,7 +587,7 @@ erDiagram
 | `domain` | 종합점수(구 영역별, 2026-10-18 — 설문조사 바로 앞) | `DomainTab` | 레이더 · 영역 카드 4(종합 궁합 카드는 2026-10-18 제거 — 점수는 인트로·캐릭터 카드; 점수·레벨·narrative·pros/cons 칩, display_name은 관계 유형별) — 카드 순서 고정 |
 | `daily` | 시운(구 오늘의 궁합, 2026-10-18 — 카드 제목 시운(時運)) | `DailyTab` | `GET /compatibility/forecast`(14일, 결과당 1회) — 시운 화면(/siun)과 같은 틀: 오늘·내일·모레·글피 탭 → 일진 오행 색 히어로(headline + ✦ 함께 할 것(첫 팁) + ✕ 피할 것(주의 영역 문구), 간지·궁합 점수) → 두 분 각자의 그날 타일 → 영역 막대 2열(낮은 쪽 점수) → 레벨·손없는 날·절기 배지 + ✦ 팁 → 주간 궁합 시운 7일 목록(누르면 그날) + 2주 안에 함께하기 좋은 날 3(시운 링크 없음). 다른 날은 문장의 "오늘"을 그 날 이름으로 치환. **프로필×2일 때만** 탭 노출 |
 | `scenario` | 설문조사 | `ScenarioCard` | 설문조사(구 "이럴 때 두 분은?", 2026-10-18 분석과 같은 이름으로 — 탭 📋·카드 🔮) — [이름1님 / 이름2님 / 둘 다]로 5문항씩 페이지(6~10문항을 고르게 나눔, 2026-10-17)로 전부 답한 뒤 한꺼번에 비교 → "사주와 두 분 응답의 일치율" % + 까치 해설 한 문장 + 문항별(다른 문항 먼저·근거는 다른 문항에만). 신뢰도·사람별 사주 스타일 라벨은 2026-10-15 제거. 인트로 문답(`?step=scenario`)과 답·제출 상태 공유 — 인트로에서 제출하면 "답변 완료"만, 일치율은 이 탭에서. 문답 없는 옛 결과는 탭 숨김 |
-| `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 (Ollama 없으면 안내) |
+| `ai` | AI 해석 | `NarrativeTab` | `/compatibility/narrative` 스트리밍 — 결과 직후 페이지가 시작, 프로필×2는 응답의 `narratives[relation_type]`가 있으면 스트림 없이 그대로(2026-10-23). Ollama 없으면 안내 |
 
 - **결과 직후 인트로**(`?step=intro`, 2026-10-15 — 분석 V5와 같은 흐름): 두근두근 게이트(두 사람 사주 캐릭터 실루엣 + "?" + ♥, 분석 게이트와 같게 2026-10-18) → 1.2초 드럼롤 → 오행 캐릭터 상자(두 사람 사주 캐릭터 그림 `/kkachi/saju_character/{roles[i].character_key}.webp` 나란히 + ♥, 없는 쪽은 역할 이모지 · 칭호 · 점수 · 역할 칩 · 설명 — 2026-10-18, 궁합 전용 그림 없음) → 까치 인사 → [📋 설문조사 `?step=scenario`] / [💞 궁합 분석 보기 → "인연 지도 펼치는 중…" → `?tab=character`(첫 탭 성격, 2026-10-18)]. 건너뛰기 가능, 새 결과(주소에 step·tab 없음)만. "다시 입력"은 `?tab=`·`?step=` 제거
 - 한눈에 탭은 2026-10-15 제거(옛 `?tab=summary`·`total`은 팔자비교로). 팔자비교 `PillarPairDiagram animate` — 시→일→월→년 기둥마다 두 분 글자가 도장처럼 찍히고 합·충 배지가 뒤따름(분석 사주팔자와 같은 ink-stamp)
@@ -671,6 +679,7 @@ tests/
 │   ├── test_kkachi_controller.py   # /kkachi/shares 왕복 — 카드에 생년월일 없음, 세 기둥
 │   ├── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
 │   ├── test_compatibility_controller.py # direct(summary·character·zodiac·세 기둥)·프로필 궁합 404·공유 카드 왕복(character, 생년월일 없음)·초대(민감정보 제외·resolve)·오늘의 궁합 소유자 검증
+│   ├── test_ai_report_controller.py # stream-report·narrative·프로필 ai-report — LLM 없으면 503, 가짜 LLM 스트림, 캐시된 글은 LLM 없이, 소유자 검증, 옛 프롬프트 버전 무시
 │   └── test_push_controller.py     # VAPID 미설정 503 · 구독 저장/해지 왕복 · https 아닌 endpoint 422
 └── application/
     ├── test_interpret.py       # 종합 해석 통합 테스트
