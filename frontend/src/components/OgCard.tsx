@@ -58,11 +58,11 @@ export function loadOgAssets(): Promise<OgAssets> {
 const artCache = new Map<string, Promise<string | null>>();
 
 /** OG용 캐릭터 그림(public/kkachi/{relPath}, 512px JPEG) → data URI. satori가 WebP를 못 읽어 JPEG를 따로 둔다. 없으면 null, 경로별 캐시 */
-function loadArt(relPath: string): Promise<string | null> {
+function loadArt(relPath: string, mime = "image/jpeg"): Promise<string | null> {
   let art = artCache.get(relPath);
   if (!art) {
     art = readFile(join(process.cwd(), "public/kkachi", relPath))
-      .then((buf) => `data:image/jpeg;base64,${buf.toString("base64")}`)
+      .then((buf) => `data:${mime};base64,${buf.toString("base64")}`)
       .catch(() => null);
     artCache.set(relPath, art);
   }
@@ -71,13 +71,7 @@ function loadArt(relPath: string): Promise<string | null> {
 
 /** 직인 그림(투명 PNG) — 시운 좋은 날 unsu_daetong, 궁합 80점 이상 cheonsaeng_yeonbun·magyeok_jigyo·gahwa_mansa */
 export function loadSealArt(name = "unsu_daetong"): Promise<string | null> {
-  const rel = `seal/${name}.png`;
-  let art = artCache.get(rel);
-  if (!art) {
-    art = readFile(join(process.cwd(), "public/kkachi", rel)).then((b) => `data:image/png;base64,${b.toString("base64")}`).catch(() => null);
-    artCache.set(rel, art);
-  }
-  return art;
+  return loadArt(`seal/${name}.png`, "image/png");
 }
 
 /** 나의 캐릭터(사주 카드, V4) — saju_character/og/{artKey}.jpg. artKey = 일간_강|약[_여](여성판, 2026-10-23), 없으면 유형 키 그림 */
@@ -163,12 +157,15 @@ function PillarTiles({ card, size = 46 }: { card: ShareCard; size?: number }) {
 
 /** 공유 카드 — 이름 · 팔자 타일(오행색) · 오행 분포 · 한 줄 요약 · CTA.
  *  나의 캐릭터(V4)가 있으면 그림·유형명이 주인공: 왼쪽 그림, 오른쪽 유형명·한 줄·팔자 타일(작게)·선호하는 일. 오행 분포·신살·요약 줄은 뺀다 */
-/** 오른쪽 위 브랜드 — "사주까치" 글자 + 까치 아이콘 (2026-10-23, 왼쪽 위 작은 "사주까치"는 여기로 옮김) */
-function BrandMark({ mascot }: { mascot: string }) {
+/** 공유 카드 맨 아래 한 줄 — 구분선 밑 까치·"사주까치"(왼쪽) | CTA(오른쪽). 사주·시운·궁합 공용(2026-10-23) */
+function BrandFooter({ mascot, cta }: { mascot: string; cta: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: GOLD }}>사주까치</div>
-      <img src={mascot} alt="" width={88} height={88} style={{ borderRadius: 44 }} />
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
+        <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
+      </div>
+      <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>{cta}</div>
     </div>
   );
 }
@@ -176,17 +173,7 @@ function BrandMark({ mascot }: { mascot: string }) {
 export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; mascot: string; characterArt?: string | null }) {
   const who = card.name ? `${clip(card.name, 10)}님` : "나";
   const ch = card.character;
-  // 아래 줄(용신·CTA)은 2026-10-23 뺐다 — CTA는 오른쪽 위 "사주까치"·까치 아이콘 바로 아래로(사용자 지시)
   const cta = ch ? "나는 어떤 캐릭터일까? 30초 만에 →" : "나도 30초 만에 내 사주 보기 →";
-  // 왼쪽 위 "○○님의 사주 카드" 제목은 2026-10-23 뺐다(사용자 지시) — 이름은 아래 "○○님의 캐릭터" 줄이 맡는다
-  const header = (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-        <BrandMark mascot={mascot} />
-        <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: GOLD }}>{cta}</div>
-      </div>
-    </div>
-  );
 
   if (ch) {
     const el = getElementInfo(ch.element);
@@ -211,13 +198,7 @@ export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; 
               )}
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
-              <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
-            </div>
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>{cta}</div>
-          </div>
+          <BrandFooter mascot={mascot} cta={cta} />
         </div>
       </div>
     );
@@ -228,9 +209,9 @@ export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; 
   return (
     <div style={outer}>
       <div style={{ ...inner, flexDirection: "column" }}>
-        {header}
-
-        <div style={{ display: "flex", flex: 1, marginTop: 24, gap: 36, alignItems: "center" }}>
+        {/* 캐릭터 없는 옛 카드 — 이름이 다른 곳에 없어 맨 위 한 줄로(다른 카드와 같은 작은 금색 줄) */}
+        <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>{who}의 사주</div>
+        <div style={{ display: "flex", flex: 1, gap: 36, alignItems: "center" }}>
           <PillarTiles card={card} />
 
           <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
@@ -257,9 +238,8 @@ export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; 
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 18 }}>
-          <div style={{ display: "flex", fontSize: 26, lineHeight: 1.4, color: INK }}>{headline}</div>
-        </div>
+        <div style={{ display: "flex", fontSize: 26, lineHeight: 1.4, color: INK, marginTop: 18 }}>{headline}</div>
+        <BrandFooter mascot={mascot} cta={cta} />
       </div>
     </div>
   );
@@ -312,13 +292,7 @@ export function DailyOgImage({ card, mascot, seal }: { card: DailyShareCard; mas
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
-            <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
-          </div>
-          <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 오늘의 행운 보기 →</div>
-        </div>
+        <BrandFooter mascot={mascot} cta={"나도 오늘의 행운 보기 →"} />
       </div>
     </div>
   );
@@ -395,13 +369,7 @@ export function CompatOgImage({ card, mascot, characterArts = [], seal }: { card
           )}
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
-            <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
-          </div>
-          <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>우리 궁합도 보기 →</div>
-        </div>
+        <BrandFooter mascot={mascot} cta={"우리 궁합도 보기 →"} />
       </div>
     </div>
   );
