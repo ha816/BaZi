@@ -15,19 +15,15 @@ interface Props {
   channel?: string;
 }
 
-const PANEL_BTN =
-  "px-2 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-ink)] hover:bg-[var(--color-ivory-warm)] transition-colors";
-
 /** 공유 버튼 — create()로 카드 스냅샷을 만들고 /s/{id} 링크를 공유한다 (분석 결과·시운·궁합 공용).
- *  이미지는 그 링크의 OG 이미지(/s/{id}/opengraph-image)를 그대로 쓰고, 저장 파일명은 사주까치_{제목}_{YYYYMMDD}.png */
+ *  휴대폰은 공유 시트(navigator.share), 없으면 링크를 클립보드에 복사. 받는 쪽 미리보기는 /s/{id}/opengraph-image.
+ *  공유 뒤에는 카드 미리보기만 띄운다 — 링크 복사·이미지로 공유·이미지 저장 버튼은 2026-10-23 뺐다(공유 시트와 같은 일을 한 번 더 해서, 사용자 결정) */
 export default function ShareButton({ create, title, text, label = "공유", channel = "result" }: Props) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const [error, setError] = useState(false);
-  // 저장·이미지 공유 파일명 — 제목의 기호·공백은 _ 로, 날짜는 로컬(en-CA = YYYY-MM-DD)
-  const fileName = `사주까치_${title.replace(/[^0-9A-Za-z가-힣]+/g, "_").replace(/^_|_$/g, "") || "card"}_${new Date().toLocaleDateString("en-CA").replace(/-/g, "")}.png`;
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -53,36 +49,21 @@ export default function ShareButton({ create, title, text, label = "공유", cha
           await navigator.clipboard.writeText(link);
           flash("링크를 복사했어요");
         }
-      } catch {
-        // 사용자가 공유 시트를 닫음
+      } catch (e) {
+        // 사용자가 공유 시트를 닫으면 AbortError — 그 밖의 실패(권한 등)는 복사로 대신
+        if (!(e instanceof DOMException && e.name === "AbortError")) {
+          try {
+            await navigator.clipboard.writeText(link);
+            flash("링크를 복사했어요");
+          } catch {
+            flash("공유하지 못했어요");
+          }
+        }
       }
     } catch {
       setError(true);
     } finally {
       setBusy(false);
-    }
-  };
-
-  const handleCopy = async () => {
-    if (!url) return;
-    try {
-      await navigator.clipboard.writeText(url);
-      flash("링크를 복사했어요");
-    } catch {
-      flash("복사에 실패했어요");
-    }
-  };
-
-  // 모바일에서 이미지 파일 자체를 카톡·인스타로 — 지원 안 하면 '이미지 저장' 안내
-  const handleShareImage = async () => {
-    if (!url) return;
-    try {
-      const blob = await (await fetch(`${url}/opengraph-image`)).blob();
-      const files = [new File([blob], fileName, { type: "image/png" })];
-      if (navigator.canShare?.({ files })) await navigator.share({ files, title, text });
-      else flash("이미지 공유가 안 되는 브라우저예요. '이미지 저장'을 써 주세요");
-    } catch {
-      // 취소
     }
   };
 
@@ -100,7 +81,7 @@ export default function ShareButton({ create, title, text, label = "공유", cha
         <p className="absolute right-0 mt-1 text-[11px] text-[var(--color-fire)] whitespace-nowrap">공유 링크를 만들지 못했어요</p>
       )}
       {open && url && (
-        <div className="absolute right-0 mt-2 z-40 w-[min(92vw,340px)] rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] shadow-lg p-3 space-y-2">
+        <div className="fixed inset-x-4 top-16 z-50 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-[340px] rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] shadow-lg p-3 space-y-2">
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -109,20 +90,16 @@ export default function ShareButton({ create, title, text, label = "공유", cha
           >
             ✕
           </button>
-          <p className="text-xs font-semibold text-[var(--color-ink)]">{title}</p>
           <img
             src={`${url}/opengraph-image`}
             alt="공유 카드 미리보기"
-            className="w-full rounded-lg border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)]"
+            className="w-full mt-4 rounded-lg border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)]"
           />
-          <p className="text-[11px] text-[var(--color-ink-muted)] break-all">{url}</p>
-          <div className="grid grid-cols-3 gap-1.5 text-xs">
-            <button type="button" onClick={handleCopy} className={PANEL_BTN}>링크 복사</button>
-            <button type="button" onClick={handleShareImage} className={PANEL_BTN}>이미지로 공유</button>
-            <a href={`${url}/opengraph-image`} download={fileName} className={`${PANEL_BTN} text-center`}>이미지 저장</a>
-          </div>
-          {notice && <p className="text-[11px] text-center text-[var(--color-gold)]">{notice}</p>}
+          {notice && <p className="text-[11px] text-center text-[var(--color-gold)]" role="status">{notice}</p>}
         </div>
+      )}
+      {notice && !error && !open && (
+        <p className="absolute right-0 mt-1 text-[11px] text-[var(--color-gold)] whitespace-nowrap" role="status">{notice}</p>
       )}
     </div>
   );

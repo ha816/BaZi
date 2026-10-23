@@ -165,7 +165,7 @@ BaZi/
 │   │   ├── ResultIntro.tsx          # 분석 직후 전체 화면 인트로(?step=intro, 건너뛰기 가능) — 캐릭터 공개(SajuCharacterCard RevealGate 천간 슬롯) → 캐릭터 인사 말풍선 → [📋 설문조사 → ?step=survey] / [🗺️ 내 사주 분석 보기 → "운세 지도 펼치는 중…" → ?tab=natal]. 결과 단계는 한 페이지 안 주소(?step=)로 관리(pushState — 뒤로 가기로 설문 → 인트로). 새 결과(주소에 step·tab 없음)만 인트로, natal.character 없으면 생략. 설문 화면은 ResultSlides가 같은 전체 화면 틀로 SelfQuizCard를 띄움 — 제출해도 일치율은 여기서 안 보여주고 "답변 완료! 설문조사 탭에 숨겨 뒀어요" 화면만(일치율은 설문조사 탭에서 공개, 다음 이야기 카드도 "몇 % 맞았을까?"로 예고)
 │   │   ├── NextTabCard.tsx          # 탭 끝 "다음 이야기" 카드 공용(분석 ResultSlides · 궁합 CompatibilityResult) — 흥미 유발 제목(hook)만, 마지막 탭은 첫 탭으로
 │   │   ├── SelfQuizCard.tsx         # 설문조사(V3, 2026-10-13 "내 사주 맞춰 보기"에서 이름 변경) — 설문조사 탭(AI 풀이 앞) 선택형. 10문항 그렇다/아니다를 **5문항씩 2페이지**로 답하고(2026-10-17 — 페이지는 카드 안 상태, 처음엔 안 답한 첫 페이지부터, 이 페이지를 다 답해야 다음·이전은 링크, 넘기면 카드 첫 줄로 스크롤) 한꺼번에 사주 예측과 비교 → "사주와 설문 응답의 일치율" % + 아래 KkachiTip으로 구간별 해설 한 문장(같은 답 수/10 — 신뢰도·사주 스타일 라벨은 2026-10-13 제거) + 문항별 일치(다른 문항 먼저·근거는 다른 문항에만, 일치 문항은 짧게)(상태는 ResultSlides, 서버 저장 없음). 인트로의 ?step=survey 화면에서도 같은 상태로 뜸
-│   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · OG 미리보기/저장/이미지 공유(파일명 사주까치_{제목}_{YYYYMMDD}.png)
+│   │   ├── ShareButton.tsx          # 공유 버튼 공용(create·title·text·label) — 분석 결과(createShare)·시운(createDailyShare)·궁합(createCompatShare) → /s/{id} 링크 · 공유 시트 또는 링크 복사 + 카드 미리보기(링크 복사·이미지 공유·이미지 저장 버튼은 2026-10-23 제거, 옛 파일명 사주까치_{제목}_{YYYYMMDD}.png)
 │   │   ├── OgCard.tsx               # OG 이미지 JSX(satori) + 폰트·마스코트 로더 + 캐릭터 그림 로더 loadCharacterArt(saju_character/og/{key}.jpg — 사주 카드 1장·궁합 카드는 두 사람 것 2장) (경로별 캐시, 서버 전용, fs)
 │   │   ├── AnalysisForm.tsx         # 이름·생년월일·시간(12지시)·성별 · 정밀 설정(분석연도) · 경도 자동(비노출) · quick 모드(홈, 저장 단계 없음)
 │   │   ├── CompatibilityResult.tsx  # 궁합 결과 오케스트레이터 — 7탭 정의(hook 포함)·?tab=·?step=(intro·scenario, 다른 파라미터 보존, pushState)·탭바·탭 끝 NextTabCard·탭 전환 시 첫 줄로 스크롤·캐시 기본값 한 번 채우기. 인트로·문답이 덮는 동안엔 탭 본문을 마운트하지 않음. 본문은 compatibility/
@@ -542,7 +542,7 @@ erDiagram
 
 ```
 결과 헤더 "공유" → POST /kkachi/shares (지금 입력값) → shares.payload = build_share_card() 스냅샷 → /s/{id}
-  → navigator.share(제목·문구·링크) 또는 클립보드 → 패널: OG 이미지 미리보기 · 링크 복사 · 이미지로 공유(파일) · 이미지 저장
+  → navigator.share(제목·문구·링크) 또는 클립보드 → 패널: OG 카드 미리보기 + 닫기(버튼들은 2026-10-23 제거 — 공유 시트와 같은 일을 한 번 더 해서)
 받는 쪽 /s/{id} (서버 컴포넌트) → fetchShare(KKACHI_API_INTERNAL_URL) → 카드 + kind별 CTA(사주 "나도 30초 만에 내 사주 보기", 캐릭터 있으면 "나는 어떤 캐릭터일까?" / 시운 "나도 오늘 시운 보기" / 궁합 "우리 궁합도 보기") → 홈 QuickStartPost(궁합은 /compatibility)
 카톡·슬랙 미리보기 → /s/{id}/opengraph-image (satori 1200×630, public/fonts 서브셋) — metadataBase = NEXT_PUBLIC_SITE_URL
 ```
