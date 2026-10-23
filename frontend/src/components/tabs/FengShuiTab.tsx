@@ -245,11 +245,10 @@ export default function FengShuiTab({ natal, name }: Props) {
         <CollapsibleSectionHeader title="풍수(風水)">
           <p>
             <strong className="text-[var(--color-ink)]">팔택풍수(八宅風水)</strong>는 생년·성별로
-            1~9 사이의 <strong className="text-[var(--color-ink)]">쿠아 넘버(九星)</strong>를 뽑고,
-            이 숫자가 8괘(八卦) 중 하나인 <strong className="text-[var(--color-ink)]">본명괘(本命卦)</strong>에 대응돼요.
-            본명괘에 따라 <strong style={{ color: EAST_INK }}>동사택(東四宅)</strong> 또는{" "}
-            <strong style={{ color: WEST_INK }}>서사택(西四宅)</strong> 중 하나에 속하며,
-            그룹별로 길한 방위 4개와 흉한 방위 4개가 정해져요.
+            <strong className="text-[var(--color-ink)]"> 쿠아 넘버(九星)</strong>를 뽑아
+            8괘 중 하나인 <strong className="text-[var(--color-ink)]">본명괘(本命卦)</strong>에 대응시켜요.
+            본명괘가 <strong style={{ color: EAST_INK }}>동사택(東四宅)</strong>·<strong style={{ color: WEST_INK }}>서사택(西四宅)</strong> 중
+            어디냐에 따라 길한 방위 4개와 흉한 방위 4개가 정해져요.
           </p>
         </CollapsibleSectionHeader>
         <div className="divider" />

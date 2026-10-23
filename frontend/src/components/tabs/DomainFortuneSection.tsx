@@ -11,7 +11,7 @@ export default function DomainFortuneSection({ postnatal }: { postnatal: Postnat
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="삶의 영역별 운(運)">
-        <strong className="text-[var(--color-ink)]">재성(財·재물운)·관성(官·관록운)·인성(印·학문운)·식상(食傷·재능운)·비겁(比劫·인연운)</strong> — 사주까치는 이 다섯 가지로 삶의 영역을 정의해요. 대운(10년)·세운(올해) 십신 분포로 점수를 매기고, 월운(이번달) 십신을 뱃지로 함께 표시해요.
+        <strong className="text-[var(--color-ink)]">재성(財·재물)·관성(官·관록)·인성(印·학문)·식상(食傷·재능)·비겁(比劫·인연)</strong> 다섯으로 삶의 영역을 나눠요. 대운(10년)·세운(올해) 십신 분포로 점수를 매기고, 월운(이번 달) 십신은 뱃지로 보여줘요.
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">

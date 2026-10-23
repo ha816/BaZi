@@ -58,79 +58,16 @@ export default function DaeunTab({ natal, postnatal }: Props) {
           <div className="slide-card">
             <CollapsibleSectionHeader title="대운(大運)">
               <p>
-                10년 주기로 바뀌는 <strong className="text-[var(--color-ink)]">큰 운의 흐름</strong>이에요. 인생의 큰 챕터를 만드는 에너지로, 월주(月柱)에서 시작해 60갑자를 따라 한 칸씩 흘러가요. 출생 시점의 절기·성별에 따라 순행/역행이 정해져요.
+                10년마다 바뀌는 <strong className="text-[var(--color-ink)]">큰 운의 흐름</strong>이에요. 월주(月柱)에서 출발해 60갑자를 한 칸씩 따라가요.
               </p>
-              {/* 대운 계산법 */}
-              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-4 space-y-3.5">
-                <p className="text-[11px] font-semibold text-[var(--color-ink-muted)]">대운 계산법</p>
-
-                {/* ① 방향 */}
-                <div className="flex items-start gap-2">
-                  <span className="text-[10px] font-bold text-[var(--color-gold)] w-4 flex-shrink-0 mt-0.5">①</span>
-                  <div className="flex-1">
-                    <p className="text-[10px] text-[var(--color-ink-faint)] mb-1.5">순행/역행 구하기</p>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed">
-                      태어난 해는 {isYinYear ? "음(陰)" : "양(陽)"}의 해({yearBranch})로,{" "}
-                      {isMale ? "남성(양)" : "여성(음)"}과 {isReverse ? "불일치" : "일치"}하여{" "}
-                      {isReverse ? "역행" : "순행"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* ② 출발점 */}
-                <div className="flex items-start gap-2">
-                  <span className="text-[10px] font-bold text-[var(--color-gold)] w-4 flex-shrink-0 mt-0.5">②</span>
-                  <div className="flex-1">
-                    <p className="text-[10px] text-[var(--color-ink-faint)] mb-1.5">
-                      {isReverse ? "역행" : "순행"}이므로 월주 기준 60갑자 순회에서 한 칸 이동
-                    </p>
-                    {/* 60갑자 스트립 */}
-                    {mIdx !== -1 && (
-                      <div className="flex items-center gap-1 overflow-hidden">
-                        {[-1, 0, 1].map((offset) => {
-                          const idx = (mIdx + offset + 60) % 60;
-                          const ganji = GANJI_60[idx];
-                          const isMonth = offset === 0;
-                          const isFirst = firstDaeun && ganji === firstDaeun.ganji && offset !== 0;
-                          return (
-                            <div key={offset} className="flex flex-col items-center gap-0.5">
-                              <span className="text-[9px] font-semibold" style={{
-                                color: isMonth ? "var(--color-ink-faint)"
-                                  : offset === (isReverse ? -1 : 1) ? (isReverse ? "#C75B52" : "#1B6B3A")
-                                  : "transparent",
-                              }}>
-                                {isMonth ? "月柱" : offset === (isReverse ? -1 : 1) ? "첫 대운" : "."}
-                              </span>
-                              <span className={`font-heading text-xs font-bold px-2 py-1 rounded-lg border ${
-                                isMonth
-                                  ? "border-[var(--color-border-light)] bg-white text-[var(--color-ink)]"
-                                  : isFirst
-                                  ? "text-[var(--color-gold)]"
-                                  : "text-[var(--color-ink-faint)]"
-                              }`}
-                                style={isFirst ? { backgroundColor: "#FFF8EC", borderColor: "var(--color-gold)" } :
-                                  !isMonth ? { backgroundColor: "var(--color-ivory)", borderColor: "transparent" } : {}}>
-                                {ganji}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* ③ 시작 나이 */}
-                <div className="flex items-start gap-2">
-                  <span className="text-[10px] font-bold text-[var(--color-gold)] w-4 flex-shrink-0 mt-0.5">③</span>
-                  <div>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] mb-1.5">대운 시작 나이 - 대운수(大運數)</p>
-                    <p className="text-[10px] text-[var(--color-ink-faint)] leading-relaxed">
-                      태어난 날부터 절기{nearestSolarTerm ? `(${nearestSolarTerm})` : ""}까지 날수를 세면 약 {daeunNumber * 3}일. {daeunNumber * 3}을 3으로 나누면 {daeunNumber}세 — 대운이 시작되는 나이. (명리학 3일 = 1년 취급)
-                    </p>
-                  </div>
-                </div>
-              </div>
+              {/* 계산법 — 방향·출발 칸·시작 나이를 한 줄로(2026-10-23, 상세 설명 4줄 규칙) */}
+              {firstDaeun && mIdx !== -1 && (
+                <p>
+                  {isYinYear ? "음(陰)" : "양(陽)"}의 해({yearBranch})·{isMale ? "남성" : "여성"}이라{" "}
+                  <strong className="text-[var(--color-ink)]">{isReverse ? "역행" : "순행"}</strong> — 월주 {monthPillar} {isReverse ? "이전" : "다음"} 칸 {firstDaeun.ganji}부터,
+                  절기{nearestSolarTerm ? `(${nearestSolarTerm})` : ""}까지 약 {daeunNumber * 3}일 ÷ 3 = {daeunNumber}세에 시작해요.
+                </p>
+              )}
             </CollapsibleSectionHeader>
             <div className="divider" />
             <div className="slide-card__body space-y-4">

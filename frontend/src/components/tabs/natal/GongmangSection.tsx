@@ -14,8 +14,7 @@ export default function GongmangSection({ natal }: Props) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="공망(空亡)">
-        60갑자(六十甲子) 순(旬)에서 짝이 없는 지지를 말해요. 해당 기둥의 기운이 비어 있어 약해지지만, <strong className="text-[var(--color-ink)]">집착을 내려놓을수록 오히려 잘 풀리는 기운</strong>으로 풀이합니다.
-        현대 명리에서는 공망이 있는 영역에서는 무리한 욕심보다 <strong className="text-[var(--color-ink)]">담담한 태도</strong>가 좋은 결과를 만듭니다.
+        60갑자(六十甲子)를 열 개씩 묶은 순(旬)마다 지지 둘이 짝 없이 남는데, 이것이 공망이에요. 그 기둥의 기운은 비어 약해지지만, 무리한 욕심보다 <strong className="text-[var(--color-ink)]">담담한 태도</strong>가 좋은 결과를 만드는 자리예요.
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-3">

@@ -21,7 +21,7 @@ export default function JizanganSection({ natal }: Props) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="지장간(地藏干)">
-        사주의 아래 글자(지지)는 한 달짜리 시간이에요. 그 안에서 여러 천간이 시간대별로 돌아가며 작동하는 게 지장간(地藏干, 땅에 감춰진 천간)이에요. 겉엔 잘 안 보여도 결정적인 순간 작동하는 <strong className="text-[var(--color-ink)]">잠재된 기운과 속마음</strong>을 보여줍니다. 본기·중기·여기 3단계로 비중이 다르며, 일지(日支) 본기는 <strong className="text-[var(--color-ink)]">자신의 진짜 욕구</strong>를 나타냅니다.
+        지지 한 글자는 한 달짜리 시간이라 그 안에서 여러 천간이 번갈아 작동해요. 이 땅에 감춰진 천간이 지장간이에요. 겉엔 안 보여도 결정적 순간에 움직이는 <strong className="text-[var(--color-ink)]">속마음</strong>을 보여 주고, 일지(日支) 본기는 <strong className="text-[var(--color-ink)]">진짜 욕구</strong>를 뜻해요.
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">

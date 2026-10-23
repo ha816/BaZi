@@ -41,7 +41,7 @@ export default function PillarSection({ natal }: Props) {
         </div>
         {sajuOpen && (
           <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed mt-2">
-            태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 표현한 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자를 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>예요. 그 중 태어난 날의 천간(日干)이 <strong className="text-[var(--color-ink)]">나 자신</strong>을 상징하며, 사주 전체가 이 일간을 중심으로 풀이됩니다.
+            태어난 <strong className="text-[var(--color-ink)]">연·월·일·시</strong>를 각각 하늘(천간)과 땅(지지) 두 글자로 나타낸 것이 <strong className="text-[var(--color-ink)]">사주(四柱)</strong>, 그 여덟 글자가 <strong className="text-[var(--color-ink)]">팔자(八字)</strong>예요. 그중 태어난 날의 천간(日干)이 <strong className="text-[var(--color-ink)]">나 자신</strong>이고, 사주 전체를 이 일간을 중심으로 풀이해요.
           </p>
         )}
       </div>

@@ -201,7 +201,7 @@ export default function ZodiacTab({ natal, postnatal }: Props) {
       {/* 나의 띠 심층 프로필 */}
       <div className="slide-card">
         <CollapsibleSectionHeader title="십이지신(十二支神)">
-          해를 <strong className="text-[var(--color-ink)]">십이 동물 신령</strong>으로 나눈 것이 십이지신입니다. 태어난 해의 지지(地支)가 곧 자신의 띠가 돼요. 쥐(子)·소(丑)·호랑이(寅)·토끼(卯)·용(辰)·뱀(巳)·말(午)·양(未)·원숭이(申)·닭(酉)·개(戌)·돼지(亥) — 열두 띠가 차례로 한 해씩 자리를 지켜요.
+          해를 <strong className="text-[var(--color-ink)]">열두 동물</strong>로 나눈 것이 십이지신이에요. 태어난 해의 지지(地支)가 곧 내 띠예요. 쥐(子)·소(丑)·호랑이(寅)·토끼(卯)·용(辰)·뱀(巳)·말(午)·양(未)·원숭이(申)·닭(酉)·개(戌)·돼지(亥) 순이에요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">

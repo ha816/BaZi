@@ -196,8 +196,8 @@ export default function SibiUnseongSection({ natal }: Props) {
   return (
     <div className="slide-card">
       <CollapsibleSectionHeader title="십이운성(十二運星)">
-        인생의 <strong className="text-[var(--color-ink)]">생로병사 12단계 사이클</strong>이에요. 탄생(長生) → 절정(帝旺) → 쇠퇴(衰) → 잠듬(墓) → 다시 씨앗으로 돌아가는(胎) 흐름이죠.
-        사주 4기둥(년·월·일·시)이 각각 어떤 단계인지 보면, <strong className="text-[var(--color-ink)]">인생 시기별 컨디션과 에너지 흐름</strong>이 한눈에 보입니다.
+        인생의 <strong className="text-[var(--color-ink)]">생로병사 12단계 사이클</strong>이에요. 탄생(長生)→절정(帝旺)→쇠퇴(衰)→잠듦(墓)→다시 씨앗(胎)으로 돌아가는 흐름이죠.
+        네 기둥이 각각 어느 단계인지 보면 <strong className="text-[var(--color-ink)]">시기별 컨디션과 에너지 흐름</strong>이 한눈에 보여요.
       </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-4">

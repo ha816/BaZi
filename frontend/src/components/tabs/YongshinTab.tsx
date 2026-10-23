@@ -60,8 +60,8 @@ export default function YongshinTab({ natal, postnatal }: Props) {
       {/* 용신·기신 + 활용 가이드 */}
       <div className="slide-card">
         <CollapsibleSectionHeader title="용신·기신(用神·忌神)">
-          <strong className="text-[var(--color-ink)]">용신(用神)</strong>은 사주 균형을 잡아주어 나에게 가장 이로운 오행, <strong className="text-[var(--color-ink)]">기신(忌神)</strong>은 그 균형을 흐트리는 피해야 할 오행이에요.
-          용신을 일상의 <strong className="text-[var(--color-ink)]">색·방향·직업·습관</strong>으로 끌어와 가까이 두면 운의 결이 부드러워지고, 기신은 같은 영역에서 가능한 줄이는 게 좋습니다.
+          <strong className="text-[var(--color-ink)]">용신(用神)</strong>은 사주 균형을 잡아 주는 가장 이로운 오행, <strong className="text-[var(--color-ink)]">기신(忌神)</strong>은 균형을 흐트리는 피할 오행이에요.
+          용신은 <strong className="text-[var(--color-ink)]">색·방향·직업·습관</strong>으로 가까이 두고, 기신은 같은 영역에서 되도록 줄이는 게 좋아요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">

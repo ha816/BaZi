@@ -65,7 +65,7 @@ export default function TimingTab({ postnatal, name }: Props) {
     <div className="space-y-4">
       <div className="slide-card">
         <CollapsibleSectionHeader title="언제가 좋을까(擇時)">
-          앞으로 열두 달의 <strong className="text-[var(--color-ink)]">월운(月運)</strong>을 영역별로 점수 매겼어요. 월운 간지가 내 일간과 맺는 십신(十神), 용신·기신 오행, 내 일지와의 육합·충, 역마·도화·문창 같은 신살을 더해 계산합니다. 초록은 그 일을 실행하기 좋은 달, 빨강은 한 박자 늦추는 달이에요.
+          앞으로 열두 달의 <strong className="text-[var(--color-ink)]">월운(月運)</strong>을 영역별로 점수 매겼어요. 월운과 내 일간의 십신(十神), 용신·기신, 일지와의 육합·충, 역마·도화·문창을 더해 계산해요. 초록은 실행하기 좋은 달, 빨강은 늦추는 달이에요.
         </CollapsibleSectionHeader>
         <div className="divider" />
         <div className="slide-card__body space-y-4">

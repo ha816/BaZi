@@ -117,18 +117,10 @@ export default function FortuneTab({ natal, postnatal }: Props) {
         <div className="slide-card">
           <CollapsibleSectionHeader title="충합(衝合)">
             <p>
-              사주팔자에 대운·세운이 들어오면서 부딪히는 게 <strong className="text-[var(--color-ink)]">충(衝)</strong>, 맞붙는 게 <strong className="text-[var(--color-ink)]">합(合)</strong>이에요.
-            </p>
-            <p>
-              천간끼리의 합을 <strong className="text-[var(--color-ink)]">천간합(天干合)</strong>, 지지끼리의 합과 충을 각각 <strong className="text-[var(--color-ink)]">지지합(地支合)</strong>, <strong className="text-[var(--color-ink)]">지지충(地支冲)</strong>이라고 합니다.
-            </p>
-            <p>
-              아래는 <strong className="text-[var(--color-ink)]">십간(十干)</strong>을 시계처럼 원형 배치한 그림이에요. 정반대 위치의 다섯 쌍이 천간합이에요.
+              대운·세운이 사주팔자와 부딪히면 <strong className="text-[var(--color-ink)]">충(衝)</strong>, 맞붙으면 <strong className="text-[var(--color-ink)]">합(合)</strong>이에요.
+              십간 원에서 마주 보는 짝이 <strong className="text-[var(--color-ink)]">천간합(天干合)</strong>, 십이지지 원에서 마주 보는 짝이 <strong className="text-[var(--color-ink)]">지지충(地支冲)</strong>, 맞붙는 짝이 <strong className="text-[var(--color-ink)]">지지합(地支合)</strong>이에요.
             </p>
             <CheonganCircleDiagram />
-            <p>
-              <strong className="text-[var(--color-ink)]">십이지지(十二地支)</strong>도 시계처럼 원형으로 배치한 그림이에요. 정반대의 여섯 짝은 지지충, 맞붙는 여섯 짝은 지지합이라 합니다.
-            </p>
             <JijiCircleDiagram />
             <div className="flex items-center gap-3 justify-center flex-wrap">
               <div className="flex items-center gap-1.5">

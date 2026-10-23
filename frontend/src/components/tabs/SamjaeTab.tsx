@@ -85,7 +85,7 @@ export default function SamjaeTab({ natal, postnatal }: Props) {
       <div className="slide-card">
         <CollapsibleSectionHeader title="삼재(三災)">
           <p>
-            12년 주기로 찾아오는 <strong className="text-[var(--color-ink)]">3년간의 액운기</strong>예요. 수재(水災)·화재(火災)·풍재(風災) 세 재앙이 겹친다 하여 삼재라 부르고, 태어난 띠에 따라 시기가 정해져 있어요. 3년은 들삼재(入)→눌삼재(訥)→날삼재(出) 세 단계로 흘러요.
+            12년마다 찾아오는 <strong className="text-[var(--color-ink)]">3년의 액운기</strong>예요. 수재(水災)·화재(火災)·풍재(風災) 세 재앙이 겹친다 해서 삼재라 부르고, 태어난 띠에 따라 시기가 정해져요.
           </p>
           <div className="grid grid-cols-3 gap-2">
             {[
