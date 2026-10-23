@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { CompatShareCard, DailyShareCard, ShareCard } from "@/types/analysis";
 import { sealPose } from "./LuckySeal";
 import { getElementInfo } from "@/lib/elementColors";
-import { RELATION_GLYPH } from "@/lib/relations";
+import { RELATION_GLYPH, orderedCompatDomains } from "@/lib/relations";
 
 // 링크 미리보기(OG) 이미지 — satori(next/og)로 그린다. 서버 전용: fs로 폰트·이미지를 읽는다.
 // satori 규칙: 자식이 둘 이상인 div는 display:flex, CSS 변수 불가, WOFF2 불가.
@@ -69,9 +69,9 @@ function loadArt(relPath: string): Promise<string | null> {
   return art;
 }
 
-/** 운수대통 직인(시운 카드, 좋은 날) — kkachi/seal/unsu_daetong.png(투명 PNG) */
-export function loadSealArt(): Promise<string | null> {
-  const rel = "seal/unsu_daetong.png";
+/** 직인 그림(투명 PNG) — 시운 좋은 날 unsu_daetong, 궁합 80점 이상 cheonsaeng_yeonbun·magyeok_jigyo·gahwa_mansa */
+export function loadSealArt(name = "unsu_daetong"): Promise<string | null> {
+  const rel = `seal/${name}.png`;
   let art = artCache.get(rel);
   if (!art) {
     art = readFile(join(process.cwd(), "public/kkachi", rel)).then((b) => `data:image/png;base64,${b.toString("base64")}`).catch(() => null);
@@ -326,88 +326,64 @@ export function DailyOgImage({ card, mascot, seal }: { card: DailyShareCard; mas
 
 /** 궁합 공유 카드 — 캐릭터 칭호 · 점수·라벨 · 두 사람 일간(역할) · 영역 점수 · 한 줄 · CTA.
  *  궁합 캐릭터 그림(compat/og/{key}.jpg)이 있으면 왼쪽에 232px로 넣고 점수·일간 칸을 좁힌다(2026-10-17, 사주 카드 V4와 같은 자리). 없으면 글자만 */
-export function CompatOgImage({ card, mascot, characterArts = [] }: { card: CompatShareCard; mascot: string; characterArts?: (string | null)[] }) {
-  // 두 사람 각자의 사주 캐릭터 OG 그림(saju_character/og/{character_key}.jpg, 2026-10-18 — 궁합 전용 그림 없음). 옛 카드는 빈 배열 → 글자만
+export function CompatOgImage({ card, mascot, characterArts = [], seal }: { card: CompatShareCard; mascot: string; characterArts?: (string | null)[]; seal?: string | null }) {
+  // 2026-10-23 사주·시운 카드와 같은 기준 — 이름·관계는 한 줄, 칭호가 제목, 일간 칸·설명 문장·잘리던 특징 줄은 빼고
+  // 두 캐릭터 그림·점수를 키운다. 75점 이상이면 점수 위에 관계별 직인(정지 그림 — 애니메이션은 랜딩에서)
   const arts = characterArts.filter((a): a is string => !!a);
   const hasArt = arts.length > 0;
   // 임계 65/45 = 백엔드 TOTAL_LABEL_BY_REL(80/65/45)과 맞춤
   const tone = card.total_score >= 65 ? LEVEL_COLORS["좋은 날"] : card.total_score >= 45 ? LEVEL_COLORS["평범한 날"] : LEVEL_COLORS["주의가 필요한 날"];
-  const domains = Object.entries(card.domain_scores).slice(0, 4);
+  const domains = orderedCompatDomains(card.domain_scores, card.relation_type);
   const n1 = card.name1 || "첫 번째 분";
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
-  const footer = [...card.shared_sinsal.slice(0, 1).map((s) => `둘 다 ${s}`), ...card.key_traits].slice(0, 3).join(" · ");
   const ch = card.character;
-  // 캐릭터가 있으면 한 줄은 설명 첫 문장(이모지 없이 역할만 — OgCard 글자 규칙), 없으면 기존 description
-  const line = ch ? ch.desc.split(/(?<=\.)\s+/)[0] : card.description || "";
+  const pose = sealPose(`${n1}${n2}${card.total_score}`);
   return (
     <div style={outer}>
       <div style={{ ...inner, flexDirection: "column" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>{card.relation_label} 궁합</div>
-            <div style={{ display: "flex", alignItems: "center", fontSize: 44, fontWeight: 700, marginTop: 2 }}>
-              <div style={{ display: "flex" }}>{clip(n1, 6)}님</div>
-              <div style={{ display: "flex", fontSize: 40, color: GOLD, margin: "0 10px" }}>{glyph}</div>
-              <div style={{ display: "flex" }}>{clip(n2, 6)}님</div>
-            </div>
-          </div>
-          <BrandMark mascot={mascot} />
+        <div style={{ display: "flex", alignItems: "center", fontSize: 24, fontWeight: 700, color: GOLD }}>
+          {clip(n1, 6)}님<div style={{ display: "flex", margin: "0 8px" }}>{glyph}</div>{clip(n2, 6)}님의 {card.relation_label} 궁합
         </div>
-        {ch && (
-          <div style={{ display: "flex", alignItems: "baseline", marginTop: 10 }}>
-            <div style={{ display: "flex", fontSize: 22, color: INK_MUTED, marginRight: 10 }}>두 분은</div>
-            <div style={{ display: "flex", fontSize: 32, fontWeight: 700, color: GOLD }}>{clip(ch.title, 30)}</div>
-          </div>
-        )}
+        <div style={{ display: "flex", fontSize: 46, fontWeight: 700, marginTop: 6 }}>{clip(ch?.title ?? card.label, 18)}</div>
 
-        <div style={{ display: "flex", flex: 1, marginTop: ch ? 14 : 22, gap: hasArt ? 24 : 32, alignItems: "center" }}>
+        <div style={{ display: "flex", flex: 1, gap: 30, alignItems: "center" }}>
           {hasArt && (
-            <div style={{ display: "flex", gap: 10 }}>
-              {arts.map((a, i) => <img key={i} src={a} alt="" width={156} height={156} style={{ borderRadius: 20, border: `1px solid ${BORDER}` }} />)}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img src={arts[0]} alt="" width={210} height={210} style={{ borderRadius: 24, border: `1px solid ${BORDER}` }} />
+              {arts[1] && <div style={{ display: "flex", fontSize: 30, color: GOLD_LIGHT }}>{glyph}</div>}
+              {arts[1] && <img src={arts[1]} alt="" width={210} height={210} style={{ borderRadius: 24, border: `1px solid ${BORDER}` }} />}
             </div>
           )}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: hasArt ? 180 : 240, gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700 }}>
-              <div style={{ display: "flex", fontSize: hasArt ? 76 : 88, lineHeight: 1 }}>{card.total_score}</div>
-              <div style={{ display: "flex", fontSize: 26, color: INK_MUTED, marginLeft: 4 }}>점</div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 190, gap: 10, position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "baseline", fontWeight: 700, paddingTop: 14 }}>
+              <div style={{ display: "flex", fontSize: 104, lineHeight: 1 }}>{card.total_score}</div>
+              <div style={{ display: "flex", fontSize: 30, color: INK_MUTED, marginLeft: 4 }}>점</div>
             </div>
-            <div style={{ display: "flex", fontSize: 18, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 999, padding: "6px 16px" }}>{card.label}</div>
+            <div style={{ display: "flex", fontSize: 21, fontWeight: 700, color: tone.fg, background: tone.bg, borderRadius: 999, padding: "6px 16px" }}>{card.label}</div>
+            {seal && (
+              <img src={seal} alt="" width={96} height={96} style={{ position: "absolute", top: -38 + Math.round(pose.dy * 8), right: -8 - Math.round(pose.dx * 8), transform: `rotate(${pose.rotate}deg)` }} />
+            )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, width: hasArt ? 170 : 190 }}>
-            {[{ name: n1, d: card.p1, role: ch?.roles[0] }, { name: n2, d: card.p2, role: ch?.roles[1] }].map(({ name, d, role }, i) => (
-              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", borderRadius: 16, background: IVORY_WARM, border: `1px solid ${BORDER}`, padding: "8px 0" }}>
-                <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>{clip(name, 8)}</div>
-                <div style={{ display: "flex", alignItems: "baseline", color: getElementInfo(d.element).color, lineHeight: 1.1 }}>
-                  <div style={{ display: "flex", fontSize: 36, fontWeight: 700 }}>{d.korean}</div>
-                  <div style={{ display: "flex", fontSize: 22, marginLeft: 2 }}>({d.stem})</div>
-                  <div style={{ display: "flex", fontSize: 16, color: INK_FAINT, marginLeft: 6 }}>일간</div>
-                </div>
-                {role && (
-                  <div style={{ display: "flex", fontSize: 17, fontWeight: 700, color: GOLD, marginTop: 2 }}>= {role.name}({role.element})</div>
-                )}
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
-            {domains.map(([k, v]) => (
-              <div key={k} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ display: "flex", width: 96, fontSize: 22, fontWeight: 700, color: INK }}>{k}</div>
+          <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 14 }}>
+            {domains.map((d) => (
+              <div key={d.key} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ display: "flex", width: 120, fontSize: 21, fontWeight: 700, color: INK }}>{d.label}</div>
                 <div style={{ display: "flex", flex: 1, height: 18, borderRadius: 9, background: IVORY_WARM }}>
-                  <div style={{ display: "flex", width: `${Math.max(4, Math.min(100, v.score))}%`, height: 18, borderRadius: 9, background: GOLD_LIGHT }} />
+                  <div style={{ display: "flex", width: `${Math.max(4, Math.min(100, d.score))}%`, height: 18, borderRadius: 9, background: GOLD_LIGHT }} />
                 </div>
-                <div style={{ display: "flex", width: 44, fontSize: 20, color: INK_MUTED, justifyContent: "flex-end" }}>{v.score}</div>
+                <div style={{ display: "flex", width: 40, fontSize: 20, color: INK_MUTED, justifyContent: "flex-end" }}>{d.score}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 16 }}>
-          <div style={{ display: "flex", fontSize: 24, lineHeight: 1.4, color: INK }}>{clip(line, 70)}</div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>{clip(footer, 36)}</div>
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>우리 궁합도 보기 →</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
+            <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
           </div>
+          <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>우리 궁합도 보기 →</div>
         </div>
       </div>
     </div>

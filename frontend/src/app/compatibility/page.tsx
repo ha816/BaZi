@@ -215,7 +215,7 @@ function CompatibilityPageInner() {
               <>
                 {chatInput && (
                   <ShareButton
-                    label="궁합 공유"
+                    label="공유"
                     create={() => createCompatShare(chatInput)}
                     title={`${resultNames.name1 || "첫 번째 분"}님 ${RELATION_GLYPH[chatInput.relation_type ?? "lover"]} ${resultNames.name2 || "두 번째 분"}님 궁합`}
                     text={

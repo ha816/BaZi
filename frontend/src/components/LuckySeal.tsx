@@ -15,14 +15,14 @@ export function sealPose(seed: string): { rotate: number; dx: number; dy: number
   return { rotate: Math.round(-12 + r(0) * 8), dx: r(1), dy: r(2) };
 }
 
-export default function LuckySeal({ className = "", size = 56, seed = "" }: { className?: string; size?: number; seed?: string }) {
+export default function LuckySeal({ className = "", size = 56, seed = "", src = SEAL_SRC, alt = "운수대통(運數大通)" }: { className?: string; size?: number; seed?: string; src?: string; alt?: string }) {
   const { rotate, dx, dy } = sealPose(seed);
   const jitter = size * 0.14; // 56px 기준 ±8px
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={SEAL_SRC}
-      alt="운수대통(運數大通)"
+      src={src}
+      alt={alt}
       width={size}
       height={size}
       className={`seal-stamp pointer-events-none select-none drop-shadow-sm ${className}`}

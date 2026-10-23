@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { BrandOgImage, CompatOgImage, DailyOgImage, OG_SIZE, ShareOgImage, loadCharacterArt, loadOgAssets, loadSealArt } from "@/components/OgCard";
+import { COMPAT_SEAL, COMPAT_SEAL_MIN_SCORE } from "@/lib/relations";
 import { fetchShare } from "./share";
 
 export const alt = "사주까치 공유 카드";
@@ -19,10 +20,12 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     : [];
   // 좋은 날 시운 카드는 점수 위에 운수대통 직인(2026-10-23)
   const sealArt = card?.kind === "daily" && card.level === "좋은 날" ? await loadSealArt() : null;
+  // 궁합 80점 이상은 관계별 직인(천생연분·막역지교·가화만사)
+  const compatSeal = compat && compat.total_score >= COMPAT_SEAL_MIN_SCORE ? await loadSealArt(COMPAT_SEAL[compat.relation_type]?.file) : null;
   return new ImageResponse(
     !card ? <BrandOgImage mascot={mascot} />
       : card.kind === "daily" ? <DailyOgImage card={card} mascot={mascot} seal={sealArt} />
-      : card.kind === "compat" ? <CompatOgImage card={card} mascot={mascot} characterArts={compatArts} />
+      : card.kind === "compat" ? <CompatOgImage card={card} mascot={mascot} characterArts={compatArts} seal={compatSeal} />
       : <ShareOgImage card={card} mascot={mascot} characterArt={characterArt} />,
     { ...OG_SIZE, fonts },
   );

@@ -7,7 +7,7 @@ import KkachiTip from "@/components/KkachiTip";
 import LuckySeal from "@/components/LuckySeal";
 import SectionHeader from "@/components/SectionHeader";
 import { FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
-import { RELATION_GLYPH } from "@/lib/relations";
+import { COMPAT_SEAL, COMPAT_SEAL_MIN_SCORE, RELATION_GLYPH, orderedCompatDomains } from "@/lib/relations";
 import type { CompatShareCard, DailyShareCard } from "@/types/analysis";
 import { fetchShare } from "./share";
 
@@ -146,7 +146,8 @@ const scoreTone = (score: number) =>
 
 /** 궁합 공유 카드 — 캐릭터 칭호·점수·라벨·두 사람 일간·영역 점수·특징. 생년월일 없음 */
 function CompatShareView({ card }: { card: CompatShareCard }) {
-  const domains = Object.entries(card.domain_scores);
+  const domains = orderedCompatDomains(card.domain_scores, card.relation_type);
+  const seal = card.total_score >= COMPAT_SEAL_MIN_SCORE ? COMPAT_SEAL[card.relation_type] : null;
   const n1 = card.name1 || "첫 번째 분";
   const n2 = card.name2 || "두 번째 분";
   const glyph = RELATION_GLYPH[card.relation_type] ?? "♥";
@@ -206,23 +207,15 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
                 )}
               </div>
             )}
-            <div className="flex items-center gap-4">
-              <p className="font-heading text-4xl font-bold text-[var(--color-ink)]">
-                {card.total_score}<span className="text-base font-normal text-[var(--color-ink-muted)]">점</span>
-              </p>
+            {/* 일간 칸은 2026-10-23 뺐다(사주 카드와 같게). 80점 이상이면 점수 위에 관계별 직인이 찍힌다 */}
+            <div className="flex items-center gap-4 seal-thud">
+              <div className="relative pr-6 pt-3">
+                <p className="font-heading text-5xl font-bold leading-none text-[var(--color-ink)]">
+                  {card.total_score}<span className="text-base font-normal text-[var(--color-ink-muted)] ml-0.5">점</span>
+                </p>
+                {seal && <LuckySeal seed={`${n1}${n2}${card.total_score}`} src={`/kkachi/seal/${seal.file}.png`} alt={seal.alt} className="absolute -top-4 -right-5" size={58} />}
+              </div>
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${scoreTone(card.total_score)}`}>{card.label}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {[{ name: n1, d: card.p1 }, { name: n2, d: card.p2 }].map(({ name, d }, i) => (
-                <div key={i} className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] px-3 py-2 text-center">
-                  <p className="text-[11px] text-[var(--color-ink-muted)] truncate">{name}</p>
-                  <p className="font-heading leading-tight whitespace-nowrap" style={{ color: getElementInfo(d.element).color }}>
-                    <span className="text-xl font-bold">{d.korean}</span>
-                    <span className="text-xs">({d.stem})</span>
-                    <span className="text-[10px] text-[var(--color-ink-faint)]"> 일간</span>
-                  </p>
-                </div>
-              ))}
             </div>
             {(card.p1.hour_unknown || card.p2.hour_unknown) && (
               <p className="text-[11px] text-[var(--color-ink-faint)]">
@@ -232,13 +225,13 @@ function CompatShareView({ card }: { card: CompatShareCard }) {
             {!ch && card.description && <KkachiTip>{card.description}</KkachiTip>}
             {domains.length > 0 && (
               <div className="space-y-1.5">
-                {domains.map(([k, v]) => (
-                  <div key={k} className="flex items-center gap-2 text-xs">
-                    <span className="w-12 font-semibold text-[var(--color-ink)]">{k}</span>
+                {domains.map((d) => (
+                  <div key={d.key} className="flex items-center gap-2 text-xs">
+                    <span className="w-20 font-semibold text-[var(--color-ink)] break-keep">{d.label}</span>
                     <div className="flex-1 h-2 rounded-full bg-[var(--color-ivory-warm)]">
-                      <div className="h-2 rounded-full bg-[var(--color-gold)]" style={{ width: `${Math.max(4, Math.min(100, v.score))}%` }} />
+                      <div className="h-2 rounded-full bg-[var(--color-gold)]" style={{ width: `${Math.max(4, Math.min(100, d.score))}%` }} />
                     </div>
-                    <span className="w-8 text-right text-[var(--color-ink-muted)]">{v.score}</span>
+                    <span className="w-8 text-right text-[var(--color-ink-muted)]">{d.score}</span>
                   </div>
                 ))}
               </div>
