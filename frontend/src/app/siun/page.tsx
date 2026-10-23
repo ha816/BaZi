@@ -156,7 +156,7 @@ export default function SiunPage() {
                     <span className="text-xs text-[var(--color-ink-muted)]">종합</span>
                     <span className="font-heading text-3xl font-bold leading-none text-[var(--color-ink)]">{data.total_score}</span>
                     {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
-                    {data.level === "좋은 날" && <LuckySeal key={data.date} className="absolute -top-9 -right-5" size={50} />}
+                    {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-9 -right-5" size={50} />}
                   </div>
                 </div>
               </>

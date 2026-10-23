@@ -103,7 +103,7 @@ function DailyShareView({ card }: { card: DailyShareCard }) {
                 <p className="font-heading text-6xl font-bold leading-none text-[var(--color-ink)]">
                   {card.total_score}<span className="text-lg font-normal text-[var(--color-ink-muted)] ml-0.5">점</span>
                 </p>
-                {lucky && <LuckySeal className="absolute -top-4 -right-5" size={60} />}
+                {lucky && <LuckySeal seed={card.date} className="absolute -top-4 -right-5" size={60} />}
               </div>
               <div className="space-y-1.5">
                 <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${meta.badge}`}>{meta.icon} {card.level}</span>

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { CompatShareCard, DailyShareCard, ShareCard } from "@/types/analysis";
+import { sealPose } from "./LuckySeal";
 import { getElementInfo } from "@/lib/elementColors";
 import { RELATION_GLYPH } from "@/lib/relations";
 
@@ -279,6 +280,7 @@ export function DailyOgImage({ card, mascot, seal }: { card: DailyShareCard; mas
   const el = getElementInfo(card.day_element);
   const lv = LEVEL_COLORS[card.level] ?? LEVEL_COLORS["평범한 날"];
   const k = card.day_pillar_korean;
+  const pose = sealPose(card.date); // 직인 기울기·위치 — 같은 날짜면 공유 페이지·시운 화면과 같다
   // 2026-10-23 사주 카드와 같은 기준으로 — 큰 제목 대신 날짜·이름 한 줄, 일진·점수를 키우고,
   // 잘리던 절기·날씨·용신 줄은 빼고 구분선 밑 한 줄에 까치·"사주까치" | CTA
   return (
@@ -297,7 +299,7 @@ export function DailyOgImage({ card, mascot, seal }: { card: DailyShareCard; mas
             </div>
             <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: lv.fg, background: lv.bg, borderRadius: 999, padding: "8px 22px" }}>{card.level}</div>
             {card.level === "좋은 날" && seal && (
-              <img src={seal} alt="" width={120} height={120} style={{ position: "absolute", top: -14, right: -14, transform: "rotate(-12deg)" }} />
+              <img src={seal} alt="" width={120} height={120} style={{ position: "absolute", top: -14 + Math.round(pose.dy * 17), right: -14 - Math.round(pose.dx * 17), transform: `rotate(${pose.rotate}deg)` }} />
             )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 14 }}>
