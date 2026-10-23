@@ -10,6 +10,7 @@ import ResultSlides from "@/components/ResultSlides";
 import ShareButton from "@/components/ShareButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { MEMBER_ID_KEY, INPUT_CLASS, hourToSiLabel } from "@/lib/constants";
+import { useAiReport } from "@/lib/useAiReport";
 
 export default function AnalysisPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -28,6 +29,8 @@ export default function AnalysisPage() {
   const [detectedLongitude, setDetectedLongitude] = useState<number | undefined>();
   // 지금 보고 있는 결과의 입력값 — 공유 카드 생성에 그대로 보낸다
   const [lastInput, setLastInput] = useState<AnalysisInput | null>(null);
+  // AI 풀이 — 결과가 뜨자마자 미리 시작해 AI 풀이 탭에 닿을 때쯤 글이 준비되게(궁합 AI 해석과 같은 구조)
+  const { text: aiText, status: aiStatus, start: startAi, reset: resetAi, retry: retryAi } = useAiReport();
 
   useEffect(() => {
     detectLocation().then((loc) => {
@@ -56,10 +59,12 @@ export default function AnalysisPage() {
     const profileRaw = sessionStorage.getItem("kkachi_profile_input");
     const inputRaw = sessionStorage.getItem("kkachi_analysis_input");
 
+    let profileRef: { memberId?: string; profileId?: string } = {};
     if (profileRaw) {
       try {
         const parsed = JSON.parse(profileRaw);
         if (parsed.profileId) setProfileId(parsed.profileId);
+        profileRef = parsed;
       } catch { /* profileId 없이 진행 */ }
     }
 
@@ -74,11 +79,14 @@ export default function AnalysisPage() {
       setLastInput(input);
       setLoading(true);
       analyzeChart(input)
-        .then(setResult)
+        .then((data) => {
+          setResult(data);
+          startAi({ input, name: savedName, memberId: profileRef.memberId, profileId: profileRef.profileId, year: input.analysis_year, cached: data.ai_report?.text });
+        })
         .catch((e) => setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다."))
         .finally(() => setLoading(false));
     }
-  }, []);
+  }, [startAi]);
 
   useEffect(() => {
     if (!memberId || !selectedProfileId) { setCachedYears([]); return; }
@@ -103,6 +111,7 @@ export default function AnalysisPage() {
       setProfileId(undefined);
       setLastInput(input);
       setResult(data);
+      startAi({ input, name: n, year: input.analysis_year, cached: data.ai_report?.text });
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
     } finally {
@@ -120,8 +129,9 @@ export default function AnalysisPage() {
       const data = await analyzeProfileChart(memberId, selectedProfileId, year);
       sessionStorage.setItem("kkachi_profile_input", JSON.stringify({ memberId, profileId: selectedProfileId, year }));
       setCachedYears((ys) => (ys.includes(year) ? ys : [...ys, year].sort((a, b) => b - a)));
+      let input: AnalysisInput | null = null;
       if (profile) {
-        const input: AnalysisInput = { birth_dt: profile.birth_dt, gender: profile.gender, analysis_year: year, city: profile.city, hour_unknown: profile.birth_hour_unknown };
+        input = { birth_dt: profile.birth_dt, gender: profile.gender, analysis_year: year, city: profile.city, hour_unknown: profile.birth_hour_unknown };
         sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
         sessionStorage.setItem("kkachi_analysis_name", profile.name);
         setName(profile.name);
@@ -129,6 +139,9 @@ export default function AnalysisPage() {
       }
       setProfileId(selectedProfileId);
       setResult(data);
+      if (profile && input) {
+        startAi({ input, name: profile.name, memberId, profileId: selectedProfileId, year, cached: data.ai_report?.text });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "분석 중 오류가 발생했습니다.");
     } finally {
@@ -163,7 +176,7 @@ export default function AnalysisPage() {
                   />
                 )}
                 <button
-                  onClick={() => { setResult(null); setError(null); window.history.replaceState(null, "", "/analysis"); }}
+                  onClick={() => { setResult(null); setError(null); resetAi(); window.history.replaceState(null, "", "/analysis"); }}
                   className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--color-border-light)]"
                 >
                   다시 입력
@@ -188,7 +201,7 @@ export default function AnalysisPage() {
             </div>
           )}
           <Suspense fallback={<LoadingSpinner />}>
-            <ResultSlides data={result} name={name} memberId={memberId} profileId={profileId} />
+            <ResultSlides data={result} name={name} memberId={memberId} profileId={profileId} ai={{ text: aiText, status: aiStatus, onRetry: retryAi }} />
           </Suspense>
         </div>
       </main>

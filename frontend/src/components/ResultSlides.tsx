@@ -23,6 +23,7 @@ import NextTabCard from "./NextTabCard";
 import SelfQuizCard, { type SelfPick } from "./SelfQuizCard";
 import { postFeedback } from "@/lib/api";
 import { track } from "@/lib/track";
+import type { AiReportState } from "@/lib/useAiReport";
 
 // 한 줄에 6개까지, 넘으면 아랫줄로 (globals.css .feature-tabbar). 순서 = 노출 순서.
 const FEATURE_TABS = [
@@ -45,6 +46,8 @@ interface Props {
   name: string;
   memberId?: string;
   profileId?: string;
+  /** AI 풀이 스트림 — 페이지가 결과 직후 미리 시작해 들고 있다(탭을 오가도 유지). AiTab이 보여 준다 */
+  ai?: AiReportState;
 }
 
 function FeedbackBar({
@@ -97,7 +100,7 @@ function FeedbackBar({
   );
 }
 
-export default function ResultSlides({ data, name, memberId, profileId }: Props) {
+export default function ResultSlides({ data, name, memberId, profileId, ai }: Props) {
   // 설문조사(V3) 답·제출 — 인트로 설문(?step=survey)과 설문 탭이 같이 쓴다. "다시 입력"으로 결과가 사라지면 함께 초기화
   const [quizAnswers, setQuizAnswers] = useState<Record<number, SelfPick>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -290,7 +293,7 @@ export default function ResultSlides({ data, name, memberId, profileId }: Props)
             <SamjaeTab {...tabProps} />
           </div>
         )}
-        {active === "ai"       && <AiTab           {...tabProps} />}
+        {active === "ai"       && <AiTab           {...tabProps} ai={ai} />}
         {active === "fengshui" && <FengShuiTab    natal={natal} name={name} />}
 
         <NextTabCard

@@ -175,14 +175,23 @@ function CompatibilityPageInner() {
       sessionStorage.setItem("kkachi_compat_input", JSON.stringify(input));
       sessionStorage.setItem("kkachi_compat_names", JSON.stringify(names));
 
-      const controller = new AbortController();
-      narrativeAbortRef.current = controller;
-      setNarrativeLoading(true);
-      streamCompatibilityNarrative(input, setNarrative, controller.signal)
-        .catch(() => {})
-        .finally(() => {
-          if (narrativeAbortRef.current === controller) setNarrativeLoading(false);
-        });
+      // AI 해석 — 프로필×2는 서버가 저장해 둔 글(narratives)이 있으면 그대로, 없으면 지금 시작해 저장까지 맡긴다
+      const cachedNarrative = data.narratives?.[relationType]?.text;
+      if (cachedNarrative) {
+        setNarrative(cachedNarrative);
+      } else {
+        const controller = new AbortController();
+        narrativeAbortRef.current = controller;
+        setNarrativeLoading(true);
+        streamCompatibilityNarrative(
+          input, setNarrative, controller.signal,
+          byProfiles ? { p1: person1.profileId, p2: person2.profileId } : undefined,
+        )
+          .catch(() => {}) // 503(까치 서버 꺼짐)·중단 — 탭이 안내 문구를 보여 준다
+          .finally(() => {
+            if (narrativeAbortRef.current === controller) setNarrativeLoading(false);
+          });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다.");
     } finally {

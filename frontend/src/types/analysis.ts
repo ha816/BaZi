@@ -292,11 +292,21 @@ export interface PostnatalResult {
   advice: InterpretBlock[];
 }
 
+/** AI 풀이·AI 해석 글 — 백엔드가 analyses/compatibilities 캐시에 저장해 둔 것 (2026-10-23) */
+export interface AiReportEntry {
+  text: string;
+  version?: number;
+  model?: string;
+  created_at?: string;
+}
+
 export interface AnalysisResult {
   natal: NatalResult;
   postnatal: PostnatalResult;
   /** 내 사주 맞춰 보기(V3) 10문항 — 백엔드 self_quiz. 옛 응답엔 없음 */
   self_quiz?: SelfQuizItem[];
+  /** 프로필 분석(analyze)에만 — 이미 만들어 둔 AI 풀이. 있으면 스트림 없이 바로 보여 준다 */
+  ai_report?: AiReportEntry | null;
 }
 
 export interface AnalysisInput {
@@ -437,6 +447,8 @@ export interface CompatibilityResult {
   samhap_completions: SamhapCompletion[];
   key_traits: string[];
   narrative: string | null;
+  /** 프로필×2 결과에만 — 관계 유형별로 저장해 둔 AI 해석. 있으면 스트림 없이 바로 보여 준다 (2026-10-23) */
+  narratives?: Record<string, AiReportEntry>;
   /** 한눈에 4줄 — 백엔드 compatibility_summary. {p1}·{p2}는 이름 토큰(프론트가 치환). 옛 응답엔 없을 수 있음 */
   summary?: CompatSummary;
   /** 띠궁합 — 백엔드 compatibility_zodiac. 스냅샷 없으면 null */

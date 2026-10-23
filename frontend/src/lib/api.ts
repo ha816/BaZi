@@ -54,17 +54,17 @@ export async function streamChat(
   }
 }
 
-export async function streamAiInterpretation(
-  input: AnalysisInput,
-  name: string,
-  onChunk: (accumulated: string) => void,
-): Promise<void> {
-  const res = await fetch(`${API_URL}/kkachi/stream-report`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...input, name }),
-  });
-  if (!res.ok || !res.body) return;
+/** LLM 스트림을 못 연 경우 — 503은 까치 서버(Ollama)가 꺼져 있음 */
+export class StreamUnavailableError extends Error {
+  status: number;
+  constructor(status: number) {
+    super(`stream unavailable (${status})`);
+    this.status = status;
+  }
+}
+
+async function readTextStream(res: Response, onChunk: (accumulated: string) => void): Promise<string> {
+  if (!res.ok || !res.body) throw new StreamUnavailableError(res.status);
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let accumulated = "";
@@ -74,6 +74,40 @@ export async function streamAiInterpretation(
     accumulated += decoder.decode(value, { stream: true });
     onChunk(accumulated);
   }
+  return accumulated;
+}
+
+/** AI 풀이(직접 입력) — 백엔드가 같은 입력의 생성을 나눠 주고 최근 글을 기억한다. 완성된 전체 글을 돌려준다 */
+export async function streamAiInterpretation(
+  input: AnalysisInput,
+  name: string,
+  onChunk: (accumulated: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  const res = await fetch(`${API_URL}/kkachi/stream-report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...input, name }),
+    signal,
+  });
+  return readTextStream(res, onChunk);
+}
+
+/** AI 풀이(프로필) — analyses 캐시에 글이 있으면 한 번에 오고, 없으면 생성하며 서버가 저장해 둔다 */
+export async function streamProfileAiReport(
+  memberId: string,
+  profileId: string,
+  year: number,
+  onChunk: (accumulated: string) => void,
+  signal?: AbortSignal,
+): Promise<string> {
+  const res = await fetch(`${API_URL}/members/${memberId}/profiles/${profileId}/ai-report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ year }),
+    signal,
+  });
+  return readTextStream(res, onChunk);
 }
 
 export async function analyzePalmistry(file: File): Promise<PalmistryResult> {
@@ -223,27 +257,20 @@ export async function streamCompatibilityChat(
   }
 }
 
+/** 궁합 AI 해석 — 프로필 id 둘을 주면 서버가 compatibilities 캐시에 글을 저장해 두고 다음부터 그대로 준다 */
 export async function streamCompatibilityNarrative(
   input: CompatibilityInput,
   onChunk: (accumulated: string) => void,
   signal?: AbortSignal,
-): Promise<void> {
+  profileIds?: { p1: string; p2: string },
+): Promise<string> {
   const res = await fetch(`${API_URL}/compatibility/narrative`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify(profileIds ? { ...input, profile_id_1: profileIds.p1, profile_id_2: profileIds.p2 } : input),
     signal,
   });
-  if (!res.ok || !res.body) return;
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let accumulated = "";
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    accumulated += decoder.decode(value, { stream: true });
-    onChunk(accumulated);
-  }
+  return readTextStream(res, onChunk);
 }
 
 export async function postFeedback(
