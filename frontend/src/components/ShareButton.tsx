@@ -81,20 +81,23 @@ export default function ShareButton({ create, title, text, label = "공유", cha
         <p className="absolute right-0 mt-1 text-[11px] text-[var(--color-fire)] whitespace-nowrap">공유 링크를 만들지 못했어요</p>
       )}
       {open && url && (
-        <div className="fixed inset-x-4 top-16 z-50 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-[340px] rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] shadow-lg p-3 space-y-2">
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="absolute top-1.5 right-2 text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-ink)]"
-            aria-label="닫기"
-          >
-            ✕
-          </button>
-          <img
-            src={`${url}/opengraph-image`}
-            alt="공유 카드 미리보기"
-            className="w-full mt-4 rounded-lg border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)]"
-          />
+        <div className="fixed inset-x-4 top-16 z-50 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-[340px] rounded-xl border border-[var(--color-border-light)] bg-[var(--color-card)] shadow-lg p-2 space-y-1.5">
+          {/* 닫기는 미리보기 오른쪽 위 모서리에 겹쳐서 — 따로 줄을 차지하지 않게(2026-10-23, 사용자 지시) */}
+          <div className="relative">
+            <img
+              src={`${url}/opengraph-image`}
+              alt="공유 카드 미리보기"
+              className="w-full rounded-lg border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)]"
+            />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/45 text-white text-[11px] leading-none flex items-center justify-center hover:bg-black/60"
+              aria-label="닫기"
+            >
+              ✕
+            </button>
+          </div>
           {notice && <p className="text-[11px] text-center text-[var(--color-gold)]" role="status">{notice}</p>}
         </div>
       )}

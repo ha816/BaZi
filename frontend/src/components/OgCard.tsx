@@ -164,35 +164,33 @@ function BrandMark({ mascot }: { mascot: string }) {
 export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; mascot: string; characterArt?: string | null }) {
   const who = card.name ? `${clip(card.name, 10)}님` : "나";
   const ch = card.character;
+  // 아래 줄(용신·CTA)은 2026-10-23 뺐다 — CTA는 오른쪽 위 "사주까치"·까치 아이콘 바로 아래로(사용자 지시)
+  const cta = ch ? "나는 어떤 캐릭터일까? 30초 만에 →" : "나도 30초 만에 내 사주 보기 →";
+  // 왼쪽 위 "○○님의 사주 카드" 제목은 2026-10-23 뺐다(사용자 지시) — 이름은 아래 "○○님의 캐릭터" 줄이 맡는다
   const header = (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", fontSize: 44, fontWeight: 700 }}>{who}의 사주 카드</div>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+        <BrandMark mascot={mascot} />
+        <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: GOLD }}>{cta}</div>
       </div>
-      <BrandMark mascot={mascot} />
-    </div>
-  );
-  const footerLeft = (
-    <div style={{ display: "flex", fontSize: 20, color: INK_FAINT }}>
-      {card.day_stem_korean}({card.day_stem}) 일간 · {card.strength_label} · 용신 {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
     </div>
   );
 
   if (ch) {
     const el = getElementInfo(ch.element);
+    // 2026-10-23: 제목 줄을 빼고 — 위는 그림(360px) + 글 묶음, 맨 아래 구분선 밑 한 줄에 까치·사주까치(왼쪽)와 CTA(오른쪽)
     return (
       <div style={outer}>
         <div style={{ ...inner, flexDirection: "column" }}>
-          {header}
-          <div style={{ display: "flex", flex: 1, marginTop: 16, gap: 32, alignItems: "center" }}>
-            {characterArt && <img src={characterArt} alt="" width={272} height={272} style={{ borderRadius: 24, border: `1px solid ${BORDER}` }} />}
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 10 }}>
-              <div style={{ display: "flex", fontSize: 20, fontWeight: 700, color: GOLD }}>{who}의 캐릭터 · {ch.stem_korean}({ch.stem}) 일간 · {ch.strength_label}</div>
-              <div style={{ display: "flex", fontSize: 48, fontWeight: 700, lineHeight: 1.15 }}>{clip(ch.title, 14)}</div>
-              <div style={{ display: "flex", fontSize: 24, color: INK_MUTED }}>{clip(ch.line, 40)}</div>
-              <div style={{ display: "flex", marginTop: 4 }}><PillarTiles card={card} size={34} /></div>
+          <div style={{ display: "flex", flex: 1, gap: 36, alignItems: "center" }}>
+            {characterArt && <img src={characterArt} alt="" width={360} height={360} style={{ borderRadius: 28, border: `1px solid ${BORDER}` }} />}
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 12 }}>
+              <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>{who}의 사주 캐릭터</div>
+              <div style={{ display: "flex", fontSize: 50, fontWeight: 700, lineHeight: 1.15 }}>{clip(ch.title, 13)}</div>
+              {/* 한 줄 설명(ch.line)은 2026-10-23 뺐다 — 어색한 표현이 많아서(사용자 지시) */}
+              <div style={{ display: "flex", marginTop: 4 }}><PillarTiles card={card} size={46} /></div>
               {ch.jobs.length > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
                   <div style={{ display: "flex", fontSize: 18, color: INK_MUTED }}>선호하는 일</div>
                   {ch.jobs.slice(0, 3).map((j) => (
                     <div key={j} style={{ display: "flex", fontSize: 18, fontWeight: 700, color: el.color, background: el.bgColor, border: `1px solid ${el.borderColor}`, borderRadius: 999, padding: "4px 12px" }}>{j}</div>
@@ -201,9 +199,12 @@ export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; 
               )}
             </div>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-            {footerLeft}
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나는 어떤 캐릭터일까? 30초 만에 →</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <img src={mascot} alt="" width={44} height={44} style={{ borderRadius: 22 }} />
+              <div style={{ display: "flex", fontSize: 24, fontWeight: 700, color: GOLD }}>사주까치</div>
+            </div>
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>{cta}</div>
           </div>
         </div>
       </div>
@@ -246,10 +247,6 @@ export function ShareOgImage({ card, mascot, characterArt }: { card: ShareCard; 
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: 18 }}>
           <div style={{ display: "flex", fontSize: 26, lineHeight: 1.4, color: INK }}>{headline}</div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}` }}>
-            {footerLeft}
-            <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: GOLD }}>나도 30초 만에 내 사주 보기 →</div>
-          </div>
         </div>
       </div>
     </div>

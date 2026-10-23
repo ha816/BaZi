@@ -54,9 +54,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const who = card.name ? `${card.name}님` : "나";
   // 캐릭터(V4)가 있으면 "○○님은 든든한 수호자"가 제목 — 미리보기에서 유형명이 먼저 보이게
   const title = card.character ? `${card.name ? `${card.name}님은` : "나는"} ${card.character.title}` : `${who}의 사주 카드`;
-  const description = card.character
-    ? [card.character.line, card.pillar_summary || card.summary.me].filter(Boolean).join(" · ")
-    : card.pillar_summary || card.summary.me || "사주까치가 본 사주 카드";
+  // 캐릭터 한 줄 설명(character.line)은 2026-10-23 카드에서 뺐다(어색한 표현) — 링크 미리보기 설명에서도 뺀다
+  const description = card.pillar_summary || card.summary.me || "사주까치가 본 사주 카드";
   return {
     title,
     description,
@@ -305,9 +304,8 @@ export default async function SharePage({ params }: Props) {
             {charArt && (
               <img src={charArt} alt={ch.title} className="w-full max-w-[18rem] mx-auto aspect-square rounded-2xl object-cover" />
             )}
-            <p className="text-[11px] font-semibold text-[var(--color-gold)]">{who}의 캐릭터 · {ch.stem_korean}({ch.stem}) 일간 · {ch.strength_label}</p>
+            <p className="text-[11px] font-semibold text-[var(--color-gold)]">{who}의 사주 캐릭터</p>
             <p className="font-heading text-2xl font-bold leading-snug text-[var(--color-ink)] break-keep">{ch.title}</p>
-            <p className="text-sm leading-relaxed text-[var(--color-ink-muted)] break-keep">{ch.line}</p>
             {ch.jobs.length > 0 && (
               <div className="flex flex-wrap items-center justify-center gap-1.5">
                 <span className="text-[11px] text-[var(--color-ink-muted)] mr-0.5">선호하는 일</span>
@@ -364,7 +362,7 @@ export default async function SharePage({ params }: Props) {
               })}
             </div>
             <p className="text-xs text-[var(--color-ink-muted)]">
-              {card.day_stem_korean}({card.day_stem}) 일간 · {card.strength_label} · 용신(用神) {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
+              용신(用神) {getElementInfo(card.yongshin.name).korean}({card.yongshin.name})
             </p>
             {card.sinsal.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
