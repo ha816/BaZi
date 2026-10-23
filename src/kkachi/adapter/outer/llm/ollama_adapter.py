@@ -21,9 +21,9 @@ _KKACHI_SYSTEM = (
 )
 
 # kind별 시스템 프롬프트·출력 토큰 상한 — analysis: AI 풀이(/kkachi/stream-report), compat: 궁합 AI 해석(/compatibility/narrative)
-# qwen3.8은 한국어 글자당 약 0.8토큰 — analysis 1,000~1,200자+마크다운 → 1700, compat 900~1,200자 → 1600 (여유 포함)
+# qwen3.8은 한국어 글자당 약 0.8토큰 — analysis 1,000~1,200자+마크다운 → 1700, compat 1,000~1,200자 → 1700 (여유 포함)
 _SYSTEM = {"analysis": _KKACHI_SYSTEM, "compat": _KKACHI_SYSTEM}
-_NUM_PREDICT = {"chat": 500, "advice": 500, "analysis": 1700, "compat": 1600}
+_NUM_PREDICT = {"chat": 500, "advice": 500, "analysis": 1700, "compat": 1700}
 _KEEP_ALIVE = "30m"  # 탭을 오가는 동안 모델을 내리지 않게(20GB 재적재 수십 초)
 _NUM_CTX = 8192  # AI 풀이 프롬프트 ≈2,900토큰 + 출력 1,700 — Ollama 기본 4096이면 앞부분이 잘린다
 

@@ -7,13 +7,13 @@ from kkachi.application.util.compatibility_meta import (
     RelationType,
 )
 from kkachi.domain.compatibility import CompatibilityResult
-from kkachi.domain.ganji import Branch, Pillar, Stem
+from kkachi.domain.ganji import OHENG_GUIDE, Branch, Oheng, Pillar, Stem
 from kkachi.domain.natal import NatalInfo
 from kkachi.domain.user import User
 
 # AI 해석 프롬프트 버전 — 가이드·데이터가 바뀌면 올린다(compatibilities 캐시의 옛 글을 버리고 다시 만들게)
-NARRATIVE_PROMPT_VERSION = 5  # 5: 한 줄 총평 제거 · 3: 형식 뼈대(### 제목) 추가 · 4: 5섹션 900~1,200자 + 첫 제목 미리 채움 (2026-10-23)
-NARRATIVE_FIRST_HEADING = "### 두 분의 결\n"
+NARRATIVE_PROMPT_VERSION = 7  # 7: 재미 섹션 6개(끌리는 순간·티격태격·함께하면 운이 트이는 것) · 6: 분석과 같은 1,000~1,200자·섹션당 3문장 · 5: 한 줄 총평 제거 · 3: 형식 뼈대(### 제목) 추가 · 4: 5섹션 900~1,200자 + 첫 제목 미리 채움 (2026-10-23)
+NARRATIVE_FIRST_HEADING = "### 두 분은 이런 사이\n"
 
 # 궁합 결과 → LLM 입력 텍스트. 챗 시스템 프롬프트의 [데이터] 블록(format_chat_context)과
 # 종합해석 스트리밍 프롬프트(format_narrative_prompt). 호출은 CompatibilityService.build_chat_context/build_narrative_prompt.
@@ -194,7 +194,7 @@ def format_narrative_prompt(
         "## 쓰는 법 (반드시 지킬 것)",
         "- 아래 자료는 사주까치 룰 엔진이 계산한 결론이에요. 두 분은 결과 화면의 탭(성격·팔자비교·시운·띠궁합·종합점수)에서 이 내용을 카드로 이미 봤어요. "
         "같은 문장을 되풀이하지 말고, 두 사람 사이의 이야기로 엮고 '그래서 무엇을 해 볼지'를 쓰세요.",
-        "- 분량: 전체 900~1,200자. 아래 5개 섹션을 순서대로, 각 섹션은 `### 제목` 한 줄 뒤에 3~4문장(필요하면 불릿 최대 3개). 섹션의 첫 문장이 결론이에요.",
+        "- 분량: 전체 1,000~1,200자(분석 AI 풀이와 같은 길이). 아래 6개 섹션을 순서대로, 각 섹션은 `### 제목` 한 줄 뒤에 3문장(불릿 없이). 섹션의 첫 문장이 결론이에요. 장면이 떠오르게 구체적으로 — '둘이 카페에서 메뉴를 고를 때'처럼.",
         f"- 두 분은 항상 '{n1}'·'{n2}'라고 부르세요. '첫 번째 분'·'두 번째 분'은 쓰지 마세요.",
         f"- 관계 톤: {relation_tone}.",
         "- 문체: 구어체 존댓말('~해요'). 용어는 우리말을 먼저 쓰고 한자는 괄호 안에만 — 예 '물(水)', '천간합(天干合)', '정(丁)'. "
@@ -203,15 +203,16 @@ def format_narrative_prompt(
         "- 금지: 표(|), '사주에 따르면'·'데이터에 따르면'·'자료에 따르면' 같은 말, 자료에 없는 추측, 막연한 격려, 총평·요약 문장.",
         "",
         "## 섹션",
-        f"1. `### 두 분의 결` — 일간 오행·기운 세기·용신이 어떻게 맞물리는지, 어떤 인연인지.{char_hint}",
-        "2. `### 끌리는 자리, 부딪히는 자리` — 기둥 관계(합·충·원진 등)·함께 가진 신살·잘 맞는 순간/부딪히기 쉬운 순간 중 큰 것 두세 개. 없으면 솔직히.",
-        f"3. `### 영역별 흐름` — {' · '.join(label_map.values())} 중 가장 잘 맞는 곳과 아쉬운 곳, 각각 근거 하나.",
+        f"1. `### 두 분은 이런 사이` — 일간 오행·기운 세기로 두 사람이 어떤 짝인지 한 장면으로.{char_hint}",
+        "2. `### 끌리는 순간` — 합·삼합·함께 가진 신살·잘 맞는 순간에서 서로 끌리는 장면 둘.",
+        "3. `### 티격태격 포인트` — 충·원진·형·해·파·부딪히기 쉬운 순간에서 다툼이 나는 장면 하나와, 그때 먼저 건넬 말 한마디(따옴표로). 부딪힘이 없으면 '굳이 꼽자면'으로 가볍게.",
         "4. `### 서로에게 주는 것` — 오행 보완·용신·각자만 가진 신살로 한 사람이 다른 사람에게 채워 주는 것을 사람마다 한 번씩.",
-        "5. `### 이번 주에 해 볼 것` — 관계 톤에 맞는 구체적 행동 2~3가지.",
-        "마지막 섹션(이번 주에 해 볼 것)에서 글을 끝내고, 총평·요약·맺음말은 쓰지 마세요.",
+        f"5. `### 영역별 궁합` — {' · '.join(label_map.values())} 중 가장 잘 맞는 곳과 아쉬운 곳, 각각 근거 하나.",
+        "6. `### 함께하면 운이 트이는 것` — 두 사람 용신의 색·방향·일상(자료 '함께 운'), 관계 톤에 맞게 같이 해 볼 장소·활동 두 가지를 이번 주 계획처럼.",
+        "마지막 섹션(함께하면 운이 트이는 것)에서 글을 끝내고, 총평·요약·맺음말은 쓰지 마세요.",
         "",
         "## 형식 (이 뼈대를 그대로 채우세요 — 제목 줄 `### `을 빼먹지 마세요)",
-        "### 두 분의 결\n(3~4문장)\n\n### 끌리는 자리, 부딪히는 자리\n(3~4문장)\n\n### 영역별 흐름\n(3~4문장)\n\n### 서로에게 주는 것\n(3~4문장)\n\n### 이번 주에 해 볼 것\n(3~4문장)",
+        "### 두 분은 이런 사이\n(3문장)\n\n### 끌리는 순간\n(3문장)\n\n### 티격태격 포인트\n(3문장)\n\n### 서로에게 주는 것\n(3문장)\n\n### 영역별 궁합\n(3문장)\n\n### 함께하면 운이 트이는 것\n(3문장)",
         "",
         "## 자료",
         "### 두 사람",
@@ -236,6 +237,14 @@ def format_narrative_prompt(
     ]
     if zodiac.get("headline"):
         lines.append(f"- 띠: {_names(zodiac['headline'], bare1, bare2)}")
+    luck = []
+    for who, snap in ((n1, result.get("pillar1_snapshot")), (n2, result.get("pillar2_snapshot"))):
+        y = (snap or {}).get("yongshin", "")
+        g = OHENG_GUIDE.get(Oheng[y], {}) if y in _ELEMENT_KOR else {}
+        if g:
+            luck.append(f"{who} 용신 {_kor_el(y)} — 색 {g.get('color', '')} · 방향 {g.get('direction', '')} · 일상 {g.get('daily', '')}")
+    if luck:
+        lines.append("- 함께 운: " + " / ".join(luck))
     if score_lines:
         lines += ["### 영역 점수"] + score_lines
     cards = [summary.get(k) for k in ("pillars", "element", "strength", "domain")]

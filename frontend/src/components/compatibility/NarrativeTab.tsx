@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import KkachiTip from "../KkachiTip";
+import CollapsibleSectionHeader from "../CollapsibleSectionHeader";
 import SectionHeader from "../SectionHeader";
 
 interface Props {
@@ -27,14 +28,12 @@ export default function NarrativeTab({ narrative, streamingNarrative, narrativeL
   }
   return (
     <div className="slide-card">
-      <div className="slide-card__header">
-        <SectionHeader title="까치의 AI 종합해석" noMargin />
-      </div>
+      {/* 소개 문구는 상세 설명(접힘)으로 — 분석 AI 풀이 탭과 같게(2026-10-23, 사용자 지시) */}
+      <CollapsibleSectionHeader title="까치의 AI 종합해석">
+        <p>앞에서 본 데이터를 까치가 한 편의 글로 정리했어요. 강점·약점·실천 조언이 담겨 있어요.</p>
+      </CollapsibleSectionHeader>
       <div className="divider" />
       <div className="slide-card__body space-y-3">
-        <KkachiTip>
-          앞에서 본 데이터를 까치가 한 편의 글로 정리했어요. 강점·약점·실천 조언이 담겨 있어요.
-        </KkachiTip>
         {isLoading ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <div className="relative w-14 h-14">
