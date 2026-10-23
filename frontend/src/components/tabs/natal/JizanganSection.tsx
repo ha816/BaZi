@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import type { NatalResult } from "@/types/analysis";
 import KkachiTip from "@/components/KkachiTip";
 import CollapsibleSectionHeader from "@/components/CollapsibleSectionHeader";
@@ -74,6 +75,16 @@ export default function JizanganSection({ natal }: Props) {
                         )}
                       </div>
                     </div>
+                  </div>
+                  {/* 겉과 속 그림 — 투출이면 물에 비친 모습이 똑같은 까치, 아니면 물속에만 결의가 비치는 까치(2026-10-23, 삼재 카드와 같은 4:3) */}
+                  <div className="flex justify-center">
+                    <Image
+                      src={exposed ? "/kkachi/jizangan/exposed.png" : "/kkachi/jizangan/hidden.png"}
+                      alt={exposed ? "겉과 속이 같은 까치" : "속마음이 따로 있는 까치"}
+                      width={320}
+                      height={240}
+                      className="object-cover w-2/3 aspect-[4/3] rounded-xl"
+                    />
                   </div>
                   <KkachiTip>
                     {exposed
