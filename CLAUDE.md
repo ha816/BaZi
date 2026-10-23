@@ -109,7 +109,7 @@ BaZi/
 │   │   ├── compatibility_summary.py  # build_compat_summary(result dict) 궁합 한눈에 {pillars, element, strength, sinsal, domain} — 이름은 {p1}·{p2} 토큰, 캐시 hit에도 매번 계산
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
-│   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → AI 풀이 자료 시트(쓰는 법·5섹션·탭별 한두 줄, ≈3,300토큰; 2026-10-23 v2) + REPORT_PROMPT_VERSION · kor_ganji/kor_sipsin
+│   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → AI 풀이 자료 시트(쓰는 법·삶의 영역 6섹션 1,000~1,200자·탭별 한두 줄(월운·택시 제외), ≈2,600토큰; 2026-10-23 v6, 총평·달 이야기 없음) + REPORT_PROMPT_VERSION·REPORT_FIRST_HEADING(답 첫 제목 미리 채움) · kor_ganji/kor_sipsin
 │   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
 │   │   │                             #   fortune, weather, payment, feedback, llm, event, push(PushPort·PushSenderPort)
 │   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음 + build_summary)
@@ -134,7 +134,7 @@ BaZi/
 │           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→경도 내부 룩업, sajupy 호출)
 │           ├── postnatal_adapter.py        # PostnatalAdapter — 세운·대운·월운·충합·영역점수(reason 포함)·삼재
 │           ├── weather_adapter.py          # Open-Meteo geocoding + forecast (past_days=14), WMO → 오행
-│           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret(kind=analysis|compat) · interpret_payload(벤치용). 시스템 프롬프트 _KKACHI_SYSTEM, num_predict analysis 1200/compat 900, keep_alive 30m
+│           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret(kind=analysis|compat, prefix=첫 제목) · interpret_payload(벤치용). 시스템 프롬프트 _KKACHI_SYSTEM, num_predict analysis 1700/compat 1600, keep_alive 30m
 │           ├── push/webpush_adapter.py     # WebPushAdapter (pywebpush, VAPID env) — 404/410이면 구독 소멸 반환
 │           └── db/
 │               ├── models.py       # MemberModel · ProfileModel · AnalysisModel · FortuneModel · CompatibilityModel
@@ -281,7 +281,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 **우선순위·진행 현황은 `docs/ROADMAP.md`가 정식 출처** (2026-09-12 핵심 루프 재정의: F0 측정 → R1 요약 카드 → R2 시간 모름 → R3 타이밍 리포트 → R4 알림 → R5 궁합 공유 → R6 연속성). 제품 기능을 추가하기 전에 ROADMAP §4·§5를 먼저 본다.
 
 ### ① 하이브리드 해석 엔진 (Rule + LLM) — 구현됨
-- Rule 엔진(Interpreter 13개) → 구조화 데이터 → `LlmReportBuilder` 자료 시트(2026-10-23 v2: 쓰는 법 + 5섹션 지시 + 탭별 한두 줄, 약 3,300토큰 — v1은 카드 본문을 통째로 실은 7,250토큰) → Ollama가 한 편의 글로
+- Rule 엔진(Interpreter 13개) → 구조화 데이터 → `LlmReportBuilder` 자료 시트(2026-10-23 v5: 쓰는 법 + 삶의 영역 6섹션(나는 어떤 사람·올해의 흐름·일과 재물·사랑과 사람·몸과 마음·개운법, 달 이야기는 택시 탭 몫이라 뺌) + 탭별 한두 줄, 약 2,600토큰, 첫 제목은 assistant 메시지로 미리 채움 — v1은 카드 본문을 통째로 실은 7,250토큰) → Ollama가 한 편의 글로
 - 진입점: AI 풀이 탭(`/kkachi/stream-report`·프로필 `/ai-report`), 까치 상담(`/kkachi/chat`), 궁합 종합해석(`/compatibility/narrative`)·궁합 챗
 - LLM은 해석 생성기가 아닌 **언어 변환기**. 공통 시스템 프롬프트 `_KKACHI_SYSTEM`(까치 해설가, 한글만·한자는 괄호 안·표 금지·"사주에 따르면" 금지), 분량·섹션은 자료의 "쓰는 법"이 정함. 챗은 225자 제한
 - 2026-10-23: 생성 공유·캐시(`AiReportService`·`LlmStreamHub`), 결과 직후 미리 시작, Ollama 꺼짐 503. 샘플 3개 기준 AI 풀이 첫 글자 66~99초 → 31~36초, 전체 129~163초 → 73~80초, 700토큰 잘림 2/3 → 0. 같은 날 V2-3 비교로 기본 모델을 `qwen3.8:27b`로 교체(생성 23~25토큰/초, qwen2.5:32b의 2배; AI 풀이 전체 39~47초, 궁합 31~36초; `### ` 제목은 프롬프트의 형식 뼈대로 고정). 프롬프트 버전은 `REPORT_PROMPT_VERSION`·`NARRATIVE_PROMPT_VERSION`(3)
