@@ -82,7 +82,8 @@
 
 한다
 - 유형표·문구의 출처는 `saju_character.py` `_TYPES` 하나. §3 표와 글자까지 같고, 바꿀 때 같은 커밋에서 둘 다 고친다.
-- 그림 파일은 `frontend/public/kkachi/saju_character/{key}.webp`(화면용 1024px)와 `saju_character/og/{key}.jpg`(OG용 512px, satori가 WebP를 못 읽어 따로 둠). 원본 PNG(2048px)도 같은 폴더에 커밋한다(Gemini 워터마크는 그대로). 변환은 `bash scripts/art_convert.sh frontend/public/kkachi/saju_character`.
+- **성별로 그림을 고른다(2026-10-23)**: 백엔드가 캐릭터에 그림 키 `art_key`를 싣는다 — 남성은 `key` 그대로(`갑_강`), 여성은 `{key}_여`(조바위를 쓴 여성판, 부록 E). 분석 결과는 분석 때 성별, 프로필 연도 캐시는 응답 때 프로필 성별로 다시 맞추고, 공유 카드에도 `art_key`만 싣는다(성별 값 자체는 싣지 않음). 궁합은 `roles[i].art_key`가 각자의 성별을 따른다. 화면·랜딩·OG는 `art_key` 그림이 없으면 `key` 그림으로, 그것도 없으면 아래 대체로 떨어진다. 유형 키 `key`는 성별과 무관(표·테스트·궁합 유형 그대로).
+- 그림 파일은 `frontend/public/kkachi/saju_character/{key}.webp`(화면용 1024px, 여성판 `{key}_여.webp`)와 `saju_character/og/{key}.jpg`(OG용 512px, satori가 WebP를 못 읽어 따로 둠). 원본 PNG(2048px)도 같은 폴더에 커밋한다(Gemini 워터마크는 그대로). 변환은 `bash scripts/art_convert.sh frontend/public/kkachi/saju_character`.
 - 그림이 없으면 화면은 기본 까치(`FALLBACK_IMG`, onError), 공유 랜딩은 파일 존재로 판단해 그림 칸을 비우고, OG는 글자만.
 - 같은 그림 파일을 궁합 결과에서도 쓴다(두 사람 나란히, 2026-10-18). 그림을 바꾸면 양쪽에 같이 반영된다.
 - 선호하는 일·선호하지 않는 일은 **직업명** 2~3개(분야명·"부동산" 같은 자산명 금지, 2026-10-11). 두 목록은 겹치지 않는다.
@@ -106,12 +107,14 @@
 | 항목 | 누가 | 메모 |
 |---|---|---|
 | 선호하는 일·선호하지 않는 일 직업명 다듬기 | 사용자 | 2026-10-11 1차 정리(라벨·직업명). 남은 어색한 항목은 §3 표와 `_TYPES` 동시에 |
+| 남성 기준 까치 `originals/까치_남.png` | 사용자(그림) | 부록 E-0 프롬프트. 여성 기준 `까치_여.png`와 짝 — 남성판 새 그림을 만들 때 기준 |
 | 그림 재생성(워터마크·짝 일관성) | 사용자 | 지금 20장은 Gemini 원본 그대로. 다시 만들면 부록 D 프롬프트 → `scripts/art_convert.sh` |
 
 ## 8. 변경 이력
 
 | 날짜 | 변경 | 왜 |
 |---|---|---|
+| 2026-10-23 | **여성판 그림 20장 + 성별로 고르기** — 조바위·댕기·노리개를 단 여성 까치(부록 E, 원본 `saju_character/og_여/{key}_여.png` → `{key}_여.webp`·`og/{key}_여.jpg`). 백엔드 `art_key`(분석·프로필 캐시·공유 카드·궁합 roles), 화면·랜딩·OG는 `art_key` → `key` → 대체 순 | 남녀가 같은 그림을 보면 품질이 떨어져 보여서(사용자 지시) |
 | 2026-10-18 | 궁합 결과(인트로·카드·랜딩·OG)에서 두 사람의 캐릭터 그림을 재사용 | 궁합 전용 15장 대신(사용자 결정) |
 | 2026-10-17 | `docs/SAJU_CHARACTER_TYPES.md` → `specs/analysis/character.md`. 유형이 정해지는 방식·노출 규칙·수용 기준을 추가하고 표를 코드에서 다시 만들었다(대표 직업·캐릭터 열 추가, 대조 테스트). 그림 제작 자료는 부록으로 | 유형표·노출 규칙은 코드가 지키는 약속이라 스펙(사용자 결정) |
 | 2026-10-17 | 복붙용 통합 프롬프트를 `SAJU_CHARACTER_PROMPTS.md`에서 이 문서로 합침 | 문서 정리 |
@@ -639,3 +642,79 @@ Mood: warm, gentle and cooperative — the magpie works WITH others (small birds
 Profession and scene:
 Illustrator. Paint-smudged smock (keep only the gat, no beret), painting a dreamy picture at an easel in a dawn meadow covered with sparkling dewdrops, a small bird friend holding the palette. Pastel blue and dawn-pink palette.
 ```
+
+
+## 부록 E. 여성판 그림 프롬프트 (2026-10-23 초안)
+
+지금 20장은 모두 갓(남성 양반 모자)을 쓴 남성 까치라, 여성 사용자도 같은 그림을 본다. 여성판 20장을 **같은 장면·같은 직업·같은 구도**로 만들어 짝을 맞춘다. 직업은 바꾸지 않는다(성별로 직업을 나누지 않음).
+
+**디자인 결정(초안)**
+- 갓 대신 **조바위**(조선 여성의 검은 비단 방한모 — 정수리가 트이고 귀를 덮으며, 앞뒤에 붉은 술·작은 옥 장식). 검은 모자 실루엣이 남아 "갓 쓴 까치" 브랜드가 이어진다.
+- 뒷머리 깃털 한 가닥을 땋아 **붉은 댕기**, 가슴께 작은 **노리개** 술 하나. 속눈썹 조금, 볼 홍조 조금.
+- 몸 비율·깃털 색·눈 색·부리는 남성판과 똑같이. 옷은 같은 직업복을 여성 체형에 맞게(한복풍이면 저고리+치마).
+- 하지 않는 것: 직업·포즈·배경·조연 새 바꾸기, 핑크 일색, 짙은 화장, 리본 과다.
+
+**생성 순서**
+1. **여성 기준 까치 1장**을 먼저 만든다(아래 E-1) — 기준 그림 `frontend/public/kkachi/strength/신강.png` 첨부. 결과는 `frontend/public/kkachi/originals/까치_여.png`(2026-10-23 완료). 짝이 되는 **남성 기준** `originals/까치_남.png`는 E-0으로 만든다.
+2. 유형마다 **남성판 그림 `saju_character/{key}.png` + 여성 기준 `originals/까치_여.png`** 두 장을 첨부하고 E-2를 붙여 넣는다(2026-10-23 20장 완료, `saju_character/og_여/{key}_여.png` — 생성 시각이 아니라 직업 장면으로 이름 매핑).
+3. 원본은 `frontend/public/kkachi/saju_character/{key}_여.png`(예 `갑_강_여.png`)로 저장 → `bash scripts/art_convert.sh frontend/public/kkachi/saju_character`(WebP·OG JPG 자동).
+4. 화면 연결(성별로 `{key}_여.webp` 고르고 없으면 남성판으로)은 그림이 다 모인 뒤 코드 작업 — 열린 결정 참고.
+
+### E-0. 남성 기준 까치 (1회, 여성 기준과 짝)
+
+`originals/까치_여.png`(자세·배경·화풍) + `strength/신강.png`(갓 모양) 두 장을 첨부한다. 결과는 `originals/까치_남.png`. 남성판 새 그림을 만들 때 첫 장면 참고 대신 기준으로 쓴다.
+
+```
+Two images are attached.
+Image 1 = the pose, framing, background and art-style reference (a female magpie).
+Image 2 = the hat reference (a male magpie wearing a black gat).
+Draw the MALE version of the magpie in Image 1 with EXACTLY the same pose, camera angle, size in frame,
+plain warm off-white watercolor background, line weight, shading and color palette as Image 1.
+Same chibi body proportions, black-and-white plumage with blue-tinted wing feathers, big amber eyes, small grey beak.
+Changes for the male version:
+- Replace the jobawi cap with the black traditional Korean gat from Image 2: wide flat brim, tall crown,
+  black chin strap tied in a small bow under the beak.
+- Remove the braid, the red daenggi ribbon, the norigae ornament and the eyelashes. Keep a light blush only.
+- Calm, friendly, confident expression (not angry).
+Composition: square 1:1 (1024x1024), magpie centered, full body, about 60% of the image height, 10% margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+```
+
+### E-1. 여성 기준 까치 (1회)
+
+```
+Use the attached image as the character reference. Redraw the SAME cute chibi Korean magpie character
+as a FEMALE version. Keep the body proportions, black-and-white plumage with blue-tinted wing feathers,
+big expressive amber eyes, small grey beak, line art and painterly style exactly the same.
+Changes for the female version:
+- Replace the black gat hat with a black silk "jobawi" (traditional Korean women's winter cap):
+  open crown, rounded sides covering the ears, a small red silk tassel and a tiny jade ornament on the front and back.
+  It must keep a dark, clearly visible headwear silhouette similar in size to the gat.
+- One braided feather lock at the back of the head tied with a red "daenggi" ribbon.
+- A small "norigae" tassel ornament hanging at the chest.
+- Slightly longer eyelashes and a soft blush on the cheeks. Friendly, confident expression.
+Do NOT make everything pink, no heavy makeup, no extra bows, no jewelry other than the jobawi ornament and norigae.
+Pose: standing upright, full body, front three-quarter view, wings relaxed. Plain soft watercolor background.
+Composition: square 1:1 (1024x1024), magpie centered, about 60% of the image height, 10% margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks.
+```
+
+### E-2. 유형별 여성판 (20회, 장면 설명 없이 같은 블록)
+
+```
+Two images are attached.
+Image 1 = the scene reference (male version). Image 2 = the female character reference.
+Recreate Image 1 as faithfully as possible — the SAME profession, outfit type, pose, props, background,
+supporting characters, color palette, lighting and composition — but replace the magpie with the FEMALE magpie from Image 2.
+- The jobawi cap replaces the gat. Anything attached to the gat in Image 1 (brooch, headlamp, etc.)
+  goes on the jobawi instead. Keep the red daenggi ribbon and the small norigae.
+- Tailor the outfit for a woman but keep it the same profession and instantly recognizable
+  (a hanbok-style outfit becomes a jeogori jacket with a chima skirt; suits, coats, uniforms and aprons stay the same kind).
+- Keep the mood of Image 1 (confident and bold, or warm and cooperative).
+Style: clean cartoon line art, soft painterly watercolor background, warm cinematic lighting, gentle glow particles.
+Composition: square 1:1 (1024x1024), magpie centered, full body, about 60% of the image height, at least 10% margin on every side.
+Absolutely NO text, letters, numbers, Korean/Chinese characters, logos, signatures or watermarks
+(screens, boards, books and signs show only pictures or blank shapes).
+```
+
+결과에 글자가 들어가면 "remove all text, keep everything else the same"으로 한 번 더 요청한다. 짝(같은 일간의 신강·신약)끼리 조바위·댕기 색이 다르게 나오면, 먼저 만든 쪽 여성판을 Image 2 대신 첨부해 맞춘다.
