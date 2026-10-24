@@ -12,6 +12,14 @@ REPORT_PROMPT_VERSION = 6  # 6: 앞으로 1년·달 자료 제거, 6섹션 1,000
 # 답의 첫 줄 — 어댑터가 assistant 메시지로 미리 채워 이어 쓰게 한다(qwen3.8이 제목을 통째로 빼먹는 것 방지)
 REPORT_FIRST_HEADING = "### 나는 어떤 사람\n"
 
+
+def cached_report_text(entry: dict | None, version: int) -> str | None:
+    """캐시에 저장된 AI 글(`{text, version, …}`)이 지금 프롬프트 버전이면 글, 아니면 None — 옛 글은 없는 것으로 친다.
+    AI 풀이·AI 해석 스트림(`AiReportService`)과 그 글을 응답에 싣는 곳(프로필 분석·프로필 궁합·홈)이 같은 기준을 쓴다."""
+    if entry and entry.get("version") == version and entry.get("text"):
+        return entry["text"]
+    return None
+
 _PILLARS = ["년주", "월주", "일주", "시주"]
 SIPSIN_KOR = {"比肩": "비견", "劫財": "겁재", "食神": "식신", "傷官": "상관", "偏財": "편재", "正財": "정재", "偏官": "편관", "正官": "정관", "偏印": "편인", "正印": "정인"}
 _ELEMENT_KOR = {"木": "나무", "火": "불", "土": "흙", "金": "쇠", "水": "물"}

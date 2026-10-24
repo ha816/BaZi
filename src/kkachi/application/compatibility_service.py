@@ -3,7 +3,11 @@ from dataclasses import asdict
 from uuid import UUID
 
 from kkachi.application.compatibility_character import build_compat_character
-from kkachi.application.compatibility_prompt import format_chat_context, format_narrative_prompt
+from kkachi.application.compatibility_prompt import (
+    NARRATIVE_PROMPT_VERSION,
+    format_chat_context,
+    format_narrative_prompt,
+)
 from kkachi.application.compatibility_prose import (
     advice_for,
     compute_key_traits,
@@ -16,6 +20,7 @@ from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.llm_port import LlmPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.report_builder import cached_report_text
 from kkachi.application.self_quiz import score_sipsin
 from kkachi.application.util.compatibility_meta import (
     DOMAIN_LABEL_BY_REL,
@@ -183,9 +188,15 @@ class CompatibilityService:
             result_dict["summary"] = build_compat_summary(result_dict)  # 옛 캐시에도 붙도록 매번 계산
             result_dict["zodiac"] = build_compat_zodiac(result_dict, year)
             result_dict["character"] = build_compat_character(result_dict, relation_type, males)
+            # 옛 프롬프트로 쓴 AI 해석은 응답에서 뺀다 — 화면이 옛 글을 바로 보여 주지 않고 새로 만들게
+            if result_dict.get("narratives"):
+                result_dict["narratives"] = {
+                    rel: e for rel, e in result_dict["narratives"].items()
+                    if cached_report_text(e, NARRATIVE_PROMPT_VERSION) is not None
+                }
             return result_dict
 
-        user1 = User(name=profile1.name, gender=profile1.gender, birth_dt=profile1.birth_dt, city=profile1.city, hour_unknown=profile1.birth_hour_unknown)
+        user1 =User(name=profile1.name, gender=profile1.gender, birth_dt=profile1.birth_dt, city=profile1.city, hour_unknown=profile1.birth_hour_unknown)
         user2 = User(name=profile2.name, gender=profile2.gender, birth_dt=profile2.birth_dt, city=profile2.city, hour_unknown=profile2.birth_hour_unknown)
 
         natal1, postnatal1 = self._saju_service.analyze(user1, year)

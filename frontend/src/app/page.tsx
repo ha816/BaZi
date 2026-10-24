@@ -59,7 +59,7 @@ function TodayHero({ me, memberId }: { me: NonNullable<HomeData["me"]>; memberId
           <img
             src={charArtSrc(me.character.art_key, me.character.key)}
             alt={me.character.title}
-            onError={onCharArtError(me.character.key, FALLBACK_IMG)}
+            onError={onCharArtError(me.character.key, level.image)}
             className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md animate-float"
           />
           <p className="mt-1.5 text-[11px] font-semibold text-[var(--color-ink-muted)] text-center leading-tight">{me.character.title}</p>

@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 from kkachi.adapter.outer.natal_adapter import NatalAdapter
 from kkachi.adapter.outer.postnatal_adapter import PostnatalAdapter
+from kkachi.application.compatibility_prompt import NARRATIVE_PROMPT_VERSION
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
 from kkachi.application.port.compatibility_port import CompatibilityPort
@@ -225,6 +226,26 @@ def test_analyze_compatibility_cache_hit_skips_recompute():
     r2 = asyncio.run(svc.analyze_compatibility(pid1, pid2, 2026))
     assert cp.save_calls == 1  # 캐시 hit
     assert r1["total_score"] == r2["total_score"]
+
+
+def test_cache_hit_drops_narratives_from_old_prompt_version():
+    """옛 프롬프트로 쓴 AI 해석은 응답에 싣지 않는다 — 화면이 옛 글을 보여 주지 않고 새로 만들게."""
+    pid1, pid2 = sorted((uuid4(), uuid4()), key=str)
+    member_id = uuid4()
+    profiles = {
+        pid1: Profile(id=pid1, member_id=member_id, name="A", gender=Gender.MALE, birth_dt=datetime(1990, 5, 15, 10), city="Seoul", created_at=datetime.now()),
+        pid2: Profile(id=pid2, member_id=member_id, name="B", gender=Gender.FEMALE, birth_dt=datetime(1992, 8, 20, 14), city="Seoul", created_at=datetime.now()),
+    }
+    cp = _FakeCompatibilityPort()
+    svc = _service(profile_port=_FakeProfilePort(profiles), compat_port=cp)
+    asyncio.run(svc.analyze_compatibility(pid1, pid2, 2026))
+    cp._store[(pid1, pid2, 2026)]["narratives"] = {
+        "lover": {"text": "옛 글", "version": NARRATIVE_PROMPT_VERSION - 1},
+        "friend": {"text": "새 글", "version": NARRATIVE_PROMPT_VERSION},
+    }
+
+    result = asyncio.run(svc.analyze_compatibility(pid1, pid2, 2026))
+    assert list(result["narratives"]) == ["friend"]
 
 
 def test_narrative_prompt_includes_relation_type():

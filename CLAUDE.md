@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 174 tests
+uv run pytest            # 176 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -339,7 +339,7 @@ GET    ""                    → Profile[]
 GET    /{pid}
 PATCH  /{pid}                { name, gender, birth_dt, city, birth_hour_unknown } — 출생정보 변경 시 analyses·fortunes 캐시 삭제
 DELETE /{pid}                → 204 (is_self 프로필은 409)
-POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선) + ai_report{text,version,model,created_at}(AI 풀이를 한 번 만든 뒤)
+POST   /{pid}/analyze        { year=2026 } → Interpretation dict (analyses 캐시 우선) + ai_report{text,version,model,created_at}(AI 풀이를 한 번 만든 뒤, 지금 `REPORT_PROMPT_VERSION` 글일 때만 — 옛 글은 응답에서 뺌, 2026-10-24)
 POST   /{pid}/ai-report      { year=2026 } → text/plain 스트림 (AI 풀이 — 캐시가 있으면 한 번에, 없으면 생성하며 analyses에 저장. 소유자만, Ollama 꺼짐 503)
 POST   /{pid}/set-self       → Profile  기본 프로필(나) 지정 — 같은 회원의 다른 프로필은 is_self=false (캐시 유지)
 GET    /{pid}/analyses       → [{ year, created_at }]  캐시된 연도 목록 — "지난 연도 다시 보기" (R6)
@@ -353,7 +353,7 @@ GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_
 POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
 #   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }(화면 노출 없음 — 2026-10-15 한눈에 탭 제거, LLM 기본 요약용으로 유지), character { title, kind, key(유형 키 예 木火 — 그림 키 아님), roles[2]{token, name, element, emoji, character_key(그 사람 사주 캐릭터 키 예 무_강 → 그림 saju_character/{character_key}.webp, 2026-10-18)}, desc, moments{good[3], hard[3]}, scenarios[6~10]{q, who:p1|p2|both, reason, basis} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
-POST /compatibility/narrative 같은 요청 + profile_id_1?·profile_id_2? → text/plain 스트림 (LLM 종합해석 — 프로필 id 둘을 주면 compatibilities.result.narratives[relation_type]에 저장돼 다음 POST /compatibility 응답에 실림. Ollama 꺼짐 503)
+POST /compatibility/narrative 같은 요청 + profile_id_1?·profile_id_2? → text/plain 스트림 (LLM 종합해석 — 프로필 id 둘을 주면 compatibilities.result.narratives[relation_type]에 저장돼 다음 POST /compatibility 응답에 실림(지금 `NARRATIVE_PROMPT_VERSION` 글만, 2026-10-24). Ollama 꺼짐 503)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간 p1/p2{stem,korean,element(일간 글자 오행),hour_unknown}·특징·character{title,key,roles[{name,element,emoji,character_key}],desc(이름 채움),moments{good,hard}}) → /s/{share_id}
 POST /compatibility/invites  { person1, relation_type } → { invite_id }  (초대자 정보 저장, 30일 TTL) — 생성 UI는 2026-09-28 제거, ?invite= 링크 처리만 유지
@@ -642,7 +642,7 @@ erDiagram
 
 - 결과 `Fortune`: total_score, level(좋은 날/평범한 날/주의가 필요한 날), domain_scores{score,level,reason}, description, tips(최대 3), weather, solar_term(24절기 — 해당일이면 팁 맨 앞에 삽입), yongshin, son_eomneun_nal(음력 끝자리 9·0), 시운 그리드(daeun/seun/wol ganji + yongshin_in_*)
 - **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운에 표시하고, 내일·모레·지난주("이날")는 첫 "오늘"을 라벨로 치환
-- 홈·시운 화면의 까치 이미지는 `FORECAST_LEVEL_META[level]`로 선택
+- `FORECAST_LEVEL_META[level].image`(good/normal/caution 까치)는 홈 히어로 캐릭터 그림이 안 뜰 때의 마지막 대체 그림. good·caution은 `public/kkachi/originals/` 원본 PNG(7MB)에서 만든 1024px WebP(2026-10-24 — 원본을 originals로 옮기며 링크가 깨져 있던 것)
 
 ### 아침 알림 (Web Push, ROADMAP R4)
 - 구독: `/siun`의 `PushSubscribeButton` → `lib/push.ts`가 `/sw.js` 등록 → `GET /push/vapid-public-key` → `pushManager.subscribe` → `POST /push/subscriptions`. 회원·기기(endpoint) 단위, 프로필은 발송 시 `is_self` 우선

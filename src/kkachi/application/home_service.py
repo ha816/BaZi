@@ -8,7 +8,7 @@ from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.member_port import MemberPort
 from kkachi.application.port.profile_port import ProfilePort
-from kkachi.application.report_builder import REPORT_PROMPT_VERSION
+from kkachi.application.report_builder import REPORT_PROMPT_VERSION, cached_report_text
 from kkachi.application.saju_character import build_saju_character
 from kkachi.domain.profile import Profile
 from kkachi.domain.user import User
@@ -97,7 +97,6 @@ class HomeService:
                 nxt.append({"kind": "compat", "profile_id": str(p.id), "name": p.name})
                 break
         row = await self._analysis_port.get(me.id, year)
-        report = (row.result.get("ai_report") or {}) if row else {}
-        if not (report.get("version") == REPORT_PROMPT_VERSION and report.get("text")):
+        if cached_report_text(row.result.get("ai_report") if row else None, REPORT_PROMPT_VERSION) is None:
             nxt.append({"kind": "ai_report"})
         return nxt

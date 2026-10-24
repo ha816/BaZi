@@ -29,6 +29,7 @@ from kkachi.application.report_builder import (
     REPORT_FIRST_HEADING,
     REPORT_PROMPT_VERSION,
     LlmReportBuilder,
+    cached_report_text,
 )
 from kkachi.application.util.compatibility_meta import RelationType
 from kkachi.domain.profile import Profile
@@ -74,12 +75,6 @@ class AiReportService:
             "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
         }
 
-    @staticmethod
-    def _valid(entry: dict | None, version: int) -> str | None:
-        if entry and entry.get("version") == version and entry.get("text"):
-            return entry["text"]
-        return None
-
     # ── 분석 AI 풀이 ──────────────────────────────────────────────────────
     async def build_analysis_report(self, user: User, name: str, year: int) -> str:
         natal, postnatal = self._saju.analyze(user, year)
@@ -105,7 +100,7 @@ class AiReportService:
     async def stream_profile_analysis(self, profile: Profile, year: int) -> AsyncIterator[str]:
         """프로필 — analyses 캐시의 글을 먼저, 없으면 생성하며 끝나면 저장."""
         row = await self._analysis_port.get(profile.id, year) if self._analysis_port else None
-        text = self._valid(row.result.get("ai_report") if row else None, REPORT_PROMPT_VERSION)
+        text = cached_report_text(row.result.get("ai_report") if row else None, REPORT_PROMPT_VERSION)
         if text is not None:
             yield text
             return
@@ -154,7 +149,7 @@ class AiReportService:
         lo, hi = (pair[0], pair[1]) if str(pair[0]) < str(pair[1]) else (pair[1], pair[0])
         row = await self._compat_port.get(lo, hi, year)
         entry = (row.result.get("narratives") or {}).get(relation_type) if row else None
-        text = self._valid(entry, NARRATIVE_PROMPT_VERSION)
+        text = cached_report_text(entry, NARRATIVE_PROMPT_VERSION)
         if text is not None:
             yield text
             return

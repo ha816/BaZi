@@ -7,6 +7,7 @@ from kkachi.application.port.analysis_port import AnalysisPort
 from kkachi.application.port.fortune_port import FortunePort
 from kkachi.application.port.payment_port import PaymentPort
 from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.report_builder import REPORT_PROMPT_VERSION, cached_report_text
 from kkachi.application.saju_character import character_art_key
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.domain.interpretation import INTERPRETATION_VERSION
@@ -97,6 +98,9 @@ class ProfileService:
                 await self.analysis_port.save(profile_id, year, cached.result)
             cached.result["self_quiz"] = build_self_quiz(cached.result.get("natal") or {})  # 옛 캐시에도
             _apply_art_key(cached.result, profile.gender.is_male)  # 옛 캐시엔 art_key가 없고, 프로필 성별이 바뀌었을 수도
+            # 옛 프롬프트로 쓴 AI 풀이는 응답에서 뺀다 — 화면이 옛 글을 바로 보여 주지 않고 새로 만들게(저장된 행은 새 글이 덮는다)
+            if cached_report_text(cached.result.get("ai_report"), REPORT_PROMPT_VERSION) is None:
+                cached.result.pop("ai_report", None)
             return cached.result
 
         # 캐시 없음 또는 응답 구조가 바뀐 옛 캐시(version 불일치) → 전체 재계산

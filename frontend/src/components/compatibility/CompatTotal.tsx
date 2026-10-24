@@ -11,7 +11,7 @@ import type { CompatTabProps } from "./types";
 // 궁합 종합 — 2026-10-15 한눈에 탭을 빼면서 쪼갰다:
 // RevealGate·CompatCharacterBox는 결과 직후 인트로(CompatIntro). 종합 궁합 점수 카드는 2026-10-18 제거 — 점수는 인트로·캐릭터 카드에
 
-const FALLBACK_IMG = "/kkachi/good_kkachi.png";
+const FALLBACK_IMG = "/kkachi/good_kkachi.webp";
 const DRUMROLL_MS = 1200;
 
 /** 공개 전 실루엣 한 장 — 그 사람의 사주 캐릭터 그림을 흐리게 미리 보여 주며(그림도 미리 받아 둔다) "?"를 겹친다. 분석 RevealGate(SajuCharacterCard)와 같은 모양 */

@@ -76,7 +76,7 @@
 카드 하나. 바탕은 오늘 일진 오행 색(`ELEMENT_META[day_element]`의 연한 색).
 
 1. 윗줄 — 작은 배지들: 레벨(`FORECAST_LEVEL_META[level]`) · `{total_score}점` · `{오행 이모지} {day_element}의 날` · 절기(있을 때) · 👻 손없는 날(있을 때). 날짜(`{M}월 {D}일 ({요일})`)는 카드 위 페이지 머리줄에(모든 상태 공통)
-2. 본문 — 왼쪽 내 캐릭터 그림(정사각 원형 프레임, `charArtSrc(art_key, key)` → 유형 그림 → 기본 까치 폴백), 오른쪽 **까치 말풍선**: `headline`(가장 큰 글씨) → `✦ {action}` → `✕ {caution}`(빈 문자열이면 줄 자체 없음). `MorningBrief`와 같은 문장
+2. 본문 — 왼쪽 내 캐릭터 그림(정사각 원형 프레임, `charArtSrc(art_key, key)` → 유형 그림 → 오늘 레벨 까치 폴백), 오른쪽 **까치 말풍선**: `headline`(가장 큰 글씨) → `✦ {action}` → `✕ {caution}`(빈 문자열이면 줄 자체 없음). `MorningBrief`와 같은 문장
 3. 그림 아래 한 줄 — 캐릭터 `title`(예: "든든한 수호자"). 캐릭터가 없으면 그림 자리에 기본 까치, 이 줄 없음
 4. 버튼 줄 — [오늘 시운 자세히 →] `/siun` · [공유] 시운 공유 카드(`ShareButton` + `createDailyShare`, 시운 화면과 같은 카드)
 
@@ -115,7 +115,7 @@
 **한다**
 - 백엔드 호출은 로그인 홈에서 `GET /members/{id}/home` 1회(+ 공유·알림 켜기를 누를 때). 비로그인은 0회(위치 감지 `ipapi.co`는 퀵스타트 폼이 쓰던 대로).
 - 문장은 백엔드가 준 그대로(`headline`·`action`·`caution`·`compat.headline`). 이름 접두(`{name}님, `)도 백엔드 것.
-- 캐릭터 그림은 `art_key` → 유형 키 → 기본 까치 순 폴백. 그림이 없어 칸이 비지 않는다.
+- 캐릭터 그림은 `art_key` → 유형 키 → 까치 그림 순 폴백(히어로는 오늘 레벨 까치, 사람 줄은 기본 까치). 그림이 없어 칸이 비지 않는다.
 - 렌더되지 않는 옛 코드(`WeatherPost`·`HourlyRow`·`getWeather` import·`weatherCity`·StoryTray `activeId`)는 이 개편에서 지운다.
 
 **하지 않는다** (2026-10-24 결정)
@@ -134,7 +134,7 @@
 2. 첫 화면(스크롤 전)에 ① 오늘의 나 카드가 통째로 보이고, 그 안 가장 큰 글자는 `headline`이다. 점수 숫자는 윗줄 배지 안에만 있다.
 3. `caution`이 빈 문자열인 날은 ✕ 줄이 없다.
 4. ① 카드 바탕색이 오늘 `day_element` 오행 색이다(예: 火 날이면 붉은 계열).
-5. 기본 프로필이 여성이면 그림 주소가 `saju_character/{key}_여.webp`이고, 그 파일이 없으면 `saju_character/{key}.webp`, 그것도 없으면 기본 까치 그림이 보인다.
+5. 기본 프로필이 여성이면 그림 주소가 `saju_character/{key}_여.webp`이고, 그 파일이 없으면 `saju_character/{key}.webp`, 그것도 없으면 오늘 레벨의 까치 그림(좋은 날 `good_kkachi.webp` · 평범한 날 `normal_kkachi_00.png` · 주의 `caution_kkachi.webp`)이 보인다.
 6. ②에 얼굴 칸 3개 + "+ 사람 추가" 한 칸이 가로로 있고, 칸마다 이름과 궁합 배지(♥ / · / !)가 있으며 숫자는 없다.
 7. ②의 칸을 누르면 `/compatibility?p2={그 프로필 id}`로 간다.
 8. ③ 카드는 2장 이하다. 알림이 꺼져 있고(`off`) 이번 주 좋은 날이 있으면 알림 카드가 위, 좋은 날 카드가 아래다.
@@ -159,6 +159,7 @@
 
 ## 7. 변경 이력
 
+- 2026-10-24 — 히어로 캐릭터 그림의 마지막 대체를 오늘 레벨 까치로(`FORECAST_LEVEL_META[level].image`, good·caution은 원본에서 만든 WebP — 원본이 `originals/`로 옮겨져 링크가 깨져 있었다)
 - 2026-10-24 — 홈 화면 구현(`app/page.tsx` 다시 씀: TodayHero·PeopleRow·NextCards·GuestHero, 옛 피드·날씨 코드 삭제). 구현하며 정한 것: 날짜는 머리줄에만(히어로 윗줄은 배지 + "{오행}의 날"), 좋은 날 카드는 날짜까지("10월 26일 월요일이"), 소개 영상은 비로그인 맨 아래에만, 말풍선은 어절 단위 줄바꿈(`break-keep`). `MorningBrief` prop을 쓰는 네 필드로 좁힘
 - 2026-10-24 — 묶음 API 구현(`HomeService`). 캐릭터는 analyses 캐시 대신 natal로 매번 계산, 사람 순서는 최근 추가 먼저, `next` 항목 모양 확정. `get_forecast`가 날씨를 필요할 때만 받게 해 홈 응답 1.1초 → 약 70ms
 - 2026-10-24 — 옛 화면 명세(인스타 피드) 초안을 정식 스펙 형식으로 다시 씀. 컨셉 A "까치가 물어다 준 오늘"(오늘의 나 · 오늘 내 사람들 · 이어서 할 것), 홈 묶음 API `GET /members/{id}/home` 신설 결정. 근거 `docs/research/home_홈화면.md`
