@@ -1,256 +1,320 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { AnalysisInput, DailyFortune, DailyWeather, HourlyWeather, Profile } from "@/types/analysis";
-import { getDailyCompat, getForecast, getWeather, listProfiles, type DailyCompat } from "@/lib/api";
+import type { AnalysisInput } from "@/types/analysis";
+import { createDailyShare, getHome, type HomeData } from "@/lib/api";
 import { detectLocation, type LocationInfo } from "@/lib/location";
+import { getPushState, subscribePush, type PushState } from "@/lib/push";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
 import FeedPost from "@/components/FeedPost";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import ShareButton from "@/components/ShareButton";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
-import { getZodiacEmoji } from "@/lib/zodiac";
+import { charArtSrc, onCharArtError } from "@/lib/characterArt";
+import { useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
 
-// ── 상단 스토리 트레이 (Story Tray) ─────────────────────────────────────────
-function StoryTray({ profiles, activeId }: { profiles: Profile[]; activeId?: string | null }) {
-  if (profiles.length === 0) return null;
+// 홈 — 까치가 물어다 준 오늘 (specs/home/index.md, 2026-10-24). 로그인은 GET /members/{id}/home 한 번
 
-  const scrollToPost = (id: string) => {
-    const el = document.getElementById(`post-${id}`);
-    if (el) {
-      const headerOffset = 130; // Header(60) + StoryTray(70)
-      const elementPosition = el.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+const FALLBACK_IMG = "/kkachi/normal_kkachi_00.png";
+const MAX_PROFILES = 10;
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth"
-      });
+/** 오늘 궁합 배지 — 숫자 없이 기호·색만 */
+const COMPAT_BADGE: Record<string, { glyph: string; cls: string }> = {
+  "좋음": { glyph: "♥", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  "보통": { glyph: "·", cls: "bg-slate-100 text-slate-600 border-slate-200" },
+  "주의": { glyph: "!", cls: "bg-amber-100 text-amber-800 border-amber-200" },
+};
+
+/** "2026-10-26" → "10월 26일 월요일" — 토요일에 "이번 주 월요일"이라고 하지 않게 날짜를 함께 */
+function dayLabelOf(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${m}월 ${d}일 ${WEEKDAYS[new Date(y, m - 1, d).getDay()]}요일`;
+}
+
+function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
+  return <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cls}`}>{children}</span>;
+}
+
+// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 윗줄 배지로만
+function TodayHero({ me, memberId }: { me: NonNullable<HomeData["me"]>; memberId: string }) {
+  const f = me.fortune;
+  const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
+  const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
+  return (
+    <section className={`mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] ${el.bg} p-4 shadow-sm`}>
+      <div className="flex items-center gap-1.5 flex-wrap mb-3">
+        <Badge cls={level.color}>{level.icon} {f.level}</Badge>
+        <Badge cls="bg-white/70 text-[var(--color-ink-muted)] border-white">{f.total_score}점</Badge>
+        <Badge cls="bg-white/70 text-[var(--color-ink-muted)] border-white">{el.emoji} {f.day_element}의 날</Badge>
+        {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
+        {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
+      </div>
+      <div className="flex gap-3 items-start">
+        <div className="flex flex-col items-center shrink-0 w-24">
+          <img
+            src={charArtSrc(me.character.art_key, me.character.key)}
+            alt={me.character.title}
+            onError={onCharArtError(me.character.key, FALLBACK_IMG)}
+            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md animate-float"
+          />
+          <p className="mt-1.5 text-[11px] font-semibold text-[var(--color-ink-muted)] text-center leading-tight">{me.character.title}</p>
+        </div>
+        <div className="relative flex-1 min-w-0 rounded-2xl bg-white/85 px-3.5 py-3 shadow-sm break-keep">
+          {/* 말풍선 꼬리 — 캐릭터 쪽 */}
+          <span className="absolute -left-1.5 top-6 w-3 h-3 rotate-45 bg-white/85" aria-hidden />
+          <MorningBrief data={f} />
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-4">
+        <Link href="/siun" className="flex-1 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
+          오늘 시운 자세히 →
+        </Link>
+        <ShareButton
+          create={() => createDailyShare(memberId, me.profile_id)}
+          title="나의 오늘 시운"
+          text={`오늘 내 시운 ${f.total_score}점, 사주까치가 이렇게 봤어요. 나도 오늘의 행운 보기 →`}
+          channel="daily"
+        />
+      </div>
+    </section>
+  );
+}
+
+// ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지
+function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canAdd: boolean; hasMe: boolean }) {
+  const best = people
+    .filter((p) => p.compat?.level === "좋음")
+    .sort((a, b) => (b.compat?.score ?? 0) - (a.compat?.score ?? 0))[0];
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between px-4 mb-2">
+        <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">오늘 내 사람들</h2>
+        <Link href="/profile" className="text-xs text-[var(--color-ink-faint)]">관리</Link>
+      </div>
+      <div className="overflow-x-auto no-scrollbar">
+        <div className="flex gap-4 px-4 min-w-max pb-1">
+          {people.map((p) => {
+            const badge = p.compat ? COMPAT_BADGE[p.compat.level] : null;
+            return (
+              <Link key={p.profile_id} href={`/compatibility?p2=${p.profile_id}`} className="flex flex-col items-center gap-1 w-16">
+                <div className="relative">
+                  <img
+                    src={charArtSrc(p.character.art_key, p.character.key)}
+                    alt=""
+                    onError={onCharArtError(p.character.key, FALLBACK_IMG)}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)]"
+                  />
+                  {badge && (
+                    <span className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border text-[11px] font-bold flex items-center justify-center ${badge.cls}`} aria-label={`오늘 궁합 ${p.compat?.level}`}>
+                      {badge.glyph}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] font-medium text-[var(--color-ink-muted)] truncate w-16 text-center">{p.name}</span>
+              </Link>
+            );
+          })}
+          {canAdd && (
+            <Link href="/profile" className="flex flex-col items-center gap-1 w-16">
+              <span className="w-16 h-16 rounded-full border-2 border-dashed border-[var(--color-border)] flex items-center justify-center text-2xl text-[var(--color-ink-faint)]">+</span>
+              <span className="text-[11px] font-medium text-[var(--color-ink-faint)]">사람 추가</span>
+            </Link>
+          )}
+        </div>
+      </div>
+      {people.length === 0 ? (
+        <p className="px-4 mt-2 text-xs text-[var(--color-ink-faint)]">궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요</p>
+      ) : best && hasMe ? (
+        <p className="px-4 mt-2 text-xs text-[var(--color-ink-light)] leading-relaxed break-keep">
+          <span className="font-semibold text-emerald-700">♥ {best.name}님과</span> — {best.compat?.headline}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+type NextCard = { key: string; icon: string; text: string; sub?: string; href?: string; onClick?: () => void; busy?: boolean };
+
+// ③ 이어서 할 것 — 알림 켜기(클라이언트) → 서버 후보 순서, 최대 2장
+function NextCards({ next, push, onPush, pushBusy }: { next: HomeData["next"]; push: PushState | null; onPush: () => void; pushBusy: boolean }) {
+  const cards: NextCard[] = [];
+  if (push === "off") cards.push({ key: "push", icon: "🔔", text: "내일 아침 7시, 까치가 먼저 알려 드릴까요?", sub: "알림 켜기", onClick: onPush, busy: pushBusy });
+  for (const n of next) {
+    if (n.kind === "good_day") cards.push({ key: "good_day", icon: "🌟", text: `${dayLabelOf(n.date)}이 좋은 날이에요`, sub: n.action, href: "/siun" });
+    else if (n.kind === "compat") cards.push({ key: "compat", icon: "💞", text: `${n.name}님과 궁합을 아직 안 봤어요`, sub: "우리 사이 알아보기", href: `/compatibility?p2=${n.profile_id}` });
+    else cards.push({ key: "ai_report", icon: "📜", text: "까치가 쓴 내 사주 이야기, 한 편 읽어 볼래요?", sub: "AI 풀이 보기", href: "/analysis?tab=ai" });
+  }
+  if (cards.length === 0) return null;
+
+  return (
+    <section className="mt-6 px-4 space-y-2">
+      <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">이어서 할 것</h2>
+      {cards.slice(0, 2).map((c) => {
+        const body = (
+          <>
+            <span className="text-2xl shrink-0">{c.icon}</span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug">{c.text}</span>
+              {c.sub && <span className="block text-xs text-[var(--color-ink-muted)] mt-0.5 leading-snug">{c.busy ? "…" : c.sub}</span>}
+            </span>
+            <span className="text-[var(--color-ink-faint)] shrink-0">›</span>
+          </>
+        );
+        const cls = "w-full flex items-center gap-3 text-left rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3 active:opacity-80";
+        return c.href ? (
+          <Link key={c.key} href={c.href} className={cls}>{body}</Link>
+        ) : (
+          <button key={c.key} type="button" onClick={c.onClick} disabled={c.busy} className={cls}>{body}</button>
+        );
+      })}
+    </section>
+  );
+}
+
+// 불러오는 동안 — ①과 같은 자리·크기, ② 얼굴 원 3개
+function HomeSkeleton() {
+  return (
+    <div className="animate-pulse" aria-busy>
+      <div className="mx-4 mt-4 rounded-3xl bg-[var(--color-ivory-warm)] p-4 h-[248px]">
+        <div className="h-4 w-40 rounded-full bg-white/70 mb-3" />
+        <div className="flex gap-3">
+          <div className="w-24 h-24 rounded-full bg-white/70 shrink-0" />
+          <div className="flex-1 space-y-2 pt-2">
+            <div className="h-4 rounded bg-white/70" />
+            <div className="h-3 w-4/5 rounded bg-white/70" />
+            <div className="h-3 w-3/5 rounded bg-white/70" />
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-4 px-4 mt-12">
+        {[0, 1, 2].map((i) => <div key={i} className="w-16 h-16 rounded-full bg-[var(--color-ivory-warm)]" />)}
+      </div>
+    </div>
+  );
+}
+
+function LoggedInHome({ memberId }: { memberId: string }) {
+  const [home, setHome] = useState<HomeData | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [push, setPush] = useState<PushState | null>(null);
+  const [pushBusy, setPushBusy] = useState(false);
+  const tracked = useRef(false);
+
+  const load = useCallback(() => {
+    setFailed(false);
+    getHome(memberId)
+      .then((h) => {
+        setHome(h);
+        if (!tracked.current) {
+          tracked.current = true;
+          track("home_view", { logged_in: true, profiles: h.people.length + (h.me ? 1 : 0) });
+        }
+      })
+      .catch(() => setFailed(true));
+  }, [memberId]);
+
+  useEffect(() => {
+    load();
+    getPushState().then(setPush).catch(() => setPush("unsupported"));
+  }, [load]);
+
+  const handlePush = async () => {
+    setPushBusy(true);
+    try {
+      setPush(await subscribePush());
+    } catch {
+      /* 실패하면 카드를 그대로 둔다 — 시운 화면 버튼에서 사유를 보여 준다 */
+    } finally {
+      setPushBusy(false);
     }
   };
 
-  return (
-    <div className="py-4 border-b border-[var(--color-border-light)] bg-white overflow-x-auto no-scrollbar sticky top-[60px] z-10">
-      <div className="flex gap-4 px-4 min-w-max">
-        {profiles.map((p) => {
-          const isActive = p.is_self; 
-          return (
-            <button key={p.id} onClick={() => scrollToPost(p.id)} className="flex flex-col items-center gap-1">
-              <div className={`w-16 h-16 rounded-full p-0.5 border-2 ${isActive ? "border-[var(--color-gold)]" : "border-gray-200"}`}>
-                <div className="w-full h-full rounded-full bg-[var(--color-gold-faint)] flex items-center justify-center text-3xl overflow-hidden shadow-inner">
-                  {getZodiacEmoji(p.birth_dt)}
-                </div>
-              </div>
-              <span className="text-[10px] font-medium text-[var(--color-ink-muted)] truncate w-16 text-center">
-                {p.is_self ? "나" : p.name}
-              </span>
-            </button>
-          );
-        })}
+  if (failed) {
+    return (
+      <div className="mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-6 text-center">
+        <img src={FALLBACK_IMG} alt="" className="w-20 h-20 mx-auto object-contain mb-2" />
+        <p className="text-sm text-[var(--color-ink-muted)] mb-3">까치가 소식을 가져오지 못했어요</p>
+        <button type="button" onClick={load} className="px-4 py-2 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold">다시 시도</button>
       </div>
-    </div>
-  );
-}
+    );
+  }
+  if (!home) return <HomeSkeleton />;
 
-// ── 운세 포스트 (로그인, 프로필별) ─────────────────────────────────────────
-function FortunePost({ profile, memberId, selfId }: { profile: Profile; memberId: string; selfId?: string }) {
-  const [forecast, setForecast] = useState<DailyFortune[] | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [dailyCompat, setDailyCompat] = useState<DailyCompat | null>(null);
-
-  useEffect(() => {
-    getForecast(memberId, profile.id, 7)
-      .then(setForecast)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [memberId, profile.id]);
-
-  useEffect(() => {
-    // 나 프로필이 따로 있고 이 포스트가 그 대상이 아니면, 오늘 나와의 궁합을 배지로
-    if (selfId && selfId !== profile.id) {
-      getDailyCompat(memberId, selfId, profile.id).then(setDailyCompat).catch(() => {});
-    }
-  }, [memberId, selfId, profile.id]);
-
-  const today = forecast?.[0];
-  const meta = today ? FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"] : null;
-  const el = today ? ELEMENT_META[today.day_element] ?? ELEMENT_META["土"] : ELEMENT_META["土"];
+  const total = home.people.length + (home.me ? 1 : 0);
+  if (total === 0) {
+    return (
+      <div className="mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] p-6 text-center">
+        <img src={FALLBACK_IMG} alt="" className="w-24 h-24 mx-auto object-contain mb-3 animate-float" />
+        <p className="font-heading text-base font-semibold text-[var(--color-ink)] leading-snug mb-1">내 사주를 등록하면 까치가 매일 아침 소식을 물어다 줘요</p>
+        <p className="text-xs text-[var(--color-ink-faint)] mb-4">첫 프로필이 곧 기본 프로필(나)이 돼요</p>
+        <Link href="/profile" className="inline-block px-5 py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold">내 사주 등록</Link>
+      </div>
+    );
+  }
 
   return (
-    <div id={`post-${profile.id}`}>
-      <FeedPost
-        name={profile.name}
-      handle={`${new Date(profile.birth_dt).getFullYear()}년생 · ${profile.gender === "male" ? "남" : "여"} · ${profile.city}`}
-      avatarChar={getZodiacEmoji(profile.birth_dt)}
-      avatarClass="bg-[var(--color-gold-faint)] text-2xl"
-      caption={
-        today && meta ? (
-          <div className="space-y-2.5">
-            <MorningBrief data={today} stripName={profile.name} compact />
-            {(today.solar_term || today.weather || today.son_eomneun_nal || dailyCompat) && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {today.solar_term && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
-                    🌿 {today.solar_term}
-                  </span>
-                )}
-                {today.weather && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-sky-50 text-sky-700 border-sky-200">
-                    {(ELEMENT_META[today.weather.element] ?? ELEMENT_META["土"]).emoji} {today.weather.condition}
-                  </span>
-                )}
-                {today.son_eomneun_nal && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-700 border-indigo-200">
-                    👻 손없는 날
-                  </span>
-                )}
-                {dailyCompat && (
-                  <Link
-                    href={`/compatibility?p2=${profile.id}`}
-                    className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border bg-rose-50 text-rose-700 border-rose-200"
-                  >
-                    💞 오늘 나와 {dailyCompat.score}점
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
-        ) : null
-      }
-      actions={
-        <div className="space-y-1">
-          <div className="flex gap-4 pt-1 border-t border-[var(--color-border-light)] mt-2 py-2">
-            <Link href="/analysis" className="text-xs text-[var(--color-ink-faint)]">사주분석하기</Link>
-            <Link
-              href={profile.is_self ? "/compatibility" : `/compatibility?p2=${profile.id}`}
-              className="text-xs text-[var(--color-ink-faint)]"
-            >
-              나와 궁합보기
-            </Link>
-          </div>
+    <>
+      {home.me ? (
+        <TodayHero me={home.me} memberId={memberId} />
+      ) : (
+        <div className="mx-4 mt-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-ink-muted)]">
+          기본 프로필(나)을 정하면 오늘의 소식을 여기서 받아요. <Link href="/profile" className="underline underline-offset-2 text-[var(--color-gold)]">정하러 가기</Link>
         </div>
-      }
-    >
-      {/* 비주얼 카드 영역 */}
-      <div className={`aspect-[4/3] w-full ${el.bg} flex flex-col items-center justify-center relative overflow-hidden`}>
-        {loading ? (
-          <LoadingSpinner />
-        ) : today && meta ? (
-          <>
-            {/* 배경 장식 */}
-            <div className="absolute top-[-10%] right-[-10%] w-40 h-40 rounded-full bg-white/20 blur-3xl" />
-            <div className="absolute bottom-[-5%] left-[-5%] w-32 h-32 rounded-full bg-black/5 blur-2xl" />
-            
-            {/* 까치 마스코트 */}
-            <div className="z-10 flex flex-col items-center relative">
-              <img
-                src={meta.image}
-                alt="kkachi"
-                className="w-36 h-36 md:w-48 md:h-48 object-contain animate-float drop-shadow-xl"
-              />
-
-            </div>
-
-            {/* 하단 정보 태그들 */}
-            <div className="absolute bottom-6 left-6 right-6 z-10 flex flex-wrap gap-2">
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border backdrop-blur-md shadow-sm ${meta.color.replace('bg-', 'bg-white/40 border-white/60 ')}`}>
-                {meta.icon} {today.level} {today.total_score}점
-              </span>
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-[var(--color-ink-faint)]">운세를 불러오는 중...</p>
-        )}
-      </div>
-    </FeedPost>
-    </div>
+      )}
+      <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} hasMe={!!home.me} />
+      <NextCards next={home.next} push={push} onPush={handlePush} pushBusy={pushBusy} />
+    </>
   );
 }
 
-const DAY_LABELS = ["오늘", "내일", "모레"];
+// 비로그인 — 나는 어떤 캐릭터일까? 오행이 겹치지 않는 맛보기 4장 + 물음표 실루엣 → 바로 아래 퀵스타트 폼
+const PREVIEW_KEYS = ["갑_강", "병_약", "경_강", "계_약"];
 
-function HourlyRow({ h }: { h: HourlyWeather }) {
-  const m = ELEMENT_META[h.element] ?? ELEMENT_META["土"];
-  return (
-    <div className="flex items-center gap-2 py-1.5 border-b border-white/50 last:border-0">
-      <span className="text-xs text-[var(--color-ink-muted)] w-10 shrink-0">{h.hour}</span>
-      <span className="text-base">{m.emoji}</span>
-      <span className="text-xs text-[var(--color-ink)] flex-1">{h.condition}</span>
-      <span className="text-xs font-semibold text-[var(--color-ink)]">{h.temperature}°</span>
-    </div>
-  );
-}
+function GuestHero({ location }: { location: LocationInfo | null }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
 
-// ── 날씨 포스트 ────────────────────────────────────────────────────────────
-function WeatherPost({ city }: { city: string }) {
-  const [days, setDays] = useState<DailyWeather[] | null>(null);
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
-
-  useEffect(() => {
-    getWeather(city).then(setDays).catch(() => {});
-  }, [city]);
-
-  const todayMeta = days?.length ? (ELEMENT_META[days[0].element] ?? ELEMENT_META["土"]) : null;
+  // 입력값을 sessionStorage에 두고 /analysis로 — 그 페이지가 진입 시 자동으로 분석하고 인트로에서 캐릭터를 공개한다
+  const handleSubmit = (input: AnalysisInput, name: string) => {
+    setBusy(true);
+    sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
+    sessionStorage.setItem("kkachi_analysis_name", name);
+    sessionStorage.removeItem("kkachi_profile_input");
+    router.push("/analysis");
+  };
 
   return (
-    <FeedPost
-      name="날씨 기운"
-      handle={city}
-      avatarChar="기"
-      avatarClass="bg-gradient-to-br from-sky-400 to-blue-500"
-      caption={null}
-    >
-      <div className={`${todayMeta?.bg ?? "bg-[var(--color-ivory-warm)]"} px-4 py-5`}>
-        {!days ? (
-          <div className="flex justify-center py-2">
-            <LoadingSpinner />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-3 gap-2">
-              {days.map((day, i) => {
-                const m = ELEMENT_META[day.element] ?? ELEMENT_META["土"];
-                const isOpen = openIdx === i;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setOpenIdx(isOpen ? null : i)}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 transition-all ${isOpen ? "bg-white/80 ring-1 ring-[var(--color-gold-light)]" : "bg-white/60"}`}
-                  >
-                    <p className="text-xs font-bold text-[var(--color-ink)]">
-                      {DAY_LABELS[i]}
-                      {day.date && <span className="ml-1">{day.date.slice(5).replace("-", "/")}</span>}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <span className="text-3xl">{m.emoji}</span>
-                    </div>
-                    <p className="text-xs text-[var(--color-ink)] font-medium text-center leading-tight">{day.condition}</p>
-                    <span className="text-[10px] text-[var(--color-ink-faint)]">{isOpen ? "▲" : "▼"}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {openIdx !== null && days[openIdx].hours?.length ? (
-              <div className="bg-white/70 rounded-xl px-3 py-2">
-                <p className="text-[10px] text-[var(--color-ink-faint)] mb-1 font-medium">{DAY_LABELS[openIdx]} 시간별 예보</p>
-                {days[openIdx].hours!.map((h) => (
-                  <HourlyRow key={h.hour} h={h} />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        )}
+    <section className="px-4 pt-5 pb-6 border-b border-[var(--color-border-light)] bg-[var(--color-card)]">
+      <h1 className="font-heading text-xl font-bold text-[var(--color-ink)] text-center">나는 어떤 캐릭터일까?</h1>
+      <p className="text-xs text-[var(--color-ink-muted)] text-center mt-1 leading-relaxed">생년월일만 넣으면 30초 만에 사주 캐릭터를 찾아 드려요</p>
+      <div className="flex items-center justify-center gap-1.5 my-5" aria-hidden>
+        {PREVIEW_KEYS.slice(0, 2).map((k) => (
+          <img key={k} src={charArtSrc(null, k)} alt="" className="w-14 h-14 rounded-full object-cover opacity-60 border-2 border-white shadow-sm" />
+        ))}
+        <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-[var(--color-gold-faint)] animate-float mx-1">
+          <img src={charArtSrc(null, "무_강")} alt="" className="w-full h-full object-cover char-silhouette" />
+          <span className="absolute inset-0 flex items-center justify-center font-heading text-4xl font-bold text-white/90">?</span>
+        </div>
+        {PREVIEW_KEYS.slice(2).map((k) => (
+          <img key={k} src={charArtSrc(null, k)} alt="" className="w-14 h-14 rounded-full object-cover opacity-60 border-2 border-white shadow-sm" />
+        ))}
       </div>
-    </FeedPost>
+      <AnalysisForm quick onSubmit={handleSubmit} loading={busy} defaultCity={location?.city} defaultLongitude={location?.longitude} />
+      <p className="mt-3 text-center text-[11px] text-[var(--color-ink-faint)]">
+        로그인하면 매일 아침 오늘의 소식을 받아요{" "}
+        <Link href="/join" className="underline underline-offset-2 text-[var(--color-gold)]">로그인</Link>
+      </p>
+    </section>
   );
 }
 
-// ── 서비스 영상 포스트 ──────────────────────────────────────────────────────
-function VideoPost({ loggedIn }: { loggedIn: boolean }) {
+// 서비스 영상 — 비로그인 맨 아래에만(유지 여부는 스펙 §6 열린 결정)
+function VideoPost() {
   const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(true);
   const [showIcon, setShowIcon] = useState(false);
@@ -277,18 +341,6 @@ function VideoPost({ loggedIn }: { loggedIn: boolean }) {
           <span className="font-semibold">사주까치</span>{" "}
           까치가 울면 반가운 소식이 온다 했죠. 오늘 당신의 기운이 어떤지 알려드릴게요. 🪶
         </span>
-      }
-      actions={
-        !loggedIn ? (
-          <div className="flex gap-2">
-            <Link href="/analysis" className="flex-1 text-center py-2.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors">
-              내 사주 보기
-            </Link>
-            <Link href="/join" className="flex-1 text-center py-2.5 border border-[var(--color-gold)] text-[var(--color-gold)] rounded-lg text-sm font-semibold hover:bg-[var(--color-gold)] hover:text-white transition-colors">
-              로그인
-            </Link>
-          </div>
-        ) : null
       }
     >
       <div className="aspect-square w-full bg-black overflow-hidden relative cursor-pointer" onClick={togglePlay}>
@@ -322,116 +374,33 @@ function VideoPost({ loggedIn }: { loggedIn: boolean }) {
   );
 }
 
-// ── 비로그인 첫 화면: 30초 만에 내 사주 보기 ────────────────────────────────
-function QuickStartPost({ location }: { location: LocationInfo | null }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-
-  // 입력값을 sessionStorage에 두고 /analysis로 — 그 페이지가 진입 시 자동으로 분석한다
-  const handleSubmit = (input: AnalysisInput, name: string) => {
-    setBusy(true);
-    sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
-    sessionStorage.setItem("kkachi_analysis_name", name);
-    sessionStorage.removeItem("kkachi_profile_input");
-    router.push("/analysis");
-  };
-
-  return (
-    <section className="px-4 pt-5 pb-6 border-b border-[var(--color-border-light)] bg-[var(--color-card)]">
-      <div className="flex items-center gap-3 mb-4">
-        <img src="/kkachi/icon-192.png" alt="사주까치" className="w-14 h-14 rounded-full flex-shrink-0" />
-        <div>
-          <h1 className="font-heading text-xl font-bold text-[var(--color-ink)]">30초 만에 내 사주 보기</h1>
-          <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">이름과 생년월일만 넣으면 타고난 팔자, 올해 흐름, 좋은 달까지. 로그인 없이.</p>
-        </div>
-      </div>
-      <AnalysisForm quick onSubmit={handleSubmit} loading={busy} defaultCity={location?.city} defaultLongitude={location?.longitude} />
-      <p className="mt-3 text-center text-[11px] text-[var(--color-ink-faint)]">
-        매일 아침 한 마디를 받고 싶다면{" "}
-        <Link href="/join" className="underline underline-offset-2 text-[var(--color-gold)]">로그인</Link>
-      </p>
-    </section>
-  );
-}
-
-// ── 프로필 없을 때 CTA 포스트 ──────────────────────────────────────────────
-function EmptyProfilePost() {
-  return (
-    <FeedPost
-      name="사주까치"
-      handle="sajukkachi"
-      avatarChar="까"
-      caption="기본 프로필이 아직 없어요. 나의 사주를 등록하면 매일 아침 한 마디를 피드에서 바로 볼 수 있어요. 🌟"
-      actions={
-        <Link href="/profile" className="block text-center py-2.5 bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg text-sm font-semibold hover:bg-[var(--color-ink-light)] transition-colors">
-          기본 프로필 등록하기
-        </Link>
-      }
-    >
-      <div className="px-4 py-8 bg-[var(--color-ivory-warm)] text-center">
-        <p className="font-heading text-4xl mb-2">🪶</p>
-        <p className="text-sm text-[var(--color-ink-faint)]">첫 프로필이 곧 기본 프로필(나)이 돼요</p>
-      </div>
-    </FeedPost>
-  );
-}
-
-// ── 루트 ────────────────────────────────────────────────────────────────────
-export default function Home() {
-  const [memberId, setMemberId] = useState<string | null | undefined>(undefined);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [weatherCity, setWeatherCity] = useState<string>("Seoul");
+function GuestHome() {
   const [location, setLocation] = useState<LocationInfo | null>(null);
-
-  const today = new Date();
-  const dateLabel = today.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
-
   useEffect(() => {
-    const id = localStorage.getItem(MEMBER_ID_KEY);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMemberId(id);
-    if (id) {
-      listProfiles(id).then((ps) => {
-        const sorted = [...ps].sort((a, b) => (a.is_self === b.is_self ? 0 : a.is_self ? -1 : 1));
-        setProfiles(sorted);
-        if (sorted.length > 0) setWeatherCity(sorted[0].city);
-        track("home_view", { logged_in: true, profiles: sorted.length });
-      }).catch(() => {});
-    } else {
-      track("home_view", { logged_in: false });
-      detectLocation().then((loc) => { if (loc) { setWeatherCity(loc.city); setLocation(loc); } }).catch(() => {});
-    }
+    track("home_view", { logged_in: false });
+    detectLocation().then((loc) => { if (loc) setLocation(loc); }).catch(() => {});
   }, []);
+  return (
+    <>
+      <GuestHero location={location} />
+      <VideoPost />
+    </>
+  );
+}
 
-  if (memberId === undefined) return null;
+export default function Home() {
+  const memberId = useStorageValue(MEMBER_ID_KEY);
+  const dateLabel = new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+
+  if (memberId === null) return null; // 하이드레이션 전 — 로그인 여부를 아직 모른다
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen pb-8">
       <div className="max-w-lg mx-auto">
-        {/* 상단 헤더 */}
         <header className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-[var(--color-border-light)] bg-white sticky top-0 z-20">
-          <div>
-            <p className="font-heading text-lg font-bold text-[var(--color-ink)]">{dateLabel}</p>
-          </div>
+          <p className="font-heading text-lg font-bold text-[var(--color-ink)]">{dateLabel}</p>
         </header>
-
-        {/* 스토리 트레이 */}
-        {memberId && profiles.length > 0 && <StoryTray profiles={profiles} />}
-
-        {/* 피드 */}
-        <div>
-          {/* 비로그인: 입력 폼이 먼저 */}
-          {!memberId && <QuickStartPost location={location} />}
-
-          {/* 로그인: 운세 포스트 */}
-          {memberId && profiles.length === 0 && <EmptyProfilePost />}
-          {memberId && profiles.map((p) => (
-            <FortunePost key={p.id} profile={p} memberId={memberId} selfId={profiles.find((x) => x.is_self)?.id} />
-          ))}
-
-          {/* 항상: 서비스 영상 포스트 */}
-          <VideoPost loggedIn={!!memberId} />
-        </div>
+        {memberId ? <LoggedInHome memberId={memberId} /> : <GuestHome />}
       </div>
     </main>
   );

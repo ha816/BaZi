@@ -2,12 +2,12 @@
 
 | | |
 |---|---|
-| 상태 | 살아있음(구현 전) — 2026-10-24 컨셉 A로 다시 씀. 지금 코드(인스타 피드: StoryTray·FortunePost×N·VideoPost)는 이 스펙과 다르다. 구현하면서 수용 기준을 하나씩 맞춘다 |
+| 상태 | 살아있음 — 2026-10-24 컨셉 A로 다시 쓰고 같은 날 구현(인스타 피드 StoryTray·FortunePost×N·WeatherPost 제거) |
 | 화면 | `/` — 비로그인 "내 캐릭터 찾기" + 퀵스타트 / 로그인 "오늘의 나 · 오늘 내 사람들 · 이어서 할 것" |
 | 관련 코드 | `frontend/src/app/page.tsx` · 재사용 `MorningBrief.tsx` · `SajuCharacterCard.tsx`(RevealGate) · `compatibility/CompatTotal.tsx`(실루엣) · `lib/characterArt.ts` · `lib/elementColors.ts`(`ELEMENT_META`·`FORECAST_LEVEL_META`) · `PushSubscribeButton.tsx`·`lib/push.ts` · `ShareButton.tsx` · `AnalysisForm.tsx`(quick) |
 | 관련 API | `GET /members/{id}/home`(**신규**, §2-1) · `POST /members/{id}/profiles/{pid}/daily/share`(공유) · 비로그인은 API 호출 없음 |
 | 관련 문서 | `docs/research/home_홈화면.md`(근거·벤치마크·데이터) · `specs/analysis/character.md`(캐릭터 20유형·그림 키) · `specs/siun/index.md` · `docs/ROADMAP.md` R4(홈 한 문장·스트릭 없음)·R5(오늘의 궁합)·V1(홈 퀵스타트)·V3(첫 화면에 설문 없음)·V8(이 개편) |
-| 마지막 확인 | 2026-10-24 — 코드 읽기로 API·필드 이름 대조(구현 전) |
+| 마지막 확인 | 2026-10-24 — 390px Playwright(시스템 Chrome)로 로그인·프로필 4개 / 기본 프로필만 / 프로필 없음 / API 실패(없는 회원) / 비로그인 다섯 상태와 AI 풀이 카드 → `/analysis?tab=ai` 확인, 가로 스크롤 없음. 알림 카드는 로컬에 VAPID가 없어 화면으로는 못 봄(코드 읽기) |
 
 ## 1. 목적
 
@@ -75,7 +75,7 @@
 
 카드 하나. 바탕은 오늘 일진 오행 색(`ELEMENT_META[day_element]`의 연한 색).
 
-1. 윗줄 — `{M}월 {D}일 {요일}` + 오른쪽 작은 배지들: 레벨(`FORECAST_LEVEL_META[level]`) · `{total_score}점` · 절기(있을 때) · 👻 손없는 날(있을 때)
+1. 윗줄 — 작은 배지들: 레벨(`FORECAST_LEVEL_META[level]`) · `{total_score}점` · `{오행 이모지} {day_element}의 날` · 절기(있을 때) · 👻 손없는 날(있을 때). 날짜(`{M}월 {D}일 ({요일})`)는 카드 위 페이지 머리줄에(모든 상태 공통)
 2. 본문 — 왼쪽 내 캐릭터 그림(정사각 원형 프레임, `charArtSrc(art_key, key)` → 유형 그림 → 기본 까치 폴백), 오른쪽 **까치 말풍선**: `headline`(가장 큰 글씨) → `✦ {action}` → `✕ {caution}`(빈 문자열이면 줄 자체 없음). `MorningBrief`와 같은 문장
 3. 그림 아래 한 줄 — 캐릭터 `title`(예: "든든한 수호자"). 캐릭터가 없으면 그림 자리에 기본 까치, 이 줄 없음
 4. 버튼 줄 — [오늘 시운 자세히 →] `/siun` · [공유] 시운 공유 카드(`ShareButton` + `createDailyShare`, 시운 화면과 같은 카드)
@@ -97,9 +97,9 @@
 | 순서 | kind | 조건 | 카드 | 누르면 |
 |---|---|---|---|---|
 | 1 | `push` | 클라이언트 `getPushState() == "off"` | "내일 아침 7시, 까치가 먼저 알려 드릴까요?" | 그 자리에서 알림 켜기(`PushSubscribeButton`과 같은 동작), 켜지면 카드 사라짐 |
-| 2 | `good_day` | 서버: 나의 앞으로 7일 중 `level == "좋은 날"`인 첫 날이 내일 이후 | "{요일}이 이번 주 좋은 날이에요" + 그날 `action` | `/siun` |
+| 2 | `good_day` | 서버: 나의 앞으로 7일 중 `level == "좋은 날"`인 첫 날이 내일 이후 | "{M}월 {D}일 {요일}이 좋은 날이에요" + 그날 `action` (날짜를 함께 — 토요일에 "이번 주 월요일"이라 하지 않게) | `/siun` |
 | 3 | `compat` | 서버: ②의 사람 중 올해 `compatibilities` 캐시가 없는 첫 사람 | "{이름}님과 궁합을 아직 안 봤어요" | `/compatibility?p2={id}` |
-| 4 | `ai_report` | 서버: 기본 프로필 올해 analyses에 `ai_report` 없음 | "까치가 쓴 내 사주 이야기, 한 편 읽어 볼래요?" | `/analysis`(프로필 모드, AI 풀이 탭) |
+| 4 | `ai_report` | 서버: 기본 프로필 올해 analyses에 지금 프롬프트 버전 `ai_report` 없음 | "까치가 쓴 내 사주 이야기, 한 편 읽어 볼래요?" | `/analysis?tab=ai` — 기본 프로필이 골라진 폼, [분석 시작] 한 번이면 AI 풀이 탭 |
 
 ### 3-4. 비로그인 — 내 캐릭터 찾기
 
@@ -107,7 +107,8 @@
 2. 히어로 카드 — 제목 "나는 어떤 캐릭터일까?", 부제 "생년월일만 넣으면 30초 만에 사주 캐릭터를 찾아 드려요"
 3. 가운데 물음표 실루엣 하나(`CompatTotal` 실루엣과 같은 모양) + 양옆으로 맛보기 캐릭터 그림 4장(20유형 중 오행이 겹치지 않게 고정 4장, 작게·약간 흐리게)
 4. 바로 아래 퀵스타트 폼(`AnalysisForm quick`, 지금과 같은 동작: sessionStorage 저장 → `/analysis` 자동 분석 → 결과 인트로에서 캐릭터 공개)
-5. 폼 아래 작은 줄 "로그인하면 매일 아침 오늘의 소식을 받아요" → `/join`
+5. 폼 아래 작은 줄 "로그인하면 매일 아침 오늘의 소식을 받아요 [로그인]" → `/join`
+6. 맨 아래 소개 영상(VideoPost) — 유지 여부가 정해질 때까지 비로그인에만 둔다(§6). 로그인 홈에는 없다
 
 ## 4. 규칙
 
@@ -158,6 +159,7 @@
 
 ## 7. 변경 이력
 
+- 2026-10-24 — 홈 화면 구현(`app/page.tsx` 다시 씀: TodayHero·PeopleRow·NextCards·GuestHero, 옛 피드·날씨 코드 삭제). 구현하며 정한 것: 날짜는 머리줄에만(히어로 윗줄은 배지 + "{오행}의 날"), 좋은 날 카드는 날짜까지("10월 26일 월요일이"), 소개 영상은 비로그인 맨 아래에만, 말풍선은 어절 단위 줄바꿈(`break-keep`). `MorningBrief` prop을 쓰는 네 필드로 좁힘
 - 2026-10-24 — 묶음 API 구현(`HomeService`). 캐릭터는 analyses 캐시 대신 natal로 매번 계산, 사람 순서는 최근 추가 먼저, `next` 항목 모양 확정. `get_forecast`가 날씨를 필요할 때만 받게 해 홈 응답 1.1초 → 약 70ms
 - 2026-10-24 — 옛 화면 명세(인스타 피드) 초안을 정식 스펙 형식으로 다시 씀. 컨셉 A "까치가 물어다 준 오늘"(오늘의 나 · 오늘 내 사람들 · 이어서 할 것), 홈 묶음 API `GET /members/{id}/home` 신설 결정. 근거 `docs/research/home_홈화면.md`
 - 2026-10-17 — `docs/frontend` 화면 명세에서 옮겨 옴(초안)

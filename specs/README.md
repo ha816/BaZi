@@ -36,7 +36,7 @@
 
 | 경로 | 스펙 | 상태 |
 |---|---|---|
-| `/` | `home/index.md` | **정식**(구현 전, 2026-10-24) |
+| `/` | `home/index.md` | **정식**(2026-10-24) |
 | `/join` | `join/index.md` | 초안 |
 | `/my` | `my/index.md` | 초안 |
 | `/profile` | `profile/index.md` | 초안 |

@@ -383,6 +383,28 @@ export async function getDailyCompat(memberId: string, p1: string, p2: string): 
   return request<DailyCompat>(`/compatibility/daily?member_id=${memberId}&p1=${p1}&p2=${p2}`);
 }
 
+/** 홈 한 장 — GET /members/{id}/home (specs/home/index.md §2-1, 2026-10-24). 기본 프로필이 없으면 me null */
+export interface HomeData {
+  date: string;
+  me: {
+    profile_id: string;
+    name: string;
+    character: { key: string; art_key: string; title: string; line: string };
+    fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal">;
+  } | null;
+  people: {
+    profile_id: string;
+    name: string;
+    character: { key: string; art_key: string };
+    compat: { score: number; level: "좋음" | "보통" | "주의"; headline: string } | null;
+  }[];
+  next: ({ kind: "good_day"; date: string; action: string } | { kind: "compat"; profile_id: string; name: string } | { kind: "ai_report" })[];
+}
+
+export async function getHome(memberId: string): Promise<HomeData> {
+  return request<HomeData>(`/members/${memberId}/home`);
+}
+
 /** 궁합 시운 — 오늘부터 N일(기본 14, 최대 31). 각 날은 getDailyCompat과 같은 모양. 궁합 결과 시운 탭용(2026-10-18) */
 export async function getCompatForecast(memberId: string, p1: string, p2: string, days = 14): Promise<{ days: DailyCompat[] }> {
   return request<{ days: DailyCompat[] }>(`/compatibility/forecast?member_id=${memberId}&p1=${p1}&p2=${p2}&days=${days}`);

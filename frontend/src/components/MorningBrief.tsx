@@ -3,7 +3,8 @@
 import type { DailyFortune } from "@/types/analysis";
 
 interface Props {
-  data: DailyFortune;
+  /** 쓰는 건 이 네 필드뿐 — 홈 묶음 API의 fortune(description 없음)도 그대로 넘긴다 */
+  data: Pick<DailyFortune, "headline" | "action" | "caution"> & { description?: string };
   /** 피드처럼 이름이 이미 보이는 자리에서는 "OO님, " 접두를 뗀다 */
   stripName?: string;
   /** "내일"·"모레"처럼 오늘이 아닌 날이면 문장의 첫 "오늘"을 이 라벨로 바꾼다 */
@@ -22,7 +23,7 @@ function adapt(text: string, dayLabel?: string): string {
 
 export default function MorningBrief({ data, stripName, dayLabel, compact }: Props) {
   // 옛 캐시(headline 없음)는 description으로 폴백
-  let headline = data.headline || data.description;
+  let headline = data.headline || data.description || "";
   if (stripName) headline = headline.replace(new RegExp(`^${escapeRegExp(stripName)}님,\\s*`), "");
   headline = adapt(headline, dayLabel);
   const action = data.action ? adapt(data.action, dayLabel) : "";

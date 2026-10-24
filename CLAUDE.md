@@ -146,7 +146,7 @@ BaZi/
 │               └── payment_repo.py # PaymentRepo
 ├── frontend/src/
 │   ├── app/
-│   │   ├── page.tsx                 # 홈 — 비로그인: QuickStartPost(30초 퀵스타트 폼) / 로그인: StoryTray · 프로필별 FortunePost(7일 예보) · VideoPost
+│   │   ├── page.tsx                 # 홈(V8, specs/home) — 비로그인: GuestHero("나는 어떤 캐릭터일까?" 실루엣+맛보기 4장+퀵스타트 폼) · VideoPost / 로그인: GET /members/{id}/home 한 번 → TodayHero(캐릭터+까치 말풍선 MorningBrief) · PeopleRow(캐릭터 얼굴+오늘 궁합 배지) · NextCards(알림 켜기·좋은 날·안 본 궁합·AI 풀이, 최대 2)
 │   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx(사주/시운/궁합 kind 분기) · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
 │   │   ├── opengraph-image.tsx      # 사이트 기본 OG 이미지 (satori) · robots.ts(/s/ 색인 금지) · sitemap.ts
 │   │   ├── layout.tsx · fonts/      # 루트 레이아웃 — 화면 폰트는 next/font/local 서브셋 WOFF2(fonts/: Noto Sans KR·Noto Serif KR 가변, 상용 한글 2,350 + 코드의 한자 247; 빌드·dev가 구글 폰트를 받지 않음 2026-10-18, 재생성은 fonts/README.md)
@@ -513,7 +513,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | 비로그인: 날짜 헤더 + **QuickStartPost**("30초 만에 내 사주 보기" — `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis`로 이동해 자동 분석) + 소개 영상 / 로그인: StoryTray + 프로필별 오늘 운세 FortunePost(7일 예보, 손없는 날 배지) + 영상 | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인: 날짜 헤더 + "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis` 자동 분석) + 소개 영상 / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(일진 오행 바탕·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히]·[공유]) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가) ③ 이어서 할 것 최대 2장(알림 켜기 → 좋은 날 → 안 본 궁합 → AI 풀이 `/analysis?tab=ai`). 7일 예보·영상 없음 | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
