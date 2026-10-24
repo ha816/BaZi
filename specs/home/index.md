@@ -1,24 +1,163 @@
-# 홈 (피드)
+# 홈 — 까치가 물어다 준 오늘
 
 | | |
 |---|---|
-| 상태 | 초안 — `docs/frontend`의 화면 명세·시나리오(코드를 설명한 글)를 2026-10-17에 옮겨 둔 것. 아직 스펙 형식(`specs/README.md` 템플릿: 규칙·수용 기준)으로 바꾸지 않았다 — 이 화면을 손댈 때 약속과 수용 기준으로 다시 쓴다 |
-| 화면 | `/` — 비로그인 퀵스타트 / 로그인 피드 |
+| 상태 | 살아있음(구현 전) — 2026-10-24 컨셉 A로 다시 씀. 지금 코드(인스타 피드: StoryTray·FortunePost×N·VideoPost)는 이 스펙과 다르다. 구현하면서 수용 기준을 하나씩 맞춘다 |
+| 화면 | `/` — 비로그인 "내 캐릭터 찾기" + 퀵스타트 / 로그인 "오늘의 나 · 오늘 내 사람들 · 이어서 할 것" |
+| 관련 코드 | `frontend/src/app/page.tsx` · 재사용 `MorningBrief.tsx` · `SajuCharacterCard.tsx`(RevealGate) · `compatibility/CompatTotal.tsx`(실루엣) · `lib/characterArt.ts` · `lib/elementColors.ts`(`ELEMENT_META`·`FORECAST_LEVEL_META`) · `PushSubscribeButton.tsx`·`lib/push.ts` · `ShareButton.tsx` · `AnalysisForm.tsx`(quick) |
+| 관련 API | `GET /members/{id}/home`(**신규**, §2-1) · `POST /members/{id}/profiles/{pid}/daily/share`(공유) · 비로그인은 API 호출 없음 |
+| 관련 문서 | `docs/research/home_홈화면.md`(근거·벤치마크·데이터) · `specs/analysis/character.md`(캐릭터 20유형·그림 키) · `specs/siun/index.md` · `docs/ROADMAP.md` R4(홈 한 문장·스트릭 없음)·R5(오늘의 궁합)·V1(홈 퀵스타트)·V3(첫 화면에 설문 없음)·V8(이 개편) |
+| 마지막 확인 | 2026-10-24 — 코드 읽기로 API·필드 이름 대조(구현 전) |
 
-## 화면 명세 (옛 screen_spec)
+## 1. 목적
 
-**진입 조건:** 없음 (공개)
+아침에 홈을 열면 **까치가 오늘 소식 하나를 물어다 준다** — 내 캐릭터가 오늘 한 문장과 한 행동을 건네고, 그 아래 내가 아끼는 사람들의 오늘이 얼굴로 보인다. 더 보고 싶으면 시운·궁합·분석으로 간다.
 
-| 상태 | 표시 내용 |
-|------|---------|
-| 비로그인 | 날짜 헤더 + VideoPost (가입 CTA) |
-| 로그인 + 프로필 없음 | EmptyProfilePost + VideoPost |
-| 로그인 + 프로필 있음 | StoryTray + FortunePost × N + VideoPost |
+지키는 원칙
+- **한 문장 + 한 행동이 먼저, 점수는 보조**(R4). 점수 그래프·7일 예보는 홈에 두지 않는다 — 시운 화면 몫.
+- **내 오늘은 한 덩어리로 가장 크게.** 같은 모양 카드를 사람 수만큼 반복하지 않는다.
+- **길조 까치 톤.** 반가운 소식이 먼저, 주의는 ✕ 한 줄. 공포·결핍·손실 회피 문구 금지.
+- 해석 문장·점수는 전부 백엔드. 프론트는 표시만.
+- 폰(390px) 기준 스크롤 세 화면 이내.
 
-**데이터:** `listProfiles(memberId)` → is_self 우선 정렬, `getForecast(memberId, profileId, 7)` (FortunePost당 1회)
+## 2. 진입과 상태
 
-**인터랙션:** StoryTray 아바타 → 해당 FortunePost로 스크롤, "사주분석하기" → `/analysis`, "나와 궁합보기" → `/compatibility?p2={id}` (is_self는 `/compatibility`)
+- 로그인 판단은 `localStorage["kkachi_member_id"]`. 로그인 없이도 열린다.
+- 홈은 주소 파라미터를 쓰지 않는다(`?tab=`·`?step=` 없음). 알림 진입은 지금처럼 `/siun?src=push`로 가고 홈과 무관하다.
 
-**참고:** WeatherPost는 2026-05에 홈 피드에서 제거(`795ac80`), 컴포넌트 코드는 `page.tsx` 내부에 남아 있음.
+| 상태 | 보이는 것 |
+|---|---|
+| 비로그인 | 날짜 줄 → **내 캐릭터 찾기 히어로**(§3-4) → 퀵스타트 폼 |
+| 로그인 · 프로필 없음 | 날짜 줄 → "내 사주를 등록하면 까치가 매일 아침 소식을 물어다 줘요" 카드 + [내 사주 등록] → `/profile` |
+| 로그인 · 기본 프로필만 | ① 오늘의 나 → ② 오늘 내 사람들(빈 줄: "+ 사람 추가" 한 칸과 "궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요") → ③ 이어서 할 것 |
+| 로그인 · 여러 프로필 | ① → ②(기본 프로필을 뺀 사람들) → ③ |
+| 불러오는 중 | ①의 자리·크기를 그대로 둔 스켈레톤(그림 원·말풍선 세 줄) + ② 얼굴 원 3개. 레이아웃이 밀리지 않는다 |
+| 묶음 API 실패 | ① 자리에 "까치가 소식을 가져오지 못했어요" + [다시 시도]. ②③은 숨긴다 |
 
----
+- **기본 프로필** = `is_self` 프로필(CLAUDE.md "기본 프로필"). ①은 항상 기본 프로필이다. 다른 사람의 오늘은 ②에서 그 사람을 눌러 간다.
+- **이벤트**: `home_view{logged_in, profiles?}`(지금과 같음). 새 이벤트는 열린 결정(§6).
+
+### 2-1. 묶음 API `GET /members/{member_id}/home`
+
+홈이 부르는 백엔드는 이것 하나다. 회원이 없으면 404, 기본 프로필이 없으면 `me: null`·`next: []`(사람들의 `compat`도 null). 구현 `application/home_service.py` `HomeService.get_home`(2026-10-24), 로컬 측정 캐시 hit 약 70ms(첫 호출 250ms).
+
+```
+{
+  date: "2026-10-24",
+  me: {
+    profile_id, name,
+    character: { key, art_key, title, line },              // build_saju_character(natal) — 분석 결과의 natal.character와 같은 값
+    fortune: { headline, action, caution, total_score, level, day_element,
+               solar_term, son_eomneun_nal }                // FortuneService.get_forecast(7일)[0] (fortunes 캐시)
+  } | null,
+  people: [                                                 // 기본 프로필을 뺀 나머지, 최근에 추가한 사람 먼저
+    { profile_id, name,
+      character: { key, art_key },
+      compat: { score, level, headline } | null }           // compute_daily_compat(나, 그 사람, 오늘) — level 좋음·보통·주의, me 없으면 null
+  ],
+  next: [                                                   // §3-3 후보 중 서버가 아는 것, 이 순서(push는 클라이언트가 맨 앞에)
+    { kind: "good_day", date, action }                      // 내일~6일 뒤 중 level "좋은 날" 첫 날
+    { kind: "compat", profile_id, name }                    // 올해 compatibilities 캐시가 없는 첫 사람
+    { kind: "ai_report" }                                   // 올해 analyses에 지금 프롬프트 버전 AI 풀이 없음
+  ]
+}
+```
+
+- 캐릭터·오늘의 궁합은 사람마다 **natal만** 계산한다(`KkachiService.analyze_natal`, 한 사람 1ms 미만 — 대운·세운까지 하는 analyze의 1/40). analyses 캐시를 읽거나 쓰지 않는다(2026-10-24 구현 때 결정 — 처음 적은 "캐시에서 꺼내고 없으면 저장"보다 단순하고 빠르다).
+- 나의 natal은 요청마다 한 번만 만든다. 사람마다 `/compatibility/daily`를 부르지 않고 `compute_daily_compat`를 직접 쓴다.
+- 나의 운세는 앞으로 7일을 한 번에 받는다 — 0번이 ①, 나머지가 `good_day` 후보. 날씨(외부 호출 약 1초)는 날씨까지 든 캐시가 없는 날이 있을 때만 받는다(`FortuneService.get_forecast`, 2026-10-24).
+- `art_key`는 `character_art_key(key, is_male)` — 여성 프로필은 `{key}_여`.
+- 다른 회원의 프로필은 섞이지 않는다(`member_id` 소유만).
+
+## 3. 화면 구성과 순서 (로그인)
+
+### 3-1. ① 오늘의 나
+
+카드 하나. 바탕은 오늘 일진 오행 색(`ELEMENT_META[day_element]`의 연한 색).
+
+1. 윗줄 — `{M}월 {D}일 {요일}` + 오른쪽 작은 배지들: 레벨(`FORECAST_LEVEL_META[level]`) · `{total_score}점` · 절기(있을 때) · 👻 손없는 날(있을 때)
+2. 본문 — 왼쪽 내 캐릭터 그림(정사각 원형 프레임, `charArtSrc(art_key, key)` → 유형 그림 → 기본 까치 폴백), 오른쪽 **까치 말풍선**: `headline`(가장 큰 글씨) → `✦ {action}` → `✕ {caution}`(빈 문자열이면 줄 자체 없음). `MorningBrief`와 같은 문장
+3. 그림 아래 한 줄 — 캐릭터 `title`(예: "든든한 수호자"). 캐릭터가 없으면 그림 자리에 기본 까치, 이 줄 없음
+4. 버튼 줄 — [오늘 시운 자세히 →] `/siun` · [공유] 시운 공유 카드(`ShareButton` + `createDailyShare`, 시운 화면과 같은 카드)
+
+### 3-2. ② 오늘 내 사람들
+
+제목 "오늘 내 사람들" + 오른쪽 작은 링크 [관리] → `/profile`.
+
+- 가로 스크롤 줄. 한 칸 = 캐릭터 얼굴(원형 64px) + 이름 + 오늘 궁합 배지
+- 배지: `compat.level` — 좋음 ♥ / 보통 · / 주의 ! 를 레벨 색(좋음 emerald · 보통 slate · 주의 amber)으로, 숫자는 쓰지 않는다
+- 칸을 누르면 `/compatibility?p2={profile_id}`(첫 번째 분은 기본 프로필 기본값)
+- 줄 끝 칸 "+ 사람 추가" → `/profile`. 프로필이 10개면 이 칸 없음
+- 얼굴 줄 아래 한 줄: 오늘 궁합이 가장 좋은 사람의 `headline`을 "{이름}님과 — {headline}"으로(좋음인 사람이 없으면 이 줄 없음)
+
+### 3-3. ③ 이어서 할 것
+
+조건에 맞는 카드 중 **위에서부터 최대 2장**. 하나도 없으면 섹션 자체가 없다.
+
+| 순서 | kind | 조건 | 카드 | 누르면 |
+|---|---|---|---|---|
+| 1 | `push` | 클라이언트 `getPushState() == "off"` | "내일 아침 7시, 까치가 먼저 알려 드릴까요?" | 그 자리에서 알림 켜기(`PushSubscribeButton`과 같은 동작), 켜지면 카드 사라짐 |
+| 2 | `good_day` | 서버: 나의 앞으로 7일 중 `level == "좋은 날"`인 첫 날이 내일 이후 | "{요일}이 이번 주 좋은 날이에요" + 그날 `action` | `/siun` |
+| 3 | `compat` | 서버: ②의 사람 중 올해 `compatibilities` 캐시가 없는 첫 사람 | "{이름}님과 궁합을 아직 안 봤어요" | `/compatibility?p2={id}` |
+| 4 | `ai_report` | 서버: 기본 프로필 올해 analyses에 `ai_report` 없음 | "까치가 쓴 내 사주 이야기, 한 편 읽어 볼래요?" | `/analysis`(프로필 모드, AI 풀이 탭) |
+
+### 3-4. 비로그인 — 내 캐릭터 찾기
+
+1. 날짜 줄
+2. 히어로 카드 — 제목 "나는 어떤 캐릭터일까?", 부제 "생년월일만 넣으면 30초 만에 사주 캐릭터를 찾아 드려요"
+3. 가운데 물음표 실루엣 하나(`CompatTotal` 실루엣과 같은 모양) + 양옆으로 맛보기 캐릭터 그림 4장(20유형 중 오행이 겹치지 않게 고정 4장, 작게·약간 흐리게)
+4. 바로 아래 퀵스타트 폼(`AnalysisForm quick`, 지금과 같은 동작: sessionStorage 저장 → `/analysis` 자동 분석 → 결과 인트로에서 캐릭터 공개)
+5. 폼 아래 작은 줄 "로그인하면 매일 아침 오늘의 소식을 받아요" → `/join`
+
+## 4. 규칙
+
+**한다**
+- 백엔드 호출은 로그인 홈에서 `GET /members/{id}/home` 1회(+ 공유·알림 켜기를 누를 때). 비로그인은 0회(위치 감지 `ipapi.co`는 퀵스타트 폼이 쓰던 대로).
+- 문장은 백엔드가 준 그대로(`headline`·`action`·`caution`·`compat.headline`). 이름 접두(`{name}님, `)도 백엔드 것.
+- 캐릭터 그림은 `art_key` → 유형 키 → 기본 까치 순 폴백. 그림이 없어 칸이 비지 않는다.
+- 렌더되지 않는 옛 코드(`WeatherPost`·`HourlyRow`·`getWeather` import·`weatherCity`·StoryTray `activeId`)는 이 개편에서 지운다.
+
+**하지 않는다** (2026-10-24 결정)
+- 7일 예보·영역 점수 막대·그래프를 홈에 두지 않는다 — 시운으로.
+- 스트릭·연속 일수·"놓치면 사라져요" 같은 손실 회피 문구(R4 결정 유지).
+- 설문을 홈에 두지 않는다(V3 — 홈 퀵스타트 "30초 만에 내 사주"를 지킨다).
+- 사람마다 같은 모양의 큰 카드를 반복하지 않는다. 다른 사람은 ②의 얼굴 칸으로만.
+- 점신식 "조심할 것"을 히어로 첫 줄로 올리지 않는다 — 첫 줄은 항상 `headline`.
+- 프론트에서 레벨·점수로 문장을 고르지 않는다(해석 분기 금지).
+
+## 5. 수용 기준
+
+390px, 로그인 + 프로필 4개(기본 1 + 3) 기준. 따로 적은 것만 다른 상태.
+
+1. 홈 진입 시 브라우저가 부르는 백엔드 요청은 `/members/{id}/home` 1회다(`/forecast`·`/daily`·`/compatibility/daily`·`/profiles` 목록 호출이 없다).
+2. 첫 화면(스크롤 전)에 ① 오늘의 나 카드가 통째로 보이고, 그 안 가장 큰 글자는 `headline`이다. 점수 숫자는 윗줄 배지 안에만 있다.
+3. `caution`이 빈 문자열인 날은 ✕ 줄이 없다.
+4. ① 카드 바탕색이 오늘 `day_element` 오행 색이다(예: 火 날이면 붉은 계열).
+5. 기본 프로필이 여성이면 그림 주소가 `saju_character/{key}_여.webp`이고, 그 파일이 없으면 `saju_character/{key}.webp`, 그것도 없으면 기본 까치 그림이 보인다.
+6. ②에 얼굴 칸 3개 + "+ 사람 추가" 한 칸이 가로로 있고, 칸마다 이름과 궁합 배지(♥ / · / !)가 있으며 숫자는 없다.
+7. ②의 칸을 누르면 `/compatibility?p2={그 프로필 id}`로 간다.
+8. ③ 카드는 2장 이하다. 알림이 꺼져 있고(`off`) 이번 주 좋은 날이 있으면 알림 카드가 위, 좋은 날 카드가 아래다.
+9. 알림 카드에서 알림을 켜면 새로고침 없이 그 카드가 사라지고 다음 후보가 올라온다.
+10. 화면 어디에도 7일 예보 목록·영역 점수 막대·연속 일수가 없다.
+11. 비로그인 홈은 백엔드 요청 없이 그려지고, 맨 위 카드 제목이 "나는 어떤 캐릭터일까?"이며 바로 아래에 이름·생년월일 폼이 있다. 폼 제출 후 `/analysis`에서 자동 분석된다.
+12. 로그인 · 프로필 없음이면 "내 사주 등록" 버튼이 보이고 누르면 `/profile`로 간다.
+13. 로그인 · 기본 프로필만이면 ②에 "+ 사람 추가" 한 칸과 안내 문장만 있다.
+14. 불러오는 동안 스켈레톤이 ① 카드와 같은 높이를 차지해, 데이터가 들어와도 아래 내용이 밀리지 않는다.
+15. 백엔드 테스트(`tests/application/test_home_service.py`·`tests/adapter/test_profile_controller.py`, 2026-10-24 통과): `GET /members/{id}/home`은 다른 회원의 프로필을 돌려주지 않고, 기본 프로필이 없으면 `me: null`·`next: []`, 회원이 없으면 404다. 여성 프로필의 `art_key`는 `{key}_여`, `good_day`는 오늘이 아닌 내일 이후 첫 좋은 날, 옛 프롬프트 버전 AI 풀이는 없는 것으로 친다.
+
+## 6. 열린 결정
+
+| 결정 | 선택지 | 누가 |
+|---|---|---|
+| 소개 영상(VideoPost) | 비로그인 맨 아래에 남김 / 뺌 | 사용자 |
+| 캐릭터 표정 | 레벨(좋은 날·평범·주의)별 그림 변형 — 20유형×성별×3 제작 필요 / 지금 그림 하나 + 바탕색만 | 사용자(그림 작업량) |
+| 저녁 상태 | 18시 이후 ①을 "내일 예고"로 바꾸기(Finch식 하루 리듬) / 하루 종일 오늘 | 사용자 — v1은 하루 종일 오늘 |
+| 홈 클릭 이벤트 | `home_click{target: hero_siun·hero_share·person·next_*}` 추가 / `home_view`만 | 사용자 — "새 이벤트 추가 안 함"(2026-09-28) 예외 여부 |
+| 설문조사 카드 | V3 답 저장이 정해지면 ③ 후보 "설문조사로 일치율 확인하기" 추가 | V3와 함께 |
+| 맛보기 캐릭터 4장 | 고정 4장 / 방문마다 무작위 | 구현 때 |
+
+## 7. 변경 이력
+
+- 2026-10-24 — 묶음 API 구현(`HomeService`). 캐릭터는 analyses 캐시 대신 natal로 매번 계산, 사람 순서는 최근 추가 먼저, `next` 항목 모양 확정. `get_forecast`가 날씨를 필요할 때만 받게 해 홈 응답 1.1초 → 약 70ms
+- 2026-10-24 — 옛 화면 명세(인스타 피드) 초안을 정식 스펙 형식으로 다시 씀. 컨셉 A "까치가 물어다 준 오늘"(오늘의 나 · 오늘 내 사람들 · 이어서 할 것), 홈 묶음 API `GET /members/{id}/home` 신설 결정. 근거 `docs/research/home_홈화면.md`
+- 2026-10-17 — `docs/frontend` 화면 명세에서 옮겨 옴(초안)

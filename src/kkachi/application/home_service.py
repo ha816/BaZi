@@ -1,0 +1,103 @@
+from datetime import date
+from uuid import UUID
+
+from kkachi.application.compatibility_daily import compute_daily_compat
+from kkachi.application.fortune_service import FortuneService
+from kkachi.application.kkachi_service import KkachiService
+from kkachi.application.port.analysis_port import AnalysisPort
+from kkachi.application.port.compatibility_port import CompatibilityPort
+from kkachi.application.port.member_port import MemberPort
+from kkachi.application.port.profile_port import ProfilePort
+from kkachi.application.report_builder import REPORT_PROMPT_VERSION
+from kkachi.application.saju_character import build_saju_character
+from kkachi.domain.profile import Profile
+from kkachi.domain.user import User
+
+_FORTUNE_KEYS = ("headline", "action", "caution", "total_score", "level", "day_element", "solar_term", "son_eomneun_nal")
+
+
+class HomeService:
+    """홈 한 장(specs/home/index.md §2-1) — 오늘의 나 · 오늘 내 사람들 · 이어서 할 것 후보를 요청 한 번에.
+    캐릭터·오늘의 궁합은 natal만으로 계산한다(한 사람 1ms 미만) — analyses 캐시를 읽거나 쓰지 않는다."""
+
+    def __init__(
+        self,
+        member_port: MemberPort,
+        profile_port: ProfilePort,
+        fortune_service: FortuneService,
+        saju_service: KkachiService,
+        analysis_port: AnalysisPort,
+        compatibility_port: CompatibilityPort,
+    ):
+        self._member_port = member_port
+        self._profile_port = profile_port
+        self._fortune = fortune_service
+        self._saju = saju_service
+        self._analysis_port = analysis_port
+        self._compat_port = compatibility_port
+
+    async def get_home(self, member_id: UUID, today: date | None = None) -> dict | None:
+        """회원이 없으면 None. 기본 프로필(is_self)이 없으면 me는 None, people은 궁합 없이."""
+        if await self._member_port.get(member_id) is None:
+            return None
+        today = today or date.today()
+        profiles = await self._profile_port.list_by_member(member_id)  # 최근에 추가한 사람 먼저
+        me = next((p for p in profiles if p.is_self), None)
+        others = [p for p in profiles if p is not me]
+
+        my_natal = self._natal(me) if me else None
+        people = []
+        for p in others:
+            natal = self._natal(p)
+            compat = compute_daily_compat(my_natal, natal, today, me.name, p.name) if my_natal else None
+            people.append({
+                "profile_id": str(p.id),
+                "name": p.name,
+                "character": self._character(natal, p, full=False),
+                "compat": {k: compat[k] for k in ("score", "level", "headline")} if compat else None,
+            })
+
+        if me is None:
+            return {"date": today.isoformat(), "me": None, "people": people, "next": []}
+
+        week = await self._fortune.get_forecast(me.id, days=7, start_date=today)
+        return {
+            "date": today.isoformat(),
+            "me": {
+                "profile_id": str(me.id),
+                "name": me.name,
+                "character": self._character(my_natal, me, full=True),
+                "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
+            },
+            "people": people,
+            "next": await self._get_next(me, others, week, today.year),
+        }
+
+    def _natal(self, profile: Profile):
+        return self._saju.analyze_natal(User(
+            name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt,
+            city=profile.city, hour_unknown=profile.birth_hour_unknown,
+        ))
+
+    @staticmethod
+    def _character(natal, profile: Profile, full: bool) -> dict:
+        ch = build_saju_character(natal, profile.gender.is_male)
+        keys = ("key", "art_key", "title", "line") if full else ("key", "art_key")
+        return {k: ch[k] for k in keys}
+
+    async def _get_next(self, me: Profile, others: list[Profile], week: list[dict], year: int) -> list[dict]:
+        """서버가 아는 '이어서 할 것' 후보, 스펙 §3-3 순서(알림 켜기는 클라이언트가 맨 앞에 붙인다)."""
+        nxt = []
+        good = next((d for d in week[1:] if d.get("level") == "좋은 날"), None)
+        if good:
+            nxt.append({"kind": "good_day", "date": good["date"], "action": good.get("action", "")})
+        for p in others:
+            lo, hi = (me.id, p.id) if str(me.id) < str(p.id) else (p.id, me.id)
+            if await self._compat_port.get(lo, hi, year) is None:
+                nxt.append({"kind": "compat", "profile_id": str(p.id), "name": p.name})
+                break
+        row = await self._analysis_port.get(me.id, year)
+        report = (row.result.get("ai_report") or {}) if row else {}
+        if not (report.get("version") == REPORT_PROMPT_VERSION and report.get("text")):
+            nxt.append({"kind": "ai_report"})
+        return nxt

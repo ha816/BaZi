@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 168 tests
+uv run pytest            # 174 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -92,7 +92,8 @@ BaZi/
 │   │   ├── kkachi_service.py         # NatalService(analyze/interpret_natal) · PostnatalService(analyze/interpret_postnatal)
 │   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)
 │   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
-│   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입
+│   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입(get_forecast는 날씨 든 캐시로 안 채워지는 날이 있을 때만 날씨 호출, 2026-10-24)
+│   │   ├── home_service.py           # HomeService.get_home — 홈 묶음(me 캐릭터·7일 예보[0], people 캐릭터·오늘의 궁합, next 후보). 사람마다 natal만(analyze_natal) — analyses 캐시 안 씀 (specs/home §2-1, 2026-10-24)
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
@@ -327,6 +328,9 @@ GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShar
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
 GET    /members/{id}
+GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal}}|null,
+                               people:[{profile_id,name,character{key,art_key},compat{score,level(좋음·보통·주의),headline}|null}](기본 프로필 제외, 최근 추가 먼저),
+                               next:[{kind:"good_day",date,action}|{kind:"compat",profile_id,name}|{kind:"ai_report"}] }  홈 묶음(V8, 2026-10-24) — 404 if 회원 없음, 기본 프로필 없으면 me null·next []
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
 
 # 프로필 (prefix /members/{member_id}/profiles) — /{pid} 경로는 모두 소유자 검증: profile.member_id ≠ URL member_id 이면 404 (IDOR 방지)
@@ -687,6 +691,7 @@ tests/
     ├── test_fortune_rules.py   # 일진 점수·아침 한 마디
     ├── test_timing_rules.py    # 타이밍 리포트(R3)
     ├── test_push_service.py    # 푸시 페이로드
+    ├── test_home_service.py    # 홈 묶음 — 회원 없음 None·기본 프로필 없음·여성 art_key·다른 회원 제외·next 순서(좋은 날은 내일 이후·안 본 궁합 첫 사람·옛 버전 AI 풀이)
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     ├── test_self_quiz.py       # 설문조사 10문항(십신·지장간·투출 점수→그렇다/아니다·근거 문장·세 기둥·옛 결과)

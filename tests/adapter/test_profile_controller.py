@@ -61,6 +61,11 @@ class FakeFeedbackRepo:
         return []
 
 
+class FakeHomeService:
+    async def get_home(self, member_id):
+        return {"date": "2026-10-24", "me": None, "people": [], "next": []} if member_id == OWNER else None
+
+
 @pytest.fixture
 def client():
     """lifespan 없이(DB 연결 없이) 컨트롤러만 — 컨테이너 provider를 가짜로 덮고 wiring."""
@@ -70,6 +75,7 @@ def client():
     container.feedback_repo.override(providers.Object(fb))
     container.fortune_service.override(providers.Object(FakeFortuneService()))
     container.share_repo.override(providers.Object(FakeShareRepo()))
+    container.home_service.override(providers.Object(FakeHomeService()))
     c = TestClient(app)
     c.fake_feedback = fb  # type: ignore[attr-defined]
     yield c
@@ -115,6 +121,12 @@ def test_set_self_profile_is_owner_only(client):
     res = client.post(f"/members/{OWNER}/profiles/{PROFILE.id}/set-self")
     assert res.status_code == 200 and res.json()["is_self"] is True
     assert client.post(f"/members/{STRANGER}/profiles/{PROFILE.id}/set-self").status_code == 404
+
+
+def test_home_unknown_member_is_404(client):
+    res = client.get(f"/members/{OWNER}/home")
+    assert res.status_code == 200 and res.json()["people"] == []
+    assert client.get(f"/members/{STRANGER}/home").status_code == 404
 
 
 def test_daily_share_is_owner_only(client):

@@ -21,6 +21,7 @@ from kkachi.adapter.outer.weather_adapter import WeatherAdapter
 from kkachi.application.ai_report_service import AiReportService
 from kkachi.application.compatibility_service import CompatibilityService
 from kkachi.application.fortune_service import FortuneService
+from kkachi.application.home_service import HomeService
 from kkachi.application.kkachi_service import KkachiService, NatalService, PostnatalService
 from kkachi.application.llm_stream_hub import LlmStreamHub
 from kkachi.application.member_service import MemberService
@@ -120,6 +121,15 @@ class Container(containers.DeclarativeContainer):
         fortune_port=fortune_repo,
         saju_service=kkachi_service,
         weather_adapter=weather_adapter,
+    )
+    home_service = providers.Singleton(
+        HomeService,
+        member_port=member_repo,
+        profile_port=profile_repo,
+        fortune_service=fortune_service,
+        saju_service=kkachi_service,
+        analysis_port=analysis_repo,
+        compatibility_port=compatibility_repo,
     )
     push_repo = providers.Singleton(PushRepo, session_factory=session_factory)
     webpush_adapter = providers.Singleton(WebPushAdapter)

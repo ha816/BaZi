@@ -240,6 +240,10 @@ class KkachiService(InterpreterPort):
         postnatal = self._postnatal_svc.analyze(user, natal, year)
         return natal, postnatal
 
+    def analyze_natal(self, user: User) -> NatalInfo:
+        """선천만 — 캐릭터·오늘의 궁합처럼 대운·세운이 필요 없을 때(홈, analyze의 1/40 비용)."""
+        return self._natal_svc.analyze(user)
+
     async def interpret(
         self, natal: NatalInfo, postnatal: PostnatalInfo, user: User | None = None, name: str = ""
     ) -> Interpretation:

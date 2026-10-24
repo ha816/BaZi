@@ -96,20 +96,23 @@ class FortuneService:
             raise ValueError(f"Profile {profile_id} not found")
 
         user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
-        # Note: Weather adapter currently only fetches future data.
-        # For past dates, weather_map will be empty for those dates.
-        weather_map = await self._get_weather_map(profile.city, days=days)
+        # 날씨(외부 호출 ~1초)는 날씨까지 든 캐시로 채워지지 않는 날이 처음 나올 때 한 번만 받는다 — 홈처럼 매일 다시 여는 7일은 대개 호출 없음
+        weather_map: dict[str, dict] | None = None
 
         results = []
         analyzed: dict[int, tuple] = {}  # 연도별 (natal, postnatal) — 사주 분석은 날짜와 무관하게 연도에만 의존
         for i in range(days):
             target = today + timedelta(days=i)
-            target_str = target.isoformat()
-            weather = weather_map.get(target_str)
-
             cached = await self._fortune_port.get(profile_id, target)
-            # 캐시 재사용 조건: headline 있고 (오늘 날씨가 없거나 캐시에 이미 날씨 있음)
-            if cached and cached.result.get("headline") and (weather is None or cached.result.get("weather") is not None):
+            if cached and cached.result.get("headline") and cached.result.get("weather") is not None:
+                results.append(cached.result)
+                continue
+
+            if weather_map is None:
+                weather_map = await self._get_weather_map(profile.city, days=days)
+            weather = weather_map.get(target.isoformat())
+            # 캐시 재사용 조건: headline 있고 (그날 날씨가 없거나 캐시에 이미 날씨 있음)
+            if cached and cached.result.get("headline") and weather is None:
                 results.append(cached.result)
                 continue
 
