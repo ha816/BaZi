@@ -189,6 +189,7 @@ export async function analyzeProfileChart(
 }
 
 export async function analyzeCompatibilityByProfiles(
+  memberId: string,
   profileId1: string,
   profileId2: string,
   year: number,
@@ -197,6 +198,7 @@ export async function analyzeCompatibilityByProfiles(
   return request<CompatibilityResult>("/compatibility", {
     method: "POST",
     body: JSON.stringify({
+      member_id: memberId, // 서버가 두 프로필이 이 회원 것인지 확인한다(2026-10-24)
       profile_id_1: profileId1,
       profile_id_2: profileId2,
       year,
@@ -257,17 +259,17 @@ export async function streamCompatibilityChat(
   }
 }
 
-/** 궁합 AI 해석 — 프로필 id 둘을 주면 서버가 compatibilities 캐시에 글을 저장해 두고 다음부터 그대로 준다 */
+/** 궁합 AI 해석 — 프로필 id 둘(+ 회원 id)을 주면 서버가 소유자를 확인하고 compatibilities 캐시에 글을 저장해 두고 다음부터 그대로 준다 */
 export async function streamCompatibilityNarrative(
   input: CompatibilityInput,
   onChunk: (accumulated: string) => void,
   signal?: AbortSignal,
-  profileIds?: { p1: string; p2: string },
+  profileIds?: { memberId: string; p1: string; p2: string },
 ): Promise<string> {
   const res = await fetch(`${API_URL}/compatibility/narrative`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(profileIds ? { ...input, profile_id_1: profileIds.p1, profile_id_2: profileIds.p2 } : input),
+    body: JSON.stringify(profileIds ? { ...input, member_id: profileIds.memberId, profile_id_1: profileIds.p1, profile_id_2: profileIds.p2 } : input),
     signal,
   });
   return readTextStream(res, onChunk);

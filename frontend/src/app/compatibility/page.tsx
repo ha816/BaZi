@@ -157,11 +157,11 @@ function CompatibilityPageInner() {
         relation_type: relationType,
       };
       // 초대로 들어왔으면 초대자 정보와 합쳐 resolve, 아니면 기존 경로
-      const byProfiles = !inviteId && person1.mode === "profile" && person2.mode === "profile" && !!person1.profileId && !!person2.profileId;
+      const byProfiles = !!memberId && !inviteId && person1.mode === "profile" && person2.mode === "profile" && !!person1.profileId && !!person2.profileId;
       const data = inviteId
         ? await resolveCompatInvite(inviteId, personToInput(person2), year)
         : byProfiles
-          ? await analyzeCompatibilityByProfiles(person1.profileId, person2.profileId, year, relationType)
+          ? await analyzeCompatibilityByProfiles(memberId, person1.profileId, person2.profileId, year, relationType)
           : await analyzeCompatibility(input);
       setResult(data);
       if (byProfiles) setResultProfileIds({ p1: person1.profileId, p2: person2.profileId });
@@ -185,7 +185,7 @@ function CompatibilityPageInner() {
         setNarrativeLoading(true);
         streamCompatibilityNarrative(
           input, setNarrative, controller.signal,
-          byProfiles ? { p1: person1.profileId, p2: person2.profileId } : undefined,
+          byProfiles ? { memberId, p1: person1.profileId, p2: person2.profileId } : undefined,
         )
           .catch(() => {}) // 503(까치 서버 꺼짐)·중단 — 탭이 안내 문구를 보여 준다
           .finally(() => {

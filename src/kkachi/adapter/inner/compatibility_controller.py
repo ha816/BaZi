@@ -14,6 +14,7 @@ from kkachi.application.compatibility_service import CompatibilityService, build
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.container import Container
+from kkachi.domain.profile import Profile
 from kkachi.domain.user import Gender, User
 
 RelationTypeStr = Literal["lover", "friend", "family"]
@@ -34,7 +35,23 @@ def _to_user(p: PersonInput) -> User:
     return User(name=p.name, gender=gender, birth_dt=p.birth_dt, city=p.city, hour_unknown=p.hour_unknown)
 
 
+def _profile_user(p: Profile) -> User:
+    return User(name=p.name, gender=p.gender, birth_dt=p.birth_dt, city=p.city, hour_unknown=p.birth_hour_unknown)
+
+
+async def _owned_pair(profile_port: ProfilePort, member_id: UUID | None, p1: UUID, p2: UUID) -> tuple[Profile, Profile]:
+    """두 프로필이 모두 member_id 회원 것일 때만 통과 — 없으면 404, 남의 것(또는 member_id 없음)이면 403."""
+    prof1 = await profile_port.get(p1)
+    prof2 = await profile_port.get(p2)
+    if prof1 is None or prof2 is None:
+        raise HTTPException(status_code=404, detail="프로필을 찾을 수 없습니다.")
+    if member_id is None or prof1.member_id != member_id or prof2.member_id != member_id:
+        raise HTTPException(status_code=403, detail="본인 프로필만 조회할 수 있습니다.")
+    return prof1, prof2
+
+
 class CompatibilityRequest(BaseModel):
+    member_id: UUID  # 두 프로필의 소유자 — 남의 프로필 궁합(생년월일에서 나온 사주 전체)을 막는다(2026-10-24)
     profile_id_1: UUID
     profile_id_2: UUID
     year: int
@@ -46,7 +63,9 @@ class CompatibilityRequest(BaseModel):
 async def analyze_compatibility(
     req: CompatibilityRequest,
     svc: CompatibilityService = Depends(Provide[Container.compatibility_service]),
+    profile_port: ProfilePort = Depends(Provide[Container.profile_repo]),
 ) -> dict:
+    await _owned_pair(profile_port, req.member_id, req.profile_id_1, req.profile_id_2)
     try:
         return await svc.analyze_compatibility(
             req.profile_id_1, req.profile_id_2, req.year, req.relation_type,
@@ -136,9 +155,10 @@ class CompatibilityNarrativeRequest(BaseModel):
     person2: PersonInput
     year: int
     relation_type: RelationTypeStr = "lover"
-    # 프로필×2면 둘 다 — 글을 compatibilities 캐시에 저장해 두고 다음에 그대로 준다(POST /compatibility 응답의 narratives)
+    # 프로필×2면 둘 다 + member_id — 글을 compatibilities 캐시에 저장해 두고 다음에 그대로 준다(POST /compatibility 응답의 narratives)
     profile_id_1: UUID | None = None
     profile_id_2: UUID | None = None
+    member_id: UUID | None = None
 
 
 @compatibility_router.post("/narrative")
@@ -146,12 +166,15 @@ class CompatibilityNarrativeRequest(BaseModel):
 async def compatibility_narrative(
     req: CompatibilityNarrativeRequest,
     ai_svc: AiReportService = Depends(Provide[Container.ai_report_service]),
+    profile_port: ProfilePort = Depends(Provide[Container.profile_repo]),
 ) -> StreamingResponse:
-    """AI 해석 스트림 — 생성 중이면 나눠 받고, 끝난 글은 캐시. Ollama가 꺼져 있으면 503."""
-    pair = (req.profile_id_1, req.profile_id_2) if req.profile_id_1 and req.profile_id_2 else None
-    return await text_stream(
-        ai_svc.stream_compat(_to_user(req.person1), _to_user(req.person2), req.year, req.relation_type, pair),
-    )
+    """AI 해석 스트림 — 생성 중이면 나눠 받고, 끝난 글은 캐시. Ollama가 꺼져 있으면 503.
+    프로필 쌍이면 소유자만, 글은 요청의 person1·2가 아니라 그 프로필로 계산한다 — 남의 궁합 캐시에 엉뚱한 글이 저장되지 않게(2026-10-24)."""
+    user1, user2, pair = _to_user(req.person1), _to_user(req.person2), None
+    if req.profile_id_1 and req.profile_id_2:
+        prof1, prof2 = await _owned_pair(profile_port, req.member_id, req.profile_id_1, req.profile_id_2)
+        user1, user2, pair = _profile_user(prof1), _profile_user(prof2), (prof1.id, prof2.id)
+    return await text_stream(ai_svc.stream_compat(user1, user2, req.year, req.relation_type, pair))
 
 
 class InviteCreateRequest(BaseModel):
@@ -229,14 +252,8 @@ async def daily_compat(
     saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> dict:
     """두 프로필의 오늘 궁합 한 줄. 홈 피드 배지용."""
-    prof1 = await profile_port.get(p1)
-    prof2 = await profile_port.get(p2)
-    if prof1 is None or prof2 is None:
-        raise HTTPException(status_code=404, detail="프로필을 찾을 수 없습니다.")
-    if prof1.member_id != member_id or prof2.member_id != member_id:
-        raise HTTPException(status_code=403, detail="본인 프로필만 조회할 수 있습니다.")
-    u1 = User(name=prof1.name, gender=prof1.gender, birth_dt=prof1.birth_dt, city=prof1.city, hour_unknown=prof1.birth_hour_unknown)
-    u2 = User(name=prof2.name, gender=prof2.gender, birth_dt=prof2.birth_dt, city=prof2.city, hour_unknown=prof2.birth_hour_unknown)
+    prof1, prof2 = await _owned_pair(profile_port, member_id, p1, p2)
+    u1, u2 = _profile_user(prof1), _profile_user(prof2)
     natal1, _ = saju_svc.analyze(u1, date.today().year)
     natal2, _ = saju_svc.analyze(u2, date.today().year)
     return compute_daily_compat(natal1, natal2, date.today(), prof1.name, prof2.name)
@@ -253,14 +270,8 @@ async def compat_forecast(
     saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> dict:
     """두 프로필의 오늘부터 N일 궁합 시운(기본 14, 최대 31). 각 날은 /daily와 같은 모양 — 궁합 결과 시운 탭용(2026-10-18)."""
-    prof1 = await profile_port.get(p1)
-    prof2 = await profile_port.get(p2)
-    if prof1 is None or prof2 is None:
-        raise HTTPException(status_code=404, detail="프로필을 찾을 수 없습니다.")
-    if prof1.member_id != member_id or prof2.member_id != member_id:
-        raise HTTPException(status_code=403, detail="본인 프로필만 조회할 수 있습니다.")
-    u1 = User(name=prof1.name, gender=prof1.gender, birth_dt=prof1.birth_dt, city=prof1.city, hour_unknown=prof1.birth_hour_unknown)
-    u2 = User(name=prof2.name, gender=prof2.gender, birth_dt=prof2.birth_dt, city=prof2.city, hour_unknown=prof2.birth_hour_unknown)
+    prof1, prof2 = await _owned_pair(profile_port, member_id, p1, p2)
+    u1, u2 = _profile_user(prof1), _profile_user(prof2)
     today = date.today()
     analyzed: dict[int, tuple] = {}  # 연도가 바뀌면 세운이 달라지므로 연도별로 한 번씩
     out = []

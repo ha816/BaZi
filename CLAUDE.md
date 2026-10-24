@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 176 tests
+uv run pytest            # 178 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -350,10 +350,10 @@ POST   /{pid}/feedback       { tab_id, rating } → { success }   (일진 회고
 GET    /{pid}/feedback       ?prefix=daily: → { tab_id: rating }  (같은 tab_id는 마지막 값)
 
 # 궁합 (prefix /compatibility) — relation_type: "lover" | "friend" | "family" (기본 lover)
-POST /compatibility          { profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음)
+POST /compatibility          { member_id, profile_id_1, profile_id_2, year, relation_type } → CompatibilityResult (캐시 우선, 404 if 없음, 남의 프로필 403 — 2026-10-24 소유자 검증)
 POST /compatibility/direct   { person1:{name,gender,birth_dt,city,hour_unknown?}, person2, year, relation_type } → stateless
 #   궁합 결과(POST /compatibility·/direct·invite resolve)에는 summary { pillars, element, strength, strength_p1, strength_p2, sinsal, zodiac, domain }(화면 노출 없음 — 2026-10-15 한눈에 탭 제거, LLM 기본 요약용으로 유지), character { title, kind, key(유형 키 예 木火 — 그림 키 아님), roles[2]{token, name, element, emoji, character_key(그 사람 사주 캐릭터 키 예 무_강 → 그림 saju_character/{character_key}.webp, 2026-10-18)}, desc, moments{good[3], hard[3]}, scenarios[6~10]{q, who:p1|p2|both, reason, basis} }, zodiac { p1, p2, relation, relation_label, headline, chunghap{relation, title, explain, trio, ring[12], friends}, pillars{columns[4], cross[], tip}, years[{year, ganji, kor, emoji, rel1, rel2}], years_line } (한눈에, {p1}·{p2} 이름 토큰)가 붙는다 — 캐시에는 저장하지 않고 응답 때 계산
-POST /compatibility/narrative 같은 요청 + profile_id_1?·profile_id_2? → text/plain 스트림 (LLM 종합해석 — 프로필 id 둘을 주면 compatibilities.result.narratives[relation_type]에 저장돼 다음 POST /compatibility 응답에 실림(지금 `NARRATIVE_PROMPT_VERSION` 글만, 2026-10-24). Ollama 꺼짐 503)
+POST /compatibility/narrative 같은 요청 + profile_id_1?·profile_id_2?·member_id? → text/plain 스트림 (LLM 종합해석 — 프로필 id 둘(+ member_id, 남의 것이면 403)을 주면 글을 그 프로필로 계산해 compatibilities.result.narratives[relation_type]에 저장돼 다음 POST /compatibility 응답에 실림(지금 `NARRATIVE_PROMPT_VERSION` 글만, 2026-10-24). Ollama 꺼짐 503)
 POST /compatibility/chat     { person1, person2, year, messages, relation_type } → text/plain 스트림
 POST /compatibility/shares   DirectCompatibilityRequest → 201 { share_id }  궁합 공유 카드(kind="compat": 점수·라벨·영역 점수·두 사람 일간 p1/p2{stem,korean,element(일간 글자 오행),hour_unknown}·특징·character{title,key,roles[{name,element,emoji,character_key}],desc(이름 채움),moments{good,hard}}) → /s/{share_id}
 POST /compatibility/invites  { person1, relation_type } → { invite_id }  (초대자 정보 저장, 30일 TTL) — 생성 UI는 2026-09-28 제거, ?invite= 링크 처리만 유지
@@ -682,7 +682,7 @@ tests/
 │   ├── test_three_pillars.py       # 출생시간 미상 세 기둥(R2)
 │   ├── test_kkachi_controller.py   # /kkachi/shares 왕복 — 카드에 생년월일 없음, 세 기둥
 │   ├── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
-│   ├── test_compatibility_controller.py # direct(summary·character·zodiac·세 기둥)·프로필 궁합 404·공유 카드 왕복(character, 생년월일 없음)·초대(민감정보 제외·resolve)·오늘의 궁합 소유자 검증
+│   ├── test_compatibility_controller.py # direct(summary·character·zodiac·세 기둥)·프로필 궁합 404·소유자 검증(프로필 궁합·AI 해석 403, 글은 저장된 프로필로)·공유 카드 왕복(character, 생년월일 없음)·초대(민감정보 제외·resolve)·오늘의 궁합 소유자 검증
 │   ├── test_ai_report_controller.py # stream-report·narrative·프로필 ai-report — LLM 없으면 503, 가짜 LLM 스트림, 캐시된 글은 LLM 없이, 소유자 검증, 옛 프롬프트 버전 무시
 │   └── test_push_controller.py     # VAPID 미설정 503 · 구독 저장/해지 왕복 · https 아닌 endpoint 422
 └── application/

@@ -86,11 +86,56 @@ def test_direct_hour_unknown_drops_hour_pillar_for_that_person(client):
 
 
 def test_by_profiles_computes_saves_and_404s_unknown(client):
-    res = client.post("/compatibility", json={"profile_id_1": str(P1.id), "profile_id_2": str(P2.id), "year": 2026, "relation_type": "lover"})
+    res = client.post("/compatibility", json={"member_id": str(OWNER), "profile_id_1": str(P1.id), "profile_id_2": str(P2.id), "year": 2026, "relation_type": "lover"})
     assert res.status_code == 200 and res.json()["character"]["title"].endswith("커플")
     lo, hi = sorted([str(P1.id), str(P2.id)])
     assert client.compat_repo.saved == [(UUID(lo), UUID(hi), 2026)]
-    assert client.post("/compatibility", json={"profile_id_1": str(P1.id), "profile_id_2": str(uuid4()), "year": 2026}).status_code == 404
+    assert client.post("/compatibility", json={"member_id": str(OWNER), "profile_id_1": str(P1.id), "profile_id_2": str(uuid4()), "year": 2026}).status_code == 404
+
+
+def test_by_profiles_is_owner_only(client):
+    """남의 프로필 id로는 궁합(생년월일에서 나온 사주 전체)을 받을 수 없다 — 계산·저장도 하지 않는다."""
+    body = {"profile_id_1": str(P1.id), "profile_id_2": str(P2.id), "year": 2026}
+    assert client.post("/compatibility", json={**body, "member_id": str(STRANGER)}).status_code == 403
+    assert client.post("/compatibility", json=body).status_code == 422  # member_id 필수
+    assert client.compat_repo.saved == []
+
+
+class CaptureLlm:
+    """AI 해석 프롬프트를 받아 두는 가짜 LLM"""
+
+    available = True
+    model = "fake"
+
+    def __init__(self):
+        self.prompts: list[str] = []
+
+    async def stream_interpret(self, report, kind="analysis", prefix=""):
+        self.prompts.append(report)
+        yield "까치 해석"
+
+
+def test_narrative_with_profiles_is_owner_only_and_uses_stored_profiles():
+    """프로필 쌍의 AI 해석은 소유자만, 글은 요청 본문이 아니라 저장된 프로필로 계산한다(남의 궁합 캐시에 엉뚱한 글 저장 방지)."""
+    container = Container()
+    llm = CaptureLlm()
+    container.profile_repo.override(providers.Object(FakeProfileRepo()))
+    container.compatibility_repo.override(providers.Object(FakeCompatRepo()))
+    container.analysis_repo.override(providers.Object(None))
+    container.ollama_adapter.override(providers.Object(llm))
+    c = TestClient(app)
+    try:
+        fake = {"name": "가짜", "gender": "male", "birth_dt": "2000-01-01T12:00:00"}
+        body = {"person1": fake, "person2": fake, "year": 2026, "profile_id_1": str(P1.id), "profile_id_2": str(P2.id)}
+        assert c.post("/compatibility/narrative", json={**body, "member_id": str(STRANGER)}).status_code == 403
+        assert c.post("/compatibility/narrative", json=body).status_code == 403  # 프로필 쌍인데 member_id 없음
+        assert llm.prompts == []
+
+        res = c.post("/compatibility/narrative", json={**body, "member_id": str(OWNER)})
+        assert res.status_code == 200 and res.text == "까치 해석"
+        assert "승민" in llm.prompts[0] and "하늘" in llm.prompts[0] and "가짜" not in llm.prompts[0]
+    finally:
+        container.unwire()
 
 
 def test_share_roundtrip_exposes_card_with_character_only(client):
