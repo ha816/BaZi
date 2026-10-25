@@ -55,18 +55,18 @@
 
 ## 시나리오 1 — 직접 입력 (비로그인 가능)
 
-1. `/analysis` 진입 → 로그인 + 프로필 있으면 "저장된 프로필 불러오기" 탭 기본, 아니면 "프로필 직접 입력하기" 탭
-2. `AnalysisForm`에 이름 · 생년월일 · 태어난 시간(12지시, "모르겠어요"=12:00) · 성별 입력
+1. `/analysis` 진입 → **비로그인**은 `AnalysisForm` 하나. **로그인**은 궁합과 같은 "분석할 분" 카드(`PersonCard`, 2026-10-25) — 프로필 있으면 [프로필], 없으면 직접 입력 칸 + "나의 사주 등록하기 →" 안내. [직접]은 이름·생년월일·태어난 시간·도시(IP 감지값으로 채움)·성별, 아래 분석 연도, 이름을 넣어야 [분석 시작] 활성 — 프로필 저장 단계 없이 바로 `POST /kkachi/interpret`
+2. (비로그인) `AnalysisForm`에 이름 · 생년월일 · 태어난 시간(12지시, "모르겠어요"=12:00) · 성별 입력
    - "정밀 설정" 접이식: 분석 연도 (기본 올해)
    - 도시/경도는 `ipapi.co` IP 위치 감지로 자동 주입 (UI 미노출, `longitude` → sajupy 직접 전달)
-3. **"프로필 저장" 클릭** → 로그인 시 `POST /members/{id}/profiles`, 비로그인 시 확인 단계만 → "분석 시작" 활성화
+3. (비로그인) "프로필 저장" 버튼은 비활성 + 가입 유도 캡션, "분석 시작"은 이름만 넣으면 바로 — 로그인 사용자의 "저장 먼저" 단계는 2026-10-25 카드로 바꾸며 없앰(궁합 직접 입력과 같게)
 4. "분석 시작" 클릭 → `POST /kkachi/interpret`
 5. 성공 시 `ResultSlides` 렌더, `sessionStorage`에 `kkachi_analysis_input`·`kkachi_analysis_name` 저장 (`kkachi_profile_input` 제거)
 
 ## 시나리오 2 — 저장된 프로필 (로그인)
 
-1. `localStorage["kkachi_member_id"]` 있으면 프로필 목록 자동 로드 → 첫 프로필 선택
-2. 드롭다운(이름·출생연도·시주·성별) + 분석 연도
+1. `localStorage["kkachi_member_id"]` 있으면 프로필 목록 자동 로드 → 기본 프로필(is_self) 선택
+2. "분석할 분" 카드의 [프로필] 드롭다운(이름·출생연도·성별, 궁합과 같은 `PersonCard`) + 분석 연도 + "저장된 지난 분석" 칩
 3. "분석 시작" → `POST /members/{id}/profiles/{pid}/analyze { year }` (analyses 캐시 우선)
 4. 성공 시 `ResultSlides` 렌더, `sessionStorage`에 `kkachi_profile_input {memberId, profileId, year}` + `kkachi_analysis_input` + `kkachi_analysis_name` 저장
 
@@ -109,6 +109,7 @@ POST /members/{id}/profiles/{pid}/analyze
 | 2026-05-24 | 무료/심층 2단계 폐지 → `/analysis` 단일 화면, `/analysis/deep`은 redirect. 탭 6개(만세력·용신삼재·시운·십이지신·풍수·AI) 재편 |
 | 2026-05-25 | FeedbackBar 👍/👎 + `/admin/feedback` 대시보드 |
 | 2026-05-25 | 사주 챗을 `/chat` 페이지로 분리 (SajuChat은 FAB만) |
+| 2026-10-25 | 로그인 입력을 궁합과 같은 "분석할 분" 카드(`PersonCard` [프로필|직접])로 — 위쪽 모드 탭·로그인 직접 입력의 "프로필 저장 먼저" 단계 제거. 비로그인은 `AnalysisForm` 그대로 |
 
 ---
 

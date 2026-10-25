@@ -3,13 +3,14 @@
 import PageHeader from "@/components/PageHeader";
 import { useEffect, useState, Suspense } from "react";
 import type { AnalysisInput, AnalysisResult, Profile } from "@/types/analysis";
-import { analyzeChart, analyzeProfileChart, createProfile, createShare, listAnalysisYears, listProfiles } from "@/lib/api";
+import { analyzeChart, analyzeProfileChart, createShare, listAnalysisYears, listProfiles } from "@/lib/api";
 import { detectLocation } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
+import PersonCard, { type PersonState, DEFAULT_MANUAL } from "@/components/PersonCard";
 import ResultSlides from "@/components/ResultSlides";
 import ShareButton from "@/components/ShareButton";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { MEMBER_ID_KEY, INPUT_CLASS, hourToSiLabel } from "@/lib/constants";
+import { MEMBER_ID_KEY, INPUT_CLASS, HOUR_OPTIONS } from "@/lib/constants";
 import { useAiReport } from "@/lib/useAiReport";
 
 export default function AnalysisPage() {
@@ -20,8 +21,9 @@ export default function AnalysisPage() {
   const [memberId, setMemberId] = useState<string | undefined>();
   const [profileId, setProfileId] = useState<string | undefined>();
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [mode, setMode] = useState<"direct" | "profile">("direct");
-  const [selectedProfileId, setSelectedProfileId] = useState("");
+  // 로그인 입력 — 궁합과 같은 카드(PersonCard): 프로필 고르기 / 직접 입력 (2026-10-25)
+  const [person, setPerson] = useState<PersonState>({ mode: "manual", manual: DEFAULT_MANUAL, profileId: "" });
+  const selectedProfileId = person.mode === "profile" ? person.profileId : "";
   const [profileYear, setProfileYear] = useState(new Date().getFullYear());
   // 선택한 프로필에 저장된 연도별 해석 — "지난 연도 분석 다시 보기" (ROADMAP R6)
   const [cachedYears, setCachedYears] = useState<number[]>([]);
@@ -37,6 +39,7 @@ export default function AnalysisPage() {
       if (loc) {
         setDetectedCity(loc.city);
         setDetectedLongitude(loc.longitude);
+        setPerson((s) => (s.manual.city === DEFAULT_MANUAL.city ? { ...s, manual: { ...s.manual, city: loc.city } } : s));
       }
     });
   }, []);
@@ -48,8 +51,7 @@ export default function AnalysisPage() {
       listProfiles(mid).then((ps) => {
         setProfiles(ps);
         if (ps.length > 0) {
-          setMode("profile");
-          setSelectedProfileId((ps.find((p) => p.is_self) ?? ps[0]).id); // 기본 프로필(나) 우선
+          setPerson((s) => ({ ...s, mode: "profile", profileId: (ps.find((p) => p.is_self) ?? ps[0]).id })); // 기본 프로필(나) 우선
         }
       }).catch(() => {});
     }
@@ -95,12 +97,6 @@ export default function AnalysisPage() {
     if (!memberId || !selectedProfileId) { setCachedYears([]); return; }
     listAnalysisYears(memberId, selectedProfileId).then(setCachedYears).catch(() => setCachedYears([]));
   }, [memberId, selectedProfileId]);
-
-  const handleSaveProfile = async (n: string, gender: "male" | "female", birth_dt: string, city: string, birthHourUnknown: boolean) => {
-    if (!memberId) return;
-    await createProfile(memberId, { name: n, gender, birth_dt, city, birth_hour_unknown: birthHourUnknown });
-    listProfiles(memberId).then(setProfiles).catch(() => {});
-  };
 
   const handleDirectSubmit = async (input: AnalysisInput, n: string) => {
     setLoading(true);
@@ -152,10 +148,22 @@ export default function AnalysisPage() {
     }
   };
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleMemberSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    runProfileAnalysis(profileYear);
+    if (selectedProfileId) { runProfileAnalysis(profileYear); return; }
+    const m = person.manual;
+    const time = HOUR_OPTIONS.find((h) => h.value === m.selectedHour)?.time ?? "12:00";
+    const city = m.city || detectedCity || "Seoul";
+    handleDirectSubmit({
+      birth_dt: `${m.birthDate}T${time}:00`,
+      gender: m.gender,
+      analysis_year: profileYear,
+      city,
+      longitude: city === detectedCity ? detectedLongitude : undefined,
+      hour_unknown: m.selectedHour === "",
+    }, m.name.trim());
   };
+  const canSubmitMember = selectedProfileId ? true : person.mode === "manual" && !!person.manual.name.trim();
 
   const otherYears = cachedYears.filter((y) => y !== profileYear);
 
@@ -217,69 +225,32 @@ export default function AnalysisPage() {
 
         <PageHeader title="사주 분석" description="타고난 사주와 올해의 운세를 풀어드립니다." />
 
-        {/* 모드 탭 — 로그인했을 때만. 비로그인은 직접 입력 하나 (로그인 정책: CLAUDE.md) */}
+        {/* 로그인 — 궁합과 같은 카드 하나: [프로필 | 직접] (2026-10-25). 비로그인은 아래 직접 입력 폼 */}
         {memberId && (
-          <div className="flex gap-1 p-1 bg-[var(--color-ivory-warm)] rounded-xl border border-[var(--color-border-light)]">
-            {(["profile", "direct"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  mode === m
-                    ? "bg-white text-[var(--color-ink)] shadow-sm"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                }`}
-              >
-                {m === "profile" ? "저장된 프로필 불러오기" : "프로필 직접 입력하기"}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* 프로필 없음 안내 */}
-        {memberId && mode === "profile" && profiles.length === 0 && (
-          <div className="text-center py-10 text-sm text-[var(--color-ink-faint)] space-y-3">
-            <p>기본 프로필이 아직 없어요. 나의 사주를 등록해 주세요.</p>
-            <a href="/profile" className="inline-block text-sm text-[var(--color-gold)] hover:opacity-70 transition-opacity">
-              기본 프로필 등록하기 →
-            </a>
-          </div>
-        )}
-
-        {/* 프로필 선택 폼 */}
-        {memberId && mode === "profile" && profiles.length > 0 && (
           <form
-            onSubmit={handleProfileSubmit}
+            onSubmit={handleMemberSubmit}
             className="bg-[var(--color-card)] rounded-2xl border border-[var(--color-border-light)] shadow-sm p-5 space-y-4"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <label className="sm:col-span-2 space-y-1.5">
-                <span className="text-sm font-medium text-[var(--color-ink-light)]">프로필</span>
-                <select
-                  value={selectedProfileId}
-                  onChange={(e) => setSelectedProfileId(e.target.value)}
-                  className={`${INPUT_CLASS} appearance-none`}
-                >
-                  {profiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({new Date(p.birth_dt).getFullYear()}년생 · {p.birth_hour_unknown ? "시간 모름" : hourToSiLabel(new Date(p.birth_dt).getHours())} · {p.gender === "male" ? "남" : "여"})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
-                <input
-                  type="number"
-                  value={profileYear}
-                  onChange={(e) => setProfileYear(+e.target.value)}
-                  className={INPUT_CLASS}
-                  min={1920}
-                  max={2100}
-                />
-              </label>
-            </div>
-            {otherYears.length > 0 && (
+            <PersonCard label="분석할 분" state={person} profiles={profiles}
+              onChange={(patch) => setPerson((s) => ({ ...s, ...patch }))} />
+            {profiles.length === 0 && (
+              <p className="text-xs text-[var(--color-ink-faint)]">
+                기본 프로필이 아직 없어요.{" "}
+                <a href="/profile" className="text-[var(--color-gold)] underline underline-offset-2">나의 사주 등록하기 →</a>
+              </p>
+            )}
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
+              <input
+                type="number"
+                value={profileYear}
+                onChange={(e) => setProfileYear(+e.target.value)}
+                className={INPUT_CLASS}
+                min={1920}
+                max={2100}
+              />
+            </label>
+            {selectedProfileId && otherYears.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-[var(--color-ink-faint)]">저장된 지난 분석</span>
                 {otherYears.map((y) => (
@@ -296,7 +267,7 @@ export default function AnalysisPage() {
             )}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !canSubmitMember}
               className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3.5 text-sm font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors"
             >
               {loading ? "분석 중..." : "분석 시작"}
@@ -305,13 +276,12 @@ export default function AnalysisPage() {
         )}
 
         {/* 직접 입력 폼 — 비로그인은 항상 이것 */}
-        {(!memberId || mode === "direct") && (
+        {!memberId && (
           <AnalysisForm
             onSubmit={handleDirectSubmit}
             loading={loading}
             defaultCity={detectedCity}
             defaultLongitude={detectedLongitude}
-            onSave={memberId ? handleSaveProfile : undefined}
           />
         )}
 

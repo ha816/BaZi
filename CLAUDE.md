@@ -517,7 +517,7 @@ erDiagram
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
-| `/analysis` | 사주 분석 — "저장된 프로필 불러오기" / "프로필 직접 입력하기" 탭 → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
+| `/analysis` | 사주 분석 — 로그인: 궁합과 같은 "분석할 분" 카드(`PersonCard` [프로필\|직접]) / 비로그인: `AnalysisForm` → `ResultSlides` | 선택 (직접 입력은 비로그인 가능) |
 | `/analysis/deep` | `/analysis`로 redirect (구 경로 호환용 껍데기) | — |
 | `/chat` | 까치 상담 풀스크린 챗 — sessionStorage 입력값 없으면 안내만 | — |
 | `/compatibility` | 궁합 — PersonCard×2(프로필/직접), 관계 유형 3종, 연도 → 결과가 폼을 대체(분석과 같은 구조): 헤더 "공유"(→ `/s/{id}`)·"다시 입력", 결과 직후 전체 화면 인트로(`?step=intro`, 두근두근 → 캐릭터·점수 → [📋 설문조사]/[궁합 분석 보기]) 다음 **7탭**(성격(두 분의 캐릭터+신살+신강신약 — 첫 탭, 2026-10-18)·팔자비교(+오행 보완)·시운(오늘의 궁합)·띠궁합·종합점수(영역별, 구 이름)·설문조사·AI 해석 — `?tab=`, `CompatibilityResult` → `components/compatibility/`; 오늘의 궁합은 프로필×2일 때만, 직접 입력·초대는 6탭), 탭 끝 "다음 이야기" + 챗 FAB. `?p1=&p2=` 딥링크 | 필수 (비로그인은 `LoginRequired` 카드 → `/join`, 복귀 경로는 sessionStorage) |
@@ -536,9 +536,9 @@ erDiagram
 - 페이지 진입 시 `ipapi.co`로 IP 위치 감지 → city(+ longitude) 자동 입력. `longitude`는 UI 비노출로 `User.longitude` → sajupy 직접 전달.
 
 ### 분석 입력 흐름 (`/analysis`)
-- 모드 탭(저장된 프로필 불러오기 / 프로필 직접 입력하기)은 **로그인했을 때만** 보인다. 비로그인은 직접 입력 폼 하나.
-- **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. 로그인 시 **"프로필 저장"(`POST /profiles`)을 먼저 눌러야 "분석 시작" 활성화**. 비로그인은 저장 버튼 비활성(호버·캡션으로 "로그인하면 여러 프로필을 저장" 가입 유도, `/join?next=/analysis`)이고 분석 시작은 이름만 넣으면 바로 됨. → `POST /kkachi/interpret`
-- **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시). `GET …/analyses`로 받은 저장된 연도는 폼·결과 상단에 "지난 연도 다시 보기" 칩 (R6)
+- **로그인**: 궁합과 같은 "분석할 분" 카드 하나(`PersonCard`, 2026-10-25) — [프로필]이 기본(기본 프로필 선택), [직접]은 이름·생년월일·태어난 시간·도시(IP 감지값)·성별, 아래 분석 연도. 직접 입력은 저장 단계 없이 이름만 넣으면 바로 분석(`POST /kkachi/interpret`). 프로필이 없으면 직접 입력 칸 + "나의 사주 등록하기 →"
+- **비로그인 직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. 저장 버튼 비활성(호버·캡션으로 "로그인하면 여러 프로필을 저장" 가입 유도, `/join?next=/analysis`)이고 분석 시작은 이름만 넣으면 바로 됨. → `POST /kkachi/interpret`
+- **프로필 선택**: 카드의 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시). `GET …/analyses`로 받은 저장된 연도는 폼·결과 상단에 "지난 연도 다시 보기" 칩 (R6)
 - 성공 시 `sessionStorage`에 저장 → 결과 주소(`?tab=`·`?step=`)로 다시 오면(새로고침·뒤로 가기·홈 퀵스타트) 자동 재분석, 그냥 `/analysis`(하단 메뉴)는 입력 화면부터(2026-10-25). `/chat`·AI 풀이 탭이 재사용
 - 결과 헤더의 **공유** 버튼(`ShareButton`, 아래 "결과 공유 카드" 절)
 
