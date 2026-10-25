@@ -117,7 +117,7 @@ export default function ResultSlides({ data, name, memberId, profileId, ai }: Pr
   // 새 결과(주소에 step·tab이 없음)는 인트로부터 — 새로고침한 ?tab= 대시보드는 그대로. 캐릭터 없는 옛 결과는 바로 대시보드
   const [freshResult] = useState(() => !!data.natal.character?.key && !stepParam && !tabParam);
   const hasQuiz = (data.self_quiz ?? []).length > 0;
-  const step = stepParam === "intro" || (stepParam === "survey" && hasQuiz) ? stepParam : freshResult && !tabParam ? "intro" : null;
+  const step = (stepParam === "intro" && !!data.natal.character?.key) || (stepParam === "survey" && hasQuiz) ? stepParam : freshResult && !tabParam ? "intro" : null;
   const surveyRef = useRef<HTMLDivElement>(null);
   const tabs = hasQuiz ? FEATURE_TABS : FEATURE_TABS.filter((t) => t.id !== "survey");
   // 한눈에 탭은 2026-10-13 화면에서 뺐다(postnatal.summary API는 LLM 기본 요약용으로 유지) — 옛 ?tab=summary 링크는 첫 탭으로
@@ -130,6 +130,14 @@ export default function ResultSlides({ data, name, memberId, profileId, ai }: Pr
   useEffect(() => {
     track("result_view", { has_profile: !!profileId });
   }, [profileId]);
+
+  // 모바일 탭바는 한 줄 가로 스크롤 — 고른 탭(다음 이야기·주소로 바뀐 것 포함)을 가운데로
+  useEffect(() => {
+    const row = tabbarRef.current?.firstElementChild as HTMLElement | null;
+    const btn = row?.querySelector<HTMLElement>(".feature-tab--active");
+    if (!row || !btn || row.scrollWidth <= row.clientWidth) return;
+    row.scrollTo({ left: btn.offsetLeft - (row.clientWidth - btn.offsetWidth) / 2, behavior: "smooth" });
+  }, [active, step]);
 
   // 탭은 클라이언트 state라 서버 왕복이 필요 없다. router.replace는 RSC를 다시 받아오다 실패하면
   // 전체 새로고침으로 넘어가 결과가 사라지므로, history API로 URL만 바꾼다(useSearchParams는 같이 갱신됨).
@@ -182,7 +190,7 @@ export default function ResultSlides({ data, name, memberId, profileId, ai }: Pr
         />
       )}
       {step === "survey" && (
-        <div ref={surveyRef} className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="설문조사">
+        <div ref={surveyRef} className="fixed inset-x-0 top-0 bottom-16 mb-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="설문조사">
           <div className="min-h-full max-w-md mx-auto px-4 pt-4 flex flex-col">
             <div className="flex items-center justify-between h-10">
               <span className="text-xs font-semibold text-[var(--color-gold)]">📋 설문조사</span>
@@ -234,7 +242,7 @@ export default function ResultSlides({ data, name, memberId, profileId, ai }: Pr
         </div>
       )}
       <div ref={tabbarRef} className="sticky top-0 z-30 bg-[var(--color-ivory)] -mx-4 px-4 pt-2">
-        <div className="feature-tabbar">
+        <div className="feature-tabbar feature-tabbar--scroll">
           {tabs.map((tab) => (
             <button
               key={tab.id}

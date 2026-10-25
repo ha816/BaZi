@@ -513,7 +513,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인: 날짜 헤더 + "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis` 자동 분석) + 소개 영상 / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(일진 오행 바탕·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히]·[공유]) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가) ③ 이어서 할 것 최대 2장(알림 켜기 → 좋은 날 → 안 본 궁합 → AI 풀이 `/analysis?tab=ai`). 7일 예보·영상 없음 | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인: 날짜 헤더 + "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 소개 영상 / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(일진 오행 바탕·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히]·[공유]) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가) ③ 이어서 할 것 최대 2장(알림 켜기 → 좋은 날 → 안 본 궁합 → AI 풀이 `/analysis?tab=ai`). 7일 예보·영상 없음 | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
@@ -539,7 +539,7 @@ erDiagram
 - 모드 탭(저장된 프로필 불러오기 / 프로필 직접 입력하기)은 **로그인했을 때만** 보인다. 비로그인은 직접 입력 폼 하나.
 - **직접 입력**: `AnalysisForm` — 이름·생년월일·태어난 시간(12지시, 모름=12:00)·성별, "정밀 설정" 접이식에 분석연도. 로그인 시 **"프로필 저장"(`POST /profiles`)을 먼저 눌러야 "분석 시작" 활성화**. 비로그인은 저장 버튼 비활성(호버·캡션으로 "로그인하면 여러 프로필을 저장" 가입 유도, `/join?next=/analysis`)이고 분석 시작은 이름만 넣으면 바로 됨. → `POST /kkachi/interpret`
 - **프로필 선택**: 드롭다운 + 분석연도 → `POST /members/{id}/profiles/{pid}/analyze` (캐시). `GET …/analyses`로 받은 저장된 연도는 폼·결과 상단에 "지난 연도 다시 보기" 칩 (R6)
-- 성공 시 `sessionStorage`에 저장 → 재진입 시 자동 재분석, `/chat`·AI 풀이 탭이 재사용
+- 성공 시 `sessionStorage`에 저장 → 결과 주소(`?tab=`·`?step=`)로 다시 오면(새로고침·뒤로 가기·홈 퀵스타트) 자동 재분석, 그냥 `/analysis`(하단 메뉴)는 입력 화면부터(2026-10-25). `/chat`·AI 풀이 탭이 재사용
 - 결과 헤더의 **공유** 버튼(`ShareButton`, 아래 "결과 공유 카드" 절)
 
 ## 결과 공유 카드 — 유입 루프 (ROADMAP V1)
@@ -559,7 +559,7 @@ erDiagram
 ### sessionStorage 키
 | 키 | 저장 | 사용 |
 |----|------|------|
-| `kkachi_analysis_input` | `/analysis` | `/analysis` 재진입, `/chat`, `AiTab` |
+| `kkachi_analysis_input` | `/analysis`, 홈 퀵스타트 | `/analysis?tab=`·`?step=` 재진입, `/chat`, `AiTab` |
 | `kkachi_analysis_name` | `/analysis` | 위와 동일 (KkachiTip `{name}님` 개인화) |
 | `kkachi_profile_input` | `/analysis` 프로필 모드 | `{memberId, profileId, year}` → FeedbackBar가 profileId 필요 |
 | `kkachi_compat_input` / `kkachi_compat_names` | `/compatibility` | `/compatibility/chat` |
@@ -596,7 +596,7 @@ erDiagram
 - **결과 직후 인트로**(`?step=intro`, 2026-10-15 — 분석 V5와 같은 흐름): 두근두근 게이트(두 사람 사주 캐릭터 실루엣 + "?" + ♥, 분석 게이트와 같게 2026-10-18) → 1.2초 드럼롤 → 오행 캐릭터 상자(두 사람 사주 캐릭터 그림 `/kkachi/saju_character/{roles[i].character_key}.webp` 나란히 + ♥, 없는 쪽은 역할 이모지 · 칭호 · 점수 · 역할 칩 · 설명 — 2026-10-18, 궁합 전용 그림 없음) → 까치 인사 → [📋 설문조사 `?step=scenario`] / [💞 궁합 분석 보기 → "인연 지도 펼치는 중…" → `?tab=character`(첫 탭 성격, 2026-10-18)]. 건너뛰기 가능, 새 결과(주소에 step·tab 없음)만. "다시 입력"은 `?tab=`·`?step=` 제거
 - 한눈에 탭은 2026-10-15 제거(옛 `?tab=summary`·`total`은 팔자비교로). 팔자비교 `PillarPairDiagram animate` — 시→일→월→년 기둥마다 두 분 글자가 도장처럼 찍히고 합·충 배지가 뒤따름(분석 사주팔자와 같은 ink-stamp)
 - 탭 전환은 `?tab=`만 바꾸고(`history.replaceState`) `invite`·`p1`·`p2`는 보존. `?tab=daily`인데 직접 입력·초대면 첫 탭으로. `tab_view{tab, page:"compat", has_profile}` 이벤트(새 이벤트 이름 없음)
-- 7탭일 때 탭바는 `.feature-tabbar--7`(모바일 4+3, sm 이상 한 줄), 6탭은 기본 한 줄. 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)
+- 분석 결과 9탭은 `.feature-tabbar--scroll`(모바일 한 줄 가로 스크롤·고른 탭 가운데, sm 이상 줄바꿈, 2026-10-25). 궁합 7탭일 때 탭바는 `.feature-tabbar--7`(모바일 4+3, sm 이상 한 줄), 6탭은 기본 한 줄. 프론트의 궁합 해석 문장(`summarize*`, 신살 의미 표)은 기존 부채 — 늘리지 않는다(REFACTORING §4-2)
 - 캐시(JSONB)는 키 순서를 보존하지 않으므로 `domain_scores` 카드 순서는 프론트에서 고정. 옛 캐시에 없는 필드는 오케스트레이터가 기본값으로 채운다
 
 ## 타이밍 리포트 — `timing_rules.compute_timing` (ROADMAP R3)

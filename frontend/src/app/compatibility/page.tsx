@@ -269,36 +269,36 @@ function CompatibilityPageInner() {
                 </div>
               )}
 
-              <div className="space-y-1.5" hidden={!!inviteId}>
-                <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
-                <div className="flex gap-2">
-                  {(Object.entries(RELATION_TYPE_LABEL) as [RelationType, string][]).map(([value, label]) => {
-                    const active = relationType === value;
-                    return (
-                      <button key={value} type="button" onClick={() => setRelationType(value)}
-                        className={`flex-1 rounded-lg py-2 text-sm border transition-colors ${
-                          active
-                            ? "bg-[var(--color-ink)] text-[var(--color-ivory)] border-[var(--color-ink)]"
-                            : "bg-white text-[var(--color-ink-muted)] border-[var(--color-border)] hover:border-[var(--color-gold-light)]"
-                        }`}>
-                        {label}
-                      </button>
-                    );
-                  })}
+              <div className="flex items-end gap-3">
+                <div className="flex-1 min-w-0 space-y-1.5" hidden={!!inviteId}>
+                  <span className="text-sm font-medium text-[var(--color-ink-light)]">관계 유형</span>
+                  <div className="flex gap-1.5">
+                    {(Object.entries(RELATION_TYPE_LABEL) as [RelationType, string][]).map(([value, label]) => {
+                      const active = relationType === value;
+                      return (
+                        <button key={value} type="button" onClick={() => setRelationType(value)}
+                          className={`flex-1 h-10 whitespace-nowrap rounded-lg text-[13px] border transition-colors ${
+                            active
+                              ? "bg-[var(--color-ink)] text-[var(--color-ivory)] border-[var(--color-ink)]"
+                              : "bg-white text-[var(--color-ink-muted)] border-[var(--color-border)] hover:border-[var(--color-gold-light)]"
+                          }`}>
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
-                <label className="flex-1 space-y-1.5">
+                <label className={`space-y-1.5 ${inviteId ? "flex-1" : "w-20 shrink-0"}`}>
                   <span className="text-sm font-medium text-[var(--color-ink-light)]">분석 연도</span>
                   <input type="number" value={year} onChange={(e) => setYear(+e.target.value)}
-                    className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2.5 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors" min={1920} max={2100} />
+                    className="w-full h-10 border border-[var(--color-border)] rounded-lg px-3 text-sm bg-white text-[var(--color-ink)] focus:border-[var(--color-gold)] focus:ring-1 focus:ring-[var(--color-gold-light)] focus:outline-none transition-colors" min={1920} max={2100} />
                 </label>
-                <button type="submit" disabled={loading}
-                  className="w-full sm:flex-[2] bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 sm:py-2.5 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
-                  {loading ? "분석 중..." : "궁합 보기"}
-                </button>
               </div>
+
+              <button type="submit" disabled={loading}
+                className="w-full bg-[var(--color-ink)] text-[var(--color-ivory)] rounded-lg py-3 text-base font-semibold hover:bg-[var(--color-ink-light)] disabled:bg-[var(--color-ink-faint)] transition-colors shadow-sm">
+                {loading ? "분석 중..." : "궁합 보기"}
+              </button>
             </form>
           )}
 

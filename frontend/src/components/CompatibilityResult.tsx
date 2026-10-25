@@ -160,7 +160,7 @@ export default function CompatibilityResultView({ data, name1, name2, relationTy
         />
       )}
       {step === "scenario" && (
-        <div ref={scenarioRef} className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="설문조사">
+        <div ref={scenarioRef} className="fixed inset-x-0 top-0 bottom-16 mb-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="설문조사">
           <div className="min-h-full max-w-md mx-auto px-4 pt-4 flex flex-col">
             <div className="flex items-center justify-between h-10">
               <span className="text-xs font-semibold text-[var(--color-gold)]">📋 설문조사</span>

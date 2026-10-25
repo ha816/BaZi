@@ -54,7 +54,10 @@ export default function AnalysisPage() {
       }).catch(() => {});
     }
 
-    // sessionStorage에 이전 분석 입력이 있으면 자동 분석
+    // 결과 주소(?tab=·?step= — 새로고침·뒤로 가기·홈 퀵스타트)로 왔을 때만 이전 입력으로 자동 분석.
+    // 메뉴로 그냥 들어오면(/analysis) 지난 결과 대신 입력 화면부터 (2026-10-25)
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has("tab") && !params.has("step")) return;
     const savedName = sessionStorage.getItem("kkachi_analysis_name") ?? "";
     const profileRaw = sessionStorage.getItem("kkachi_profile_input");
     const inputRaw = sessionStorage.getItem("kkachi_analysis_input");

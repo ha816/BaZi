@@ -18,7 +18,7 @@
 입력 → "프로필 저장" (로그인: 실제 저장 / 비로그인: 확인 단계) → "분석 시작"
   → sessionStorage kkachi_analysis_input · kkachi_analysis_name (· kkachi_profile_input)
   → ResultSlides
-재진입: sessionStorage 입력값 있으면 자동 재분석
+재진입: 주소에 `?tab=`·`?step=`이 있을 때만 sessionStorage 입력값으로 자동 재분석, 그냥 `/analysis`면 입력 화면 (2026-10-25)
 ```
 
 **ResultSlides 탭:** 결과 단계는 `specs/analysis/result.md`.
@@ -72,7 +72,8 @@
 
 ## 시나리오 3 — 재진입 자동 분석
 
-- `/analysis` 재진입 시 `sessionStorage["kkachi_analysis_input"]`이 있으면 자동으로 `POST /kkachi/interpret` 재호출 → 결과 바로 표시
+- 결과 주소(`/analysis?tab=…`·`?step=…` — 새로고침·뒤로 가기·홈 퀵스타트 `?step=intro`)로 들어오면 `sessionStorage["kkachi_analysis_input"]`으로 자동으로 `POST /kkachi/interpret` 재호출 → 결과 바로 표시
+- 그냥 `/analysis`(하단 메뉴 등)로 들어오면 지난 결과를 띄우지 않고 입력 화면부터 (2026-10-25)
 - "다시 입력" 버튼으로 폼 복귀 (sessionStorage는 유지)
 
 ## 시나리오 4 — 비로그인 + 프로필 탭

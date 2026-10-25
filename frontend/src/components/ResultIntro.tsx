@@ -34,7 +34,7 @@ export default function ResultIntro({ character: c, name, year, revealed, onReve
   }, [phase, onDone]);
 
   return (
-    <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="분석 결과 인트로">
+    <div className="fixed inset-x-0 top-0 bottom-16 mb-0 z-[70] overflow-y-auto bg-[var(--color-ivory)]" role="dialog" aria-modal="true" aria-label="분석 결과 인트로">
       <div className="min-h-full max-w-md mx-auto px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col">
         <div className="flex items-center justify-between h-10">
           <span className="text-xs font-semibold text-[var(--color-gold)]">✓ 분석 완료</span>

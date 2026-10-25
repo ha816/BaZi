@@ -60,7 +60,7 @@ export default function BottomNav() {
   const tabs = storedMember ? TABS_LOGGED_IN : TABS_GUEST;
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 bg-[var(--color-card)] border-t border-[var(--color-border-light)] flex">
+    <nav className="fixed bottom-0 inset-x-0 z-50 h-16 bg-[var(--color-card)] border-t border-[var(--color-border-light)] flex">
       {tabs.map((tab) => {
         const isActive = tab.href === "/"
           ? pathname === "/"

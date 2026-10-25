@@ -279,13 +279,14 @@ function GuestHero({ location }: { location: LocationInfo | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
-  // 입력값을 sessionStorage에 두고 /analysis로 — 그 페이지가 진입 시 자동으로 분석하고 인트로에서 캐릭터를 공개한다
+  // 입력값을 sessionStorage에 두고 /analysis?step=intro로 — 결과 주소라 그 페이지가 자동으로 분석하고 인트로에서 캐릭터를 공개한다
+  // (주소 없이 /analysis로 오면 입력 화면부터)
   const handleSubmit = (input: AnalysisInput, name: string) => {
     setBusy(true);
     sessionStorage.setItem("kkachi_analysis_input", JSON.stringify(input));
     sessionStorage.setItem("kkachi_analysis_name", name);
     sessionStorage.removeItem("kkachi_profile_input");
-    router.push("/analysis");
+    router.push("/analysis?step=intro");
   };
 
   return (

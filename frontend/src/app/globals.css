@@ -460,6 +460,36 @@ body {
   }
 }
 
+/* 분석 결과 9탭(ResultSlides) — 모바일은 2줄(124px) 대신 한 줄 가로 스크롤, sm 이상은 줄바꿈 */
+.feature-tabbar--scroll {
+  position: relative; /* 고른 탭을 가운데로 — offsetLeft 기준 */
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -16px;
+  padding: 0 16px 8px;
+}
+.feature-tabbar--scroll::-webkit-scrollbar {
+  display: none;
+}
+.feature-tabbar--scroll .feature-tab {
+  flex: 0 0 auto;
+  flex-direction: row;
+  gap: 4px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+@media (min-width: 640px) {
+  .feature-tabbar--scroll {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    margin: 0;
+    padding: 0 0 8px;
+  }
+}
+
 .feature-tab:hover {
   background: var(--color-ivory-warm);
 }
