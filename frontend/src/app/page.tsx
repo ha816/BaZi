@@ -347,7 +347,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
           <TodayHero me={home.me} />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
           <HourlyLuckCard days={home.me.week} yongshin={home.me.fortune.yongshin} needGoodToday className="mx-4 mt-3" />
-          <WeeklySiunCard days={home.me.week} className="mx-4 mt-3" />
+          <WeeklySiunCard days={home.me.week} count={3} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>

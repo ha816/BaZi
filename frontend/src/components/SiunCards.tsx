@@ -64,9 +64,9 @@ export function HourlyLuckCard({ days, yongshin, needGoodToday = false, classNam
   );
 }
 
-/** 오늘부터 7일 — 날씨 오행·운세 점수·레벨 아이콘. 날씨 없는 날은 건너뛴다 */
-export function WeeklySiunCard({ days, className = "" }: { days: SiunDay[]; className?: string }) {
-  const rows = days.slice(0, 7).filter((d) => d.weather);
+/** 오늘부터 count일(기본 7, 홈은 3 — 2026-10-26) — 날씨 오행·운세 점수·레벨 아이콘. 날씨 없는 날은 건너뛴다 */
+export function WeeklySiunCard({ days, count = 7, className = "" }: { days: SiunDay[]; count?: number; className?: string }) {
+  const rows = days.slice(0, count).filter((d) => d.weather);
   if (rows.length === 0) return null;
 
   return (
