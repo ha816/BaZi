@@ -32,17 +32,21 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
   return <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cls}`}>{children}</span>;
 }
 
+/** 홈 카드 공통 틀(CLAUDE.md 카드 규약) — 칸 소제목 없이 카드마다 안에 제목 */
+const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
+
 // ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 윗줄 배지로만
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
   const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
   const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
   return (
-    <section className={`mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] ${el.bg} p-4 shadow-sm`}>
-      <div className="flex items-center gap-1.5 flex-wrap mb-3">
+    <section className={`mx-4 mt-4 ${FEED_CARD}`}>
+      <h2 className="font-heading text-[15px] font-bold text-[var(--color-ink)]">오늘의 나</h2>
+      <div className="flex items-center gap-1.5 flex-wrap mt-2 mb-3">
         <Badge cls={level.color}>{level.icon} {f.level}</Badge>
-        <Badge cls="bg-white/70 text-[var(--color-ink-muted)] border-white">{f.total_score}점</Badge>
-        <Badge cls="bg-white/70 text-[var(--color-ink-muted)] border-white">{el.emoji} {f.day_element}의 날</Badge>
+        <Badge cls="bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]">{f.total_score}점</Badge>
+        <Badge cls={`${el.bg} text-[var(--color-ink-muted)] border-[var(--color-border-light)]`}>{el.emoji} {f.day_element}의 날</Badge>
         {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
         {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
       </div>
@@ -52,25 +56,22 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
             src={charArtSrc(me.character.art_key, me.character.key)}
             alt={me.character.title}
             onError={onCharArtError(me.character.key, level.image)}
-            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md animate-float"
+            className="w-24 h-24 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)] animate-float"
           />
           <p className="mt-1.5 text-[11px] font-semibold text-[var(--color-ink-muted)] text-center leading-tight">{me.character.title}</p>
         </div>
-        <div className="relative flex-1 min-w-0 rounded-2xl bg-white/85 px-3.5 py-3 shadow-sm break-keep">
+        <div className="relative flex-1 min-w-0 rounded-2xl bg-[var(--color-ivory)] px-3.5 py-3 break-keep">
           {/* 말풍선 꼬리 — 캐릭터 쪽 */}
-          <span className="absolute -left-1.5 top-6 w-3 h-3 rotate-45 bg-white/85" aria-hidden />
+          <span className="absolute -left-1.5 top-6 w-3 h-3 rotate-45 bg-[var(--color-ivory)]" aria-hidden />
           <MorningBrief data={f} />
         </div>
       </div>
-      <Link href="/siun" className="block mt-4 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
+      <Link href="/siun" className="block mt-3.5 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
         오늘 시운 자세히 →
       </Link>
     </section>
   );
 }
-
-/** 히어로 아래 카드 공통 틀 — 섹션 제목 없이 카드마다 안에 제목 */
-const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
 
 // ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지
 function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canAdd: boolean; hasMe: boolean }) {
@@ -225,7 +226,7 @@ function KkachiFeed({ today, myBranch }: { today: TodayData; myBranch?: string }
 function HomeSkeleton() {
   return (
     <div className="animate-pulse" aria-busy>
-      <div className="mx-4 mt-4 rounded-3xl bg-[var(--color-ivory-warm)] p-4 h-[248px]">
+      <div className="mx-4 mt-4 rounded-2xl bg-[var(--color-ivory-warm)] px-4 py-3.5 h-[356px]">
         <div className="h-4 w-40 rounded-full bg-white/70 mb-3" />
         <div className="flex gap-3">
           <div className="w-24 h-24 rounded-full bg-white/70 shrink-0" />
@@ -266,7 +267,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
 
   if (failed) {
     return (
-      <div className="mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-6 text-center">
+      <div className={`mx-4 mt-4 ${FEED_CARD} text-center`}>
         <img src={FALLBACK_IMG} alt="" className="w-20 h-20 mx-auto object-contain mb-2" />
         <p className="text-sm text-[var(--color-ink-muted)] mb-3">까치가 소식을 가져오지 못했어요</p>
         <button type="button" onClick={() => { setFailed(false); load(); }} className="px-4 py-2 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold">다시 시도</button>
@@ -278,7 +279,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
   const total = home.people.length + (home.me ? 1 : 0);
   if (total === 0) {
     return (
-      <div className="mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] bg-[var(--color-ivory-warm)] p-6 text-center">
+      <div className={`mx-4 mt-4 ${FEED_CARD} text-center`}>
         <img src={FALLBACK_IMG} alt="" className="w-24 h-24 mx-auto object-contain mb-3 animate-float" />
         <p className="font-heading text-base font-semibold text-[var(--color-ink)] leading-snug mb-1">내 사주를 등록하면 까치가 매일 아침 소식을 물어다 줘요</p>
         <p className="text-xs text-[var(--color-ink-faint)] mb-4">첫 프로필이 곧 기본 프로필(나)이 돼요</p>
@@ -292,7 +293,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
       {home.me ? (
         <TodayHero me={home.me} />
       ) : (
-        <div className="mx-4 mt-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-ink-muted)]">
+        <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
           기본 프로필(나)을 정하면 오늘의 소식을 여기서 받아요. <Link href="/profile" className="underline underline-offset-2 text-[var(--color-gold)]">정하러 가기</Link>
         </div>
       )}
