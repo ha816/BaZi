@@ -127,7 +127,7 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
   );
 }
 
-// ③ 까치 소식 (specs/home §3-5) — 공지 · 오늘의 띠 · 사주 한 입, 종류마다 한 장
+// ③ 까치 소식 (specs/home §3-5) — 새소식 · 사주 한 입, 종류마다 한 장 (오늘의 띠는 TodayZodiacCard)
 
 /** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
 const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
@@ -152,7 +152,36 @@ const ZODIAC_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-function KkachiFeed({ today, myBranch }: { today: TodayData; myBranch?: string }) {
+// 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지. 로그인은 오늘의 나 바로 아래, 비로그인은 까치 소식 맨 앞 (2026-10-26)
+function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData; myBranch?: string; className?: string }) {
+  return (
+    <div className={`${FEED_CARD} ${className}`}>
+      <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 띠</p>
+      <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+        {today.animal.emoji} 오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
+      </p>
+      <div className="grid grid-cols-6 gap-1.5 mt-3">
+        {today.zodiac.map((z) => (
+          <div key={z.branch} className={`relative flex flex-col items-center rounded-xl border py-1.5 ${ZODIAC_TONE[z.relation]}`}>
+            <span className="text-xl leading-none">{z.emoji}</span>
+            <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{z.korean}</span>
+            {z.branch === myBranch && (
+              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
+        <span><span className="text-emerald-600">●</span> 기운 받는 띠</span>
+        <span><span className="text-amber-500">●</span> 조심할 띠</span>
+        <span><span className="text-[var(--color-gold)]">●</span> 오늘의 주인공</span>
+      </div>
+      <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-2 break-keep">{today.line}</p>
+    </div>
+  );
+}
+
+function KkachiFeed({ today }: { today: TodayData }) {
   const dayNo = Math.floor(Date.parse(today.date) / 86_400_000);
   const news = KKACHI_NEWS.find((n) => dayNo - Math.floor(Date.parse(n.date) / 86_400_000) <= NEWS_DAYS);
   const bite = BITES[dayNo % BITES.length];
@@ -172,30 +201,6 @@ function KkachiFeed({ today, myBranch }: { today: TodayData; myBranch?: string }
           </span>
         </Link>
       )}
-
-      <div className={FEED_CARD}>
-        <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 띠</p>
-        <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
-          {today.animal.emoji} 오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
-        </p>
-        <div className="grid grid-cols-6 gap-1.5 mt-3">
-          {today.zodiac.map((z) => (
-            <div key={z.branch} className={`relative flex flex-col items-center rounded-xl border py-1.5 ${ZODIAC_TONE[z.relation]}`}>
-              <span className="text-xl leading-none">{z.emoji}</span>
-              <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{z.korean}</span>
-              {z.branch === myBranch && (
-                <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
-          <span><span className="text-emerald-600">●</span> 기운 받는 띠</span>
-          <span><span className="text-amber-500">●</span> 조심할 띠</span>
-          <span><span className="text-[var(--color-gold)]">●</span> 오늘의 주인공</span>
-        </div>
-        <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-2 break-keep">{today.line}</p>
-      </div>
 
       <div className={FEED_CARD}>
         {term ? (
@@ -294,6 +299,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
       {home.me ? (
         <>
           <TodayHero me={home.me} />
+          <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
           <HourlyLuckCard days={home.me.week} yongshin={home.me.fortune.yongshin} needGoodToday className="mx-4 mt-3" />
           <WeeklySiunCard days={home.me.week} className="mx-4 mt-3" />
         </>
@@ -302,8 +308,9 @@ function LoggedInHome({ memberId }: { memberId: string }) {
           기본 프로필(나)을 정하면 오늘의 소식을 여기서 받아요. <Link href="/profile" className="underline underline-offset-2 text-[var(--color-gold)]">정하러 가기</Link>
         </div>
       )}
+      {!home.me && <TodayZodiacCard today={home.today} className="mx-4 mt-3" />}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} hasMe={!!home.me} />
-      <KkachiFeed today={home.today} myBranch={home.me?.zodiac_branch} />
+      <KkachiFeed today={home.today} />
     </>
   );
 }
@@ -422,7 +429,12 @@ function GuestHome() {
   return (
     <>
       <GuestHero location={location} />
-      {today && <KkachiFeed today={today} />}
+      {today && (
+        <>
+          <TodayZodiacCard today={today} className="mx-4 mt-3" />
+          <KkachiFeed today={today} />
+        </>
+      )}
       <VideoPost />
     </>
   );
@@ -430,16 +442,12 @@ function GuestHome() {
 
 export default function Home() {
   const memberId = useStorageValue(MEMBER_ID_KEY);
-  const dateLabel = new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 
   if (memberId === null) return null; // 하이드레이션 전 — 로그인 여부를 아직 모른다
 
   return (
     <main className="min-h-screen pb-8">
       <div className="max-w-lg mx-auto">
-        <header className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-[var(--color-border-light)] bg-white sticky top-0 z-20">
-          <p className="font-heading text-lg font-bold text-[var(--color-ink)]">{dateLabel}</p>
-        </header>
         {memberId ? <LoggedInHome memberId={memberId} /> : <GuestHome />}
       </div>
     </main>
