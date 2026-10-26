@@ -36,6 +36,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#A68B5B",
+  viewportFit: "cover", // 아이폰 홈 표시줄 영역까지 그리고, 하단 메뉴·입력줄이 env(safe-area-inset-bottom)로 비켜 간다
 };
 
 export default function RootLayout({
@@ -45,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className={`${notoSansKr.variable} ${notoSerifKr.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-[family-name:var(--font-noto-sans-kr)] pb-20">
+      <body className="min-h-full flex flex-col font-[family-name:var(--font-noto-sans-kr)] pb-[calc(var(--nav-h)+1rem)]">
         {children}
         <BottomNav />
       </body>

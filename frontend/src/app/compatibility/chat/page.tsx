@@ -129,7 +129,7 @@ export default function CompatibilityChatPage() {
       </div>
 
       <div
-        className="flex items-end gap-2 px-3 py-3 border-t border-[var(--color-border-light)]"
+        className="flex items-end gap-2 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-[var(--color-border-light)]"
         style={{ backgroundColor: "var(--color-surface)" }}
       >
         <textarea

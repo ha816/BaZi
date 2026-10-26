@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  /* 하단 메뉴 높이 — 아이폰 홈 표시줄(safe-area)만큼 더한다. 메뉴 위 전체 화면·FAB·본문 여백이 이 값을 쓴다 */
+  --nav-h: calc(4rem + env(safe-area-inset-bottom));
   /* 수묵(水墨) 팔레트 — 먹색 + 상아 + 금박 */
   --color-ink: #1C1917;
   --color-ink-light: #44403C;

@@ -528,7 +528,7 @@ erDiagram
 | `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(맨 위 나의 캐릭터 상자 → 이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: 두 사람 사주 캐릭터 그림 `saju_character/{roles[i].character_key}.webp`(파일 존재 확인, 옛 카드·없는 쪽은 역할 이모지) + 칭호 + 역할 칩 + 설명 + 잘 맞는 순간 칩 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
-- **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김.
+- **BottomNav 5탭**: 홈 · 분석 · 궁합 · 시운 · 계정(비로그인 시 로그인). `/chat`, `/compatibility/chat`에서는 숨김. 높이는 `--nav-h`(4rem + 홈 표시줄 `env(safe-area-inset-bottom)`, `viewport-fit=cover`, 2026-10-26) — 메뉴 위 전체 화면(`bottom-[var(--nav-h)]`)·챗 FAB·body 하단 여백이 이 값을 쓴다. 챗 입력줄도 safe-area만큼 띄운다
 - `/weather`, `/palmistry`, `/admin/feedback`은 네비게이션에 연결되어 있지 않음 — URL 직접 진입만 가능.
 - 로그인 상태는 `localStorage["kkachi_member_id"]` (`MEMBER_ID_KEY`)로 판단. 비밀번호 없음.
 - **기본 프로필** = `is_self` 프로필. **첫 프로필은 자동으로 기본**이 되고(요청 플래그와 무관), 지워서 하나만 남으면 그것이 자동으로 기본이 된다. 프로필이 없으면 기본 프로필도 없고 홈·분석·시운·프로필 화면이 "기본 프로필 등록"을 안내한다. `/profile`의 "기본으로"로 바꿀 수 있다. 홈 정렬·시운 기본·분석 프로필 선택 기본·궁합 첫 번째 분 기본이 모두 이 프로필이다 (따로 고르면 그것을 쓴다).
