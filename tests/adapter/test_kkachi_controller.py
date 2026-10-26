@@ -54,4 +54,4 @@ def test_today_is_public(client):
     r = client.get("/kkachi/today")
     assert r.status_code == 200
     body = r.json()
-    assert len(body["zodiac"]) == 12 and body["line"].endswith(("요.",))
+    assert len(body["zodiac"]) == 12 and all(z["advice"] for z in body["zodiac"])

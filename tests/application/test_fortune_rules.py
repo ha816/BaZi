@@ -118,7 +118,6 @@ def test_today_zodiac_relations_and_line():
     assert [z["branch"] for z in t["zodiac"]][0] == "子" and len(rel) == 12
     assert rel["酉"] == "나" and rel["丑"] == rel["巳"] == "삼합" and rel["辰"] == "육합"
     assert rel["卯"] == "충" and rel["寅"] == "원진"
-    assert t["line"] == "닭과 삼합인 소·뱀, 육합인 용 띠가 기운을 받는 날이에요. 토끼·호랑이 띠는 한 박자 쉬어 가세요."
 
 
 def test_today_zodiac_advice_and_birth_years():

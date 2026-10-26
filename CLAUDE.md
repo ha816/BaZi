@@ -325,7 +325,7 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이 — 같은 입력·이름은 메모리 캐시, Ollama 꺼짐 503)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, line, solar_term{name,tip,date,days}|null, son_eomneun_nal }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26)
+GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}|null, son_eomneun_nal }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26)
 GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,art_key(그림 키 — 여성은 {key}_여, 2026-10-23),stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
 
 # 회원

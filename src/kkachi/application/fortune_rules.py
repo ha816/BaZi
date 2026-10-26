@@ -153,15 +153,6 @@ def build_today(today: date) -> dict:
             "advice": pool[(today.toordinal() + i) % len(pool)],
         })
 
-    def names(rel: str) -> str:
-        return "·".join(z["korean"] for z in zodiac if z["relation"] == rel)
-
-    good = [f"{rel}인 {names(rel)}" for rel in ("삼합", "육합") if names(rel)]
-    line = f"{animal.korean}{josa(animal.korean, '과', '와')} {', '.join(good)} 띠가 기운을 받는 날이에요."
-    bad = [names(rel) for rel in ("충", "원진") if names(rel)]
-    if bad:
-        line += f" {'·'.join(bad)} 띠는 한 박자 쉬어 가세요."
-
     term = None
     for i in range(_SOLAR_TERM_AHEAD + 1):
         d = today + timedelta(days=i)
@@ -177,7 +168,6 @@ def build_today(today: date) -> dict:
         "animal": {"branch": branch, "korean": animal.korean, "emoji": animal.emoji,
                    "color": _STEM_COLOR[day.stem.element]},
         "zodiac": zodiac,
-        "line": line,
         "solar_term": term,
         "son_eomneun_nal": _is_son_eomneun_nal(today),
     }

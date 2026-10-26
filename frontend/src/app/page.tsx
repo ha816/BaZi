@@ -205,7 +205,7 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
     <div className={`${FEED_CARD} ${className}`}>
       <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 띠</p>
       <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
-        {today.animal.emoji} 오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
+        오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>
       <div className="grid grid-cols-6 gap-1.5 mt-3">
         {today.zodiac.map((z) => (
@@ -230,7 +230,6 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
         </p>
         <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-0.5">{sel.advice}</p>
       </div>
-      <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-2 break-keep">{today.line}</p>
     </div>
   );
 }
