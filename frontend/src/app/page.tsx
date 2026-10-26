@@ -69,18 +69,21 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   );
 }
 
+/** 히어로 아래 카드 공통 틀 — 섹션 제목 없이 카드마다 안에 제목 */
+const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
+
 // ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지
 function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canAdd: boolean; hasMe: boolean }) {
   const best = people
     .filter((p) => p.compat?.level === "좋음")
     .sort((a, b) => (b.compat?.score ?? 0) - (a.compat?.score ?? 0))[0];
   return (
-    <section className="mt-6">
-      <div className="flex items-center justify-between px-4 mb-2">
-        <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">오늘 내 사람들</h2>
+    <section className={`mx-4 mt-3 ${FEED_CARD}`}>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-heading text-[15px] font-bold text-[var(--color-ink)]">오늘 내 사람들</h2>
         <Link href="/profile" className="text-xs text-[var(--color-ink-faint)]">관리</Link>
       </div>
-      <div className="overflow-x-auto no-scrollbar">
+      <div className="-mx-4 overflow-x-auto no-scrollbar">
         <div className="flex gap-4 px-4 min-w-max pb-1">
           {people.map((p) => {
             const badge = p.compat ? COMPAT_BADGE[p.compat.level] : null;
@@ -112,9 +115,9 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
         </div>
       </div>
       {people.length === 0 ? (
-        <p className="px-4 mt-2 text-xs text-[var(--color-ink-faint)]">궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요</p>
+        <p className="mt-2 text-xs text-[var(--color-ink-faint)]">궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요</p>
       ) : best && hasMe ? (
-        <p className="px-4 mt-2 text-xs text-[var(--color-ink-light)] leading-relaxed break-keep">
+        <p className="mt-2 text-xs text-[var(--color-ink-light)] leading-relaxed break-keep">
           <span className="font-semibold text-emerald-700">♥ {best.name}님과</span> — {best.compat?.headline}
         </p>
       ) : null}
@@ -147,8 +150,6 @@ const ZODIAC_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
-
 function KkachiFeed({ today, myBranch }: { today: TodayData; myBranch?: string }) {
   const dayNo = Math.floor(Date.parse(today.date) / 86_400_000);
   const news = KKACHI_NEWS.find((n) => dayNo - Math.floor(Date.parse(n.date) / 86_400_000) <= NEWS_DAYS);
@@ -157,8 +158,7 @@ function KkachiFeed({ today, myBranch }: { today: TodayData; myBranch?: string }
   const termWhen = term ? (term.days === 0 ? "오늘" : term.days === 1 ? "내일" : `${term.days}일 뒤`) : "";
 
   return (
-    <section className="mt-7 px-4 space-y-3">
-      <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">까치 소식</h2>
+    <section className="mt-3 px-4 space-y-3">
 
       {news && (
         <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
