@@ -73,7 +73,7 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
       </div>
       {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요, 2026-10-26 */}
       <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
-      <HourlyLuckCard days={me.week} yongshin={f.yongshin} embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
+      <HourlyLuckCard days={me.week} yongshin={f.yongshin} count={3} embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
     </section>
   );
 }
