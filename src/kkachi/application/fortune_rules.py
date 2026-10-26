@@ -99,17 +99,59 @@ def _get_day_stembrach(today: date) -> StemBranch:
 
 _STEM_COLOR = {Oheng.木: "푸른", Oheng.火: "붉은", Oheng.土: "누런", Oheng.金: "흰", Oheng.水: "검은"}
 _SOLAR_TERM_AHEAD = 3
+_BIRTH_YEARS_SHOWN = 5  # 신문 띠별 운세처럼 "72·84·96·08·20년생" — 최근 다섯 해(오늘 기준 6살 이상)
+
+# 띠별 한 줄 — 그 띠(년지)와 오늘 일지의 관계마다 몇 문장, 날짜·띠로 돌려 매일 다르게 (2026-10-26)
+_ZODIAC_ADVICE: dict[str, list[str]] = {
+    "나": [
+        "오늘은 내 날이에요. 미뤄 둔 일을 앞장서서 시작해 보세요.",
+        "주목받는 하루, 먼저 말을 꺼내면 일이 술술 풀려요.",
+        "기운이 겹쳐 고집도 세지는 날, 한 번 더 듣고 정하세요.",
+    ],
+    "삼합": [
+        "뜻 맞는 사람이 곁에 모여요. 함께하는 일에 힘을 실으세요.",
+        "막혔던 일이 이어지는 날, 연락을 미루지 마세요.",
+        "힘을 합치면 두 배로 돌아와요. 도움을 청해도 좋은 날이에요.",
+    ],
+    "육합": [
+        "귀인이 가까이 있어요. 오늘 만나는 사람을 소중히 하세요.",
+        "조용히 화합하는 날, 서먹했던 사이와 풀기 좋아요.",
+        "약속·계약처럼 손을 잡는 일에 길해요.",
+    ],
+    "충": [
+        "부딪히기 쉬운 날, 큰 결정은 하루 미루세요.",
+        "이동과 변화가 잦아요. 서두르지 말고 한 박자 쉬어 가세요.",
+        "말다툼은 피하고 지갑과 몸을 단단히 챙기세요.",
+    ],
+    "원진": [
+        "괜히 서운해지기 쉬운 날, 말은 부드럽게 하세요.",
+        "작은 오해가 커지기 쉬워요. 확인하고 또 확인하세요.",
+        "혼자만의 시간이 약이 되는 날이에요.",
+    ],
+    "보통": [
+        "무난한 하루, 늘 하던 일을 꾸준히 하면 좋아요.",
+        "작은 정리가 행운을 부르는 날이에요.",
+        "평소처럼 차분히, 끼니를 거르지 마세요.",
+        "가까운 사람에게 안부 한 통 전해 보세요.",
+    ],
+}
 
 
 def build_today(today: date) -> dict:
-    """홈 '까치 소식' 칸(specs/home §3-5) — 오늘 일진의 띠와 12띠 관계, 3일 안 절기, 손없는 날. 로그인 무관."""
+    """홈 '까치 소식' 칸(specs/home §3-5) — 오늘 일진의 띠와 12띠 관계·띠별 한 줄(년생), 3일 안 절기, 손없는 날. 로그인 무관."""
     day = _get_day_stembrach(today)
     branch = day.branch.name
     animal = zodiac_info(branch)
-    zodiac = [
-        {"branch": b, "korean": zodiac_info(b).korean, "emoji": zodiac_info(b).emoji, "relation": relation_of(branch, b)[0]}
-        for b in BRANCH_ORDER
-    ]
+    zodiac = []
+    for i, b in enumerate(BRANCH_ORDER):
+        rel = relation_of(branch, b)[0]
+        pool = _ZODIAC_ADVICE[rel]
+        last = today.year - 6 - (today.year - 6 - 4 - i) % 12  # 子=1984처럼 (년-4)%12가 띠 순번
+        zodiac.append({
+            "branch": b, "korean": zodiac_info(b).korean, "emoji": zodiac_info(b).emoji, "relation": rel,
+            "years": [f"{y % 100:02d}" for y in range(last - 12 * (_BIRTH_YEARS_SHOWN - 1), last + 1, 12)],
+            "advice": pool[(today.toordinal() + i) % len(pool)],
+        })
 
     def names(rel: str) -> str:
         return "·".join(z["korean"] for z in zodiac if z["relation"] == rel)

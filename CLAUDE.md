@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 181 tests
+uv run pytest            # 182 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -325,7 +325,7 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이 — 같은 입력·이름은 메모리 캐시, Ollama 꺼짐 503)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation}, line, solar_term{name,tip,date,days}|null, son_eomneun_nal }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26)
+GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, line, solar_term{name,tip,date,days}|null, son_eomneun_nal }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26)
 GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,art_key(그림 키 — 여성은 {key}_여, 2026-10-23),stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
 
 # 회원
@@ -516,7 +516,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 띠 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히], 공유 버튼 없음 2026-10-26) → 오늘의 띠(12띠 격자+내 띠) → 이 시간대가 좋아요(오늘 남은 시간에 최고·좋음 있을 때만) · 주간 시운(시운 화면과 같은 `components/SiunCards.tsx`, 2026-10-26) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 사주 한 입: 오늘의 신살·십신 + "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴 금테·✦, 2026-10-26) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식도) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 띠 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히], 공유 버튼 없음 2026-10-26) → 오늘의 띠(12띠 격자+내 띠, 칸을 누르면 띠별 한 줄·년생) → 이 시간대가 좋아요(오늘 남은 시간에 최고·좋음 있을 때만) · 주간 시운(시운 화면과 같은 `components/SiunCards.tsx`, 2026-10-26) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 사주 한 입: 오늘의 신살·십신 + "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴 금테·✦, 2026-10-26) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식도) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |

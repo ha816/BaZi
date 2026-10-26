@@ -121,6 +121,17 @@ def test_today_zodiac_relations_and_line():
     assert t["line"] == "닭과 삼합인 소·뱀, 육합인 용 띠가 기운을 받는 날이에요. 토끼·호랑이 띠는 한 박자 쉬어 가세요."
 
 
+def test_today_zodiac_advice_and_birth_years():
+    t = build_today(date(2026, 10, 26))
+    z = {x["branch"]: x for x in t["zodiac"]}
+    assert z["子"]["years"] == ["72", "84", "96", "08", "20"]  # 2020 경자년이 6살 이상 중 최근
+    assert z["酉"]["years"] == ["69", "81", "93", "05", "17"]
+    assert all(x["advice"].endswith("요.") for x in t["zodiac"])
+    # 관계마다 그 관계의 문장, 다음 날엔 같은 띠라도 문장이 바뀐다
+    nxt = {x["branch"]: x["advice"] for x in build_today(date(2026, 10, 27))["zodiac"]}
+    assert any(nxt[b] != z[b]["advice"] for b in z if z[b]["relation"] == "보통")
+
+
 def test_today_solar_term_within_three_days():
     assert build_today(date(2026, 11, 4))["solar_term"]["days"] == 3  # 입동 11-07
     assert build_today(date(2026, 11, 7))["solar_term"] == {

@@ -197,8 +197,10 @@ const ZODIAC_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-// 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지. 로그인은 오늘의 나 바로 아래, 비로그인은 까치 소식 맨 앞 (2026-10-26)
+// 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
 function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData; myBranch?: string; className?: string }) {
+  const [picked, setPicked] = useState(myBranch ?? today.animal.branch);
+  const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
   return (
     <div className={`${FEED_CARD} ${className}`}>
       <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 띠</p>
@@ -207,19 +209,26 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
       </p>
       <div className="grid grid-cols-6 gap-1.5 mt-3">
         {today.zodiac.map((z) => (
-          <div key={z.branch} className={`relative flex flex-col items-center rounded-xl border py-1.5 ${ZODIAC_TONE[z.relation]}`}>
+          <button type="button" key={z.branch} onClick={() => setPicked(z.branch)} aria-pressed={z.branch === sel.branch}
+            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${ZODIAC_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-xl leading-none">{z.emoji}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{z.korean}</span>
             {z.branch === myBranch && (
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
-          </div>
+          </button>
         ))}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
         <span><span className="text-emerald-600">●</span> 기운 받는 띠</span>
         <span><span className="text-amber-500">●</span> 조심할 띠</span>
         <span><span className="text-[var(--color-gold)]">●</span> 오늘의 주인공</span>
+      </div>
+      <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
+        <p className="text-[11px] text-[var(--color-ink-muted)]">
+          <span className="font-bold text-[var(--color-ink)]">{sel.emoji} {sel.korean}띠</span> · {sel.years.join("·")}년생
+        </p>
+        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-0.5">{sel.advice}</p>
       </div>
       <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-2 break-keep">{today.line}</p>
     </div>

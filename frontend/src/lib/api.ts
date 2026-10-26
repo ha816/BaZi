@@ -391,7 +391,7 @@ export interface TodayData {
   day_pillar: string;
   day_kor: string;
   animal: { branch: string; korean: string; emoji: string; color: string };
-  zodiac: { branch: string; korean: string; emoji: string; relation: "나" | "삼합" | "육합" | "충" | "원진" | "보통" }[];
+  zodiac: { branch: string; korean: string; emoji: string; relation: "나" | "삼합" | "육합" | "충" | "원진" | "보통"; years: string[]; advice: string }[];
   line: string;
   solar_term: { name: string; tip: string; date: string; days: number } | null;
   son_eomneun_nal: boolean;
