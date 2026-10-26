@@ -4,13 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AnalysisInput } from "@/types/analysis";
-import { createDailyShare, getHome, type HomeData } from "@/lib/api";
+import { getHome, type HomeData } from "@/lib/api";
 import { detectLocation, type LocationInfo } from "@/lib/location";
-import { getPushState, subscribePush, type PushState } from "@/lib/push";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
 import FeedPost from "@/components/FeedPost";
-import ShareButton from "@/components/ShareButton";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { charArtSrc, onCharArtError } from "@/lib/characterArt";
@@ -21,7 +19,6 @@ import { track } from "@/lib/track";
 
 const FALLBACK_IMG = "/kkachi/normal_kkachi_00.png";
 const MAX_PROFILES = 10;
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 /** 오늘 궁합 배지 — 숫자 없이 기호·색만 */
 const COMPAT_BADGE: Record<string, { glyph: string; cls: string }> = {
@@ -30,18 +27,12 @@ const COMPAT_BADGE: Record<string, { glyph: string; cls: string }> = {
   "주의": { glyph: "!", cls: "bg-amber-100 text-amber-800 border-amber-200" },
 };
 
-/** "2026-10-26" → "10월 26일 월요일" — 토요일에 "이번 주 월요일"이라고 하지 않게 날짜를 함께 */
-function dayLabelOf(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  return `${m}월 ${d}일 ${WEEKDAYS[new Date(y, m - 1, d).getDay()]}요일`;
-}
-
 function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
   return <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${cls}`}>{children}</span>;
 }
 
 // ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 윗줄 배지로만
-function TodayHero({ me, memberId }: { me: NonNullable<HomeData["me"]>; memberId: string }) {
+function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
   const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
   const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
@@ -70,17 +61,9 @@ function TodayHero({ me, memberId }: { me: NonNullable<HomeData["me"]>; memberId
           <MorningBrief data={f} />
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-4">
-        <Link href="/siun" className="flex-1 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
-          오늘 시운 자세히 →
-        </Link>
-        <ShareButton
-          create={() => createDailyShare(memberId, me.profile_id)}
-          title="나의 오늘 시운"
-          text={`오늘 내 시운 ${f.total_score}점, 사주까치가 이렇게 봤어요. 나도 오늘의 행운 보기 →`}
-          channel="daily"
-        />
-      </div>
+      <Link href="/siun" className="block mt-4 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
+        오늘 시운 자세히 →
+      </Link>
     </section>
   );
 }
@@ -138,44 +121,6 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
   );
 }
 
-type NextCard = { key: string; icon: string; text: string; sub?: string; href?: string; onClick?: () => void; busy?: boolean };
-
-// ③ 이어서 할 것 — 알림 켜기(클라이언트) → 서버 후보 순서, 최대 2장
-function NextCards({ next, push, onPush, pushBusy }: { next: HomeData["next"]; push: PushState | null; onPush: () => void; pushBusy: boolean }) {
-  const cards: NextCard[] = [];
-  if (push === "off") cards.push({ key: "push", icon: "🔔", text: "내일 아침 7시, 까치가 먼저 알려 드릴까요?", sub: "알림 켜기", onClick: onPush, busy: pushBusy });
-  for (const n of next) {
-    if (n.kind === "good_day") cards.push({ key: "good_day", icon: "🌟", text: `${dayLabelOf(n.date)}이 좋은 날이에요`, sub: n.action, href: "/siun" });
-    else if (n.kind === "compat") cards.push({ key: "compat", icon: "💞", text: `${n.name}님과 궁합을 아직 안 봤어요`, sub: "우리 사이 알아보기", href: `/compatibility?p2=${n.profile_id}` });
-    else cards.push({ key: "ai_report", icon: "📜", text: "까치가 쓴 내 사주 이야기, 한 편 읽어 볼래요?", sub: "AI 풀이 보기", href: "/analysis?tab=ai" });
-  }
-  if (cards.length === 0) return null;
-
-  return (
-    <section className="mt-6 px-4 space-y-2">
-      <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">이어서 할 것</h2>
-      {cards.slice(0, 2).map((c) => {
-        const body = (
-          <>
-            <span className="text-2xl shrink-0">{c.icon}</span>
-            <span className="flex-1 min-w-0">
-              <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug">{c.text}</span>
-              {c.sub && <span className="block text-xs text-[var(--color-ink-muted)] mt-0.5 leading-snug">{c.busy ? "…" : c.sub}</span>}
-            </span>
-            <span className="text-[var(--color-ink-faint)] shrink-0">›</span>
-          </>
-        );
-        const cls = "w-full flex items-center gap-3 text-left rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3 active:opacity-80";
-        return c.href ? (
-          <Link key={c.key} href={c.href} className={cls}>{body}</Link>
-        ) : (
-          <button key={c.key} type="button" onClick={c.onClick} disabled={c.busy} className={cls}>{body}</button>
-        );
-      })}
-    </section>
-  );
-}
-
 // 불러오는 동안 — ①과 같은 자리·크기, ② 얼굴 원 3개
 function HomeSkeleton() {
   return (
@@ -201,12 +146,9 @@ function HomeSkeleton() {
 function LoggedInHome({ memberId }: { memberId: string }) {
   const [home, setHome] = useState<HomeData | null>(null);
   const [failed, setFailed] = useState(false);
-  const [push, setPush] = useState<PushState | null>(null);
-  const [pushBusy, setPushBusy] = useState(false);
   const tracked = useRef(false);
 
   const load = useCallback(() => {
-    setFailed(false);
     getHome(memberId)
       .then((h) => {
         setHome(h);
@@ -220,26 +162,14 @@ function LoggedInHome({ memberId }: { memberId: string }) {
 
   useEffect(() => {
     load();
-    getPushState().then(setPush).catch(() => setPush("unsupported"));
   }, [load]);
-
-  const handlePush = async () => {
-    setPushBusy(true);
-    try {
-      setPush(await subscribePush());
-    } catch {
-      /* 실패하면 카드를 그대로 둔다 — 시운 화면 버튼에서 사유를 보여 준다 */
-    } finally {
-      setPushBusy(false);
-    }
-  };
 
   if (failed) {
     return (
       <div className="mx-4 mt-4 rounded-3xl border border-[var(--color-border-light)] bg-[var(--color-card)] p-6 text-center">
         <img src={FALLBACK_IMG} alt="" className="w-20 h-20 mx-auto object-contain mb-2" />
         <p className="text-sm text-[var(--color-ink-muted)] mb-3">까치가 소식을 가져오지 못했어요</p>
-        <button type="button" onClick={load} className="px-4 py-2 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold">다시 시도</button>
+        <button type="button" onClick={() => { setFailed(false); load(); }} className="px-4 py-2 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold">다시 시도</button>
       </div>
     );
   }
@@ -260,14 +190,13 @@ function LoggedInHome({ memberId }: { memberId: string }) {
   return (
     <>
       {home.me ? (
-        <TodayHero me={home.me} memberId={memberId} />
+        <TodayHero me={home.me} />
       ) : (
         <div className="mx-4 mt-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-ink-muted)]">
           기본 프로필(나)을 정하면 오늘의 소식을 여기서 받아요. <Link href="/profile" className="underline underline-offset-2 text-[var(--color-gold)]">정하러 가기</Link>
         </div>
       )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} hasMe={!!home.me} />
-      <NextCards next={home.next} push={push} onPush={handlePush} pushBusy={pushBusy} />
     </>
   );
 }
