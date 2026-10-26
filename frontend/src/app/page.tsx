@@ -294,7 +294,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
       {home.me ? (
         <>
           <TodayHero me={home.me} />
-          <HourlyLuckCard days={home.me.week} yongshin={home.me.fortune.yongshin} className="mx-4 mt-3" />
+          <HourlyLuckCard days={home.me.week} yongshin={home.me.fortune.yongshin} needGoodToday className="mx-4 mt-3" />
           <WeeklySiunCard days={home.me.week} className="mx-4 mt-3" />
         </>
       ) : (
