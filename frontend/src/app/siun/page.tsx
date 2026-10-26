@@ -16,7 +16,8 @@ import { MEMBER_ID_KEY } from "@/lib/constants";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { ELEMENT_META, FORECAST_LEVEL_META, getElementInfo } from "@/lib/elementColors";
 import { getZodiacEmoji } from "@/lib/zodiac";
-import type { DailyDomainScore, DailyFortune, Profile, HourlyWeather } from "@/types/analysis";
+import type { DailyDomainScore, DailyFortune, Profile } from "@/types/analysis";
+import { HourlyLuckCard, WeeklySiunCard } from "@/components/SiunCards";
 
 const DOMAIN_LABELS: Record<string, string> = {
   직업운: "직업운", 재물운: "재물운", 건강운: "건강운", 애정운: "애정운", 학업운: "학업운",
@@ -26,8 +27,6 @@ const DOMAIN_LABELS: Record<string, string> = {
 const LEVEL_BAR: Record<string, string> = {
   좋음: "bg-emerald-400", 보통: "bg-amber-400", 주의: "bg-rose-400",
 };
-
-const GENERATES: Record<string, string> = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
 
 const GANJI_KO: Record<string, string> = {
   甲:"갑",乙:"을",丙:"병",丁:"정",戊:"무",己:"기",庚:"경",辛:"신",壬:"임",癸:"계",
@@ -111,25 +110,7 @@ export default function SiunPage() {
     const weather = data.weather;
     const tm = weather ? elMeta(weather.element) : null;
     const conditionText = weather?.condition.replace(/\s*\d+\.?\d*°C$/, "") ?? "";
-    const yongshin = data.yongshin;
-    const nowHour = new Date().getHours();
     const isToday = label === "오늘";
-
-    // 오늘인 경우: 현재 -2시간부터 + 내일 + 모레까지 합쳐서 연속된 타임라인 제공
-    const filteredHours = (() => {
-      if (!isToday) return []; // 내일/모레 탭은 시간대 제거 (이전 요청사항)
-      
-      const todayHours = (weather?.hours ?? []).filter((h: HourlyWeather) => {
-        const hr = parseInt(h.hour.replace(/[^0-9]/g, ""));
-        return hr >= Math.max(0, nowHour - 2);
-      }).map(h => ({ ...h, dateLabel: "오늘" }));
-
-      const tmrHours = (tmrFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "내일" }));
-      const datHours = (datFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "모레" }));
-      const sahHours = (sahFortune?.weather?.hours ?? []).map(h => ({ ...h, dateLabel: "글피" }));
-
-      return [...todayHours, ...tmrHours, ...datHours, ...sahHours];
-    })();
 
     return (
       <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -240,92 +221,9 @@ export default function SiunPage() {
           </div>
         </div>
 
-        {/* 시간별 기운 — 오늘만 표시 */}
-        {isToday && filteredHours.length > 0 && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-3">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-[var(--color-ink-muted)]">
-                {isToday ? "이 시간대가 좋아요" : "시간대별 기운"}
-              </p>
-              {isToday && yongshin && (
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-emerald-600 font-semibold">최고 = {yongshin}</span>
-                  <span className="text-[10px] text-amber-600 font-semibold">좋음 = {GENERATES[yongshin] || "상생"}</span>
-                </div>
-              )}
-            </div>
-            <div className="overflow-x-auto -mx-1 px-1 py-1" style={{ scrollbarWidth: "none" }}>
-              <div className="flex gap-1 w-max items-end">
-                {filteredHours.map((h: HourlyWeather & { dateLabel?: string }, i: number) => {
-                  const rel = (isToday && yongshin)
-                    ? h.element === yongshin ? "match"
-                    : GENERATES[h.element] === yongshin ? "generates"
-                    : "neutral"
-                    : "neutral";
-                  const highlight = rel === "match"
-                    ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl"
-                    : rel === "generates"
-                    ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl"
-                    : "";
-                  
-                  // 날짜가 바뀔 때 표시 (오늘 -> 내일 등)
-                  const showDate = i === 0 || h.dateLabel !== filteredHours[i - 1].dateLabel;
-
-                  return (
-                    <div key={i} className="flex flex-col gap-1">
-                      {showDate && (
-                        <span className="text-[10px] font-bold text-[var(--color-gold)] ml-1 mb-0.5 w-full text-center">{h.dateLabel}</span>
-                      )}
-                      <div className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[52px] ${highlight}`}>
-                        <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
-                        <span className="text-2xl">{elMeta(h.element).emoji}</span>
-                        <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
-                        <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(h.temperature)}°</span>
-                        {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
-                        {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋음</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 주간 시운 */}
-        {forecast.length > 0 && (
-          <div className="rounded-2xl bg-[var(--color-card)] border border-[var(--color-border-light)] shadow-sm px-4 pt-4 pb-1">
-            <p className="text-xs font-semibold text-[var(--color-ink-muted)] mb-2">주간 시운</p>
-            <div className="divide-y divide-[var(--color-border-light)]">
-              {forecast.slice(todayIdx, todayIdx + 7).map((day) => {
-                const w = day.weather;
-                if (!w) return null;
-                const m = elMeta(w.element);
-                const ct = w.condition.replace(/\s*\d+\.?\d*°C$/, "");
-                const d = new Date(day.date);
-                const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
-                const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
-                
-                return (
-                  <div key={day.date} className="flex items-center gap-2 py-2.5">
-                    <span className="w-9 text-[11px] font-bold text-[var(--color-ink-faint)] shrink-0">{dateStr}</span>
-                    <span className="text-xl shrink-0">{m.emoji}</span>
-                    <div className="flex flex-1 items-center gap-1.5 min-w-0">
-                      <span className="text-xs text-[var(--color-ink-muted)] truncate">{ct}</span>
-                      <span className={`text-xs font-semibold ${m.color} shrink-0`}>{m.label}</span>
-                      <span className="text-xs text-[var(--color-ink-faint)] shrink-0">{Math.round(w.temperature)}°</span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-[10px] text-[var(--color-ink-faint)]">운세 점수</span>
-                      <span className="text-xs font-black text-[var(--color-ink)]">{day.total_score}</span>
-                    </div>
-                    <span className="text-base shrink-0 w-5 text-right">{lMeta.icon}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* 시간별 기운 — 오늘만 표시 · 주간 시운 (홈과 같은 카드) */}
+        {isToday && <HourlyLuckCard days={forecast.slice(todayIdx, todayIdx + 4)} yongshin={data.yongshin} />}
+        {forecast.length > 0 && <WeeklySiunCard days={forecast.slice(todayIdx, todayIdx + 7)} />}
 
       </div>
     );

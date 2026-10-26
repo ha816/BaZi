@@ -93,7 +93,7 @@ BaZi/
 │   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)
 │   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
 │   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입(get_forecast는 날씨 든 캐시로 안 채워지는 날이 있을 때만 날씨 호출, 2026-10-24)
-│   │   ├── home_service.py           # HomeService.get_home — 홈 묶음(me 캐릭터·7일 예보[0], people 캐릭터·오늘의 궁합, next 후보). 사람마다 natal만(analyze_natal) — analyses 캐시 안 씀 (specs/home §2-1, 2026-10-24)
+│   │   ├── home_service.py           # HomeService.get_home — 홈 묶음(me 캐릭터·7일 예보([0]=오늘의 나, week=시간대·주간 시운 카드), people 캐릭터·오늘의 궁합, next 후보). 사람마다 natal만(analyze_natal) — analyses 캐시 안 씀 (specs/home §2-1, 2026-10-24)
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날 · build_today() 홈 까치 소식(오늘의 띠·3일 안 절기)
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
@@ -173,6 +173,7 @@ BaZi/
 │   │   ├── compatibility/           # CompatIntro(결과 직후 전체 화면: 두근두근 RevealGate → CompatCharacterBox 칭호·점수 → 까치 인사 → [📋 설문조사]/[궁합 분석 보기]) · CompatTotal(RevealGate 두 캐릭터 실루엣·PairArt·CompatCharacterBox·CompatCharacterCard 두 분의 캐릭터 카드(팔자비교 탭, 2026-10-17)) · ScenarioCard(이럴 때 두 분은?, 5문항씩 페이지) · StrengthCard(신강·신약) · ZodiacTab(띠궁합) · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디(헤드라인·할 것·피할 것) — 홈·시운(오늘~글피·지난주) 공용
+│   │   ├── SiunCards.tsx            # HourlyLuckCard(이 시간대가 좋아요)·WeeklySiunCard(주간 시운) — 시운 오늘 탭·홈 공용 (2026-10-26)
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
 │   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
 │   │   ├── PillarDetail · PillarOhengGrid · ElementRadar · OhengAnalysis · OhaengRelationDiagram
@@ -330,7 +331,7 @@ GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShar
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
 GET    /members/{id}
-GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal}}|null,
+GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
                                people:[{profile_id,name,character{key,art_key},compat{score,level(좋음·보통·주의),headline}|null}](기본 프로필 제외, 최근 추가 먼저),
                                next:[{kind:"good_day",date,action}|{kind:"compat",profile_id,name}|{kind:"ai_report"}](화면 노출 없음 — 2026-10-26 홈 ③ 제거), today(= GET /kkachi/today) }  홈 묶음(V8, 2026-10-24) — 404 if 회원 없음, 기본 프로필 없으면 me null·next []
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
@@ -515,7 +516,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인: 날짜 헤더 + "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히], 공유 버튼 없음 2026-10-26) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가) ③ 까치 소식(2026-10-26 — 새소식 `KKACHI_NEWS` 30일 안 1개 · 오늘의 띠 12띠 격자+내 띠 · 사주 한 입(3일 안 절기, 없으면 신살·십신 상식 19일 주기)). 7일 예보·영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인: 날짜 헤더 + "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, [오늘 시운 자세히], 공유 버튼 없음 2026-10-26) → 이 시간대가 좋아요 · 주간 시운(시운 화면과 같은 `components/SiunCards.tsx`, 2026-10-26) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가) ③ 까치 소식(2026-10-26 — 새소식 `KKACHI_NEWS` 30일 안 1개 · 오늘의 띠 12띠 격자+내 띠 · 사주 한 입(3일 안 절기, 없으면 신살·십신 상식 19일 주기)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |

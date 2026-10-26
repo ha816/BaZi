@@ -409,7 +409,8 @@ export interface HomeData {
     name: string;
     character: { key: string; art_key: string; title: string; line: string };
     zodiac_branch: string;
-    fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal">;
+    fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal" | "yongshin">;
+    week: Pick<DailyFortune, "date" | "total_score" | "level" | "weather">[];  // 오늘부터 7일 — 홈 시간대·주간 시운 카드
   } | null;
   people: {
     profile_id: string;

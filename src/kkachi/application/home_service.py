@@ -15,7 +15,8 @@ from kkachi.domain.ganji import Pillar
 from kkachi.domain.profile import Profile
 from kkachi.domain.user import User
 
-_FORTUNE_KEYS = ("headline", "action", "caution", "total_score", "level", "day_element", "solar_term", "son_eomneun_nal")
+_FORTUNE_KEYS = ("headline", "action", "caution", "total_score", "level", "day_element", "solar_term", "son_eomneun_nal", "yongshin")
+_WEEK_KEYS = ("date", "total_score", "level", "weather")  # 홈 "이 시간대가 좋아요"·"주간 시운" 카드 (2026-10-26)
 
 
 class HomeService:
@@ -71,6 +72,7 @@ class HomeService:
                 "character": self._character(my_natal, me, full=True),
                 "zodiac_branch": my_natal.saju[Pillar.年柱].branch.name,
                 "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
+                "week": [{k: d.get(k) for k in _WEEK_KEYS} for d in week],
             },
             "people": people,
             "today": build_today(today),

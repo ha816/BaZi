@@ -8,6 +8,7 @@ import { getHome, getToday, type HomeData, type TodayData } from "@/lib/api";
 import { detectLocation, type LocationInfo } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
+import { HourlyLuckCard, WeeklySiunCard } from "@/components/SiunCards";
 import FeedPost from "@/components/FeedPost";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
@@ -291,7 +292,11 @@ function LoggedInHome({ memberId }: { memberId: string }) {
   return (
     <>
       {home.me ? (
-        <TodayHero me={home.me} />
+        <>
+          <TodayHero me={home.me} />
+          <HourlyLuckCard days={home.me.week} yongshin={home.me.fortune.yongshin} className="mx-4 mt-3" />
+          <WeeklySiunCard days={home.me.week} className="mx-4 mt-3" />
+        </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
           기본 프로필(나)을 정하면 오늘의 소식을 여기서 받아요. <Link href="/profile" className="underline underline-offset-2 text-[var(--color-gold)]">정하러 가기</Link>

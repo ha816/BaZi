@@ -102,6 +102,8 @@ def test_me_has_character_and_today_fortune_people_have_face_and_compat():
     assert me["character"]["art_key"] == f"{me['character']['key']}_여"  # 여성판 그림
     assert me["fortune"]["headline"].startswith("나님, ") and me["fortune"]["day_element"] == "火"
     assert fortune.calls == [ME.id]  # 운세는 나만, 한 번
+    assert [d["date"] for d in me["week"]] == [f"2026-10-{24 + i}" for i in range(7)]  # 주간 시운 7일
+    assert set(me["week"][0]) == {"date", "total_score", "level", "weather"}
     assert me["zodiac_branch"] == "午"  # 1990 경오년생 — 까치 소식 '오늘의 띠'에 내 띠 표시
     assert home["today"]["date"] == "2026-10-24" and len(home["today"]["zodiac"]) == 12
 
