@@ -9,12 +9,14 @@ const GENERATES: Record<string, string> = { 木: "火", 火: "土", 土: "金", 
 const DAY_LABELS = ["오늘", "내일", "모레", "글피"];
 const CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
 const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
+// embedded: 다른 카드(홈 오늘의 나) 안에 넣을 때 — 테두리 없이, 제목은 소제목 크기 (2026-10-26)
+const SUB_TITLE = "text-[13px] font-bold text-[var(--color-ink)]";
 
 const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
 /** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 내일·모레·글피 시간대. 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음.
  *  needGoodToday(홈): 오늘 남은 시간대에 최고·좋음이 하나도 없으면 카드를 그리지 않는다 (2026-10-26) */
-export function HourlyLuckCard({ days, yongshin, needGoodToday = false, className = "" }: { days: SiunDay[]; yongshin?: string; needGoodToday?: boolean; className?: string }) {
+export function HourlyLuckCard({ days, yongshin, needGoodToday = false, embedded = false, className = "" }: { days: SiunDay[]; yongshin?: string; needGoodToday?: boolean; embedded?: boolean; className?: string }) {
   const nowHour = new Date().getHours();
   const hours = days.slice(0, DAY_LABELS.length).flatMap((d, i) =>
     (d.weather?.hours ?? [])
@@ -26,9 +28,9 @@ export function HourlyLuckCard({ days, yongshin, needGoodToday = false, classNam
   if (needGoodToday && !hours.some((h) => h.dateLabel === "오늘" && relOf(h.element) !== "neutral")) return null;
 
   return (
-    <div className={`${CARD} ${className}`}>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className={TITLE}>이 시간대가 좋아요</h2>
+    <div className={`${embedded ? "" : CARD} ${className}`}>
+      <div className={`flex items-center justify-between ${embedded ? "mb-2" : "mb-3"}`}>
+        <h2 className={embedded ? SUB_TITLE : TITLE}>이 시간대가 좋아요</h2>
         {yongshin && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-emerald-600 font-semibold">최고 = {yongshin}</span>
@@ -65,13 +67,13 @@ export function HourlyLuckCard({ days, yongshin, needGoodToday = false, classNam
 }
 
 /** 오늘부터 count일(기본 7, 홈은 3 — 2026-10-26) — 날씨 오행·운세 점수·레벨 아이콘. 날씨 없는 날은 건너뛴다 */
-export function WeeklySiunCard({ days, count = 7, className = "" }: { days: SiunDay[]; count?: number; className?: string }) {
+export function WeeklySiunCard({ days, count = 7, embedded = false, className = "" }: { days: SiunDay[]; count?: number; embedded?: boolean; className?: string }) {
   const rows = days.slice(0, count).filter((d) => d.weather);
   if (rows.length === 0) return null;
 
   return (
-    <div className={`${CARD} pb-1 ${className}`}>
-      <h2 className={`${TITLE} mb-1`}>주간 시운</h2>
+    <div className={`${embedded ? "" : `${CARD} pb-1`} ${className}`}>
+      <h2 className={`${embedded ? SUB_TITLE : TITLE} mb-1`}>주간 시운</h2>
       <div className="divide-y divide-[var(--color-border-light)]">
         {rows.map((day) => {
           const w = day.weather!;

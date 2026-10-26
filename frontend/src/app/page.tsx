@@ -67,6 +67,9 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
         {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
         {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
       </div>
+      {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요(오늘 좋은 시간이 있을 때만), 2026-10-26 */}
+      <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
+      <HourlyLuckCard days={me.week} yongshin={f.yongshin} needGoodToday embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
       <Link href="/siun" className="block mt-3 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
         오늘 시운 자세히 →
       </Link>
@@ -346,8 +349,6 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         <>
           <TodayHero me={home.me} />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
-          <HourlyLuckCard days={home.me.week} yongshin={home.me.fortune.yongshin} needGoodToday className="mx-4 mt-3" />
-          <WeeklySiunCard days={home.me.week} count={3} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
