@@ -71,9 +71,9 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
         {/* 2026-10-26 큰 검은 버튼 → 배지 줄 오른쪽 작은 링크 */}
         <Link href="/siun" className="shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70">오늘 시운 자세히 →</Link>
       </div>
-      {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요(오늘 좋은 시간이 있을 때만), 2026-10-26 */}
+      {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요, 2026-10-26 */}
       <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
-      <HourlyLuckCard days={me.week} yongshin={f.yongshin} needGoodToday embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
+      <HourlyLuckCard days={me.week} yongshin={f.yongshin} embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
     </section>
   );
 }

@@ -14,9 +14,8 @@ const SUB_TITLE = "text-[13px] font-bold text-[var(--color-ink)]";
 
 const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
-/** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 내일·모레·글피 시간대. 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음.
- *  needGoodToday(홈): 오늘 남은 시간대에 최고·좋음이 하나도 없으면 카드를 그리지 않는다 (2026-10-26) */
-export function HourlyLuckCard({ days, yongshin, needGoodToday = false, embedded = false, className = "" }: { days: SiunDay[]; yongshin?: string; needGoodToday?: boolean; embedded?: boolean; className?: string }) {
+/** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 내일·모레·글피 시간대. 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음 */
+export function HourlyLuckCard({ days, yongshin, embedded = false, className = "" }: { days: SiunDay[]; yongshin?: string; embedded?: boolean; className?: string }) {
   const nowHour = new Date().getHours();
   const hours = days.slice(0, DAY_LABELS.length).flatMap((d, i) =>
     (d.weather?.hours ?? [])
@@ -25,7 +24,6 @@ export function HourlyLuckCard({ days, yongshin, needGoodToday = false, embedded
   );
   const relOf = (el: string) => (!yongshin ? "neutral" : el === yongshin ? "match" : GENERATES[el] === yongshin ? "generates" : "neutral");
   if (hours.length === 0) return null;
-  if (needGoodToday && !hours.some((h) => h.dateLabel === "오늘" && relOf(h.element) !== "neutral")) return null;
 
   return (
     <div className={`${embedded ? "" : CARD} ${className}`}>
