@@ -57,6 +57,7 @@ class HomeService:
                 "profile_id": str(p.id),
                 "name": p.name,
                 "character": self._character(natal, p, full=False),
+                "marks": self._marks(natal),
                 "compat": {k: compat[k] for k in ("score", "level", "headline")} if compat else None,
             })
 
@@ -71,6 +72,7 @@ class HomeService:
                 "name": me.name,
                 "character": self._character(my_natal, me, full=True),
                 "zodiac_branch": my_natal.saju[Pillar.年柱].branch.name,
+                "marks": self._marks(my_natal),
                 "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
                 "week": [{k: d.get(k) for k in _WEEK_KEYS} for d in week],
             },
@@ -90,6 +92,14 @@ class HomeService:
         ch = build_saju_character(natal, profile.gender.is_male)
         keys = ("key", "art_key", "title", "line") if full else ("key", "art_key")
         return {k: ch[k] for k in keys}
+
+    @staticmethod
+    def _marks(natal) -> dict:
+        """사주 한 입 카드의 "내 사람들에게도 있을까?"용 — 가진 신살(한글 이름)·십신(한자), 중복 없이 (2026-10-26)."""
+        return {
+            "sinsal": sorted({s.korean for _, s in natal.sinsal}),
+            "sipsin": sorted({s.name for _, s in natal.sipsin}),
+        }
 
     async def _get_next(self, me: Profile, others: list[Profile], week: list[dict], year: int) -> list[dict]:
         """서버가 아는 '이어서 할 것' 후보, 스펙 §3-3 순서(알림 켜기는 클라이언트가 맨 앞에 붙인다)."""

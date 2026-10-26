@@ -409,6 +409,7 @@ export interface HomeData {
     name: string;
     character: { key: string; art_key: string; title: string; line: string };
     zodiac_branch: string;
+    marks: { sinsal: string[]; sipsin: string[] };  // 가진 신살(한글)·십신(한자) — 사주 한 입 "내 사람들에게도 있을까?"
     fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal" | "yongshin">;
     week: Pick<DailyFortune, "date" | "total_score" | "level" | "weather">[];  // 오늘부터 7일 — 홈 시간대·주간 시운 카드
   } | null;
@@ -416,6 +417,7 @@ export interface HomeData {
     profile_id: string;
     name: string;
     character: { key: string; art_key: string };
+    marks: { sinsal: string[]; sipsin: string[] };
     compat: { score: number; level: "좋음" | "보통" | "주의"; headline: string } | null;
   }[];
   today: TodayData;

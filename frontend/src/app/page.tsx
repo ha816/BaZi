@@ -75,7 +75,13 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
 }
 
 // ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지
-function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canAdd: boolean; hasMe: boolean }) {
+// + 사주 한 입: 오늘의 신살·십신 하나 → "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴에 금테·✦ (2026-10-26)
+function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; canAdd: boolean; me: HomeData["me"]; date: string }) {
+  const [revealed, setRevealed] = useState(false);
+  const bite = biteOf(date);
+  const has = (m: { sinsal: string[]; sipsin: string[] } | undefined) => !!m?.[bite.field].includes(bite.mark);
+  const holders = people.filter((p) => has(p.marks));
+  const meHas = has(me?.marks);
   const best = people
     .filter((p) => p.compat?.level === "좋음")
     .sort((a, b) => (b.compat?.score ?? 0) - (a.compat?.score ?? 0))[0];
@@ -86,7 +92,7 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
         <Link href="/profile" className="text-xs text-[var(--color-ink-faint)]">관리</Link>
       </div>
       <div className="-mx-4 overflow-x-auto no-scrollbar">
-        <div className="flex gap-4 px-4 min-w-max pb-1">
+        <div className="flex gap-4 px-4 min-w-max pt-1.5 pb-1">
           {people.map((p) => {
             const badge = p.compat ? COMPAT_BADGE[p.compat.level] : null;
             return (
@@ -96,8 +102,11 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
                     src={charArtSrc(p.character.art_key, p.character.key)}
                     alt=""
                     onError={onCharArtError(p.character.key, FALLBACK_IMG)}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)]"
+                    className={`w-16 h-16 rounded-full object-cover border-2 bg-[var(--color-gold-faint)] transition-all ${revealed && has(p.marks) ? "border-[var(--color-gold)] ring-2 ring-[var(--color-gold-light)]" : "border-[var(--color-border-light)]"}`}
                   />
+                  {revealed && has(p.marks) && (
+                    <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[var(--color-gold)] text-white text-[10px] flex items-center justify-center" aria-label={`${bite.name} 있음`}>✦</span>
+                  )}
                   {badge && (
                     <span className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border text-[11px] font-bold flex items-center justify-center ${badge.cls}`} aria-label={`오늘 궁합 ${p.compat?.level}`}>
                       {badge.glyph}
@@ -118,11 +127,31 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
       </div>
       {people.length === 0 ? (
         <p className="mt-2 text-xs text-[var(--color-ink-faint)]">궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요</p>
-      ) : best && hasMe ? (
+      ) : best && me ? (
         <p className="mt-2 text-xs text-[var(--color-ink-light)] leading-relaxed break-keep">
           <span className="font-semibold text-emerald-700">♥ {best.name}님과</span> — {best.compat?.headline}
         </p>
       ) : null}
+
+      <div className="mt-3 pt-3 border-t border-[var(--color-border-light)]">
+        <BiteIntro bite={bite} />
+        {!revealed ? (
+          <button type="button" onClick={() => setRevealed(true)} className="mt-3 w-full flex items-center justify-between gap-2 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-left active:opacity-80">
+            <span className="text-[13px] font-semibold text-[var(--color-ink)] break-keep">
+              {bite.name}({bite.hanja}), {people.length ? "내 사람들에게도 있을까?" : "나에게도 있을까?"}
+            </span>
+            <span className="shrink-0 text-xs font-bold text-[var(--color-gold)]">확인하기 →</span>
+          </button>
+        ) : (
+          <p className="mt-3 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-[13px] text-[var(--color-ink)] leading-relaxed break-keep">
+            <span className="block text-[11px] text-[var(--color-ink-muted)] mb-0.5">{bite.name}({bite.hanja})</span>
+            {people.length > 0 && (holders.length
+              ? <><span className="font-semibold text-[var(--color-gold)]">✦ {holders.map((p) => `${p.name}님`).join("·")}</span>에게 있어요. </>
+              : <>오늘 내 사람들 중엔 없어요. </>)}
+            {me ? (meHas ? <span className="font-semibold">나에게도 있어요!</span> : <>나에게는 없어요.</>) : null}
+          </p>
+        )}
+      </div>
     </section>
   );
 }
@@ -136,11 +165,27 @@ const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; h
 ];
 const NEWS_DAYS = 30;
 
-/** 사주 한 입 — 만세력 섹션의 신살 9 + 십신 10을 날마다 하나씩(19일 주기) */
-const BITES = [
-  ...SINSAL_ORDER.map((name) => ({ kind: "신살(神殺)", name, hanja: SINSAL_INFO[name].hanja, tagline: SINSAL_INFO[name].tagline, desc: SINSAL_INFO[name].desc, img: `/kkachi/sinsal/sinsal_${name}.png` })),
-  ...Object.entries(SIPSIN_INFO).map(([hanja, v]) => ({ kind: "십신(十神)", name: v.korean, hanja, tagline: v.tagline, desc: v.desc, img: `/kkachi/sipsin/sipsin_${v.korean}.png` })),
+/** 사주 한 입 — 만세력 섹션의 신살 9 + 십신 10을 날마다 하나씩(19일 주기). field·mark = 홈 응답 marks에서 찾을 키 */
+type Bite = { kind: string; name: string; hanja: string; tagline: string; desc: string; img: string; field: "sinsal" | "sipsin"; mark: string };
+const BITES: Bite[] = [
+  ...SINSAL_ORDER.map((name) => ({ kind: "신살(神殺)", name, hanja: SINSAL_INFO[name].hanja, tagline: SINSAL_INFO[name].tagline, desc: SINSAL_INFO[name].desc, img: `/kkachi/sinsal/sinsal_${name}.png`, field: "sinsal" as const, mark: name })),
+  ...Object.entries(SIPSIN_INFO).map(([hanja, v]) => ({ kind: "십신(十神)", name: v.korean, hanja, tagline: v.tagline, desc: v.desc, img: `/kkachi/sipsin/sipsin_${v.korean}.png`, field: "sipsin" as const, mark: hanja })),
 ];
+const dayNoOf = (iso: string) => Math.floor(Date.parse(iso) / 86_400_000);
+const biteOf = (iso: string) => BITES[dayNoOf(iso) % BITES.length];
+
+function BiteIntro({ bite }: { bite: Bite }) {
+  return (
+    <div className="flex items-start gap-3">
+      <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+      <div className="flex-1 min-w-0 break-keep">
+        <p className="text-[10px] font-bold text-[var(--color-gold)]">사주 한 입 · {bite.kind}</p>
+        <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">{bite.name}({bite.hanja}) — {bite.tagline}</p>
+        <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
+      </div>
+    </div>
+  );
+}
 
 /** 띠 칸 테두리·라벨 — 관계 값(백엔드)에 따라 색만 고른다 */
 const ZODIAC_TONE: Record<string, string> = {
@@ -181,37 +226,31 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   );
 }
 
-function KkachiFeed({ today }: { today: TodayData }) {
-  const dayNo = Math.floor(Date.parse(today.date) / 86_400_000);
-  const news = KKACHI_NEWS.find((n) => dayNo - Math.floor(Date.parse(n.date) / 86_400_000) <= NEWS_DAYS);
-  const bite = BITES[dayNo % BITES.length];
+/** showBite: 비로그인만 — 로그인은 사주 한 입이 오늘 내 사람들 카드 안에 있다 (2026-10-26) */
+function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: boolean }) {
+  const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= NEWS_DAYS);
   const term = today.solar_term;
   const termWhen = term ? (term.days === 0 ? "오늘" : term.days === 1 ? "내일" : `${term.days}일 뒤`) : "";
 
   return (
     <section className="mt-3 px-4 space-y-3">
-      <div className={FEED_CARD}>
+      {(term || showBite || today.son_eomneun_nal) && <div className={FEED_CARD}>
         {term ? (
           <>
             <p className="text-[10px] font-bold text-[var(--color-gold)]">절기 · {termWhen}</p>
             <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
             <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
           </>
-        ) : (
-          <div className="flex items-start gap-3">
-            <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
-            <div className="flex-1 min-w-0 break-keep">
-              <p className="text-[10px] font-bold text-[var(--color-gold)]">사주 한 입 · {bite.kind}</p>
-              <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">{bite.name}({bite.hanja}) — {bite.tagline}</p>
-              <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
-              <Link href="/analysis" className="inline-block text-xs font-semibold text-[var(--color-gold)] mt-1.5">내 사주에도 있을까? →</Link>
-            </div>
-          </div>
-        )}
+        ) : showBite ? (
+          <>
+            <BiteIntro bite={biteOf(today.date)} />
+            <Link href="/analysis" className="inline-block text-xs font-semibold text-[var(--color-gold)] mt-2 ml-[68px]">내 사주에도 있을까? →</Link>
+          </>
+        ) : null}
         {today.son_eomneun_nal && (
-          <p className="text-xs text-[var(--color-ink-muted)] mt-2 pt-2 border-t border-[var(--color-border-light)]">👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
+          <p className={`text-xs text-[var(--color-ink-muted)] ${term || showBite ? "mt-2 pt-2 border-t border-[var(--color-border-light)]" : ""}`}>👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
         )}
-      </div>
+      </div>}
 
       {news && (
         <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
@@ -308,7 +347,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         </div>
       )}
       {!home.me && <TodayZodiacCard today={home.today} className="mx-4 mt-3" />}
-      <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} hasMe={!!home.me} />
+      <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} date={home.date} />
       <KkachiFeed today={home.today} />
     </>
   );
@@ -431,7 +470,7 @@ function GuestHome() {
       {today && (
         <>
           <TodayZodiacCard today={today} className="mx-4 mt-3" />
-          <KkachiFeed today={today} />
+          <KkachiFeed today={today} showBite />
         </>
       )}
       <VideoPost />

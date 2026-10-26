@@ -5,7 +5,9 @@ from uuid import uuid4
 from kkachi.application.home_service import HomeService
 from kkachi.application.report_builder import REPORT_PROMPT_VERSION
 from kkachi.container import Container
+from kkachi.domain.ganji import Sipsin
 from kkachi.domain.member import Member
+from kkachi.domain.natal import Sinsal
 from kkachi.domain.profile import Analysis, Profile
 from kkachi.domain.user import Gender
 
@@ -104,6 +106,10 @@ def test_me_has_character_and_today_fortune_people_have_face_and_compat():
     assert fortune.calls == [ME.id]  # 운세는 나만, 한 번
     assert [d["date"] for d in me["week"]] == [f"2026-10-{24 + i}" for i in range(7)]  # 주간 시운 7일
     assert set(me["week"][0]) == {"date", "total_score", "level", "weather"}
+    assert set(me["marks"]) == {"sinsal", "sipsin"} and me["marks"]["sipsin"]  # 사주 한 입 "내 사람들에게도 있을까?"
+    assert set(friend_marks := home["people"][1]["marks"]) == {"sinsal", "sipsin"}
+    assert set(friend_marks["sinsal"]) <= {s.korean for s in Sinsal}  # 프론트 SINSAL_INFO 키와 같은 한글 이름
+    assert set(friend_marks["sipsin"]) <= {s.name for s in Sipsin}  # 프론트 SIPSIN_INFO 키와 같은 한자
     assert me["zodiac_branch"] == "午"  # 1990 경오년생 — 까치 소식 '오늘의 띠'에 내 띠 표시
     assert home["today"]["date"] == "2026-10-24" and len(home["today"]["zodiac"]) == 12
 
