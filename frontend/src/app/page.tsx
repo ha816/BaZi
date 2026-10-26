@@ -127,7 +127,7 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
   );
 }
 
-// ③ 까치 소식 (specs/home §3-5) — 새소식 · 사주 한 입, 종류마다 한 장 (오늘의 띠는 TodayZodiacCard)
+// ③ 까치 소식 (specs/home §3-5) — 사주 한 입 · 새소식(맨 아래, 노출 조건은 열린 결정), 종류마다 한 장 (오늘의 띠는 TodayZodiacCard)
 
 /** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
 const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
@@ -190,18 +190,6 @@ function KkachiFeed({ today }: { today: TodayData }) {
 
   return (
     <section className="mt-3 px-4 space-y-3">
-
-      {news && (
-        <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
-          <span className="text-2xl shrink-0">{news.emoji}</span>
-          <span className="flex-1 min-w-0 break-keep">
-            <span className="block text-[10px] font-bold text-[var(--color-gold)]">새소식 · {news.date.slice(5).replace("-", ".")}</span>
-            <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug mt-0.5">{news.title}</span>
-            <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
-          </span>
-        </Link>
-      )}
-
       <div className={FEED_CARD}>
         {term ? (
           <>
@@ -224,6 +212,17 @@ function KkachiFeed({ today }: { today: TodayData }) {
           <p className="text-xs text-[var(--color-ink-muted)] mt-2 pt-2 border-t border-[var(--color-border-light)]">👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
         )}
       </div>
+
+      {news && (
+        <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
+          <span className="text-2xl shrink-0">{news.emoji}</span>
+          <span className="flex-1 min-w-0 break-keep">
+            <span className="block text-[10px] font-bold text-[var(--color-gold)]">새소식 · {news.date.slice(5).replace("-", ".")}</span>
+            <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug mt-0.5">{news.title}</span>
+            <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
+          </span>
+        </Link>
+      )}
     </section>
   );
 }
