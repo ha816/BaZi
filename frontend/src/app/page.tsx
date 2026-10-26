@@ -36,7 +36,7 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 /** 홈 카드 공통 틀(CLAUDE.md 카드 규약) — 칸 소제목 없이 카드마다 안에 제목 */
 const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
 
-// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 버튼 바로 위 배지 줄로만
+// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, 그 줄 오른쪽에 [오늘 시운 자세히 →]
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
   const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
@@ -60,19 +60,20 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
           <MorningBrief data={f} />
         </div>
       </div>
-      <div className="flex items-center gap-1.5 flex-wrap mt-3.5">
-        <Badge cls={level.color}>{level.icon} {f.level}</Badge>
-        <Badge cls="bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]">{f.total_score}점</Badge>
-        <Badge cls={`${el.bg} text-[var(--color-ink-muted)] border-[var(--color-border-light)]`}>{el.emoji} {f.day_element}의 날</Badge>
-        {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
-        {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
+      <div className="flex items-center gap-2 mt-3.5">
+        <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
+          <Badge cls={level.color}>{level.icon} {f.level}</Badge>
+          <Badge cls="bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]">{f.total_score}점</Badge>
+          <Badge cls={`${el.bg} text-[var(--color-ink-muted)] border-[var(--color-border-light)]`}>{el.emoji} {f.day_element}의 날</Badge>
+          {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
+          {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
+        </div>
+        {/* 2026-10-26 큰 검은 버튼 → 배지 줄 오른쪽 작은 링크 */}
+        <Link href="/siun" className="shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70">오늘 시운 자세히 →</Link>
       </div>
       {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요(오늘 좋은 시간이 있을 때만), 2026-10-26 */}
       <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
       <HourlyLuckCard days={me.week} yongshin={f.yongshin} needGoodToday embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
-      <Link href="/siun" className="block mt-3 text-center py-2.5 rounded-xl bg-[var(--color-ink)] text-[var(--color-ivory)] text-sm font-semibold active:opacity-80">
-        오늘 시운 자세히 →
-      </Link>
     </section>
   );
 }
