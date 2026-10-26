@@ -9,8 +9,7 @@ const GENERATES: Record<string, string> = { 木: "火", 火: "土", 土: "金", 
 const DAY_LABELS = ["오늘", "내일", "모레", "글피"];
 const CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
 const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
-// embedded: 다른 카드(홈 오늘의 나) 안에 넣을 때 — 테두리 없이, 제목은 소제목 크기 (2026-10-26)
-const SUB_TITLE = "text-[13px] font-bold text-[var(--color-ink)]";
+// embedded: 다른 카드(홈 오늘의 나) 안에 넣을 때 — 테두리·제목 없이 (2026-10-26)
 
 const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
@@ -27,8 +26,8 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
 
   return (
     <div className={`${embedded ? "" : CARD} ${className}`}>
-      <div className={`flex items-center justify-between ${embedded ? "mb-2" : "mb-3"}`}>
-        <h2 className={embedded ? SUB_TITLE : TITLE}>이 시간대가 좋아요</h2>
+      <div className={`flex items-center ${embedded ? "justify-end mb-1" : "justify-between mb-3"}`}>
+        {!embedded && <h2 className={TITLE}>이 시간대가 좋아요</h2>}
         {yongshin && (
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-emerald-600 font-semibold">최고 = {yongshin}</span>
@@ -71,7 +70,7 @@ export function WeeklySiunCard({ days, count = 7, embedded = false, className = 
 
   return (
     <div className={`${embedded ? "" : `${CARD} pb-1`} ${className}`}>
-      <h2 className={`${embedded ? SUB_TITLE : TITLE} mb-1`}>주간 시운</h2>
+      {!embedded && <h2 className={`${TITLE} mb-1`}>주간 시운</h2>}
       <div className="divide-y divide-[var(--color-border-light)]">
         {rows.map((day) => {
           const w = day.weather!;
