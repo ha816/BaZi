@@ -102,6 +102,8 @@ def test_me_has_character_and_today_fortune_people_have_face_and_compat():
     assert me["character"]["art_key"] == f"{me['character']['key']}_여"  # 여성판 그림
     assert me["fortune"]["headline"].startswith("나님, ") and me["fortune"]["day_element"] == "火"
     assert fortune.calls == [ME.id]  # 운세는 나만, 한 번
+    assert me["zodiac_branch"] == "午"  # 1990 경오년생 — 까치 소식 '오늘의 띠'에 내 띠 표시
+    assert home["today"]["date"] == "2026-10-24" and len(home["today"]["zodiac"]) == 12
 
     # 기본 프로필을 뺀 내 사람만, 리포 순서 그대로 — 다른 회원의 프로필은 없다
     assert [p["name"] for p in home["people"]] == ["엄마", "친구"]
@@ -116,6 +118,7 @@ def test_no_self_profile_means_no_me_and_no_compat():
     svc, fortune = _svc([MOM])
     home = _home(svc)
     assert home["me"] is None and home["next"] == []
+    assert home["today"]["day_pillar"]  # 기본 프로필이 없어도 까치 소식은 있다
     assert home["people"][0]["compat"] is None and home["people"][0]["character"]["key"]
     assert fortune.calls == []
 

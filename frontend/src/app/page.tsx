@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AnalysisInput } from "@/types/analysis";
-import { getHome, type HomeData } from "@/lib/api";
+import { getHome, getToday, type HomeData, type TodayData } from "@/lib/api";
 import { detectLocation, type LocationInfo } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
@@ -14,6 +14,7 @@ import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { charArtSrc, onCharArtError } from "@/lib/characterArt";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
+import { SINSAL_INFO, SINSAL_ORDER, SIPSIN_INFO } from "@/components/tabs/natal/data";
 
 // 홈 — 까치가 물어다 준 오늘 (specs/home/index.md, 2026-10-24). 로그인은 GET /members/{id}/home 한 번
 
@@ -121,6 +122,105 @@ function PeopleRow({ people, canAdd, hasMe }: { people: HomeData["people"]; canA
   );
 }
 
+// ③ 까치 소식 (specs/home §3-5) — 공지 · 오늘의 띠 · 사주 한 입, 종류마다 한 장
+
+/** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
+const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
+  { date: "2026-10-25", emoji: "🪪", title: "사주 분석도 궁합처럼 골라서", body: "저장한 프로필을 카드에서 바로 고르거나, 직접 입력해 저장 없이 바로 볼 수 있어요.", href: "/analysis" },
+  { date: "2026-10-18", emoji: "💞", title: "궁합에 시운 탭이 생겼어요", body: "두 분의 오늘·내일·모레 궁합과 2주 안에 함께하기 좋은 날을 알려 드려요.", href: "/compatibility" },
+];
+const NEWS_DAYS = 30;
+
+/** 사주 한 입 — 만세력 섹션의 신살 9 + 십신 10을 날마다 하나씩(19일 주기) */
+const BITES = [
+  ...SINSAL_ORDER.map((name) => ({ kind: "신살(神殺)", name, hanja: SINSAL_INFO[name].hanja, tagline: SINSAL_INFO[name].tagline, desc: SINSAL_INFO[name].desc, img: `/kkachi/sinsal/sinsal_${name}.png` })),
+  ...Object.entries(SIPSIN_INFO).map(([hanja, v]) => ({ kind: "십신(十神)", name: v.korean, hanja, tagline: v.tagline, desc: v.desc, img: `/kkachi/sipsin/sipsin_${v.korean}.png` })),
+];
+
+/** 띠 칸 테두리·라벨 — 관계 값(백엔드)에 따라 색만 고른다 */
+const ZODIAC_TONE: Record<string, string> = {
+  "나": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
+  "삼합": "border-emerald-300 bg-emerald-50",
+  "육합": "border-emerald-300 bg-emerald-50",
+  "충": "border-amber-300 bg-amber-50",
+  "원진": "border-amber-300 bg-amber-50",
+  "보통": "border-[var(--color-border-light)] bg-white",
+};
+
+const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
+
+function KkachiFeed({ today, myBranch }: { today: TodayData; myBranch?: string }) {
+  const dayNo = Math.floor(Date.parse(today.date) / 86_400_000);
+  const news = KKACHI_NEWS.find((n) => dayNo - Math.floor(Date.parse(n.date) / 86_400_000) <= NEWS_DAYS);
+  const bite = BITES[dayNo % BITES.length];
+  const term = today.solar_term;
+  const termWhen = term ? (term.days === 0 ? "오늘" : term.days === 1 ? "내일" : `${term.days}일 뒤`) : "";
+
+  return (
+    <section className="mt-7 px-4 space-y-3">
+      <h2 className="font-heading text-base font-bold text-[var(--color-ink)]">까치 소식</h2>
+
+      {news && (
+        <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
+          <span className="text-2xl shrink-0">{news.emoji}</span>
+          <span className="flex-1 min-w-0 break-keep">
+            <span className="block text-[10px] font-bold text-[var(--color-gold)]">새소식 · {news.date.slice(5).replace("-", ".")}</span>
+            <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug mt-0.5">{news.title}</span>
+            <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
+          </span>
+        </Link>
+      )}
+
+      <div className={FEED_CARD}>
+        <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 띠</p>
+        <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+          {today.animal.emoji} 오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
+        </p>
+        <div className="grid grid-cols-6 gap-1.5 mt-3">
+          {today.zodiac.map((z) => (
+            <div key={z.branch} className={`relative flex flex-col items-center rounded-xl border py-1.5 ${ZODIAC_TONE[z.relation]}`}>
+              <span className="text-xl leading-none">{z.emoji}</span>
+              <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{z.korean}</span>
+              {z.branch === myBranch && (
+                <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
+          <span><span className="text-emerald-600">●</span> 기운 받는 띠</span>
+          <span><span className="text-amber-500">●</span> 조심할 띠</span>
+          <span><span className="text-[var(--color-gold)]">●</span> 오늘의 주인공</span>
+        </div>
+        <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-2 break-keep">{today.line}</p>
+      </div>
+
+      <div className={FEED_CARD}>
+        {term ? (
+          <>
+            <p className="text-[10px] font-bold text-[var(--color-gold)]">절기 · {termWhen}</p>
+            <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
+            <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
+          </>
+        ) : (
+          <div className="flex items-start gap-3">
+            <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+            <div className="flex-1 min-w-0 break-keep">
+              <p className="text-[10px] font-bold text-[var(--color-gold)]">사주 한 입 · {bite.kind}</p>
+              <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">{bite.name}({bite.hanja}) — {bite.tagline}</p>
+              <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
+              <Link href="/analysis" className="inline-block text-xs font-semibold text-[var(--color-gold)] mt-1.5">내 사주에도 있을까? →</Link>
+            </div>
+          </div>
+        )}
+        {today.son_eomneun_nal && (
+          <p className="text-xs text-[var(--color-ink-muted)] mt-2 pt-2 border-t border-[var(--color-border-light)]">👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // 불러오는 동안 — ①과 같은 자리·크기, ② 얼굴 원 3개
 function HomeSkeleton() {
   return (
@@ -197,6 +297,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         </div>
       )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} hasMe={!!home.me} />
+      <KkachiFeed today={home.today} myBranch={home.me?.zodiac_branch} />
     </>
   );
 }
@@ -306,13 +407,16 @@ function VideoPost() {
 
 function GuestHome() {
   const [location, setLocation] = useState<LocationInfo | null>(null);
+  const [today, setToday] = useState<TodayData | null>(null);
   useEffect(() => {
     track("home_view", { logged_in: false });
     detectLocation().then((loc) => { if (loc) setLocation(loc); }).catch(() => {});
+    getToday().then(setToday).catch(() => {}); // 실패하면 까치 소식 칸을 숨긴다
   }, []);
   return (
     <>
       <GuestHero location={location} />
+      {today && <KkachiFeed today={today} />}
       <VideoPost />
     </>
   );

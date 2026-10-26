@@ -2,6 +2,7 @@ from datetime import date
 from uuid import UUID
 
 from kkachi.application.compatibility_daily import compute_daily_compat
+from kkachi.application.fortune_rules import build_today
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.analysis_port import AnalysisPort
@@ -10,6 +11,7 @@ from kkachi.application.port.member_port import MemberPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.report_builder import REPORT_PROMPT_VERSION, cached_report_text
 from kkachi.application.saju_character import build_saju_character
+from kkachi.domain.ganji import Pillar
 from kkachi.domain.profile import Profile
 from kkachi.domain.user import User
 
@@ -17,7 +19,7 @@ _FORTUNE_KEYS = ("headline", "action", "caution", "total_score", "level", "day_e
 
 
 class HomeService:
-    """홈 한 장(specs/home/index.md §2-1) — 오늘의 나 · 오늘 내 사람들 · 이어서 할 것 후보를 요청 한 번에.
+    """홈 한 장(specs/home/index.md §2-1) — 오늘의 나 · 오늘 내 사람들 · 까치 소식(today) · 이어서 할 것 후보를 요청 한 번에.
     캐릭터·오늘의 궁합은 natal만으로 계산한다(한 사람 1ms 미만) — analyses 캐시를 읽거나 쓰지 않는다."""
 
     def __init__(
@@ -58,7 +60,7 @@ class HomeService:
             })
 
         if me is None:
-            return {"date": today.isoformat(), "me": None, "people": people, "next": []}
+            return {"date": today.isoformat(), "me": None, "people": people, "today": build_today(today), "next": []}
 
         week = await self._fortune.get_forecast(me.id, days=7, start_date=today)
         return {
@@ -67,9 +69,11 @@ class HomeService:
                 "profile_id": str(me.id),
                 "name": me.name,
                 "character": self._character(my_natal, me, full=True),
+                "zodiac_branch": my_natal.saju[Pillar.年柱].branch.name,
                 "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
             },
             "people": people,
+            "today": build_today(today),
             "next": await self._get_next(me, others, week, today.year),
         }
 

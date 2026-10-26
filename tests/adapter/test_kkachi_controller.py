@@ -48,3 +48,10 @@ def test_share_three_pillars_when_hour_unknown(client):
     body = {"birth_dt": "1990-10-10T12:00:00", "gender": "female", "hour_unknown": True, "name": "가"}
     card = client.get(f"/kkachi/shares/{client.post('/kkachi/shares', json=body).json()['share_id']}").json()
     assert card["hour_unknown"] is True and len(card["pillars"]) == 3
+
+
+def test_today_is_public(client):
+    r = client.get("/kkachi/today")
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["zodiac"]) == 12 and body["line"].endswith(("요.",))

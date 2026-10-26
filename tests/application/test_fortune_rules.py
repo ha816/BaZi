@@ -1,7 +1,12 @@
 from datetime import date, datetime, timedelta
 
 from kkachi.adapter.outer.natal_adapter import NatalAdapter
-from kkachi.application.fortune_rules import BRANCH_CLASHES, BRANCH_COMBINES, compute_fortune
+from kkachi.application.fortune_rules import (
+    BRANCH_CLASHES,
+    BRANCH_COMBINES,
+    build_today,
+    compute_fortune,
+)
 from kkachi.domain.fortune import Fortune
 from kkachi.domain.ganji import Oheng, Pillar
 from kkachi.domain.user import Gender, User
@@ -103,3 +108,22 @@ def test_day_pillar_never_geocodes(monkeypatch):
     monkeypatch.setattr("geopy.geocoders.Nominatim.geocode", _boom)
 
     assert compute_fortune(NATAL, START).level in LEVELS
+
+
+def test_today_zodiac_relations_and_line():
+    t = build_today(date(2026, 10, 26))  # 계유(癸酉)일 — 검은 닭
+    assert t["day_pillar"] == "癸酉" and t["day_kor"] == "계유"
+    assert t["animal"] == {"branch": "酉", "korean": "닭", "emoji": t["animal"]["emoji"], "color": "검은"}
+    rel = {z["branch"]: z["relation"] for z in t["zodiac"]}
+    assert [z["branch"] for z in t["zodiac"]][0] == "子" and len(rel) == 12
+    assert rel["酉"] == "나" and rel["丑"] == rel["巳"] == "삼합" and rel["辰"] == "육합"
+    assert rel["卯"] == "충" and rel["寅"] == "원진"
+    assert t["line"] == "닭과 삼합인 소·뱀, 육합인 용 띠가 기운을 받는 날이에요. 토끼·호랑이 띠는 한 박자 쉬어 가세요."
+
+
+def test_today_solar_term_within_three_days():
+    assert build_today(date(2026, 11, 4))["solar_term"]["days"] == 3  # 입동 11-07
+    assert build_today(date(2026, 11, 7))["solar_term"] == {
+        "name": "입동(立冬)", "tip": build_today(date(2026, 11, 7))["solar_term"]["tip"], "date": "2026-11-07", "days": 0,
+    }
+    assert build_today(date(2026, 11, 3))["solar_term"] is None  # 4일 전

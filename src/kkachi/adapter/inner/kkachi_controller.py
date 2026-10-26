@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from kkachi.adapter.inner.streaming import text_stream
 from kkachi.application.ai_report_service import AiReportService
+from kkachi.application.fortune_rules import build_today
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.container import Container
@@ -28,6 +29,12 @@ class AnalysisRequest(BaseModel):
 
 def _make_user(req: AnalysisRequest) -> User:
     return User(name="", gender=req.gender, birth_dt=req.birth_dt, city=req.city, longitude=req.longitude, hour_unknown=req.hour_unknown)
+
+
+@kkachi_router.get("/today")
+async def get_today():
+    """홈 '까치 소식' 칸의 오늘 띠·절기 — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
+    return build_today(date.today())
 
 
 @kkachi_router.post("/interpret")

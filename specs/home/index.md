@@ -3,11 +3,11 @@
 | | |
 |---|---|
 | 상태 | 살아있음 — 2026-10-24 컨셉 A로 다시 쓰고 같은 날 구현(인스타 피드 StoryTray·FortunePost×N·WeatherPost 제거) |
-| 화면 | `/` — 비로그인 "내 캐릭터 찾기" + 퀵스타트 / 로그인 "오늘의 나 · 오늘 내 사람들" |
+| 화면 | `/` — 비로그인 "내 캐릭터 찾기" + 퀵스타트 + 까치 소식 / 로그인 "오늘의 나 · 오늘 내 사람들 · 까치 소식" |
 | 관련 코드 | `frontend/src/app/page.tsx` · 재사용 `MorningBrief.tsx` · `SajuCharacterCard.tsx`(RevealGate) · `compatibility/CompatTotal.tsx`(실루엣) · `lib/characterArt.ts` · `lib/elementColors.ts`(`ELEMENT_META`·`FORECAST_LEVEL_META`) · `PushSubscribeButton.tsx`·`lib/push.ts` · `ShareButton.tsx` · `AnalysisForm.tsx`(quick) |
-| 관련 API | `GET /members/{id}/home`(**신규**, §2-1) · 비로그인은 API 호출 없음 |
+| 관련 API | `GET /members/{id}/home`(§2-1) · 비로그인은 `GET /kkachi/today`(까치 소식, §3-5) |
 | 관련 문서 | `docs/research/home_홈화면.md`(근거·벤치마크·데이터) · `specs/analysis/character.md`(캐릭터 20유형·그림 키) · `specs/siun/index.md` · `docs/ROADMAP.md` R4(홈 한 문장·스트릭 없음)·R5(오늘의 궁합)·V1(홈 퀵스타트)·V3(첫 화면에 설문 없음)·V8(이 개편) |
-| 마지막 확인 | 2026-10-24 — 390px Playwright(시스템 Chrome)로 로그인·프로필 4개 / 기본 프로필만 / 프로필 없음 / API 실패(없는 회원) / 비로그인 다섯 상태와 AI 풀이 카드 → `/analysis?tab=ai` 확인, 가로 스크롤 없음. 알림 카드는 로컬에 VAPID가 없어 화면으로는 못 봄(코드 읽기) |
+| 마지막 확인 | 2026-10-26 — 까치 소식 칸 390px 로그인·비로그인 스크린샷. 2026-10-24 — 390px Playwright(시스템 Chrome)로 로그인·프로필 4개 / 기본 프로필만 / 프로필 없음 / API 실패(없는 회원) / 비로그인 다섯 상태와 AI 풀이 카드 → `/analysis?tab=ai` 확인, 가로 스크롤 없음. 알림 카드는 로컬에 VAPID가 없어 화면으로는 못 봄(코드 읽기) |
 
 ## 1. 목적
 
@@ -27,12 +27,12 @@
 
 | 상태 | 보이는 것 |
 |---|---|
-| 비로그인 | 날짜 줄 → **내 캐릭터 찾기 히어로**(§3-4) → 퀵스타트 폼 |
+| 비로그인 | 날짜 줄 → **내 캐릭터 찾기 히어로**(§3-4) → 퀵스타트 폼 → 까치 소식(§3-5) → 소개 영상 |
 | 로그인 · 프로필 없음 | 날짜 줄 → "내 사주를 등록하면 까치가 매일 아침 소식을 물어다 줘요" 카드 + [내 사주 등록] → `/profile` |
-| 로그인 · 기본 프로필만 | ① 오늘의 나 → ② 오늘 내 사람들(빈 줄: "+ 사람 추가" 한 칸과 "궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요") |
-| 로그인 · 여러 프로필 | ① → ②(기본 프로필을 뺀 사람들) |
+| 로그인 · 기본 프로필만 | ① 오늘의 나 → ② 오늘 내 사람들(빈 줄: "+ 사람 추가" 한 칸과 "궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요") → ③ 까치 소식 |
+| 로그인 · 여러 프로필 | ① → ②(기본 프로필을 뺀 사람들) → ③ 까치 소식 |
 | 불러오는 중 | ①의 자리·크기를 그대로 둔 스켈레톤(그림 원·말풍선 세 줄) + ② 얼굴 원 3개. 레이아웃이 밀리지 않는다 |
-| 묶음 API 실패 | ① 자리에 "까치가 소식을 가져오지 못했어요" + [다시 시도]. ②는 숨긴다 |
+| 묶음 API 실패 | ① 자리에 "까치가 소식을 가져오지 못했어요" + [다시 시도]. ②③은 숨긴다 |
 
 - **기본 프로필** = `is_self` 프로필(CLAUDE.md "기본 프로필"). ①은 항상 기본 프로필이다. 다른 사람의 오늘은 ②에서 그 사람을 눌러 간다.
 - **이벤트**: `home_view{logged_in, profiles?}`(지금과 같음). 새 이벤트는 열린 결정(§6).
@@ -47,6 +47,7 @@
   me: {
     profile_id, name,
     character: { key, art_key, title, line },              // build_saju_character(natal) — 분석 결과의 natal.character와 같은 값
+    zodiac_branch: "巳",                                    // 내 년지(띠) — ③ 오늘의 띠에 "나" 표시 (2026-10-26)
     fortune: { headline, action, caution, total_score, level, day_element,
                solar_term, son_eomneun_nal }                // FortuneService.get_forecast(7일)[0] (fortunes 캐시)
   } | null,
@@ -55,6 +56,7 @@
       character: { key, art_key },
       compat: { score, level, headline } | null }           // compute_daily_compat(나, 그 사람, 오늘) — level 좋음·보통·주의, me 없으면 null
   ],
+  today: { … },                                             // §3-5 까치 소식 — GET /kkachi/today와 같은 값, 기본 프로필이 없어도 있음
   next: [                                                   // §3-3 후보 — 화면 노출 없음(2026-10-26 ③ 제거), API에는 남겨 둠
     { kind: "good_day", date, action }                      // 내일~6일 뒤 중 level "좋은 날" 첫 날
     { kind: "compat", profile_id, name }                    // 올해 compatibilities 캐시가 없는 첫 사람
@@ -90,7 +92,7 @@
 - 줄 끝 칸 "+ 사람 추가" → `/profile`. 프로필이 10개면 이 칸 없음
 - 얼굴 줄 아래 한 줄: 오늘 궁합이 가장 좋은 사람의 `headline`을 "{이름}님과 — {headline}"으로(좋음인 사람이 없으면 이 줄 없음)
 
-### 3-3. ③ 이어서 할 것 — 화면에서 뺌 (2026-10-26)
+### 3-3. (옛 ③) 이어서 할 것 — 화면에서 뺌 (2026-10-26, 자리는 §3-5 까치 소식이 이음)
 
 홈을 덜 번잡하게 하려고 섹션을 없앴다. 아래 표는 묶음 API `next`가 지금도 계산하는 후보의 기록이다(되살리거나 다른 자리에 쓸 때 참고). 알림 켜기는 `/siun`의 `PushSubscribeButton`에 그대로 있다.
 
@@ -100,6 +102,25 @@
 | 2 | `good_day` | 서버: 나의 앞으로 7일 중 `level == "좋은 날"`인 첫 날이 내일 이후 | "{M}월 {D}일 {요일}이 좋은 날이에요" + 그날 `action` (날짜를 함께 — 토요일에 "이번 주 월요일"이라 하지 않게) | `/siun` |
 | 3 | `compat` | 서버: ②의 사람 중 올해 `compatibilities` 캐시가 없는 첫 사람 | "{이름}님과 궁합을 아직 안 봤어요" | `/compatibility?p2={id}` |
 | 4 | `ai_report` | 서버: 기본 프로필 올해 analyses에 지금 프롬프트 버전 `ai_report` 없음 | "까치가 쓴 내 사주 이야기, 한 편 읽어 볼래요?" | `/analysis?tab=ai` — 기본 프로필이 골라진 폼, [분석 시작] 한 번이면 AI 풀이 탭 |
+
+### 3-5. ③ 까치 소식 (2026-10-26)
+
+②(비로그인은 퀵스타트 폼) 아래 소제목 "까치 소식"과 카드 세 장까지, **종류마다 한 장**. 재미와 새소식을 나누는 자리 — 매일 바뀐다.
+
+1. **새소식** — 코드 안 목록 `KKACHI_NEWS`(`app/page.tsx`, 맨 위가 최신)에서 오늘로부터 30일 안의 가장 최근 하나. 없으면 카드 없음. 누르면 그 기능 화면으로. 운영자가 맨 위에 한 줄 더하면 올라간다
+2. **오늘의 띠** — "{이모지} 오늘은 {계유}({癸酉})일 — {검은} {닭}의 날"(천간 오행 색: 木 푸른·火 붉은·土 누런·金 흰·水 검은) + 12띠 격자(6×2, 子부터). 칸 색은 오늘 일지와의 관계: 삼합·육합 초록 "기운 받는 띠", 충·원진 주황 "조심할 띠", 같은 띠 금색 "오늘의 주인공". 기본 프로필이 있으면 내 띠 칸에 "나" 배지. 아래 한 줄은 백엔드 `line`
+3. **사주 한 입** — 오늘~3일 뒤에 절기가 있으면 절기 카드("내일은 입동(立冬)" + `SOLAR_TERMS` 팁), 아니면 상식 카드: 만세력 섹션의 신살 9종(`SINSAL_INFO`)·십신 10종(`SIPSIN_INFO`)을 날짜 순번으로 하나씩(19일 주기) — 그림·이름(한자)·한 줄·설명 + [내 사주에도 있을까? →] `/analysis`. 손없는 날이면 카드 아래 👻 한 줄
+
+`GET /kkachi/today`(로그인 불필요) = `fortune_rules.build_today(오늘)`:
+```
+{ date, day_pillar: "癸酉", day_kor: "계유",
+  animal: { branch, korean, emoji, color: "검은" },
+  zodiac: [{ branch, korean, emoji, relation: 나|삼합|육합|충|원진|보통 } ×12],
+  line: "닭과 삼합인 소·뱀, 육합인 용 띠가 기운을 받는 날이에요. 토끼·호랑이 띠는 한 박자 쉬어 가세요.",
+  solar_term: { name, tip, date, days } | null,   // 오늘~3일 뒤 첫 절기
+  son_eomneun_nal }
+```
+- 띠 관계는 `zodiac_meta.relation_of`(분석 십이지신 탭과 같은 표), 절기·손없는 날은 일진(`compute_fortune`)과 같은 함수.
 
 ### 3-4. 비로그인 — 내 캐릭터 찾기
 
@@ -113,8 +134,8 @@
 ## 4. 규칙
 
 **한다**
-- 백엔드 호출은 로그인 홈에서 `GET /members/{id}/home` 1회. 비로그인은 0회(위치 감지 `ipapi.co`는 퀵스타트 폼이 쓰던 대로).
-- 문장은 백엔드가 준 그대로(`headline`·`action`·`caution`·`compat.headline`). 이름 접두(`{name}님, `)도 백엔드 것.
+- 백엔드 호출은 로그인 홈에서 `GET /members/{id}/home` 1회. 비로그인은 `GET /kkachi/today` 1회(2026-10-26 — 까치 소식; 실패하면 그 칸만 숨김. 위치 감지 `ipapi.co`는 퀵스타트 폼이 쓰던 대로).
+- 문장은 백엔드가 준 그대로(`headline`·`action`·`caution`·`compat.headline`·`today.line`). 까치 소식의 새소식·사주 한 입은 표시용 콘텐츠(공지 목록·만세력 표시 메타)라 프론트에 둔다. 이름 접두(`{name}님, `)도 백엔드 것.
 - 캐릭터 그림은 `art_key` → 유형 키 → 까치 그림 순 폴백(히어로는 오늘 레벨 까치, 사람 줄은 기본 까치). 그림이 없어 칸이 비지 않는다.
 - 렌더되지 않는 옛 코드(`WeatherPost`·`HourlyRow`·`getWeather` import·`weatherCity`·StoryTray `activeId`)는 이 개편에서 지운다.
 
@@ -145,6 +166,10 @@
 13. 로그인 · 기본 프로필만이면 ②에 "+ 사람 추가" 한 칸과 안내 문장만 있다.
 14. 불러오는 동안 스켈레톤이 ① 카드와 같은 높이를 차지해, 데이터가 들어와도 아래 내용이 밀리지 않는다.
 15. 백엔드 테스트(`tests/application/test_home_service.py`·`tests/adapter/test_profile_controller.py`, 2026-10-24 통과): `GET /members/{id}/home`은 다른 회원의 프로필을 돌려주지 않고, 기본 프로필이 없으면 `me: null`·`next: []`, 회원이 없으면 404다. 여성 프로필의 `art_key`는 `{key}_여`, `good_day`는 오늘이 아닌 내일 이후 첫 좋은 날, 옛 프롬프트 버전 AI 풀이는 없는 것으로 친다.
+16. ② 아래 "까치 소식" 칸에 카드가 3장 이하이고 종류(새소식·오늘의 띠·사주 한 입)마다 1장이다. 오늘로부터 30일이 지난 새소식만 있으면 새소식 카드가 없다.
+17. 오늘의 띠 카드에 12띠가 子부터 6×2로 있고, 기본 프로필의 띠 칸에만 "나" 배지가 있다. 한 줄 문장은 `today.line`과 같다.
+18. 오늘~3일 뒤에 절기가 있으면 사주 한 입 자리에 절기 카드가, 없으면 신살·십신 상식 카드가 있다(백엔드 테스트: 입동 11-07 기준 11-04는 `days: 3`, 11-03은 `null`).
+19. 비로그인 홈도 퀵스타트 폼 아래에 까치 소식 칸이 있고, 백엔드 요청은 `/kkachi/today` 1회다.
 
 ## 6. 열린 결정
 
@@ -158,6 +183,7 @@
 
 ## 7. 변경 이력
 
+- 2026-10-26 — ③ 까치 소식 칸 신설(새소식 `KKACHI_NEWS` · 오늘의 띠 · 사주 한 입/절기). `GET /kkachi/today` 신설, 홈 응답에 `today`·`me.zodiac_branch`. 비로그인 백엔드 호출 0 → 1. 수용 기준 16~19
 - 2026-10-26 — 번잡함 덜기: ① 오늘의 나의 [공유] 버튼 제거(시운 공유는 `/siun` 헤더에 그대로, [오늘 시운 자세히 →]가 한 줄 폭) · ③ 이어서 할 것 섹션 제거(알림 켜기는 `/siun`에). 묶음 API `next`는 남겨 둠(화면 노출 없음). 수용 기준 8·9 교체
 - 2026-10-24 — 히어로 캐릭터 그림의 마지막 대체를 오늘 레벨 까치로(`FORECAST_LEVEL_META[level].image`, good·caution은 원본에서 만든 WebP — 원본이 `originals/`로 옮겨져 링크가 깨져 있었다)
 - 2026-10-24 — 홈 화면 구현(`app/page.tsx` 다시 씀: TodayHero·PeopleRow·NextCards·GuestHero, 옛 피드·날씨 코드 삭제). 구현하며 정한 것: 날짜는 머리줄에만(히어로 윗줄은 배지 + "{오행}의 날"), 좋은 날 카드는 날짜까지("10월 26일 월요일이"), 소개 영상은 비로그인 맨 아래에만, 말풍선은 어절 단위 줄바꿈(`break-keep`). `MorningBrief` prop을 쓰는 네 필드로 좁힘

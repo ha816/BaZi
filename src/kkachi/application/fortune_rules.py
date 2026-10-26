@@ -1,11 +1,12 @@
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from lunardate import LunarDate
 from sajupy import calculate_saju as _sajupy_calculate
 
 from kkachi.application.util.sipsin_meta import sipsin_korean
 from kkachi.application.util.util import josa, year_to_ganji
+from kkachi.application.util.zodiac_meta import BRANCH_ORDER, relation_of, zodiac_info
 from kkachi.domain.fortune import Fortune
 from kkachi.domain.ganji import OHENG_GUIDE, Branch, Oheng, Pillar, Sipsin, StemBranch
 from kkachi.domain.natal import NatalInfo, PostnatalInfo
@@ -94,6 +95,50 @@ def _get_day_stembrach(today: date) -> StemBranch:
         hour=12, minute=0, use_solar_time=False,
     )
     return StemBranch.from_text(result["day_pillar"])
+
+
+_STEM_COLOR = {Oheng.木: "푸른", Oheng.火: "붉은", Oheng.土: "누런", Oheng.金: "흰", Oheng.水: "검은"}
+_SOLAR_TERM_AHEAD = 3
+
+
+def build_today(today: date) -> dict:
+    """홈 '까치 소식' 칸(specs/home §3-5) — 오늘 일진의 띠와 12띠 관계, 3일 안 절기, 손없는 날. 로그인 무관."""
+    day = _get_day_stembrach(today)
+    branch = day.branch.name
+    animal = zodiac_info(branch)
+    zodiac = [
+        {"branch": b, "korean": zodiac_info(b).korean, "emoji": zodiac_info(b).emoji, "relation": relation_of(branch, b)[0]}
+        for b in BRANCH_ORDER
+    ]
+
+    def names(rel: str) -> str:
+        return "·".join(z["korean"] for z in zodiac if z["relation"] == rel)
+
+    good = [f"{rel}인 {names(rel)}" for rel in ("삼합", "육합") if names(rel)]
+    line = f"{animal.korean}{josa(animal.korean, '과', '와')} {', '.join(good)} 띠가 기운을 받는 날이에요."
+    bad = [names(rel) for rel in ("충", "원진") if names(rel)]
+    if bad:
+        line += f" {'·'.join(bad)} 띠는 한 박자 쉬어 가세요."
+
+    term = None
+    for i in range(_SOLAR_TERM_AHEAD + 1):
+        d = today + timedelta(days=i)
+        hit = _get_solar_term(d)
+        if hit:
+            term = {"name": hit[0], "tip": hit[2], "date": d.isoformat(), "days": i}
+            break
+
+    return {
+        "date": today.isoformat(),
+        "day_pillar": str(day),
+        "day_kor": day.stem.korean + day.branch.korean,
+        "animal": {"branch": branch, "korean": animal.korean, "emoji": animal.emoji,
+                   "color": _STEM_COLOR[day.stem.element]},
+        "zodiac": zodiac,
+        "line": line,
+        "solar_term": term,
+        "son_eomneun_nal": _is_son_eomneun_nal(today),
+    }
 
 
 _GOOD_SIPSIN_ACTION: dict[Sipsin, str] = {

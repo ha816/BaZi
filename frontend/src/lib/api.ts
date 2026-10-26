@@ -385,6 +385,22 @@ export async function getDailyCompat(memberId: string, p1: string, p2: string): 
   return request<DailyCompat>(`/compatibility/daily?member_id=${memberId}&p1=${p1}&p2=${p2}`);
 }
 
+/** 홈 '까치 소식' 칸의 오늘 띠·절기 (specs/home §3-5, 2026-10-26) — 로그인 홈은 HomeData.today, 비로그인은 getToday() */
+export interface TodayData {
+  date: string;
+  day_pillar: string;
+  day_kor: string;
+  animal: { branch: string; korean: string; emoji: string; color: string };
+  zodiac: { branch: string; korean: string; emoji: string; relation: "나" | "삼합" | "육합" | "충" | "원진" | "보통" }[];
+  line: string;
+  solar_term: { name: string; tip: string; date: string; days: number } | null;
+  son_eomneun_nal: boolean;
+}
+
+export async function getToday(): Promise<TodayData> {
+  return request<TodayData>("/kkachi/today");
+}
+
 /** 홈 한 장 — GET /members/{id}/home (specs/home/index.md §2-1, 2026-10-24). 기본 프로필이 없으면 me null */
 export interface HomeData {
   date: string;
@@ -392,6 +408,7 @@ export interface HomeData {
     profile_id: string;
     name: string;
     character: { key: string; art_key: string; title: string; line: string };
+    zodiac_branch: string;
     fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal">;
   } | null;
   people: {
@@ -400,6 +417,7 @@ export interface HomeData {
     character: { key: string; art_key: string };
     compat: { score: number; level: "좋음" | "보통" | "주의"; headline: string } | null;
   }[];
+  today: TodayData;
   next: ({ kind: "good_day"; date: string; action: string } | { kind: "compat"; profile_id: string; name: string } | { kind: "ai_report" })[];
 }
 
