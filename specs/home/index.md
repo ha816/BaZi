@@ -4,10 +4,10 @@
 |---|---|
 | 상태 | 살아있음 — 2026-10-24 컨셉 A로 다시 쓰고 같은 날 구현(인스타 피드 StoryTray·FortunePost×N·WeatherPost 제거) |
 | 화면 | `/` — 비로그인 "내 캐릭터 찾기" + 퀵스타트 + 까치 소식 / 로그인 "오늘의 나 · 오늘 내 사람들 · 까치 소식" |
-| 관련 코드 | `frontend/src/app/page.tsx` · 재사용 `MorningBrief.tsx` · `SajuCharacterCard.tsx`(RevealGate) · `compatibility/CompatTotal.tsx`(실루엣) · `lib/characterArt.ts` · `lib/elementColors.ts`(`ELEMENT_META`·`FORECAST_LEVEL_META`) · `PushSubscribeButton.tsx`·`lib/push.ts` · `ShareButton.tsx` · `AnalysisForm.tsx`(quick) |
-| 관련 API | `GET /members/{id}/home`(§2-1) · 비로그인은 `GET /kkachi/today`(까치 소식, §3-5) |
+| 관련 코드 | `frontend/src/app/page.tsx` · 재사용 `MorningBrief.tsx` · `SajuCharacterCard.tsx`(RevealGate) · `compatibility/CompatTotal.tsx`(실루엣) · `lib/characterArt.ts` · `lib/elementColors.ts`(`ELEMENT_META`·`FORECAST_LEVEL_META`) · `PushSubscribeButton.tsx`·`lib/push.ts` · `ShareButton.tsx` · `AnalysisForm.tsx`(quick) · 오늘의 별자리 `application/horoscope_rules.py`·`adapter/outer/astro_adapter.py`(ephem) |
+| 관련 API | `GET /members/{id}/home`(§2-1) · 비로그인은 `GET /kkachi/today`(까치 소식·오늘의 별자리 `sky`, §3-5) |
 | 관련 문서 | `docs/research/home_홈화면.md`(근거·벤치마크·데이터) · `specs/analysis/character.md`(캐릭터 20유형·그림 키) · `specs/siun/index.md` · `docs/ROADMAP.md` R4(홈 한 문장·스트릭 없음)·R5(오늘의 궁합)·V1(홈 퀵스타트)·V3(첫 화면에 설문 없음)·V8(이 개편) |
-| 마지막 확인 | 2026-10-26 — 까치 소식 칸 390px 로그인·비로그인 스크린샷. 2026-10-24 — 390px Playwright(시스템 Chrome)로 로그인·프로필 4개 / 기본 프로필만 / 프로필 없음 / API 실패(없는 회원) / 비로그인 다섯 상태와 AI 풀이 카드 → `/analysis?tab=ai` 확인, 가로 스크롤 없음. 알림 카드는 로컬에 VAPID가 없어 화면으로는 못 봄(코드 읽기) |
+| 마지막 확인 | 2026-10-30 — 오늘의 별자리 카드 390px Playwright(시스템 Chrome) 비로그인·로그인(시간 아는 프로필: ☉☽↑ 칩·"나" 배지·이름 붙은 문장 / 시간 미상: ↑ 대신 안내 줄·☽ 물병?) 세 상태, 백엔드 호출 비로그인 `/kkachi/today` 1회·로그인 `/home` 1회, 가로 스크롤 없음. 별자리 기호 ♈~♓는 시스템 이모지(보라 타일)로 렌더된다. 2026-10-26 — 까치 소식 칸 390px 로그인·비로그인 스크린샷. 2026-10-24 — 390px Playwright(시스템 Chrome)로 로그인·프로필 4개 / 기본 프로필만 / 프로필 없음 / API 실패(없는 회원) / 비로그인 다섯 상태와 AI 풀이 카드 → `/analysis?tab=ai` 확인, 가로 스크롤 없음. 알림 카드는 로컬에 VAPID가 없어 화면으로는 못 봄(코드 읽기) |
 
 ## 1. 목적
 
@@ -27,7 +27,7 @@
 
 | 상태 | 보이는 것 |
 |---|---|
-| 비로그인 | **내 캐릭터 찾기 히어로**(§3-4) → 퀵스타트 폼 → 오늘의 띠 → 까치 소식(§3-5) → 소개 영상 |
+| 비로그인 | **내 캐릭터 찾기 히어로**(§3-4) → 퀵스타트 폼 → 오늘의 띠 → 오늘의 별자리 → 까치 소식(§3-5) → 소개 영상 |
 | 로그인 · 프로필 없음 | "내 사주를 등록하면 까치가 매일 아침 소식을 물어다 줘요" 카드 + [내 사주 등록] → `/profile` |
 | 로그인 · 기본 프로필만 | ① 오늘의 나 → ② 오늘 내 사람들(빈 줄: "+ 사람 추가" 한 칸과 "궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요") → ③ 까치 소식 |
 | 로그인 · 여러 프로필 | ① → ②(기본 프로필을 뺀 사람들) → ③ 까치 소식 |
@@ -49,6 +49,8 @@
     character: { key, art_key, title, line },              // build_saju_character(natal) — 분석 결과의 natal.character와 같은 값
     week: [{ date, total_score, level, weather }] ×7,      // 오늘부터 7일(get_forecast 그대로) — "이 시간대가 좋아요"(오늘~글피 weather.hours)·"주간 시운" 카드 (2026-10-26)
     zodiac_branch: "巳",                                    // 내 년지(띠) — ③ 오늘의 띠에 "나" 표시 (2026-10-26)
+    horoscope: { chart: { sun: "taurus", moon: "leo", asc: "cancer" | null, uncertain: [] },  // 오늘의 별자리(2026-10-30) — 출생 차트(태양·달·상승) × 오늘 하늘. asc는 시간 미상이면 null, uncertain은 그날 별자리가 바뀌는 천체
+                 score, level, headline, action, caution, lucky_item },  // headline은 "{name}님, " 접두 — 일진과 같은 make_brief·레벨 70/40
     fortune: { headline, action, caution, total_score, level, day_element,
                solar_term, son_eomneun_nal }                // FortuneService.get_forecast(7일)[0] (fortunes 캐시)
   } | null,
@@ -58,7 +60,7 @@
       marks: { sinsal: ["문창귀인", …], sipsin: ["正印", …] },  // 가진 신살(한글)·십신(한자), 중복 없음 — §3-2 사주 한 입 (me에도 같은 필드, 2026-10-26)
       compat: { score, level, headline } | null }           // compute_daily_compat(나, 그 사람, 오늘) — level 좋음·보통·주의, me 없으면 null
   ],
-  today: { … },                                             // §3-5 까치 소식 — GET /kkachi/today와 같은 값, 기본 프로필이 없어도 있음
+  today: { …, sky: { … } },                                 // §3-5 까치 소식 + 오늘의 별자리 — GET /kkachi/today와 같은 값, 기본 프로필이 없어도 있음
   next: [                                                   // §3-3 후보 — 화면 노출 없음(2026-10-26 ③ 제거), API에는 남겨 둠
     { kind: "good_day", date, action }                      // 내일~6일 뒤 중 level "좋은 날" 첫 날
     { kind: "compat", profile_id, name }                    // 올해 compatibilities 캐시가 없는 첫 사람
@@ -86,9 +88,10 @@
 
 ### 3-1b. 오늘의 띠 · 이 시간대가 좋아요 · 주간 시운 (2026-10-26)
 
-**주간 시운 · 이 시간대가 좋아요는 ① 오늘의 나 카드 안 하단**(배지 줄 아래, 카드 맨 끝, 구분선으로 나눔 — 2026-10-26, 처음엔 따로 카드였다). 순서는 주간 시운(3일) → 이 시간대가 좋아요. `embedded`로 테두리·제목("주간 시운"·"이 시간대가 좋아요") 없이 — 2026-10-26 제목 뺌, 시간대 범례(최고=○ 좋음=○)는 오른쪽에 남김. ① 다음 카드는 **오늘의 띠**(`TodayZodiacCard`, 비로그인은 까치 소식 맨 앞). 시운 화면(오늘 탭)과 같은 컴포넌트 `components/SiunCards.tsx`(`HourlyLuckCard`·`WeeklySiunCard`)를 쓴다 — 고치면 두 화면이 같이 바뀐다.
+**주간 시운 · 이 시간대가 좋아요는 ① 오늘의 나 카드 안 하단**(배지 줄 아래, 카드 맨 끝, 구분선으로 나눔 — 2026-10-26, 처음엔 따로 카드였다). 순서는 주간 시운(3일) → 이 시간대가 좋아요. `embedded`로 테두리·제목("주간 시운"·"이 시간대가 좋아요") 없이 — 2026-10-26 제목 뺌, 시간대 범례(최고=○ 좋음=○)는 오른쪽에 남김. ① 다음 카드는 **오늘의 띠**(`TodayZodiacCard`, 비로그인은 까치 소식 맨 앞), 그다음이 **오늘의 별자리**(`TodayStarsCard`, 2026-10-30 — 아래). 시운 화면(오늘 탭)과 같은 컴포넌트 `components/SiunCards.tsx`(`HourlyLuckCard`·`WeeklySiunCard`)를 쓴다 — 고치면 두 화면이 같이 바뀐다.
 - **이 시간대가 좋아요** — 오늘(지금 2시간 전부터)~**모레**(주간 시운과 같은 3일, 2026-10-26 — 시운 화면은 글피까지)의 3시간 간격 날씨 오행 가로 줄. 용신과 같은 오행 = 초록 "최고", 용신을 생하는 오행 = 주황 "좋음". 데이터 `me.week[0..3].weather.hours` + `me.fortune.yongshin`. 시간대(날씨)가 하나도 없을 때만 없음 — 최고·좋음이 없어도 보인다(2026-10-26, 잠깐 두었던 "오늘 최고·좋음이 있을 때만" 조건은 같은 날 철회)
 - **주간 시운** — 오늘부터 **3일**(2026-10-26 7일 → 3일, 시운 화면은 7일 그대로 `count`) 한 줄씩: 날짜·날씨 이모지·날씨·오행·기온·운세 점수·레벨 아이콘. 날씨 없는 날은 줄 없음
+- **오늘의 별자리**(`TodayStarsCard`, 2026-10-30 — 옛 신문 별자리 운세처럼, 오늘의 띠와 같은 문법) — 카드 안 라벨 "오늘의 별자리", 제목 "오늘 달은 {♋ 게}자리를 지나요 · {이지러지는 달}", 작은 줄 "태양 {♏ 전갈}자리". 기본 프로필이 있으면 **내 출생 차트 칩 3개** `☉ 황소` · `☽ 사자`(그날 달이 별자리를 옮기는 시간 미상이면 `☽ 사자?`) · `↑ 처녀`(상승 — 시간 미상이면 칩 대신 회색 한 줄 "출생 시간을 넣으면 첫인상 별자리까지 봐요"). 12별자리 격자 6×2(양자리부터, 기호 + `{korean}자리`) — 칸 색은 **오늘 달과 그 별자리의 관계**(합 금색 "오늘 달이 머무는 별자리" · 삼각·육각 초록 "기운 받는 별자리" · 사각·충 주황 "조심할 별자리" · 보통 흰), 내 태양 별자리 칸에만 "나" 배지. 처음엔 내 태양 별자리(없으면 오늘 달의 별자리)가 골라져 있고, 칸을 누르면 상아색 상자에 `{♉ 황소}자리 · 4.20~5.20` + 레벨 배지 → headline → `✦ action` → `✕ caution`(빈 문자열이면 줄 없음) → `행운의 아이템 · {lucky_item}`. **내 태양 별자리 칸이고 기본 프로필이 있으면 `me.horoscope`의 문장**(달·상승까지 넣은 개인판, 이름 접두), 다른 칸은 `today.sky.signs[]`의 일반판(출생 태양만). 문장·점수는 전부 백엔드
 
 ### 3-2. ② 오늘 내 사람들
 
@@ -121,15 +124,20 @@
 2. **사주 한 입** — 오늘~3일 뒤에 절기가 있으면 절기 카드("내일은 입동(立冬)" + `SOLAR_TERMS` 팁)는 까치 소식에. 상식 카드는 **로그인이면 ② 오늘 내 사람들 카드 안**(§3-2, 2026-10-26), 비로그인만 까치 소식에: 만세력 섹션의 신살 9종(`SINSAL_INFO`)·십신 10종(`SIPSIN_INFO`)을 날짜 순번으로 하나씩(19일 주기) — 그림·이름(한자)·한 줄·설명 + [내 사주에도 있을까? →] `/analysis`. 손없는 날이면 카드 아래 👻 한 줄
 3. **새소식** — 코드 안 목록 `KKACHI_NEWS`(`app/page.tsx`, 맨 위가 최신)에서 오늘로부터 30일 안의 가장 최근 하나. 없으면 카드 없음. 누르면 그 기능 화면으로. 운영자가 맨 위에 한 줄 더하면 올라간다 — **맨 아래**(2026-10-26). 보여 줄 소식이 없는 때가 많을 수 있어 노출 조건은 열린 결정(§6)
 
-`GET /kkachi/today`(로그인 불필요) = `fortune_rules.build_today(오늘)`:
+`GET /kkachi/today`(로그인 불필요) = `fortune_rules.build_today(오늘)` + `horoscope_rules.build_sky(오늘)`(2026-10-30):
 ```
 { date, day_pillar: "癸酉", day_kor: "계유",
   animal: { branch, korean, emoji, color: "검은" },
   zodiac: [{ branch, korean, emoji, relation: 나|삼합|육합|충|원진|보통, years: ["72","84","96","08","20"](6살 이상 최근 다섯 해), advice } ×12],
   solar_term: { name, tip, date, days } | null,   // 오늘~3일 뒤 첫 절기
-  son_eomneun_nal }
+  son_eomneun_nal,
+  sky: { sun: "scorpio", moon: "cancer", moon_phase: "이지러지는 달",   // 오늘 정오 KST의 태양·달 별자리(key)·달 모양
+         signs: [{ key, korean: "양", symbol: "♈", range: "3.21~4.19", element: "불",
+                   relation: 합|삼각|육각|사각|충|보통,   // 오늘 달과 그 별자리의 whole-sign 관계 → 격자 색
+                   score, level, headline, action, caution, lucky_item } ×12] }   // 일반판(출생 태양만, 이름 접두 없음)
 ```
 - 띠 관계는 `zodiac_meta.relation_of`(분석 십이지신 탭과 같은 표), 절기·손없는 날은 일진(`compute_fortune`)과 같은 함수.
+- **오늘의 별자리 계산**(`horoscope_rules.py`, 2026-10-30): 서양 점성술 **열대 황도** — 황경은 `ephem`(libastro, `astro_adapter.py`, ephemeris 파일 없음·1ms 미만, 그날 분점 기준). 오늘 하늘은 **오늘 정오 KST**(달은 2.5일마다 궁을 옮긴다). 출생 차트는 `profiles.birth_dt`(KST 벽시계 → `ZoneInfo("Asia/Seoul")`로 UTC — 1954~61 +8:30·옛 서머타임 자동)·도시 표 위경도(`natal_adapter.CITY_LATLON`, 모르는 도시는 서울)로 태양·달·상승점. 시간 미상이면 상승 없음, 태양·달은 정오 저장값, 그날 0시~24시 사이 별자리가 바뀌는 천체는 `uncertain`. **애스펙트는 whole-sign**(별자리 차이 0 합·4/8 삼각·2/10 육각·3/9 사각·6 충, 나머지 보통 — 정오 추정에도 흔들리지 않게). 점수 base 50 + (오늘 달→출생 태양 10/12/6/−10/−8 · 달→달 8/8/4/−8/−6 · 달→상승 6/6/3/−6/−4 · 오늘 태양→태양 8/8/4/−8/−6 · 태양→달 4/6/3/−6/−4 · 태양→상승 4/4/2/−4/−3, 합/삼각/육각/사각/충 순) + 새달(이각 12° 안) +4 · 보름달(168~192°) −3 → 0~100. 레벨·문장 고르기는 일진과 같은 `level_fortune`(70/40)·`make_brief`(가장 큰 요인, 동점이면 흉 우선). 문장은 (천체×출생 자리×애스펙트) 30셀 + 보통 4쌍(날짜·별자리 순번 회전) + 삭망 2, 행운의 아이템은 내 별자리 원소별 6개 회전. **한자·영문 없음**(화면 폰트 서브셋 — 테스트가 검사), 달 문장은 "오늘 달이", 태양 문장은 "요즘/이 시기"("이번 달"은 moon/month가 섞여서 안 씀). 근거 `docs/research/home_홈화면.md` §7
 
 ### 3-4. 비로그인 — 내 캐릭터 찾기
 
@@ -144,7 +152,7 @@
 
 **한다**
 - 백엔드 호출은 로그인 홈에서 `GET /members/{id}/home` 1회. 비로그인은 `GET /kkachi/today` 1회(2026-10-26 — 까치 소식; 실패하면 그 칸만 숨김. 위치 감지 `ipapi.co`는 퀵스타트 폼이 쓰던 대로).
-- 문장은 백엔드가 준 그대로(`headline`·`action`·`caution`·`compat.headline`·`today.zodiac[].advice`). 까치 소식의 새소식·사주 한 입은 표시용 콘텐츠(공지 목록·만세력 표시 메타)라 프론트에 둔다. 이름 접두(`{name}님, `)도 백엔드 것.
+- 문장은 백엔드가 준 그대로(`headline`·`action`·`caution`·`compat.headline`·`today.zodiac[].advice`·`today.sky.signs[]`·`me.horoscope`). 오늘의 별자리도 같은 응답 안이라 백엔드 호출 수는 그대로(로그인 1회·비로그인 1회). 까치 소식의 새소식·사주 한 입은 표시용 콘텐츠(공지 목록·만세력 표시 메타)라 프론트에 둔다. 이름 접두(`{name}님, `)도 백엔드 것.
 - 캐릭터 그림은 `art_key` → 유형 키 → 까치 그림 순 폴백(히어로는 오늘 레벨 까치, 사람 줄은 기본 까치). 그림이 없어 칸이 비지 않는다.
 - 렌더되지 않는 옛 코드(`WeatherPost`·`HourlyRow`·`getWeather` import·`weatherCity`·StoryTray `activeId`)는 이 개편에서 지운다.
 
@@ -155,6 +163,7 @@
 - 사람마다 같은 모양의 큰 카드를 반복하지 않는다. 다른 사람은 ②의 얼굴 칸으로만.
 - 점신식 "조심할 것"을 히어로 첫 줄로 올리지 않는다 — 첫 줄은 항상 `headline`.
 - 프론트에서 레벨·점수로 문장을 고르지 않는다(해석 분기 금지).
+- 오늘의 별자리(2026-10-30): 외부 기사·운세 API의 문장을 가져오지 않는다(YTN 별자리 운세는 형식만 참고, 페이지에 AI 데이터 활용 금지 고지). 프로필에 출생 위도를 저장하지 않고(도시 표), 접속 위치(ipapi)를 출생지로 쓰지 않는다. 해외 출생의 현지 시간대 보정은 하지 않는다(사주와 같은 KST 벽시계 가정 — v1 한계).
 
 ## 5. 수용 기준
 
@@ -180,6 +189,10 @@
 18. 오늘~3일 뒤에 절기가 있으면 사주 한 입 자리에 절기 카드가, 없으면 신살·십신 상식 카드가 있다(백엔드 테스트: 입동 11-07 기준 11-04는 `days: 3`, 11-03은 `null`).
 19. 비로그인 홈도 퀵스타트 폼 아래에 까치 소식 칸이 있고, 백엔드 요청은 `/kkachi/today` 1회다.
 20. 로그인 홈의 사주 한 입은 ② 카드 안 얼굴 줄 아래에 있고 까치 소식에는 없다. [확인하기]를 누르기 전엔 얼굴에 표시가 없고, 누르면 그 신살·십신을 가진 사람(`marks`) 얼굴에만 금테·✦가 생기며 "✦ {이름}님·…에게 있어요"(없으면 "오늘 내 사람들 중엔 없어요") + "나에게도 있어요!/나에게는 없어요"가 나온다.
+21. 오늘의 띠 카드 바로 아래에 오늘의 별자리 카드가 있고(비로그인도), 12별자리가 양자리부터 6×2로 있다. 기본 프로필의 태양 별자리 칸에만 "나" 배지가 있고 처음에 그 칸이 골라져 있다(없으면 오늘 달의 별자리). 칸 색은 오늘 달과의 관계(합 금·삼각/육각 초록·사각/충 주황·보통 흰)이고 레벨·점수로 색을 고르지 않는다.
+22. 카드 제목에 오늘 달의 별자리와 달 모양이 있다. 칸을 누르면 날짜 범위·레벨 배지·한 줄·✦ 행동·행운의 아이템이 나오고, caution이 빈 칸은 ✕ 줄이 없다. 내 태양 별자리 칸의 문장은 "{이름}님, "으로 시작하고(`me.horoscope`), 다른 칸은 이름이 없다(`today.sky.signs`).
+23. 기본 프로필이 있으면 ☉·☽·↑ 칩 3개가 있고, 시간 미상 프로필은 ↑ 칩 대신 "출생 시간을 넣으면 첫인상 별자리까지 봐요" 한 줄이며, 그날 달이 별자리를 옮기면 ☽ 칩에 ?가 붙는다.
+24. 백엔드 테스트(`tests/adapter/test_astro_adapter.py`·`tests/application/test_horoscope_rules.py`, 2026-10-30 통과): J2000 태양 ≈280.4° 염소 · 2026 춘분 황경 0° ±0.1 · 1992-04-12 달 133.17° 사자 · 서울 일출 때 상승점 = 태양 황경 ±1° · 하루에 12궁 단조 통과 · whole-sign 분포 합1·삼각2·육각2·사각2·충1·보통4 · 1988-07-01 12:00 KST → 02:00Z(서머타임) · 시간 미상 `asc null`·`uncertain` · 응답에 한자 0.
 
 ## 6. 열린 결정
 
@@ -194,6 +207,7 @@
 
 ## 7. 변경 이력
 
+- 2026-10-30 — **오늘의 별자리 카드**(`TodayStarsCard`, 오늘의 띠 아래): 출생 차트(태양·달·상승, `ephem` 열대 황경·whole-sign 애스펙트) × 오늘 정오 하늘. `GET /kkachi/today`·홈 `today`에 `sky`, `me.horoscope`. 도시 표를 위경도로(`CITY_LATLON`). 문장은 우리 룰 30셀(외부 기사 문장 없음). 수용 기준 21~24
 - 2026-10-26 — 오늘의 나 안의 두 칸 제목("주간 시운"·"이 시간대가 좋아요") 제거, 구분선과 범례만
 - 2026-10-26 — 홈의 이 시간대가 좋아요도 모레까지(주간 시운 3일과 맞춤, `count={3}`)
 - 2026-10-26 — 이 시간대가 좋아요의 "오늘 최고·좋음이 있을 때만" 조건 철회 — 늘 보인다(`needGoodToday` 삭제)

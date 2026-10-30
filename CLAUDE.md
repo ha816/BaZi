@@ -4,7 +4,7 @@
 
 사주팔자(四柱八字) 계산 및 오행 기반 종합 해석·시운·궁합·손금·풍수 웹 서비스.
 
-- **백엔드**: Python 3.13 + FastAPI + sajupy + SQLAlchemy(asyncpg) + Alembic
+- **백엔드**: Python 3.13 + FastAPI + sajupy + SQLAlchemy(asyncpg) + Alembic + ephem(별자리 황경 — 홈 오늘의 별자리, 2026-10-30)
 - **프론트엔드**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind CSS 4
 - **LLM**: Ollama 로컬 호출 (`OllamaAdapter`, 기본 모델 `qwen3.8:27b` — 2026-10-23 qwen2.5:32b에서 교체, thinking은 `think:false`로 끔) — 스트리밍 AI 풀이·챗·궁합 종합해석. AI 풀이·AI 해석 글은 `AiReportService`+`LlmStreamHub`가 생성을 나눠 주고 캐시한다(2026-10-23)
 - **MCP**: FastMCP 서버 `/mcp` 마운트 (도구 3종)
@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 182 tests
+uv run pytest            # 198 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -93,9 +93,10 @@ BaZi/
 │   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)
 │   │   ├── profile_service.py        # 프로필 CRUD(최대 10개) + analyze_profile() 연도별 캐시
 │   │   ├── fortune_service.py        # get_fortune()/get_forecast() — fortunes 캐시 + 날씨 주입(get_forecast는 날씨 든 캐시로 안 채워지는 날이 있을 때만 날씨 호출, 2026-10-24)
-│   │   ├── home_service.py           # HomeService.get_home — 홈 묶음(me 캐릭터·7일 예보([0]=오늘의 나, week=시간대·주간 시운 카드), people 캐릭터·오늘의 궁합, next 후보). 사람마다 natal만(analyze_natal) — analyses 캐시 안 씀 (specs/home §2-1, 2026-10-24)
+│   │   ├── home_service.py           # HomeService.get_home — 홈 묶음(me 캐릭터·7일 예보([0]=오늘의 나, week=시간대·주간 시운 카드), people 캐릭터·오늘의 궁합, next 후보). 사람마다 natal만(analyze_natal) — analyses 캐시 안 씀 (specs/home §2-1, 2026-10-24) · `today.sky`·`me.horoscope` 오늘의 별자리(horoscope_rules, 2026-10-30)
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
-│   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + _make_brief() 아침 한 마디, 24절기, 손없는 날 · build_today() 홈 까치 소식(오늘의 띠·3일 안 절기)
+│   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + make_brief() 아침 한 마디·level_fortune() 70/40(별자리도 같이 씀), 24절기, 손없는 날 · build_today() 홈 까치 소식(오늘의 띠·3일 안 절기)
+│   │   ├── horoscope_rules.py        # 오늘의 별자리(2026-10-30) — SIGNS 12(한글 이름·기호·원소) · whole-sign 애스펙트 · compute_horoscope(출생 차트 × 오늘 하늘 → score·level·headline·action·caution·lucky_item) · build_sky(12별자리 일반판)·build_chart(태양·달·상승, 시간 미상 uncertain)·build_my_horoscope. AstroPort를 첫 인자로 받는 순수 함수(서비스 없음)
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
@@ -111,7 +112,7 @@ BaZi/
 │   │   ├── member_service.py         # 이메일 중복 시 기존 반환
 │   │   ├── payment_service.py        # Toss prepare/confirm (deep_analysis 1900 · daily_fortune 990 · compatibility 1500)
 │   │   ├── report_builder.py         # LlmReportBuilder — Interpretation → AI 풀이 자료 시트(쓰는 법·삶의 영역 6섹션 1,000~1,200자·탭별 한두 줄(월운·택시 제외), ≈2,600토큰; 2026-10-23 v6, 총평·달 이야기 없음) + REPORT_PROMPT_VERSION·REPORT_FIRST_HEADING(답 첫 제목 미리 채움) · kor_ganji/kor_sipsin
-│   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility,
+│   │   ├── port/                     # saju(Natal/Postnatal/Interpreter), member, profile, analysis, compatibility, astro(positions — 별자리 황경),
 │   │   │                             #   fortune, weather, payment, feedback, llm, event, push(PushPort·PushSenderPort)
 │   │   ├── interpreter/              # 13개: advice · daeun · fengshui · fortune · hand_shape · narrative · natal(함수 모음 + build_summary)
 │   │   │                             #   · personality(Personality+ElementBalance) · relationship · samjae · seun · yongshin · zodiac
@@ -132,9 +133,10 @@ BaZi/
 │       │   ├── push_controller.py          # /push — vapid-public-key · subscriptions POST/DELETE
 │       │   └── mcp_server.py               # FastMCP "사주까치" — get_saju_context · get_annual_fortune · get_weather_element
 │       └── outer/
-│           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→경도 내부 룩업, sajupy 호출)
+│           ├── natal_adapter.py            # NatalAdapter + cal_saju() (도시→(위도,경도) `CITY_LATLON` 룩업 — 경도는 사주 진태양시, 위도는 astro_adapter 상승점; sajupy 호출)
 │           ├── postnatal_adapter.py        # PostnatalAdapter — 세운·대운·월운·충합·영역점수(reason 포함)·삼재
 │           ├── weather_adapter.py          # Open-Meteo geocoding + forecast (past_days=14), WMO → 오행
+│           ├── astro_adapter.py            # AstroAdapter(ephem) — 태양·달 열대 황경(그날 분점)·상승점(항성시+황도경사+위도). ephemeris 파일 없음, 1ms 미만 (2026-10-30)
 │           ├── llm/ollama_adapter.py       # OllamaAdapter — get_advice · interpret · stream_chat · stream_interpret(kind=analysis|compat, prefix=첫 제목) · interpret_payload(벤치용). 시스템 프롬프트 _KKACHI_SYSTEM, num_predict analysis 1700/compat 1600, keep_alive 30m
 │           ├── push/webpush_adapter.py     # WebPushAdapter (pywebpush, VAPID env) — 404/410이면 구독 소멸 반환
 │           └── db/
@@ -146,7 +148,7 @@ BaZi/
 │               └── payment_repo.py # PaymentRepo
 ├── frontend/src/
 │   ├── app/
-│   │   ├── page.tsx                 # 홈(V8, specs/home) — 비로그인: GuestHero("나는 어떤 캐릭터일까?" 실루엣+맛보기 4장+퀵스타트 폼) · VideoPost / 로그인: GET /members/{id}/home 한 번 → TodayHero(캐릭터+까치 말풍선 MorningBrief) · PeopleRow(캐릭터 얼굴+오늘 궁합 배지) · KkachiFeed(까치 소식: 새소식·오늘의 띠·사주 한 입, 2026-10-26) — 공유·이어서 할 것 카드는 2026-10-26 제거
+│   │   ├── page.tsx                 # 홈(V8, specs/home) — 비로그인: GuestHero("나는 어떤 캐릭터일까?" 실루엣+맛보기 4장+퀵스타트 폼) · VideoPost / 로그인: GET /members/{id}/home 한 번 → TodayHero(캐릭터+까치 말풍선 MorningBrief) · PeopleRow(캐릭터 얼굴+오늘 궁합 배지) · KkachiFeed(까치 소식: 새소식·오늘의 띠·사주 한 입, 2026-10-26) · TodayStarsCard(오늘의 별자리 — 12별자리 격자(색은 오늘 달과의 관계)·내 출생 차트 ☉☽↑ 칩·태양 별자리 "나" 배지, 2026-10-30) — 공유·이어서 할 것 카드는 2026-10-26 제거
 │   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx(사주/시운/궁합 kind 분기) · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
 │   │   ├── opengraph-image.tsx      # 사이트 기본 OG 이미지 (satori) · robots.ts(/s/ 색인 금지) · sitemap.ts
 │   │   ├── layout.tsx · fonts/      # 루트 레이아웃 — 화면 폰트는 next/font/local 서브셋 WOFF2(fonts/: Noto Sans KR·Noto Serif KR 가변, 상용 한글 2,350 + 코드의 한자 247; 빌드·dev가 구글 폰트를 받지 않음 2026-10-18, 재생성은 fonts/README.md)
@@ -325,13 +327,13 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이 — 같은 입력·이름은 메모리 캐시, Ollama 꺼짐 503)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}|null, son_eomneun_nal }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26)
+GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}|null, son_eomneun_nal, sky{sun,moon(별자리 key),moon_phase,signs[12]{key,korean,symbol,range,element,relation(합·삼각·육각·사각·충·보통 — 오늘 달과의 whole-sign 관계),score,level,headline,action,caution,lucky_item}} }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26) + 오늘의 별자리 일반판(2026-10-30)
 GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,art_key(그림 키 — 여성은 {key}_여, 2026-10-23),stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
 
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
 GET    /members/{id}
-GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,marks{sinsal[],sipsin[]},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
+GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,horoscope{chart{sun,moon,asc|null,uncertain[]},score,level,headline,action,caution,lucky_item}(오늘의 별자리 개인판 — 출생 차트 태양·달·상승, 2026-10-30),marks{sinsal[],sipsin[]},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
                                people:[{profile_id,name,character{key,art_key},marks{sinsal[],sipsin[]},compat{score,level(좋음·보통·주의),headline}|null}](기본 프로필 제외, 최근 추가 먼저),
                                next:[{kind:"good_day",date,action}|{kind:"compat",profile_id,name}|{kind:"ai_report"}](화면 노출 없음 — 2026-10-26 홈 ③ 제거), today(= GET /kkachi/today) }  홈 묶음(V8, 2026-10-24) — 404 if 회원 없음, 기본 프로필 없으면 me null·next []
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
@@ -516,7 +518,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 띠 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, 카드 안 하단에 주간 시운(3일)·이 시간대가 좋아요(시운 화면과 같은 `components/SiunCards.tsx` `embedded`), [오늘 시운 자세히 →]는 배지 줄 오른쪽 작은 링크, 공유 버튼 없음 2026-10-26) → 오늘의 띠(12띠 격자+내 띠, 칸을 누르면 띠별 한 줄·년생) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 사주 한 입: 오늘의 신살·십신 + "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴 금테·✦, 2026-10-26) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식도) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 띠 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, 카드 안 하단에 주간 시운(3일)·이 시간대가 좋아요(시운 화면과 같은 `components/SiunCards.tsx` `embedded`), [오늘 시운 자세히 →]는 배지 줄 오른쪽 작은 링크, 공유 버튼 없음 2026-10-26) → 오늘의 띠(12띠 격자+내 띠, 칸을 누르면 띠별 한 줄·년생) → 오늘의 별자리(12별자리 격자 — 색은 오늘 달과의 관계, 내 출생 차트 ☉☽↑ 칩 + 태양 별자리 "나" 배지, 칸을 누르면 한 줄·✦ 행동·행운의 아이템, 2026-10-30) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 사주 한 입: 오늘의 신살·십신 + "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴 금테·✦, 2026-10-26) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식도) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
@@ -654,6 +656,11 @@ erDiagram
 - 제약: Push API는 HTTPS(또는 localhost)에서만. tailscale 베타는 `next dev --experimental-https` 필요. iOS는 홈 화면 추가(PWA)한 뒤에만 알림 허용
 - 측정: `push_subscribe`·`push_unsubscribe`·`push_click`(`?src=push` 진입) 이벤트
 
+### 오늘의 별자리 — `horoscope_rules.compute_horoscope` (홈 카드, 2026-10-30)
+- 서양 점성술 열대 황도. 황경은 `AstroAdapter`(ephem) — 태양·달은 그날 분점 기준, 상승점은 항성시·황도경사·위도. 오늘 하늘은 **오늘 정오 KST**. 출생 차트는 birth_dt(KST 벽시계 → `ZoneInfo("Asia/Seoul")`)·`CITY_LATLON` 위경도. 시간 미상이면 상승 없음, 그날 별자리가 바뀌는 천체는 `uncertain`
+- **whole-sign 애스펙트**(별자리 차이 0 합·4/8 삼각·2/10 육각·3/9 사각·6 충). base 50 + 달→태양 10/12/6/−10/−8 · 달→달 8/8/4/−8/−6 · 달→상승 6/6/3/−6/−4 · 태양→태양 8/8/4/−8/−6 · 태양→달 4/6/3/−6/−4 · 태양→상승 4/4/2/−4/−3 + 새달 +4 · 보름달 −3. 레벨·문장 고르기는 일진의 `level_fortune`·`make_brief` 재사용
+- 문장 30셀 + 보통 4쌍 + 삭망 2 + 행운의 아이템 원소별 6 — **한자·영문 없음**(화면 폰트 서브셋, 테스트가 검사), 태양 문장은 "요즘/이 시기"("이번 달" 금지). 외부 기사 문장 사용 안 함. 상세 `specs/home/index.md` §3-5
+
 ### 날씨 연동 (Open-Meteo, API 키 불필요)
 - 도시명 → Geocoding API → lat/lon (프로세스 내 캐시, 실패 시 Seoul) 또는 `lat/lon` 직접 전달
 - `past_days=14` + `forecast_days≤16` 한 번에 fetch → 날짜별 맵으로 각 일진에 주입 (시운의 과거 날짜용)
@@ -683,6 +690,7 @@ tests/
 │   ├── test_fortune.py             # 세운·대운·충합
 │   ├── test_sibi_unseong.py        # 십이운성·신살
 │   ├── test_three_pillars.py       # 출생시간 미상 세 기둥(R2)
+│   ├── test_astro_adapter.py       # ephem 황경 — J2000 태양·2026 춘분 0°·Meeus 47.a 달·일출 때 상승점=태양·하루 12궁·도시 폴백
 │   ├── test_kkachi_controller.py   # /kkachi/shares 왕복 — 카드에 생년월일 없음, 세 기둥
 │   ├── test_profile_controller.py  # FastAPI TestClient(lifespan 없음) + Container provider override — 소유자 검증·R6 엔드포인트·/admin 토큰
 │   ├── test_compatibility_controller.py # direct(summary·character·zodiac·세 기둥)·프로필 궁합 404·소유자 검증(프로필 궁합·AI 해석 403, 글은 저장된 프로필로)·공유 카드 왕복(character, 생년월일 없음)·초대(민감정보 제외·resolve)·오늘의 궁합 소유자 검증
@@ -694,7 +702,8 @@ tests/
     ├── test_fortune_rules.py   # 일진 점수·아침 한 마디
     ├── test_timing_rules.py    # 타이밍 리포트(R3)
     ├── test_push_service.py    # 푸시 페이로드
-    ├── test_home_service.py    # 홈 묶음 — 회원 없음 None·기본 프로필 없음·여성 art_key·다른 회원 제외·next 순서(좋은 날은 내일 이후·안 본 궁합 첫 사람·옛 버전 AI 풀이)
+    ├── test_home_service.py    # 홈 묶음 — 회원 없음 None·기본 프로필 없음·여성 art_key·다른 회원 제외·next 순서(좋은 날은 내일 이후·안 본 궁합 첫 사람·옛 버전 AI 풀이)·me.horoscope 차트·today.sky
+    ├── test_horoscope_rules.py # 오늘의 별자리 — 별자리 경계·whole-sign 애스펙트·점수/레벨(70/40)·요인 우선순위·개인판 이름 접두·시간 미상 uncertain·KST 역사 오프셋·보통 문장 회전·삭망
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     ├── test_self_quiz.py       # 설문조사 10문항(십신·지장간·투출 점수→그렇다/아니다·근거 문장·세 기둥·옛 결과)

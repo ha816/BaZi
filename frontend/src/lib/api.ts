@@ -385,6 +385,14 @@ export async function getDailyCompat(memberId: string, p1: string, p2: string): 
   return request<DailyCompat>(`/compatibility/daily?member_id=${memberId}&p1=${p1}&p2=${p2}`);
 }
 
+/** 오늘의 별자리(specs/home §3-1b, 2026-10-30) — 12별자리 일반판. relation은 오늘 달과 그 별자리의 whole-sign 관계(격자 색), 문장은 백엔드 */
+export interface SkySign {
+  key: string; korean: string; symbol: string; range: string; element: string;
+  relation: "합" | "삼각" | "육각" | "사각" | "충" | "보통";
+  score: number; level: string; headline: string; action: string; caution: string; lucky_item: string;
+}
+export interface SkyData { sun: string; moon: string; moon_phase: string; signs: SkySign[] }  // sun·moon은 별자리 key, 오늘 정오 KST
+
 /** 홈 '까치 소식' 칸의 오늘 띠·절기 (specs/home §3-5, 2026-10-26) — 로그인 홈은 HomeData.today, 비로그인은 getToday() */
 export interface TodayData {
   date: string;
@@ -394,6 +402,7 @@ export interface TodayData {
   zodiac: { branch: string; korean: string; emoji: string; relation: "나" | "삼합" | "육합" | "충" | "원진" | "보통"; years: string[]; advice: string }[];
   solar_term: { name: string; tip: string; date: string; days: number } | null;
   son_eomneun_nal: boolean;
+  sky: SkyData;  // 오늘의 별자리 (2026-10-30)
 }
 
 export async function getToday(): Promise<TodayData> {
@@ -408,6 +417,8 @@ export interface HomeData {
     name: string;
     character: { key: string; art_key: string; title: string; line: string };
     zodiac_branch: string;
+    // 오늘의 별자리 개인판(2026-10-30) — 출생 차트(태양·달·상승 key, 시간 미상이면 asc null·그날 바뀌는 천체는 uncertain) × 오늘 하늘. headline은 "{이름}님, " 접두
+    horoscope: { chart: { sun: string; moon: string; asc: string | null; uncertain: string[] } } & Pick<SkySign, "score" | "level" | "headline" | "action" | "caution" | "lucky_item">;
     marks: { sinsal: string[]; sipsin: string[] };  // 가진 신살(한글)·십신(한자) — 사주 한 입 "내 사람들에게도 있을까?"
     fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal" | "yongshin">;
     week: Pick<DailyFortune, "date" | "total_score" | "level" | "weather">[];  // 오늘부터 7일 — 홈 시간대·주간 시운 카드

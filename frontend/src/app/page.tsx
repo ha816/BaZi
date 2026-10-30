@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AnalysisInput } from "@/types/analysis";
-import { getHome, getToday, type HomeData, type TodayData } from "@/lib/api";
+import { getHome, getToday, type HomeData, type SkyData, type TodayData } from "@/lib/api";
 import { detectLocation, type LocationInfo } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
@@ -238,6 +238,80 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   );
 }
 
+/** 별자리 칸 색 — 오늘 달과 그 별자리의 관계(백엔드 relation). 띠 카드와 같은 색 체계 */
+const STAR_TONE: Record<string, string> = {
+  "합": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
+  "삼각": "border-emerald-300 bg-emerald-50",
+  "육각": "border-emerald-300 bg-emerald-50",
+  "사각": "border-amber-300 bg-amber-50",
+  "충": "border-amber-300 bg-amber-50",
+  "보통": "border-[var(--color-border-light)] bg-white",
+};
+
+type Horoscope = NonNullable<HomeData["me"]>["horoscope"];
+
+// 오늘의 별자리 — 오늘 달·태양 별자리 + 내 출생 차트 칩(☉☽↑) + 12별자리 격자(칸을 누르면 그 별자리 한 줄·행운의 아이템).
+// 내 태양 별자리 칸은 달·상승까지 넣은 개인판(me.horoscope) 문장, 처음엔 내 별자리(없으면 오늘 달의 별자리) (2026-10-30)
+function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Horoscope; className?: string }) {
+  const [picked, setPicked] = useState(mine?.chart.sun ?? sky.moon);
+  const byKey = (key: string) => sky.signs.find((s) => s.key === key);
+  const sel = byKey(picked) ?? sky.signs[0];
+  const moon = byKey(sky.moon) ?? sky.signs[0];
+  const sun = byKey(sky.sun) ?? sky.signs[0];
+  const text = mine && sel.key === mine.chart.sun ? mine : sel;
+  const level = FORECAST_LEVEL_META[text.level] ?? FORECAST_LEVEL_META["평범한 날"];
+  const chip = "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-ivory)] text-[var(--color-ink)]";
+  return (
+    <div className={`${FEED_CARD} ${className}`}>
+      <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 별자리</p>
+      <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+        오늘 달은 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
+      </p>
+      <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">태양 {sun.symbol} {sun.korean}자리</p>
+      {mine && (
+        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+          <span className={chip}>☉ {byKey(mine.chart.sun)?.korean}</span>
+          <span className={chip}>☽ {byKey(mine.chart.moon)?.korean}{mine.chart.uncertain.includes("moon") ? "?" : ""}</span>
+          {mine.chart.asc ? (
+            <span className={chip}>↑ {byKey(mine.chart.asc)?.korean}</span>
+          ) : (
+            <span className="text-[10px] text-[var(--color-ink-faint)]">출생 시간을 넣으면 첫인상 별자리까지 봐요</span>
+          )}
+        </div>
+      )}
+      <div className="grid grid-cols-6 gap-1.5 mt-3">
+        {sky.signs.map((s) => (
+          <button type="button" key={s.key} onClick={() => setPicked(s.key)} aria-pressed={s.key === sel.key}
+            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${STAR_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            <span className="text-xl leading-none">{s.symbol}</span>
+            <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{s.korean}</span>
+            {s.key === mine?.chart.sun && (
+              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
+            )}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
+        <span><span className="text-emerald-600">●</span> 기운 받는 별자리</span>
+        <span><span className="text-amber-500">●</span> 조심할 별자리</span>
+        <span><span className="text-[var(--color-gold)]">●</span> 오늘 달이 머무는 별자리</span>
+      </div>
+      <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-[11px] text-[var(--color-ink-muted)]">
+            <span className="font-bold text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}
+          </p>
+          <Badge cls={level.color}>{level.icon} {text.level}</Badge>
+        </div>
+        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">{text.headline}</p>
+        <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✦ {text.action}</p>
+        {text.caution && <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✕ {text.caution}</p>}
+        <p className="text-[11px] text-[var(--color-ink-faint)] mt-1">행운의 아이템 · {text.lucky_item}</p>
+      </div>
+    </div>
+  );
+}
+
 /** showBite: 비로그인만 — 로그인은 사주 한 입이 오늘 내 사람들 카드 안에 있다 (2026-10-26) */
 function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: boolean }) {
   const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= NEWS_DAYS);
@@ -350,13 +424,19 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         <>
           <TodayHero me={home.me} />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
+          <TodayStarsCard sky={home.today.sky} mine={home.me.horoscope} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
           기본 프로필(나)을 정하면 오늘의 소식을 여기서 받아요. <Link href="/profile" className="underline underline-offset-2 text-[var(--color-gold)]">정하러 가기</Link>
         </div>
       )}
-      {!home.me && <TodayZodiacCard today={home.today} className="mx-4 mt-3" />}
+      {!home.me && (
+        <>
+          <TodayZodiacCard today={home.today} className="mx-4 mt-3" />
+          <TodayStarsCard sky={home.today.sky} className="mx-4 mt-3" />
+        </>
+      )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} date={home.date} />
       <KkachiFeed today={home.today} />
     </>
@@ -480,6 +560,7 @@ function GuestHome() {
       {today && (
         <>
           <TodayZodiacCard today={today} className="mx-4 mt-3" />
+          <TodayStarsCard sky={today.sky} className="mx-4 mt-3" />
           <KkachiFeed today={today} showBite />
         </>
       )}
