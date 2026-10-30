@@ -196,8 +196,8 @@ class CompatibilityService:
                 }
             return result_dict
 
-        user1 =User(name=profile1.name, gender=profile1.gender, birth_dt=profile1.birth_dt, city=profile1.city, hour_unknown=profile1.birth_hour_unknown)
-        user2 = User(name=profile2.name, gender=profile2.gender, birth_dt=profile2.birth_dt, city=profile2.city, hour_unknown=profile2.birth_hour_unknown)
+        user1 = profile1.to_user()
+        user2 = profile2.to_user()
 
         natal1, postnatal1 = self._saju_service.analyze(user1, year)
         natal2, postnatal2 = self._saju_service.analyze(user2, year)

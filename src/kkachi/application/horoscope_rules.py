@@ -97,14 +97,14 @@ _LUCKY: dict[str, list[str]] = {
 }
 
 
-def sign_of(lon: float) -> int:
-    """황경(도) → 별자리 순번 0(양)~11(물고기)."""
-    return int(lon % 360 // 30)
+def sign_of(lon: float) -> str:
+    """황경(도) → 별자리 key(양 aries ~ 물고기 pisces)."""
+    return SIGNS[int(lon % 360 // 30)]["key"]
 
 
-def aspect(transit: int, natal: int) -> str | None:
+def aspect(transit: str, natal: str) -> str | None:
     """whole-sign 애스펙트 — 합·육각·사각·삼각·충, 없으면 None(보통)."""
-    return _ASPECT.get((natal - transit) % 12)
+    return _ASPECT.get((_KEY_INDEX[natal] - _KEY_INDEX[transit]) % 12)
 
 
 def moon_phase(elong: float) -> str:
@@ -112,57 +112,56 @@ def moon_phase(elong: float) -> str:
 
 
 def compute_horoscope(chart: dict, sky: dict, today: date, name: str = "") -> dict:
-    """chart {sun, moon|None, asc|None}(순번) × sky {sun, moon(순번), elong} → base 50 + 요인표.
-    headline·action·caution은 일진과 같은 make_brief(가장 큰 요인, 동점이면 흉 우선), 레벨도 같은 70/40."""
+    """chart {sun, moon|None, asc|None}(key) × sky {sun, moon(key), moon_phase} → base 50 + 요인표.
+    headline·action·caution은 일진과 같은 make_brief(가장 큰 요인, 동점이면 흉 우선), 레벨도 같은 70/40.
+    요인이 하나도 없는 날은 보통 문장을 날짜·별자리 순번으로 돌린다."""
     factors: list[tuple[int, str, str, str]] = []
     for transit in ("moon", "sun"):
         for point in ("sun", "moon", "asc"):
             natal = chart.get(point)
-            asp = aspect(sky[transit], natal) if natal is not None else None
+            asp = aspect(sky[transit], natal) if natal else None
             if asp:
                 factors.append((_WEIGHT[(transit, point)][asp], *_TEXT[(transit, point, asp)]))
-    if sky["elong"] < 12 or sky["elong"] > 348:
+    if sky["moon_phase"] == "새달":
         factors.append(_NEW_MOON)
-    elif 168 <= sky["elong"] <= 192:
+    elif sky["moon_phase"] == "보름달":
         factors.append(_FULL_MOON)
-    idx = chart["sun"]
+    idx = _KEY_INDEX[chart["sun"]]
     turn = today.toordinal() + idx
-    if not factors:
+    if factors:
+        headline, action, caution = make_brief(factors, name, son_nal=False)
+    else:
         headline, action = _PLAIN[turn % len(_PLAIN)]
-        factors.append((0, headline, action, ""))
+        headline, caution = (f"{name}님, {headline}" if name else headline), ""
+    items = _LUCKY[SIGNS[idx]["element"]]
     score = max(0, min(100, 50 + sum(f[0] for f in factors)))
-    headline, action, caution = make_brief(factors, name, False)
     return {
-        "relation": aspect(sky["moon"], idx) or "보통",
+        "relation": aspect(sky["moon"], chart["sun"]) or "보통",
         "score": score,
         "level": level_fortune(score),
         "headline": headline,
         "action": action,
         "caution": caution,
-        "lucky_item": _LUCKY[SIGNS[idx]["element"]][turn % 6],
+        "lucky_item": items[turn % len(items)],
     }
 
 
 def build_sky(astro: AstroPort, today: date) -> dict:
-    """오늘 정오 KST의 하늘 — 태양·달 별자리·달 모양 + 12별자리 일반판(출생 태양만 든 차트)."""
-    sky = _sky_of(astro, today)
-    return {
-        "sun": SIGNS[sky["sun"]]["key"],
-        "moon": SIGNS[sky["moon"]]["key"],
-        "moon_phase": moon_phase(sky["elong"]),
-        "signs": [{**s, **compute_horoscope({"sun": i}, sky, today)} for i, s in enumerate(SIGNS)],
-    }
+    """오늘 정오 KST의 하늘 — {sun, moon, moon_phase} + 12별자리 일반판 signs(출생 태양만 든 차트)."""
+    sky = _get_sky(astro, today)
+    return {**sky, "signs": [{**s, **compute_horoscope({"sun": s["key"]}, sky, today)} for s in SIGNS]}
 
 
 def build_chart(astro: AstroPort, user: User) -> dict:
-    """출생 차트(순번) {sun, moon, asc|None, uncertain[]} — KST 벽시계 → UTC. 시간 미상이면 상승점 없음,
+    """출생 차트(key) {sun, moon, asc|None, uncertain[]} — KST 벽시계 → UTC. 시간 미상이면 상승점 없음,
     정오 저장값으로 태양·달을 보고 그날 0시~24시 사이 별자리가 바뀌는 천체는 uncertain에 적는다."""
     birth = user.birth_dt.replace(tzinfo=KST)
     p = astro.positions(birth.astimezone(UTC), None if user.hour_unknown else user.city)
     uncertain: list[str] = []
     if user.hour_unknown:
         day0 = datetime.combine(user.birth_dt.date(), time(0), tzinfo=KST)
-        first, last = (astro.positions((day0 + timedelta(days=d)).astimezone(UTC)) for d in (0, 1))
+        first = astro.positions(day0.astimezone(UTC))
+        last = astro.positions((day0 + timedelta(days=1)).astimezone(UTC))
         uncertain = [b for b in ("sun", "moon") if sign_of(first[b]) != sign_of(last[b])]
     return {
         "sun": sign_of(p["sun"]),
@@ -173,12 +172,12 @@ def build_chart(astro: AstroPort, user: User) -> dict:
 
 
 def build_my_horoscope(astro: AstroPort, user: User, today: date) -> dict:
-    """홈 me.horoscope — {chart(key), score, level, headline("{name}님, …"), action, caution, lucky_item}."""
+    """홈 me.horoscope — {chart, score, level, headline("{name}님, …"), action, caution, lucky_item}."""
     chart = build_chart(astro, user)
-    keyed = {k: (SIGNS[v]["key"] if isinstance(v, int) else v) for k, v in chart.items()}
-    return {"chart": keyed, **compute_horoscope(chart, _sky_of(astro, today), today, user.name)}
+    return {"chart": chart, **compute_horoscope(chart, _get_sky(astro, today), today, user.name)}
 
 
-def _sky_of(astro: AstroPort, today: date) -> dict:
+def _get_sky(astro: AstroPort, today: date) -> dict:
+    """오늘 정오 KST — {sun, moon(key), moon_phase}."""
     p = astro.positions(datetime.combine(today, time(12), tzinfo=KST).astimezone(UTC))
-    return {"sun": sign_of(p["sun"]), "moon": sign_of(p["moon"]), "elong": (p["moon"] - p["sun"]) % 360}
+    return {"sun": sign_of(p["sun"]), "moon": sign_of(p["moon"]), "moon_phase": moon_phase((p["moon"] - p["sun"]) % 360)}

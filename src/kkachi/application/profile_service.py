@@ -12,7 +12,7 @@ from kkachi.application.saju_character import character_art_key
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.domain.interpretation import INTERPRETATION_VERSION
 from kkachi.domain.profile import Analysis, Profile
-from kkachi.domain.user import Gender, User
+from kkachi.domain.user import Gender
 
 
 def _apply_art_key(result: dict, is_male: bool) -> None:
@@ -86,7 +86,7 @@ class ProfileService:
         profile = await self.profile_port.get(profile_id)
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
-        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
+        user = profile.to_user()
 
         cached = await self.analysis_port.get(profile_id, year)
         if cached and cached.result.get("version") == INTERPRETATION_VERSION:

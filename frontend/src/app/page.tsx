@@ -35,6 +35,8 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 
 /** 홈 카드 공통 틀(CLAUDE.md 카드 규약) — 칸 소제목 없이 카드마다 안에 제목 */
 const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
+/** 카드 안 윗줄 작은 금색 라벨(사주 한 입·오늘의 띠·오늘의 별자리·절기·새소식) */
+const FEED_LABEL = "text-[10px] font-bold text-[var(--color-gold)]";
 
 // ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, 그 줄 오른쪽에 [오늘 시운 자세히 →]
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
@@ -183,7 +185,7 @@ function BiteIntro({ bite }: { bite: Bite }) {
     <div className="flex items-start gap-3">
       <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
       <div className="flex-1 min-w-0 break-keep">
-        <p className="text-[10px] font-bold text-[var(--color-gold)]">사주 한 입 · {bite.kind}</p>
+        <p className={FEED_LABEL}>사주 한 입 · {bite.kind}</p>
         <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">{bite.name}({bite.hanja}) — {bite.tagline}</p>
         <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
       </div>
@@ -191,13 +193,17 @@ function BiteIntro({ bite }: { bite: Bite }) {
   );
 }
 
-/** 띠 칸 테두리·라벨 — 관계 값(백엔드)에 따라 색만 고른다 */
-const ZODIAC_TONE: Record<string, string> = {
+/** 띠·별자리 칸 테두리·바탕 — 관계 값(백엔드)에 따라 색만 고른다: 오늘의 주인공 금 · 기운 받는 초록 · 조심할 주황 */
+const RELATION_TONE: Record<string, string> = {
   "나": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
+  "합": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
   "삼합": "border-emerald-300 bg-emerald-50",
   "육합": "border-emerald-300 bg-emerald-50",
+  "삼각": "border-emerald-300 bg-emerald-50",
+  "육각": "border-emerald-300 bg-emerald-50",
   "충": "border-amber-300 bg-amber-50",
   "원진": "border-amber-300 bg-amber-50",
+  "사각": "border-amber-300 bg-amber-50",
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
@@ -207,14 +213,14 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 띠</p>
+      <p className={FEED_LABEL}>오늘의 띠</p>
       <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
         오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>
       <div className="grid grid-cols-6 gap-1.5 mt-3">
         {today.zodiac.map((z) => (
           <button type="button" key={z.branch} onClick={() => setPicked(z.branch)} aria-pressed={z.branch === sel.branch}
-            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${ZODIAC_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${RELATION_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-xl leading-none">{z.emoji}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{z.korean}</span>
             {z.branch === myBranch && (
@@ -238,42 +244,32 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   );
 }
 
-/** 별자리 칸 색 — 오늘 달과 그 별자리의 관계(백엔드 relation). 띠 카드와 같은 색 체계 */
-const STAR_TONE: Record<string, string> = {
-  "합": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
-  "삼각": "border-emerald-300 bg-emerald-50",
-  "육각": "border-emerald-300 bg-emerald-50",
-  "사각": "border-amber-300 bg-amber-50",
-  "충": "border-amber-300 bg-amber-50",
-  "보통": "border-[var(--color-border-light)] bg-white",
-};
-
 type Horoscope = NonNullable<HomeData["me"]>["horoscope"];
 
 // 오늘의 별자리 — 오늘 달·태양 별자리 + 내 출생 차트 칩(☉☽↑) + 12별자리 격자(칸을 누르면 그 별자리 한 줄·행운의 아이템).
 // 내 태양 별자리 칸은 달·상승까지 넣은 개인판(me.horoscope) 문장, 처음엔 내 별자리(없으면 오늘 달의 별자리) (2026-10-30)
 function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Horoscope; className?: string }) {
   const [picked, setPicked] = useState(mine?.chart.sun ?? sky.moon);
-  const byKey = (key: string) => sky.signs.find((s) => s.key === key);
-  const sel = byKey(picked) ?? sky.signs[0];
-  const moon = byKey(sky.moon) ?? sky.signs[0];
-  const sun = byKey(sky.sun) ?? sky.signs[0];
+  const byKey = (key: string) => sky.signs.find((s) => s.key === key) ?? sky.signs[0];
+  const sel = byKey(picked);
+  const moon = byKey(sky.moon);
+  const sun = byKey(sky.sun);
   const text = mine && sel.key === mine.chart.sun ? mine : sel;
   const level = FORECAST_LEVEL_META[text.level] ?? FORECAST_LEVEL_META["평범한 날"];
-  const chip = "inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--color-ivory)] text-[var(--color-ink)]";
+  const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <p className="text-[10px] font-bold text-[var(--color-gold)]">오늘의 별자리</p>
+      <p className={FEED_LABEL}>오늘의 별자리</p>
       <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
         오늘 달은 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
       </p>
       <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">태양 {sun.symbol} {sun.korean}자리</p>
       {mine && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
-          <span className={chip}>☉ {byKey(mine.chart.sun)?.korean}</span>
-          <span className={chip}>☽ {byKey(mine.chart.moon)?.korean}{mine.chart.uncertain.includes("moon") ? "?" : ""}</span>
+          <Badge cls={chip}>☉ {byKey(mine.chart.sun).korean}</Badge>
+          <Badge cls={chip}>☽ {byKey(mine.chart.moon).korean}{mine.chart.uncertain.includes("moon") ? "?" : ""}</Badge>
           {mine.chart.asc ? (
-            <span className={chip}>↑ {byKey(mine.chart.asc)?.korean}</span>
+            <Badge cls={chip}>↑ {byKey(mine.chart.asc).korean}</Badge>
           ) : (
             <span className="text-[10px] text-[var(--color-ink-faint)]">출생 시간을 넣으면 첫인상 별자리까지 봐요</span>
           )}
@@ -282,7 +278,7 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
       <div className="grid grid-cols-6 gap-1.5 mt-3">
         {sky.signs.map((s) => (
           <button type="button" key={s.key} onClick={() => setPicked(s.key)} aria-pressed={s.key === sel.key}
-            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${STAR_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${RELATION_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-xl leading-none">{s.symbol}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{s.korean}</span>
             {s.key === mine?.chart.sun && (
@@ -323,7 +319,7 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
       {(term || showBite || today.son_eomneun_nal) && <div className={FEED_CARD}>
         {term ? (
           <>
-            <p className="text-[10px] font-bold text-[var(--color-gold)]">절기 · {termWhen}</p>
+            <p className={FEED_LABEL}>절기 · {termWhen}</p>
             <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
             <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
           </>
@@ -342,7 +338,7 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
         <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
           <span className="text-2xl shrink-0">{news.emoji}</span>
           <span className="flex-1 min-w-0 break-keep">
-            <span className="block text-[10px] font-bold text-[var(--color-gold)]">새소식 · {news.date.slice(5).replace("-", ".")}</span>
+            <span className={`block ${FEED_LABEL}`}>새소식 · {news.date.slice(5).replace("-", ".")}</span>
             <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug mt-0.5">{news.title}</span>
             <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
           </span>

@@ -87,7 +87,7 @@ BaZi/
 │   │   ├── fortune.py           # Fortune (일진 결과 + 아침 한 마디 headline/action/caution) · FortuneCache
 │   │   ├── compatibility.py     # PillarRelation · PillarSnapshot · CompatibilityResult · Compatibility
 │   │   ├── user.py              # User(hour_unknown 포함), Gender("male"|"female")
-│   │   ├── member.py / profile.py / payment.py
+│   │   ├── member.py / profile.py(Profile.to_user() — 서비스들이 쓰는 Profile→User 변환 한 곳, 2026-10-30) / payment.py
 │   ├── application/
 │   │   ├── kkachi_service.py         # NatalService(analyze/interpret_natal) · PostnatalService(analyze/interpret_postnatal)
 │   │   │                             #   · KkachiService(analyze/interpret/build_chat_context)

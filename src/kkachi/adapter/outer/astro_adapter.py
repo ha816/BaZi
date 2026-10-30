@@ -14,8 +14,8 @@ class AstroAdapter(AstroPort):
     def positions(self, at_utc: datetime, city: str | None = None) -> dict[str, float]:
         d = ephem.Date(at_utc.astimezone(UTC).replace(tzinfo=None))  # ephem.Date는 tzinfo를 무시한다
         out = {
-            k: math.degrees(ephem.Ecliptic(body, epoch=d).lon) % 360  # epoch=d — 빠지면 J2000 분점 기준
-            for k, body in (("sun", ephem.Sun(d)), ("moon", ephem.Moon(d)))
+            "sun": math.degrees(ephem.Ecliptic(ephem.Sun(d), epoch=d).lon) % 360,  # epoch=d — 빠지면 J2000 분점 기준
+            "moon": math.degrees(ephem.Ecliptic(ephem.Moon(d), epoch=d).lon) % 360,
         }
         if city is not None:
             lat, lon = CITY_LATLON.get(city.strip().lower(), CITY_LATLON["seoul"])

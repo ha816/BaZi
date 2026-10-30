@@ -105,10 +105,7 @@ class AiReportService:
             yield text
             return
 
-        user = User(
-            name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt,
-            city=profile.city, hour_unknown=profile.birth_hour_unknown,
-        )
+        user = profile.to_user()
 
         async def save(done_text: str) -> None:
             if self._analysis_port is None:

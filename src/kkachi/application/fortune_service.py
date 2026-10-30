@@ -9,7 +9,6 @@ from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.port.weather_port import WeatherPort
 from kkachi.domain.ganji import Branch, Stem
 from kkachi.domain.profile import Profile
-from kkachi.domain.user import User
 
 
 def build_daily_share_card(name: str, is_self: bool, fortune: dict) -> dict:
@@ -70,7 +69,7 @@ class FortuneService:
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
-        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
+        user = profile.to_user()
         natal, postnatal = self._saju_service.analyze(user, today.year)
         weather_map = await self._get_weather_map(profile.city, days=1)
         weather = weather_map.get(today.isoformat())
@@ -95,7 +94,7 @@ class FortuneService:
         if profile is None:
             raise ValueError(f"Profile {profile_id} not found")
 
-        user = User(name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt, city=profile.city, hour_unknown=profile.birth_hour_unknown)
+        user = profile.to_user()
         # 날씨(외부 호출 ~1초)는 날씨까지 든 캐시로 채워지지 않는 날이 처음 나올 때 한 번만 받는다 — 홈처럼 매일 다시 여는 7일은 대개 호출 없음
         weather_map: dict[str, dict] | None = None
 

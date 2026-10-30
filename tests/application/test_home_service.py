@@ -76,10 +76,11 @@ class FakeCompat:
 
 def _svc(profiles, levels=("평범한 날",) * 7, report=None, done_pairs=()):
     fortune = FakeFortune(list(levels))
+    container = Container()
     svc = HomeService(
         member_port=FakeMembers(), profile_port=FakeProfiles(profiles), fortune_service=fortune,
-        saju_service=Container().kkachi_service(), analysis_port=FakeAnalyses(report),
-        compatibility_port=FakeCompat(done_pairs), astro_port=Container().astro_adapter(),
+        saju_service=container.kkachi_service(), analysis_port=FakeAnalyses(report),
+        compatibility_port=FakeCompat(done_pairs), astro_port=container.astro_adapter(),
     )
     return svc, fortune
 
