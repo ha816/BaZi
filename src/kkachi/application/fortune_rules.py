@@ -73,7 +73,7 @@ BRANCH_CLASHES = {
 }
 
 
-def _level_fortune(score: int) -> str:
+def level_fortune(score: int) -> str:
     if score >= 70:
         return "좋은 날"
     if score >= 40:
@@ -203,7 +203,7 @@ def _condition_label(condition: str) -> str:
     return re.sub(r"\s*-?\d+(\.\d+)?°C$", "", condition).strip() or "오늘 날씨"
 
 
-def _make_brief(factors: list[tuple[int, str, str, str]], name: str, son_nal: bool) -> tuple[str, str, str]:
+def make_brief(factors: list[tuple[int, str, str, str]], name: str, son_nal: bool) -> tuple[str, str, str]:
     """판정 요인 목록 → (headline, action, caution). 가장 큰 요인이 헤드라인, 동점이면 흉 우선.
     흉이 헤드라인이면 action도 그 요인의 것을 써서 "계약하세요/계약 미루세요" 같은 모순을 막는다."""
     prefix = f"{name}님, " if name else ""
@@ -357,7 +357,7 @@ def compute_fortune(
         tips = [f"오늘은 {st_name}입니다. {st_tip}", *tips][:3]
 
     son_nal = _is_son_eomneun_nal(today)
-    headline, action, caution = _make_brief(factors, name, son_nal)
+    headline, action, caution = make_brief(factors, name, son_nal)
 
     daeun_ganji = postnatal.current_daeun.ganji if postnatal and postnatal.current_daeun else None
     seun_ganji = year_to_ganji(today.year) if postnatal is None else year_to_ganji(postnatal.year)
@@ -372,7 +372,7 @@ def compute_fortune(
         day_pillar=str(day_sb),
         day_element=day_element.name,
         total_score=total_score,
-        level=_level_fortune(total_score),
+        level=level_fortune(total_score),
         domain_scores=domain_scores,
         description=description,
         tips=tips,

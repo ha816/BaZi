@@ -4,8 +4,10 @@ from uuid import UUID
 from kkachi.application.compatibility_daily import compute_daily_compat
 from kkachi.application.fortune_rules import build_today
 from kkachi.application.fortune_service import FortuneService
+from kkachi.application.horoscope_rules import build_my_horoscope, build_sky
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.analysis_port import AnalysisPort
+from kkachi.application.port.astro_port import AstroPort
 from kkachi.application.port.compatibility_port import CompatibilityPort
 from kkachi.application.port.member_port import MemberPort
 from kkachi.application.port.profile_port import ProfilePort
@@ -31,6 +33,7 @@ class HomeService:
         saju_service: KkachiService,
         analysis_port: AnalysisPort,
         compatibility_port: CompatibilityPort,
+        astro_port: AstroPort,
     ):
         self._member_port = member_port
         self._profile_port = profile_port
@@ -38,6 +41,7 @@ class HomeService:
         self._saju = saju_service
         self._analysis_port = analysis_port
         self._compat_port = compatibility_port
+        self._astro = astro_port
 
     async def get_home(self, member_id: UUID, today: date | None = None) -> dict | None:
         """회원이 없으면 None. 기본 프로필(is_self)이 없으면 me는 None, people은 궁합 없이."""
@@ -61,8 +65,9 @@ class HomeService:
                 "compat": {k: compat[k] for k in ("score", "level", "headline")} if compat else None,
             })
 
+        today_block = {**build_today(today), "sky": build_sky(self._astro, today)}  # 오늘의 띠 + 오늘의 별자리
         if me is None:
-            return {"date": today.isoformat(), "me": None, "people": people, "today": build_today(today), "next": []}
+            return {"date": today.isoformat(), "me": None, "people": people, "today": today_block, "next": []}
 
         week = await self._fortune.get_forecast(me.id, days=7, start_date=today)
         return {
@@ -72,20 +77,25 @@ class HomeService:
                 "name": me.name,
                 "character": self._character(my_natal, me, full=True),
                 "zodiac_branch": my_natal.saju[Pillar.年柱].branch.name,
+                "horoscope": build_my_horoscope(self._astro, self._user(me), today),
                 "marks": self._marks(my_natal),
                 "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
                 "week": [{k: d.get(k) for k in _WEEK_KEYS} for d in week],
             },
             "people": people,
-            "today": build_today(today),
+            "today": today_block,
             "next": await self._get_next(me, others, week, today.year),
         }
 
     def _natal(self, profile: Profile):
-        return self._saju.analyze_natal(User(
+        return self._saju.analyze_natal(self._user(profile))
+
+    @staticmethod
+    def _user(profile: Profile) -> User:
+        return User(
             name=profile.name, gender=profile.gender, birth_dt=profile.birth_dt,
             city=profile.city, hour_unknown=profile.birth_hour_unknown,
-        ))
+        )
 
     @staticmethod
     def _character(natal, profile: Profile, full: bool) -> dict:

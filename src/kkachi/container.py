@@ -1,6 +1,7 @@
 from dependency_injector import containers, providers
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from kkachi.adapter.outer.astro_adapter import AstroAdapter
 from kkachi.adapter.outer.db.event_repo import EventRepo
 from kkachi.adapter.outer.db.invite_repo import InviteRepo, ShareRepo
 from kkachi.adapter.outer.db.member_repo import MemberRepo
@@ -64,6 +65,7 @@ class Container(containers.DeclarativeContainer):
 
     # Kkachi
     natal_adapter = providers.Singleton(NatalAdapter)
+    astro_adapter = providers.Singleton(AstroAdapter)  # 별자리 황경(홈 오늘의 별자리)
     postnatal_adapter = providers.Singleton(PostnatalAdapter)
     ollama_adapter = providers.Singleton(OllamaAdapter)
     natal_service = providers.Singleton(NatalService, natal_port=natal_adapter)
@@ -130,6 +132,7 @@ class Container(containers.DeclarativeContainer):
         saju_service=kkachi_service,
         analysis_port=analysis_repo,
         compatibility_port=compatibility_repo,
+        astro_port=astro_adapter,
     )
     push_repo = providers.Singleton(PushRepo, session_factory=session_factory)
     webpush_adapter = providers.Singleton(WebPushAdapter)

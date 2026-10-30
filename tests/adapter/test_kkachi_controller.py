@@ -55,3 +55,4 @@ def test_today_is_public(client):
     assert r.status_code == 200
     body = r.json()
     assert len(body["zodiac"]) == 12 and all(z["advice"] for z in body["zodiac"])
+    assert len(body["sky"]["signs"]) == 12 and body["sky"]["moon_phase"]  # 오늘의 별자리(2026-10-30)

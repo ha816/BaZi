@@ -18,6 +18,7 @@ dependencies = [
     "lunardate>=0.2.2",
     "mcp>=1.27.0",
     "pywebpush>=2.5.0",
+    "ephem>=4.2.1",
 ]
 
 [build-system]

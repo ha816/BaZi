@@ -10,7 +10,9 @@ from pydantic import BaseModel
 from kkachi.adapter.inner.streaming import text_stream
 from kkachi.application.ai_report_service import AiReportService
 from kkachi.application.fortune_rules import build_today
+from kkachi.application.horoscope_rules import build_sky
 from kkachi.application.kkachi_service import KkachiService
+from kkachi.application.port.astro_port import AstroPort
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
@@ -32,9 +34,11 @@ def _make_user(req: AnalysisRequest) -> User:
 
 
 @kkachi_router.get("/today")
-async def get_today():
-    """홈 '까치 소식' 칸의 오늘 띠·절기 — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
-    return build_today(date.today())
+@inject
+async def get_today(astro: AstroPort = Depends(Provide[Container.astro_adapter])):
+    """홈의 오늘 띠·절기 + 오늘의 별자리(sky) — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
+    today = date.today()
+    return {**build_today(today), "sky": build_sky(astro, today)}
 
 
 @kkachi_router.post("/interpret")

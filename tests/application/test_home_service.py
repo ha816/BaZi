@@ -79,7 +79,7 @@ def _svc(profiles, levels=("평범한 날",) * 7, report=None, done_pairs=()):
     svc = HomeService(
         member_port=FakeMembers(), profile_port=FakeProfiles(profiles), fortune_service=fortune,
         saju_service=Container().kkachi_service(), analysis_port=FakeAnalyses(report),
-        compatibility_port=FakeCompat(done_pairs),
+        compatibility_port=FakeCompat(done_pairs), astro_port=Container().astro_adapter(),
     )
     return svc, fortune
 
@@ -112,6 +112,10 @@ def test_me_has_character_and_today_fortune_people_have_face_and_compat():
     assert set(friend_marks["sipsin"]) <= {s.name for s in Sipsin}  # 프론트 SIPSIN_INFO 키와 같은 한자
     assert me["zodiac_branch"] == "午"  # 1990 경오년생 — 까치 소식 '오늘의 띠'에 내 띠 표시
     assert home["today"]["date"] == "2026-10-24" and len(home["today"]["zodiac"]) == 12
+    # 오늘의 별자리(2026-10-30) — 1990-05-03 09:00 서울: 태양 황소·달 사자·상승 게. 일반판 12개는 today.sky
+    assert me["horoscope"]["chart"] == {"sun": "taurus", "moon": "leo", "asc": "cancer", "uncertain": []}
+    assert me["horoscope"]["headline"].startswith("나님, ") and me["horoscope"]["lucky_item"]
+    assert len(home["today"]["sky"]["signs"]) == 12 and home["today"]["sky"]["moon_phase"]
 
     # 기본 프로필을 뺀 내 사람만, 리포 순서 그대로 — 다른 회원의 프로필은 없다
     assert [p["name"] for p in home["people"]] == ["엄마", "친구"]
@@ -126,7 +130,7 @@ def test_no_self_profile_means_no_me_and_no_compat():
     svc, fortune = _svc([MOM])
     home = _home(svc)
     assert home["me"] is None and home["next"] == []
-    assert home["today"]["day_pillar"]  # 기본 프로필이 없어도 까치 소식은 있다
+    assert home["today"]["day_pillar"] and home["today"]["sky"]["sun"]  # 기본 프로필이 없어도 까치 소식·오늘의 별자리는 있다
     assert home["people"][0]["compat"] is None and home["people"][0]["character"]["key"]
     assert fortune.calls == []
 
