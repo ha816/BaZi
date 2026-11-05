@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { AnalysisInput } from "@/types/analysis";
-import { getHome, getToday, type HomeData, type SkyData, type TodayData } from "@/lib/api";
+import { getHome, getToday, type HomeData, type SkyData, type TarotToday, type TodayData } from "@/lib/api";
 import { detectLocation, type LocationInfo } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
+import TarotCard, { TAROT_FLIPPED_KEY, TAROT_SHUFFLE_MS } from "@/components/TarotCard";
 import { HourlyLuckCard, WeeklySiunCard } from "@/components/SiunCards";
 import FeedPost from "@/components/FeedPost";
 import { MEMBER_ID_KEY } from "@/lib/constants";
@@ -166,6 +167,7 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
 
 /** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
 const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
+  { date: "2026-11-05", emoji: "🃏", title: "오늘의 카드가 생겼어요", body: "까치가 매일 아침 타로 카드 한 장을 뽑아 둬요. 홈에서 뒤집어 보세요.", href: "/tarot" },
   { date: "2026-10-25", emoji: "🪪", title: "사주 분석도 궁합처럼 골라서", body: "저장한 프로필을 카드에서 바로 고르거나, 직접 입력해 저장 없이 바로 볼 수 있어요.", href: "/analysis" },
   { date: "2026-10-18", emoji: "💞", title: "궁합에 시운 탭이 생겼어요", body: "두 분의 오늘·내일·모레 궁합과 2주 안에 함께하기 좋은 날을 알려 드려요.", href: "/compatibility" },
 ];
@@ -308,6 +310,67 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
   );
 }
 
+const ORIENTATION_BADGE: Record<string, string> = {
+  "정방향": "bg-emerald-100 text-emerald-800 border-emerald-200",
+  "역방향": "bg-amber-100 text-amber-800 border-amber-200",
+};
+
+// 오늘의 카드 — 1909 클래식 덱 한 장(사람·날짜로 정해짐). 뒷면 → 누르면 셔플 떨림 → 앞면·이름·정/역·한 줄 → 일진 교차 한 줄(사람 카드만).
+// 뒤집은 날짜는 sessionStorage에 두어 다시 와도 또 안 뒤집는다 (V9-1, 2026-11-05)
+function TodayTarotCard({ tarot, name, className = "" }: { tarot: TarotToday; name?: string; className?: string }) {
+  const stored = useStorageValue(TAROT_FLIPPED_KEY, "session");
+  const [flippedNow, setFlippedNow] = useState(false);
+  const [shuffling, setShuffling] = useState(false);
+  const flipped = flippedNow || stored === tarot.date;
+  const person = tarot.identity === "person";
+  const c = tarot.card;
+  const flip = () => {
+    if (shuffling || flipped) return;
+    setShuffling(true);
+    setTimeout(() => {
+      setShuffling(false);
+      setFlippedNow(true);
+      try { sessionStorage.setItem(TAROT_FLIPPED_KEY, tarot.date); } catch { /* 저장 못 해도 이번 화면은 뒤집힌다 */ }
+      track("tarot_flip", { spread: "daily", orientation: c.orientation, identity: tarot.identity });
+    }, TAROT_SHUFFLE_MS);
+  };
+  return (
+    <div className={`${FEED_CARD} ${className}`}>
+      <p className={FEED_LABEL}>오늘의 카드</p>
+      <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+        {person ? `${name}님께 온 카드 한 장` : "오늘 까치가 뽑아 둔 카드"}
+      </p>
+      <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">
+        {person ? "하루 한 장, 사람마다 정해진 카드예요" : "모두에게 같은 카드예요 · 내 사주를 보면 내 카드가 생겨요"}
+      </p>
+      <div className="flex flex-col items-center mt-3">
+        <TarotCard card={c} flipped={flipped} shuffling={shuffling} onFlip={flip} size="sm" />
+        {!flipped ? (
+          <p className="text-xs text-[var(--color-ink-muted)] mt-2">{shuffling ? "카드를 섞는 중…" : "카드를 눌러 뒤집어 보세요"}</p>
+        ) : (
+          <div className="mt-2.5 w-full score-pop break-keep">
+            <div className="flex items-center justify-center gap-2">
+              <span className="font-heading text-[15px] font-bold text-[var(--color-ink)]">{c.name}</span>
+              <Badge cls={ORIENTATION_BADGE[c.orientation]}>{c.orientation}</Badge>
+            </div>
+            <p className="text-[13px] text-[var(--color-ink)] leading-relaxed text-center mt-1">{c.line}</p>
+            {tarot.cross && (
+              <div className="mt-2.5 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5">
+                <p className="text-[12px] text-[var(--color-ink-muted)] leading-relaxed">
+                  <span className="font-bold text-[var(--color-ink)]">오늘 일진과 함께 보면</span> · {tarot.cross}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex justify-end mt-2">
+        <Link href="/tarot" className="text-xs font-semibold text-[var(--color-gold)]">자세히 →</Link>
+      </div>
+    </div>
+  );
+}
+
 /** showBite: 비로그인만 — 로그인은 사주 한 입이 오늘 내 사람들 카드 안에 있다 (2026-10-26) */
 function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: boolean }) {
   const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= NEWS_DAYS);
@@ -421,6 +484,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
           <TodayHero me={home.me} />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
           <TodayStarsCard sky={home.today.sky} mine={home.me.horoscope} className="mx-4 mt-3" />
+          <TodayTarotCard tarot={home.me.tarot} name={home.me.name} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
@@ -431,6 +495,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         <>
           <TodayZodiacCard today={home.today} className="mx-4 mt-3" />
           <TodayStarsCard sky={home.today.sky} className="mx-4 mt-3" />
+          <TodayTarotCard tarot={home.today.tarot} className="mx-4 mt-3" />
         </>
       )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} date={home.date} />
@@ -557,6 +622,7 @@ function GuestHome() {
         <>
           <TodayZodiacCard today={today} className="mx-4 mt-3" />
           <TodayStarsCard sky={today.sky} className="mx-4 mt-3" />
+          <TodayTarotCard tarot={today.tarot} className="mx-4 mt-3" />
           <KkachiFeed today={today} showBite />
         </>
       )}

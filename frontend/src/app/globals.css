@@ -230,8 +230,46 @@ body {
 .seal-stamp { animation: seal-stamp 0.55s cubic-bezier(0.2, 0.7, 0.3, 1.2) 0.5s both; }
 @keyframes seal-thud { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, 2px); } 50% { transform: translate(1px, -1px); } }
 .seal-thud { animation: seal-thud 0.25s ease-out 0.82s both; }
+/* 오늘의 카드 — 뒷면(문양 + 까치) ↔ 앞면(1909 클래식 덱) 뒤집기. TarotCard (V9-1, 2026-11-05) */
+.tarot-scene { perspective: 1000px; display: block; }
+.tarot-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 11 / 19;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.tarot-card--flipped { transform: rotateY(180deg); }
+.tarot-card__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(43, 36, 24, 0.18);
+}
+.tarot-card__face--back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px double var(--color-gold);
+  background:
+    repeating-linear-gradient(45deg, rgba(166, 139, 91, 0.16) 0 2px, transparent 2px 10px),
+    repeating-linear-gradient(-45deg, rgba(166, 139, 91, 0.16) 0 2px, transparent 2px 10px),
+    radial-gradient(circle at 50% 42%, #f8f0dc 0%, #ecdcb4 55%, #d2b476 100%);
+}
+.tarot-card__face--front { transform: rotateY(180deg); }
+.tarot-card--reversed .tarot-card__face--front img { transform: rotate(180deg); }
+@keyframes tarot-shuffle {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25%      { transform: translateX(-6px) rotate(-3deg); }
+  75%      { transform: translateX(6px) rotate(3deg); }
+}
+.tarot-shuffle { animation: tarot-shuffle 0.12s ease-in-out 7; }
 @media (prefers-reduced-motion: reduce) {
-  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp, .seal-stamp, .seal-thud { animation: none !important; }
+  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp, .seal-stamp, .seal-thud, .tarot-shuffle { animation: none !important; }
+  .tarot-card { transition: none; }
 }
 
 /* Glow pulse — 용신 reveal 등 */

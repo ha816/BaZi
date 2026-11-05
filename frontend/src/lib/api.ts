@@ -403,10 +403,37 @@ export interface TodayData {
   solar_term: { name: string; tip: string; date: string; days: number } | null;
   son_eomneun_nal: boolean;
   sky: SkyData;  // 오늘의 별자리 (2026-10-30)
+  tarot: TarotToday;  // 오늘의 카드 날짜판 — 모두 같은 카드, cross 없음 (V9-1, 2026-11-05)
 }
 
 export async function getToday(): Promise<TodayData> {
   return request<TodayData>("/kkachi/today");
+}
+
+/** 오늘의 카드(V9-1, 2026-11-05) — 1909 클래식 덱 78장. 방향(정·역)에 맞는 문장만 들어 있어 프론트는 분기하지 않는다. 그림 /kkachi/tarot/{key}.webp */
+export interface TarotCardData {
+  id: number; key: string; name: string; arcana: "major" | "minor"; number: number; suit: string | null;
+  orientation: "정방향" | "역방향";
+  keywords: string[]; line: string; love: string; work: string; money: string;
+}
+export interface TarotToday {
+  date: string;
+  identity: "person" | "date";  // person = 생년월일시·성별로 뽑은 내 카드, date = 날짜만(모두 같은 카드)
+  card: TarotCardData;
+  cross?: string | null;        // 오늘 일진 레벨 × 카드 방향 교차 한 줄 — 사람 카드에만
+}
+
+/** GET /tarot/today — 생년월일·성별이 있으면 그 사람 카드(+교차 한 줄), 없으면 날짜 카드. 로그인 사용자는 getHome().me.tarot */
+export async function getTarotToday(input?: Pick<AnalysisInput, "birth_dt" | "gender" | "hour_unknown" | "city"> | null): Promise<TarotToday> {
+  const q = new URLSearchParams();
+  if (input?.birth_dt && input.gender) {
+    q.set("birth_dt", input.birth_dt);
+    q.set("gender", input.gender);
+    if (input.hour_unknown) q.set("hour_unknown", "true");
+    if (input.city) q.set("city", input.city);
+  }
+  const qs = q.toString();
+  return request<TarotToday>(`/tarot/today${qs ? `?${qs}` : ""}`);
 }
 
 /** 홈 한 장 — GET /members/{id}/home (specs/home/index.md §2-1, 2026-10-24). 기본 프로필이 없으면 me null */
@@ -419,6 +446,7 @@ export interface HomeData {
     zodiac_branch: string;
     // 오늘의 별자리 개인판(2026-10-30) — 출생 차트(태양·달·상승 key, 시간 미상이면 asc null·그날 바뀌는 천체는 uncertain) × 오늘 하늘. headline은 "{이름}님, " 접두
     horoscope: { chart: { sun: string; moon: string; asc: string | null; uncertain: string[] } } & Pick<SkySign, "score" | "level" | "headline" | "action" | "caution" | "lucky_item">;
+    tarot: TarotToday;  // 오늘의 카드 개인판(V9-1) — 사람·날짜로 정해진 카드 + 오늘 일진과의 교차 한 줄(cross)
     marks: { sinsal: string[]; sipsin: string[] };  // 가진 신살(한글)·십신(한자) — 사주 한 입 "내 사람들에게도 있을까?"
     fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal" | "yongshin">;
     week: Pick<DailyFortune, "date" | "total_score" | "level" | "weather">[];  // 오늘부터 7일 — 홈 시간대·주간 시운 카드
