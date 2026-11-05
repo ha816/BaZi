@@ -1,0 +1,77 @@
+# 타로 — 오늘의 카드 (`/tarot`, 홈 카드)
+
+| 항목 | 내용 |
+|---|---|
+| 상태 | 초안 — V9-1 오늘의 카드 구현(2026-11-05). V9-2 질문 타로는 ROADMAP V9·`docs/research/tarot_타로.md` §9 |
+| 관련 코드 | `src/kkachi/domain/tarot.py`(78장 데이터) · `application/tarot_rules.py`(추첨·교차 한 줄) · `adapter/inner/tarot_controller.py` · `home_service.py`(`me.tarot`) · `kkachi_controller.py`(`/kkachi/today tarot`) · `push_service.py`(알림 셋째 줄) · `frontend/src/components/TarotCard.tsx` · `app/tarot/page.tsx` · `app/page.tsx TodayTarotCard` · `app/globals.css .tarot-*` · 그림 `frontend/public/kkachi/tarot/` |
+| 관련 API | `GET /tarot/today` · `GET /members/{id}/home` `me.tarot` · `GET /kkachi/today` `tarot` |
+| 관련 문서 | `docs/research/tarot_타로.md`(근거·설계안) · `specs/home/index.md` §3-1b(홈 카드 자리) · ROADMAP V9 |
+| 마지막 확인 | 2026-11-05 — 390px Playwright(시스템 Chrome) 비로그인·로그인 홈 카드(뒷면 → 뒤집힘)·`/tarot` 세 상태 |
+
+## 1. 목적
+
+하루 한 장, 사람·날짜로 정해진 타로 카드를 **뒤집는 의식**으로 아침 루프를 하나 늘린다(ROADMAP V9 — §5 보류 사유 "다시 오게 못 함"에 대한 답). 카드가 주인공, 사주는 배경 — 카드 옆에 **오늘 일진과의 교차 한 줄**이 사주까치만의 자리다. LLM·DB 없이 룰 문장만으로 가치가 서야 하고, 그것이 2주 측정으로 확인돼야 V9-2(질문 타로)로 간다.
+
+## 2. 진입과 상태
+
+| 진입 | 데이터 | 카드 |
+|---|---|---|
+| 홈 로그인(기본 프로필 있음) | `GET /members/{id}/home` → `me.tarot` | **사람 카드**(`identity:"person"`) + `cross` |
+| 홈 로그인(기본 프로필 없음) · 비로그인 | 같은 응답의 `today.tarot` / `GET /kkachi/today` → `tarot` | **날짜 카드**(`identity:"date"`, 모두 같은 카드, `cross` 없음) |
+| `/tarot` 로그인 | `getHome(memberId)` 재사용 → `me.tarot`(없으면 `today.tarot`) | 위와 같음 |
+| `/tarot` 비로그인 | sessionStorage `kkachi_analysis_input`이 있으면 `GET /tarot/today?birth_dt&gender[&hour_unknown&city]`, 없으면 파라미터 없이 | 입력 있으면 사람 카드(+`cross`), 없으면 날짜 카드 |
+
+- 로그인 불필요(`/analysis` 직접 입력과 같은 정책). 하단 메뉴에 칸을 더하지 않는다 — 진입은 홈 카드 [자세히 →]·까치 소식 새소식(30일)·아침 알림 셋째 줄.
+- 뒤집은 상태: `sessionStorage kkachi_tarot_flipped = 날짜`. 같은 날 홈·`/tarot` 어디서 뒤집었든 다른 쪽은 바로 앞면, 날이 바뀌면 다시 뒷면.
+- 이벤트: `tarot_view{page:"tarot", logged_in}` · `tarot_flip{spread:"daily", orientation, identity[, page]}`.
+
+## 3. 화면 구성과 순서
+
+**홈 카드** `TodayTarotCard`(오늘의 별자리 바로 아래, `FEED_CARD` 안): 라벨 "오늘의 카드" → 제목(사람 카드 "{이름}님께 온 카드 한 장" / 날짜 카드 "오늘 까치가 뽑아 둔 카드") → 작은 줄("하루 한 장, 사람마다 정해진 카드예요" / "모두에게 같은 카드예요 · 내 사주를 보면 내 카드가 생겨요") → 가운데 카드 뒷면(너비 7rem, 상아색 격자 문양 + 까치) + "카드를 눌러 뒤집어 보세요" → **누르면** 0.9초 셔플 떨림("카드를 섞는 중…") → 뒤집힘(0.7초 3D) → 이름 + 정/역 배지(정방향 초록·역방향 호박) + 한 줄 → 사람 카드면 상아색 상자 "오늘 일진과 함께 보면 · {cross}" → 우하단 [자세히 →] `/tarot`.
+
+**`/tarot`**: `PageHeader` "오늘의 카드"(설명 "{이름}님의 카드예요. 하루 한 장, 사람마다 정해진 카드" / "하루 한 장, 사람·날짜마다 정해진 카드예요") → 카드 하나(너비 11rem, 홈에서 뒤집은 날이면 바로 앞면) → 이름·정/역 배지 → "1909 클래식 덱 · 메이저 n / {수트} 수트 n" → 키워드 칩 3 → 한 줄 → `cross` 상자(사람 카드) → 연애·일·재물 세 줄(dl) → 날짜 카드면 "모두에게 같은 카드예요. 기본 프로필을 정하면 내 카드를 뽑아요(로그인 → `/profile`) / 내 사주를 먼저 보면 내 카드가 나와요(비로그인 → `/analysis`)" → 면책 한 줄 → [← 홈으로].
+
+**아침 알림**(`build_push_payload`): 본문 셋째 줄 "🃏 오늘의 카드 · {이름}({정방향|역방향})" — 프로필의 사람 카드.
+
+## 4. 규칙
+
+**추첨(`tarot_rules.draw_daily`)**
+- identity = `"{birth_dt:%Y-%m-%dT%H:%M}|{gender}"`(프로필·직접 입력 동일 → 가입·저장 순간 카드가 바뀌지 않는다). 없으면 `""`(날짜 카드).
+- `seed = sha256("kkachi-tarot-v1|{identity}|{YYYY-MM-DD}")[:8]` → `random.Random` → 78장 중 1장, 역방향 25%. 같은 입력은 늘 같은 카드 — **DB에 저장하지 않는다**(결정론이 곧 캐시). "다시 뽑기" 없음.
+- 같은 생년월일시·성별은 같은 카드(일진과 같은 한계). 시간 미상 프로필은 정오 저장값으로.
+
+**문장**
+- 카드 문장은 `domain/tarot.py` 78장 × (키워드 3+3 · 한 줄 2 · 연애·일·재물 3+3). **전부 한글**(화면 폰트 서브셋 — 한자·영문 0, `test_tarot_rules`가 검사), 까치 말투 "~해요", 카드 그림의 장면을 한 번씩 부르고 카드를 바꿔도 성립하는 두루뭉술한 문장은 피한다. 방향에 맞는 문장만 응답에 평탄화한다(프론트는 정·역을 분기하지 않음).
+- 교차 한 줄(`cross_line`): 오늘 일진 레벨(좋은 날·평범한 날·주의가 필요한 날, 홈은 `week[0]`, `/tarot/today`는 `compute_fortune` — 날씨·대운 없이) × 카드 방향 = 6셀 × 2문장을 날짜로 회전. 일진 headline은 붙이지 않는다(홈 ① 오늘의 나와 중복).
+
+**그림**
+- 1909 웨이트·스미스 원판 스캔(Wikimedia Commons, 퍼블릭 도메인 — 미국·EU·한국) 78장만. US Games 리컬러·Universal Waite 금지. 제품 문구는 **"1909 클래식 덱"** — "라이더-웨이트"는 US Games 상표라 쓰지 않는다. 출처·라이선스·변환 명령은 `frontend/public/kkachi/tarot/README.md`.
+- 뒷면은 그림 없이 CSS(격자 문양 + `/kkachi/icon-192.png`). 역방향은 **그림만** 180°(라벨은 바로). 그림이 없으면 상아색 면에 이름만.
+
+**하지 않는다**
+- LLM·질문 입력·공유 카드(V9-2) · 하단 메뉴 6번째 칸 · 외부 운세 문장 · 카드 의미 영어 표기 · 하루 여러 장.
+
+## 5. 수용 기준
+
+390px 기준.
+
+1. 홈 오늘의 별자리 카드 바로 아래에 오늘의 카드 카드가 있다(로그인·비로그인·기본 프로필 없음 모두). 기본 프로필이 있으면 제목이 "{이름}님께 온 카드 한 장", 아니면 "오늘 까치가 뽑아 둔 카드".
+2. 처음엔 뒷면(문양 + 까치)이고 누르면 약 0.9초 떨린 뒤 3D로 뒤집혀 그림·이름·정/역 배지·한 줄이 보인다. 역방향 카드는 그림만 거꾸로다. 사람 카드에만 "오늘 일진과 함께 보면" 상자가 있고 날짜 카드엔 없다.
+3. 뒤집은 뒤 새로고침하거나 `/tarot`로 가면 같은 날은 바로 앞면이고, 날짜가 바뀌면 다시 뒷면이다.
+4. 같은 사람·같은 날은 홈·`/tarot`·`GET /tarot/today`가 모두 같은 카드를 준다. 비로그인 날짜 카드는 모두에게 같다.
+5. `/tarot`에 키워드 3·한 줄·연애·일·재물 세 줄·면책 한 줄("타로는 앞날을 맞히는 도구가 아니라 지금 마음을 비춰 보는 거울이에요.")이 있고, "1909 클래식 덱" 표기는 있되 "라이더-웨이트"는 어디에도 없다.
+6. 백엔드 테스트(`tests/application/test_tarot_rules.py`·`tests/adapter/test_tarot_controller.py`, 2026-11-05 통과): 78장·키 유일·전 문장 한자·영문 0 · 같은 입력 같은 카드, 30일 ≥ 10종 · 역방향 2,000표본 20~30% · 교차 한 줄 6셀·날짜 회전 · `GET /tarot/today` 파라미터 없음 → 날짜 카드·`cross null`, 생년월일+성별 → 사람 카드·`cross` 문장·그림 파일 존재, 성별만 → 날짜 카드, 잘못된 날짜 422 · `/kkachi/today`에 `tarot` · 홈 `me.tarot.cross` · 푸시 셋째 줄.
+7. 가로 스크롤 없음.
+
+## 6. 열린 결정
+
+| 결정 | 선택지 | 누가 |
+|---|---|---|
+| V9-2 진입 | 2주 측정(`tarot_flip` ≥ 40%·재방문 +10%p·`/tarot` 진입 ≥ 15%) / 바로 | 사용자 |
+| 역방향 비율 | 25% / 더 낮게 | 피드백 |
+| 까치 브랜드 덱 | 1909 원판 유지 / Gemini 78장 + 사람 리터치 | 사용자(2026-11-05 원판으로 시작) |
+| 카드 백과 페이지(78장 의미) | V9-2와 함께 / 보류 | 사용자 |
+
+## 7. 변경 이력
+
+- 2026-11-05 — V9-1 오늘의 카드 신설: 78장 데이터·결정론 추첨·`GET /tarot/today`·홈 `me.tarot`·`/kkachi/today tarot`·푸시 셋째 줄·`TarotCard` 뒤집기·홈 `TodayTarotCard`·`/tarot`·1909 원판 PD 그림 78장(800px WebP 7.1MB). 테스트 198 → 209.
