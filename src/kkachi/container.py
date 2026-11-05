@@ -43,6 +43,7 @@ class Container(containers.DeclarativeContainer):
             "kkachi.adapter.inner.admin_controller",
             "kkachi.adapter.inner.event_controller",
             "kkachi.adapter.inner.push_controller",
+            "kkachi.adapter.inner.tarot_controller",
         ],
     )
 

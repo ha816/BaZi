@@ -14,6 +14,7 @@ from kkachi.application.horoscope_rules import build_sky
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.astro_port import AstroPort
 from kkachi.application.self_quiz import build_self_quiz
+from kkachi.application.tarot_rules import draw_daily
 from kkachi.container import Container
 from kkachi.domain.user import Gender, User
 
@@ -36,9 +37,9 @@ def _make_user(req: AnalysisRequest) -> User:
 @kkachi_router.get("/today")
 @inject
 async def get_today(astro: AstroPort = Depends(Provide[Container.astro_adapter])):
-    """홈의 오늘 띠·절기 + 오늘의 별자리(sky) — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
+    """홈의 오늘 띠·절기 + 오늘의 별자리(sky) + 오늘의 카드(tarot, 날짜 seed) — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
     today = date.today()
-    return {**build_today(today), "sky": build_sky(astro, today)}
+    return {**build_today(today), "sky": build_sky(astro, today), "tarot": draw_daily(today)}
 
 
 @kkachi_router.post("/interpret")

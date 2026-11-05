@@ -15,6 +15,14 @@ def test_payload_strips_name_prefix_and_joins_lines():
     assert p["tag"] == "kkachi-daily-2026-09-12"
 
 
+def test_payload_appends_daily_tarot_line():
+    p = build_push_payload(
+        {"date": "2026-11-05", "headline": "오늘은 무난해요.", "action": "산책하세요."},
+        {"name": "별", "orientation": "정방향"},
+    )
+    assert p["body"].splitlines() == ["✦ 산책하세요.", "🃏 오늘의 카드 · 별(정방향)"]
+
+
 def test_payload_falls_back_without_brief():
     p = build_push_payload({"description": "오늘은 무난한 날입니다.", "level": "평범한 날", "total_score": 52})
     assert p["title"] == "🐦 오늘은 무난한 날입니다."

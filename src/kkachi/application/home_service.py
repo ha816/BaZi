@@ -13,6 +13,7 @@ from kkachi.application.port.member_port import MemberPort
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.report_builder import REPORT_PROMPT_VERSION, cached_report_text
 from kkachi.application.saju_character import build_saju_character
+from kkachi.application.tarot_rules import cross_line, draw_daily
 from kkachi.domain.ganji import Pillar
 from kkachi.domain.profile import Profile
 
@@ -69,6 +70,7 @@ class HomeService:
             return {"date": today.isoformat(), "me": None, "people": people, "today": today_block, "next": []}
 
         week = await self._fortune.get_forecast(me.id, days=7, start_date=today)
+        tarot = draw_daily(today, me.to_user())  # 오늘의 카드(V9-1) — 교차 한 줄은 오늘 일진 레벨(week[0])로, 추가 호출 없음
         return {
             "date": today.isoformat(),
             "me": {
@@ -77,6 +79,7 @@ class HomeService:
                 "character": self._character(my_natal, me, full=True),
                 "zodiac_branch": my_natal.saju[Pillar.年柱].branch.name,
                 "horoscope": build_my_horoscope(self._astro, me.to_user(), today),
+                "tarot": {**tarot, "cross": cross_line(tarot["card"], week[0].get("level", ""), today)},
                 "marks": self._marks(my_natal),
                 "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
                 "week": [{k: d.get(k) for k in _WEEK_KEYS} for d in week],

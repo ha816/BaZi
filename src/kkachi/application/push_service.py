@@ -5,14 +5,15 @@ from uuid import UUID
 from kkachi.application.fortune_service import FortuneService
 from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.port.push_port import PushPort, PushSenderPort
+from kkachi.application.tarot_rules import draw_daily
 
 _log = logging.getLogger(__name__)
 
 PUSH_URL = "/siun?src=push"
 
 
-def build_push_payload(fortune: dict) -> dict:
-    """일진 dict → 알림 페이로드. 제목은 헤드라인(이름 접두 제거), 본문은 할 것·피할 것."""
+def build_push_payload(fortune: dict, tarot: dict | None = None) -> dict:
+    """일진 dict → 알림 페이로드. 제목은 헤드라인(이름 접두 제거), 본문은 할 것·피할 것(+ 오늘의 카드 한 줄, V9-1)."""
     headline = fortune.get("headline") or fortune.get("description") or "오늘의 기운을 확인해보세요."
     if "님, " in headline[:12]:
         headline = headline.split("님, ", 1)[1]
@@ -21,6 +22,8 @@ def build_push_payload(fortune: dict) -> dict:
         lines.append(f"✦ {fortune['action']}")
     if fortune.get("caution"):
         lines.append(f"✕ {fortune['caution']}")
+    if tarot:
+        lines.append(f"🃏 오늘의 카드 · {tarot['name']}({tarot['orientation']})")
     return {
         "title": f"🐦 {headline}",
         "body": "\n".join(lines) or f"{fortune.get('level', '')} · {fortune.get('total_score', '')}점",
@@ -68,7 +71,7 @@ class PushService:
                 results.append({"member_id": str(sub.member_id), "status": "skip:no_profile"})
                 continue
             fortune = await self._fortune_service.get_fortune(profile.id)
-            payload = build_push_payload(fortune)
+            payload = build_push_payload(fortune, draw_daily(date.today(), profile.to_user())["card"])
             entry = {"member_id": str(sub.member_id), "profile": profile.name, "title": payload["title"], "body": payload["body"]}
             if dry_run:
                 entry["status"] = "dry_run"
