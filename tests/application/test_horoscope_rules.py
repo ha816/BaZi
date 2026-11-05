@@ -21,7 +21,8 @@ WANING = {"sun": "taurus", "moon": "leo", "moon_phase": "이지러지는 달"}  
 
 
 class FakeAstro:
-    """고정 황경(기본: 태양 216.7 전갈·달 90.5 게·상승 100 게). by_time으로 UTC 시각별 달 황경을 달리 주고 호출을 기록."""
+    """고정 황경(기본: 태양 216.7 전갈·달 90.5 게·상승 100 게). by_time으로 UTC 시각별 달 황경을 달리 주고 호출을 기록.
+    asc는 수 또는 UTC 시각 → 황경 함수(블록 안에서 상승이 움직이는 경우)."""
 
     def __init__(self, sun=216.7, moon=90.5, asc=100.0, by_time=None):
         self.sun, self.moon, self.asc, self.by_time = sun, moon, asc, by_time or {}
@@ -31,7 +32,7 @@ class FakeAstro:
         self.calls.append((at_utc, city))
         out = {"sun": self.sun, "moon": self.by_time.get(at_utc, self.moon)}
         if city is not None:
-            out["asc"] = self.asc
+            out["asc"] = self.asc(at_utc) if callable(self.asc) else self.asc
         return out
 
 
@@ -81,7 +82,7 @@ def test_headline_is_top_factor_negative_wins_tie_and_action_matches():
 def test_personal_chart_adds_moon_asc_factors_and_name_prefix():
     astro = FakeAstro()
     mine = build_my_horoscope(astro, _user(datetime(1990, 11, 5, 9)), TODAY)
-    assert mine["chart"] == {"sun": "scorpio", "moon": "cancer", "asc": "cancer", "uncertain": []}
+    assert mine["chart"] == {"sun": "scorpio", "moon": "cancer", "asc": "cancer", "asc_signs": ["cancer"], "uncertain": []}
     assert mine["headline"].startswith("승민님, ") and mine["level"] == "좋은 날"
     generic = next(s for s in build_sky(astro, TODAY)["signs"] if s["key"] == "scorpio")
     assert mine["score"] > generic["score"] == 70 and not generic["headline"].startswith("승민")
@@ -91,10 +92,21 @@ def test_hour_unknown_has_no_asc_and_flags_bodies_that_change_sign_that_day():
     day0, day1 = datetime(1990, 5, 2, 15, tzinfo=UTC), datetime(1990, 5, 3, 15, tzinfo=UTC)  # KST 0시·24시
     astro = FakeAstro(sun=42.3, moon=32.0, by_time={day0: 29.0, day1: 35.0})
     chart = build_chart(astro, _user(datetime(1990, 5, 3, 12), hour_unknown=True))
-    assert chart == {"sun": "taurus", "moon": "taurus", "asc": None, "uncertain": ["moon"]}
+    assert chart == {"sun": "taurus", "moon": "taurus", "asc": None, "asc_signs": [], "uncertain": ["moon"]}
     assert all(city is None for _, city in astro.calls)
     known = build_chart(FakeAstro(sun=42.3, moon=32.0), _user(datetime(1990, 5, 3, 9)))
-    assert known["asc"] == "cancer" and known["uncertain"] == []
+    assert known["asc"] == "cancer" and known["asc_signs"] == ["cancer"] and known["uncertain"] == []
+
+
+def test_asc_lists_every_sign_the_two_hour_block_passes():
+    # 1990-05-03 10:00 KST(사시 09~11시) = 00:00Z~02:00Z. 상승 황경이 한 시간에 15°씩 올라 처녀(150~180) → 천칭
+    astro = FakeAstro(asc=lambda t: 160 + 15 * (t.hour + t.minute / 60))
+    chart = build_chart(astro, _user(datetime(1990, 5, 3, 10)))
+    assert chart["asc"] == "virgo" and chart["asc_signs"] == ["virgo", "libra"] and chart["uncertain"] == ["asc"]
+    assert [t.strftime("%H:%M") for t, city in astro.calls if city] == ["01:00", "00:00", "00:30", "01:00", "01:30", "02:00"]
+    sure = FakeAstro(asc=lambda t: 100 + t.minute / 60)  # 자시(23~01시)는 전날 23시부터 — 블록 안에서 안 바뀌면 한 개
+    assert build_chart(sure, _user(datetime(1990, 5, 3, 0)))["asc_signs"] == ["cancer"]
+    assert sure.calls[1][0] == datetime(1990, 5, 2, 14, tzinfo=UTC)
 
 
 def test_birth_kst_uses_historical_offsets():

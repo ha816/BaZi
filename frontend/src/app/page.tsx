@@ -271,7 +271,7 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
           <Badge cls={chip}>☉ {byKey(mine.chart.sun).korean}</Badge>
           <Badge cls={chip}>☽ {byKey(mine.chart.moon).korean}{mine.chart.uncertain.includes("moon") ? "?" : ""}</Badge>
           {mine.chart.asc ? (
-            <Badge cls={chip}>↑ {byKey(mine.chart.asc).korean}</Badge>
+            <Badge cls={chip}>↑ {mine.chart.asc_signs.map((k) => byKey(k).korean).join(" 또는 ")}</Badge>
           ) : (
             <span className="text-[10px] text-[var(--color-ink-faint)]">출생 시간을 넣으면 첫인상 별자리까지 봐요</span>
           )}

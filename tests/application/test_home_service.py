@@ -114,7 +114,7 @@ def test_me_has_character_and_today_fortune_people_have_face_and_compat():
     assert me["zodiac_branch"] == "午"  # 1990 경오년생 — 까치 소식 '오늘의 띠'에 내 띠 표시
     assert home["today"]["date"] == "2026-10-24" and len(home["today"]["zodiac"]) == 12
     # 오늘의 별자리(2026-10-30) — 1990-05-03 09:00 서울: 태양 황소·달 사자·상승 게. 일반판 12개는 today.sky
-    assert me["horoscope"]["chart"] == {"sun": "taurus", "moon": "leo", "asc": "cancer", "uncertain": []}
+    assert me["horoscope"]["chart"] == {"sun": "taurus", "moon": "leo", "asc": "cancer", "asc_signs": ["cancer", "leo"], "uncertain": ["asc"]}
     assert me["horoscope"]["headline"].startswith("나님, ") and me["horoscope"]["lucky_item"]
     # 오늘의 카드(V9-1) — 사람·날짜로 정해진 카드 + 오늘 일진 레벨(평범한 날)과의 교차 한 줄
     assert me["tarot"]["identity"] == "person" and me["tarot"]["card"]["key"] and me["tarot"]["cross"]

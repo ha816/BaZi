@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 209 tests
+uv run pytest            # 210 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -342,7 +342,7 @@ GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShar
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
 GET    /members/{id}
-GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,horoscope{chart{sun,moon,asc|null,uncertain[]},score,level,headline,action,caution,lucky_item}(오늘의 별자리 개인판 — 출생 차트 태양·달·상승, 2026-10-30),tarot{date,identity:"person",card,cross}(오늘의 카드 사람판 + 일진 교차 한 줄, 2026-11-05),marks{sinsal[],sipsin[]},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
+GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,horoscope{chart{sun,moon,asc|null,asc_signs[],uncertain[]},score,level,headline,action,caution,lucky_item}(오늘의 별자리 개인판 — 출생 차트 태양·달·상승, 2026-10-30. asc_signs는 저장된 시의 2시간 블록 안에서 상승이 지나는 별자리 전부, 2개 이상이면 uncertain에 asc — 2026-11-06),tarot{date,identity:"person",card,cross}(오늘의 카드 사람판 + 일진 교차 한 줄, 2026-11-05),marks{sinsal[],sipsin[]},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
                                people:[{profile_id,name,character{key,art_key},marks{sinsal[],sipsin[]},compat{score,level(좋음·보통·주의),headline}|null}](기본 프로필 제외, 최근 추가 먼저),
                                next:[{kind:"good_day",date,action}|{kind:"compat",profile_id,name}|{kind:"ai_report"}](화면 노출 없음 — 2026-10-26 홈 ③ 제거), today(= GET /kkachi/today) }  홈 묶음(V8, 2026-10-24) — 404 if 회원 없음, 기본 프로필 없으면 me null·next []
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
@@ -668,7 +668,7 @@ erDiagram
 - 측정: `push_subscribe`·`push_unsubscribe`·`push_click`(`?src=push` 진입) 이벤트
 
 ### 오늘의 별자리 — `horoscope_rules.compute_horoscope` (홈 카드, 2026-10-30)
-- 서양 점성술 열대 황도. 황경은 `AstroAdapter`(ephem) — 태양·달은 그날 분점 기준, 상승점은 항성시·황도경사·위도. 오늘 하늘은 **오늘 정오 KST**. 출생 차트는 birth_dt(KST 벽시계 → `ZoneInfo("Asia/Seoul")`)·`CITY_LATLON` 위경도. 시간 미상이면 상승 없음, 그날 별자리가 바뀌는 천체는 `uncertain`
+- 서양 점성술 열대 황도. 황경은 `AstroAdapter`(ephem) — 태양·달은 그날 분점 기준, 상승점은 항성시·황도경사·위도. 오늘 하늘은 **오늘 정오 KST**. 출생 차트는 birth_dt(KST 벽시계 → `ZoneInfo("Asia/Seoul")`)·`CITY_LATLON` 위경도. 시간 미상이면 상승 없음, 그날 별자리가 바뀌는 천체는 `uncertain`. 시간이 있어도 저장값은 12지시 블록 가운데라 블록 시작부터 30분 간격 5점의 상승 별자리를 `asc_signs`에 모으고 2개 이상이면 `uncertain`에 `asc`(서울 블록의 89%) → 홈 칩 "↑ 처녀 또는 천칭"(2026-11-06). 점수는 저장 시각 `asc`로
 - **whole-sign 애스펙트**(별자리 차이 0 합·4/8 삼각·2/10 육각·3/9 사각·6 충). base 50 + 달→태양 10/12/6/−10/−8 · 달→달 8/8/4/−8/−6 · 달→상승 6/6/3/−6/−4 · 태양→태양 8/8/4/−8/−6 · 태양→달 4/6/3/−6/−4 · 태양→상승 4/4/2/−4/−3 + 새달 +4 · 보름달 −3. 레벨·문장 고르기는 일진의 `level_fortune`·`make_brief` 재사용
 - 문장 30셀 + 보통 4쌍 + 삭망 2 + 행운의 아이템 원소별 6 — **한자·영문 없음**(화면 폰트 서브셋, 테스트가 검사), 태양 문장은 "요즘/이 시기"("이번 달" 금지). 외부 기사 문장 사용 안 함. 상세 `specs/home/index.md` §3-5
 
@@ -715,7 +715,7 @@ tests/
     ├── test_timing_rules.py    # 타이밍 리포트(R3)
     ├── test_push_service.py    # 푸시 페이로드
     ├── test_home_service.py    # 홈 묶음 — 회원 없음 None·기본 프로필 없음·여성 art_key·다른 회원 제외·next 순서(좋은 날은 내일 이후·안 본 궁합 첫 사람·옛 버전 AI 풀이)·me.horoscope 차트·today.sky
-    ├── test_horoscope_rules.py # 오늘의 별자리 — 별자리 경계·whole-sign 애스펙트·점수/레벨(70/40)·요인 우선순위·개인판 이름 접두·시간 미상 uncertain·KST 역사 오프셋·보통 문장 회전·삭망
+    ├── test_horoscope_rules.py # 오늘의 별자리 — 별자리 경계·whole-sign 애스펙트·점수/레벨(70/40)·요인 우선순위·개인판 이름 접두·시간 미상 uncertain·2시간 블록 상승 asc_signs·KST 역사 오프셋·보통 문장 회전·삭망
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     ├── test_self_quiz.py       # 설문조사 10문항(십신·지장간·투출 점수→그렇다/아니다·근거 문장·세 기둥·옛 결과)

@@ -153,20 +153,32 @@ def build_sky(astro: AstroPort, today: date) -> dict:
 
 
 def build_chart(astro: AstroPort, user: User) -> dict:
-    """출생 차트(key) {sun, moon, asc|None, uncertain[]} — KST 벽시계 → UTC. 시간 미상이면 상승점 없음,
-    정오 저장값으로 태양·달을 보고 그날 0시~24시 사이 별자리가 바뀌는 천체는 uncertain에 적는다."""
+    """출생 차트(key) {sun, moon, asc|None, asc_signs[], uncertain[]} — KST 벽시계 → UTC. 시간 미상이면 상승점 없음,
+    정오 저장값으로 태양·달을 보고 그날 0시~24시 사이 별자리가 바뀌는 천체는 uncertain에 적는다.
+    시간이 있어도 저장값은 12지시 2시간 블록의 가운데라, 블록 안(30분 간격 — 상승은 서울에서 한 별자리를 75분 이상 지난다)에서
+    상승 별자리가 바뀌면 지나는 별자리를 asc_signs에 다 적고 uncertain에 asc를 넣는다(서울 블록의 89%, 2026-11-05 실측)."""
     birth = user.birth_dt.replace(tzinfo=KST)
     p = astro.positions(birth.astimezone(UTC), None if user.hour_unknown else user.city)
     uncertain: list[str] = []
+    asc_signs: list[str] = []
+    day0 = datetime.combine(user.birth_dt.date(), time(0), tzinfo=KST)
     if user.hour_unknown:
-        day0 = datetime.combine(user.birth_dt.date(), time(0), tzinfo=KST)
         first = astro.positions(day0.astimezone(UTC))
         last = astro.positions((day0 + timedelta(days=1)).astimezone(UTC))
         uncertain = [b for b in ("sun", "moon") if sign_of(first[b]) != sign_of(last[b])]
+    else:
+        block = day0 + timedelta(hours=(birth.hour + 1) // 2 * 2 - 1)  # 12지시 블록 시작(홀수 시, 자시는 전날 23시)
+        for step in range(5):
+            sign = sign_of(astro.positions((block + timedelta(minutes=30 * step)).astimezone(UTC), user.city)["asc"])
+            if sign not in asc_signs:
+                asc_signs.append(sign)
+        if len(asc_signs) > 1:
+            uncertain.append("asc")
     return {
         "sun": sign_of(p["sun"]),
         "moon": sign_of(p["moon"]),
         "asc": sign_of(p["asc"]) if "asc" in p else None,
+        "asc_signs": asc_signs,
         "uncertain": uncertain,
     }
 
