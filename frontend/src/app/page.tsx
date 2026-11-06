@@ -288,8 +288,14 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
 
 type Horoscope = NonNullable<HomeData["me"]>["horoscope"];
 
+/** 오늘의 별자리 상자의 관계 말 — 격자 아래 범례 줄 대신(2026-11-06, 띠 카드와 같은 식). 보통은 적지 않는다 */
+const STAR_RELATION_LABEL: Record<string, string> = {
+  "합": "달이 머무는 별자리", "삼각": "기운 받는 별자리", "육각": "기운 받는 별자리", "사각": "조심할 별자리", "충": "조심할 별자리",
+};
+
 // 오늘의 별자리 — 오늘 달·태양 별자리 + 내 출생 차트 칩(☉☽↑) + 12별자리 격자(칸을 누르면 그 별자리 한 줄·행운의 아이템).
 // 내 태양 별자리 칸은 달·상승까지 넣은 개인판(me.horoscope) 문장 — 이름 접두는 뗀다(stripName, 2026-11-06 오늘의 나와 같게 "어차피 알고 있어"), 처음엔 내 별자리(없으면 오늘 달의 별자리) (2026-10-30)
+// 2026-11-06 띠 카드와 같은 식으로 컴팩트하게 — 범례 줄 뺌(관계 말은 상자 첫 줄), 격자·상자 여백 줄임, 상자 글자 10/12/11px·굵게 없음
 function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData; mine?: Horoscope; stripName?: string; className?: string }) {
   const [picked, setPicked] = useState(mine?.chart.sun ?? sky.moon);
   const byKey = (key: string) => sky.signs.find((s) => s.key === key) ?? sky.signs[0];
@@ -320,34 +326,29 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
           )}
         </div>
       )}
-      <div className="grid grid-cols-6 gap-1.5 mt-3">
+      <div className="grid grid-cols-6 gap-1 mt-2">
         {sky.signs.map((s) => (
           <button type="button" key={s.key} onClick={() => setPicked(s.key)} aria-pressed={s.key === sel.key}
-            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${RELATION_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
-            <span className="text-xl leading-none">{s.symbol}</span>
-            <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{s.korean}</span>
+            className={`relative flex flex-col items-center rounded-xl border py-1 ${RELATION_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            <span className="text-lg leading-none">{s.symbol}</span>
+            <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{s.korean}</span>
             {s.key === mine?.chart.sun && (
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
-        <span><span className="text-emerald-600">●</span> 기운 받는 별자리</span>
-        <span><span className="text-amber-500">●</span> 조심할 별자리</span>
-        <span><span className="text-[var(--color-gold)]">●</span> 오늘 달이 머무는 별자리</span>
-      </div>
-      <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-[11px] text-[var(--color-ink-muted)]">
-            <span className="font-bold text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}
+      <div className="mt-2 rounded-xl bg-[var(--color-ivory)] px-3 py-2 break-keep">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] text-[var(--color-ink-muted)]">
+            <span className="text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}{STAR_RELATION_LABEL[sel.relation] ? ` · ${STAR_RELATION_LABEL[sel.relation]}` : ""}
           </p>
-          <Badge cls={level.color}>{level.icon} {text.level}</Badge>
+          <Badge cls={`${level.color} shrink-0`}>{level.icon} {text.level}</Badge>
         </div>
-        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">{headline}</p>
-        <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✦ {text.action}</p>
-        {text.caution && <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✕ {text.caution}</p>}
-        <p className="text-[11px] text-[var(--color-ink-faint)] mt-1">행운의 아이템 · {text.lucky_item}</p>
+        <p className="text-[12px] text-[var(--color-ink)] leading-relaxed mt-0.5">{headline}</p>
+        <p className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">✦ {text.action}</p>
+        {text.caution && <p className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">✕ {text.caution}</p>}
+        <p className="text-[10px] text-[var(--color-ink-faint)] mt-1">행운의 아이템 · {text.lucky_item}</p>
       </div>
     </div>
   );
