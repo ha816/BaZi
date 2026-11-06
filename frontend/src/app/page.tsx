@@ -139,13 +139,15 @@ function PeopleRow({ people, canAdd, me }: { people: HomeData["people"]; canAdd:
   );
 }
 
-// 사주 한 입(로그인) — 오늘의 신살·십신 하나 + "내 사람들에게도 있을까?" [확인하기] → 가진 사람 이름·나.
-// 2026-11-06 ② 카드 안에서 별도 카드로(사용자) — 카드가 갈라져 얼굴 금테·✦ 표시는 뺌. 확인 상태는 저장하지 않는다
+// 사주 한 입(로그인) — 오늘의 신살·십신 하나 + "내 사람들에게도 있을까?" [확인하기] → 그 기운을 가진 사람(나 포함)의 캐릭터 얼굴 줄.
+// 2026-11-06 ② 카드 안에서 별도 카드로(사용자), 결과는 글("…에게 있어요") 대신 얼굴 줄로(사용자 "결과도 어색해 — 캐릭터 카드로"). 확인 상태는 저장하지 않는다
 function SajuBiteCard({ bite, people, me }: { bite: Bite; people: HomeData["people"]; me: HomeData["me"] }) {
   const [revealed, setRevealed] = useState(false);
   const has = (m: { sinsal: string[]; sipsin: string[] } | undefined) => !!m?.[bite.field].includes(bite.mark);
-  const holders = people.filter((p) => has(p.marks));
-  const meHas = has(me?.marks);
+  const holders = [
+    ...(me && has(me.marks) ? [{ id: me.profile_id, name: me.name, character: me.character, isMe: true }] : []),
+    ...people.filter((p) => has(p.marks)).map((p) => ({ id: p.profile_id, name: p.name, character: p.character, isMe: false })),
+  ];
   return (
     <section className={`mx-4 mt-3 ${FEED_CARD}`}>
       <BiteIntro bite={bite} />
@@ -157,12 +159,31 @@ function SajuBiteCard({ bite, people, me }: { bite: Bite; people: HomeData["peop
           <span className="shrink-0 text-xs font-bold text-[var(--color-gold)]">확인하기 →</span>
         </button>
       ) : (
-        <p className="mt-3 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-[13px] text-[var(--color-ink)] leading-relaxed break-keep">
-          {people.length > 0 && (holders.length
-            ? <><span className="font-semibold text-[var(--color-gold)]">✦ {holders.map((p) => `${p.name}님`).join("·")}</span>에게 있어요. </>
-            : <>오늘 내 사람들 중엔 없어요. </>)}
-          {me ? (meHas ? <span className="font-semibold">나에게도 있어요!</span> : <>나에게는 없어요.</>) : null}
-        </p>
+        <div className="mt-3 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 break-keep">
+          {holders.length ? (
+            <>
+              <p className="text-[10px] font-bold text-[var(--color-gold)]">{bite.name}({bite.hanja}) 가진 사람 · {holders.length}명</p>
+              <div className="flex gap-3 mt-2 overflow-x-auto no-scrollbar">
+                {holders.map((h) => (
+                  <div key={h.id} className="flex flex-col items-center gap-1 w-14 shrink-0">
+                    <div className="relative">
+                      <img
+                        src={charArtSrc(h.character.art_key, h.character.key)}
+                        alt=""
+                        onError={onCharArtError(h.character.key, FALLBACK_IMG)}
+                        className="w-14 h-14 rounded-full object-cover border-2 border-[var(--color-gold)] bg-white"
+                      />
+                      {h.isMe && <span className="absolute -top-1 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
+                    </div>
+                    <span className="text-[11px] text-[var(--color-ink)] truncate w-14 text-center">{h.name}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-[12px] text-[var(--color-ink-muted)]">오늘 기운을 가진 사람이 없어요 — 내일은 다른 기운이에요.</p>
+          )}
+        </div>
       )}
     </section>
   );
