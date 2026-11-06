@@ -126,41 +126,50 @@ export default function SiunPage() {
                 </div>
                 {/* 일진 간지 + 종합 점수를 오른쪽에 함께(2026-11-06 사용자). 간지 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고,
                     점수는 뒤이어 score-pop으로 튀어나온다 — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다.
-                    왼쪽엔 대운·세운·월운을 쉬운 말로 작게 세 줄("10년 戊辰 / 올해 丙午 / 이달 己亥", 용신 든 간지는 금색) —
-                    옛 3칸 그리드는 일반 사용자가 용어를 몰라 뺐다(2026-11-06 사용자) */}
-                <div className={`px-6 py-3 flex items-center justify-between gap-4 border-y border-[var(--color-border-light)] ${heroBg}`}>
-                  <div className="flex flex-col gap-1 text-[10px] leading-none text-[var(--color-ink-faint)]">
-                    {([
-                      data.daeun_ganji ? { label: "10년", ganji: data.daeun_ganji, hit: data.yongshin_in_daeun ?? false } : null,
-                      data.seun_ganji ? { label: "올해", ganji: data.seun_ganji, hit: data.yongshin_in_seun ?? false } : null,
-                      data.wol_ganji ? { label: "이달", ganji: data.wol_ganji, hit: data.yongshin_in_wol ?? false } : null,
-                    ].filter(Boolean) as { label: string; ganji: string; hit: boolean }[]).map((g) => (
-                      <span key={g.label} className="whitespace-nowrap">
-                        {g.label}{" "}
-                        <span className={`font-heading text-[12px] font-bold ${g.hit ? "text-[var(--color-gold)]" : "text-[var(--color-ink-muted)]"}`}>{g.ganji}</span>
-                        {g.hit && <span className="ml-1 text-[8px] font-bold text-[var(--color-gold)]">용신</span>}
+                    그 아래 줄에 대운·세운·월운을 "대운(10년) 戊辰 무진" 꼴로 세 칸 나열 — 용어 + 쉬운 말 + 간지 + 한글 읽기, 용신 든 간지엔 금색 "용신"
+                    (옛 3칸 그리드는 용어만 있어 일반 사용자가 몰랐다 — 2026-11-06 사용자, 작은 세 줄도 "조그만하게 적지 말고 나열") */}
+                <div className={`px-6 py-3 border-y border-[var(--color-border-light)] ${heroBg}`}>
+                  <div className="flex items-center justify-end gap-4">
+                    <div key={`pillar-${data.date}`} className="flex items-baseline gap-2">
+                      <span className="font-heading text-3xl font-bold leading-none" style={{ color: stemEl.color }}>
+                        {Array.from(data.day_pillar).map((ch, i) => (
+                          <span key={i} className="ink-stamp" style={{ animationDelay: `${i * 0.25}s` }}>{ch}</span>
+                        ))}
                       </span>
-                    ))}
+                      <span className="text-sm font-semibold" style={{ color: stemEl.color }}>
+                        {toKorean(data.day_pillar)}
+                      </span>
+                    </div>
+                    <span className="h-6 w-px bg-[var(--color-border)]" aria-hidden />
+                    <div className="relative flex items-baseline gap-1.5">
+                      <span className="text-xs text-[var(--color-ink-muted)]">종합</span>
+                      <span key={`score-${data.date}`} className="score-pop font-heading text-3xl font-bold leading-none text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
+                      {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
+                      {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-9 -right-5" size={50} />}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                  <div key={`pillar-${data.date}`} className="flex items-baseline gap-2">
-                    <span className="font-heading text-3xl font-bold leading-none" style={{ color: stemEl.color }}>
-                      {Array.from(data.day_pillar).map((ch, i) => (
-                        <span key={i} className="ink-stamp" style={{ animationDelay: `${i * 0.25}s` }}>{ch}</span>
-                      ))}
-                    </span>
-                    <span className="text-sm font-semibold" style={{ color: stemEl.color }}>
-                      {toKorean(data.day_pillar)}
-                    </span>
-                  </div>
-                  <span className="h-6 w-px bg-[var(--color-border)]" aria-hidden />
-                  <div className="relative flex items-baseline gap-1.5">
-                    <span className="text-xs text-[var(--color-ink-muted)]">종합</span>
-                    <span key={`score-${data.date}`} className="score-pop font-heading text-3xl font-bold leading-none text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
-                    {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
-                    {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-9 -right-5" size={50} />}
-                  </div>
-                  </div>
+                  {(() => {
+                    const flows = ([
+                      data.daeun_ganji ? { term: "대운", plain: "10년", ganji: data.daeun_ganji, hit: data.yongshin_in_daeun ?? false } : null,
+                      data.seun_ganji ? { term: "세운", plain: "올해", ganji: data.seun_ganji, hit: data.yongshin_in_seun ?? false } : null,
+                      data.wol_ganji ? { term: "월운", plain: "이달", ganji: data.wol_ganji, hit: data.yongshin_in_wol ?? false } : null,
+                    ].filter(Boolean) as { term: string; plain: string; ganji: string; hit: boolean }[]);
+                    if (!flows.length) return null;
+                    return (
+                      <div className="mt-3 pt-2.5 border-t border-[var(--color-border-light)] flex items-start justify-between gap-2">
+                        {flows.map((g) => (
+                          <div key={g.term} className="flex flex-col leading-none">
+                            <span className="text-[11px] text-[var(--color-ink-faint)]">{g.term}({g.plain})</span>
+                            <span className="mt-1 flex items-baseline gap-1">
+                              <span className="font-heading text-[15px] font-bold" style={{ color: getElementInfo(g.ganji[0] ?? "").color }}>{g.ganji}</span>
+                              <span className="text-[11px] text-[var(--color-ink-muted)]">{toKorean(g.ganji)}</span>
+                              {g.hit && <span className="text-[8px] font-bold text-[var(--color-gold)]">용신</span>}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </>
             );
