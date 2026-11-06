@@ -9,6 +9,7 @@ import { detectLocation, type LocationInfo } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
 import TarotCard, { TAROT_FLIPPED_KEY, TAROT_SHUFFLE_MS } from "@/components/TarotCard";
+import GradeTag, { gradeOfRelation, gradeOfScore, toneOf } from "@/components/GradeTag";
 import { HourlyLuckCard } from "@/components/SiunCards";
 import FeedPost from "@/components/FeedPost";
 import { MEMBER_ID_KEY } from "@/lib/constants";
@@ -228,35 +229,7 @@ function BiteIntro({ bite }: { bite: Bite }) {
   );
 }
 
-/** 띠 칸 테두리·바탕 — 관계 값(백엔드)에 따라 색만 고른다: 오늘의 주인공 금 · 기운 받는 초록 · 조심할 주황 (별자리는 LEVEL_TONE — 레벨 기준) */
-const RELATION_TONE: Record<string, string> = {
-  "나": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
-  "삼합": "border-emerald-300 bg-emerald-50",
-  "육합": "border-emerald-300 bg-emerald-50",
-  "충": "border-amber-300 bg-amber-50",
-  "원진": "border-amber-300 bg-amber-50",
-  "보통": "border-[var(--color-border-light)] bg-white",
-};
-/** 별자리 칸 색·라벨 — 그 별자리의 오늘 점수(일반판 signs[].score, 내 태양 별자리는 개인판 me.horoscope.score) 기준.
- *  2026-11-06 사용자 "평범한 날인데 왜 좋음 라벨이?" — 달과의 각도(육각)만 보던 색·라벨이 태양·달·상승을 합친 판정과 어긋나서 점수를 따르게 했다.
- *  일반판 점수는 29~74(90일 표본, 중앙값 54)로 레벨 70/40을 거의 안 넘어 칸 전용 문턱: 70 최고(= 좋은 날) · 60 좋음 · 42 이하 주의 → 하루 평균 좋음 3칸·주의 2~3칸 */
-const scoreTag = (score: number): { text: string; tone: string; cls: string } | null =>
-  score >= 70 ? { text: "최고", tone: "border-[var(--color-gold)] bg-[var(--color-gold-faint)]", cls: "bg-[var(--color-gold)]" }
-  : score >= 60 ? { text: "좋음", tone: "border-emerald-300 bg-emerald-50", cls: "bg-emerald-500" }
-  : score <= 42 ? { text: "주의", tone: "border-amber-300 bg-amber-50", cls: "bg-amber-500" }
-  : null;
 
-/** 띠 격자 칸 오른쪽 위 등급 라벨 — 관계 값(백엔드, RELATION_TONE과 같은 키) → "나" 배지와 같은 꼴(최고·좋음·주의, 보통은 없음).
- *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼". 별자리는 levelTag(레벨 기준).
- *  격자 아래 범례 줄·상자의 관계 말(기운 받는 띠)은 뺌(같은 날) */
-const RELATION_TAG: Record<string, { text: string; cls: string } | null> = {
-  "나": { text: "최고", cls: "bg-[var(--color-gold)]" },
-  "삼합": { text: "좋음", cls: "bg-emerald-500" },
-  "육합": { text: "좋음", cls: "bg-emerald-500" },
-  "충": { text: "주의", cls: "bg-amber-500" },
-  "원진": { text: "주의", cls: "bg-amber-500" },
-  "보통": null,
-};
 
 // 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
 // 2026-11-06 오늘의 나와 같은 식으로 컴팩트하게 — 범례 줄 뺌(관계는 상자 배지), 격자·상자 여백 줄임, 상자 글자 10/12px·굵게 없음
@@ -275,13 +248,11 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
       <div className="grid grid-cols-6 gap-1 mt-2">
         {today.zodiac.map((z) => (
           <button type="button" key={z.branch} onClick={() => setPicked(z.branch)} aria-pressed={z.branch === sel.branch}
-            className={`relative flex flex-col items-center rounded-xl border py-1 ${RELATION_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            className={`relative flex flex-col items-center rounded-xl border py-1 ${toneOf(gradeOfRelation(z.relation))} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-lg leading-none">{z.emoji}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{z.korean}</span>
-            {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 보통은 없음), 내 띠의 "나"는 왼쪽 위 */}
-            {RELATION_TAG[z.relation] && (
-              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${RELATION_TAG[z.relation]!.cls}`}>{RELATION_TAG[z.relation]!.text}</span>
-            )}
+            {/* 오른쪽 위 등급 라벨(GradeTag — 일진 띠와의 관계, 보통은 없음), 내 띠의 "나"는 왼쪽 위 */}
+            <GradeTag grade={gradeOfRelation(z.relation)} corner />
             {z.branch === myBranch && (
               <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
@@ -324,16 +295,14 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
       {/* 출생 차트 칩(☉☽↑)은 2026-11-06 홈에서 뺌(사용자 — 설명 없인 낯섦) — /stars 내 별자리에 뜻과 함께 남음 */}
       <div className="grid grid-cols-6 gap-1 mt-2">
         {sky.signs.map((s) => {
-          const tag = scoreTag((mine && s.key === mine.chart.sun ? mine : s).score);  // 내 태양 별자리는 개인판 점수
+          const grade = gradeOfScore((mine && s.key === mine.chart.sun ? mine : s).score);  // 내 태양 별자리는 개인판 점수
           return (
           <button type="button" key={s.key} onClick={() => setPicked(s.key)} aria-pressed={s.key === sel.key}
-            className={`relative flex flex-col items-center rounded-xl border py-1 ${tag?.tone ?? "border-[var(--color-border-light)] bg-white"} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            className={`relative flex flex-col items-center rounded-xl border py-1 ${toneOf(grade)} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-lg leading-none">{s.symbol}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{s.korean}</span>
-            {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 그 별자리의 오늘 점수, 띠 카드와 같은 꼴, 2026-11-06), 내 태양 별자리의 "나"는 왼쪽 위 */}
-            {tag && (
-              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${tag.cls}`}>{tag.text}</span>
-            )}
+            {/* 오른쪽 위 등급 라벨(GradeTag — 그 별자리의 오늘 점수, 2026-11-06), 내 태양 별자리의 "나"는 왼쪽 위 */}
+            <GradeTag grade={grade} corner />
             {s.key === mine?.chart.sun && (
               <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}

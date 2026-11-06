@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import GradeTag, { gradeOfRelation } from "@/components/GradeTag";
 import { getZodiacWeek, type ZodiacRelation, type ZodiacWeek } from "@/lib/api";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { parseStored, useStorageValue } from "@/lib/useStorageValue";
@@ -79,9 +80,9 @@ export default function ZodiacPage() {
           <>
             {mine ? (
               <section className={CARD}>
-                <div className="flex items-baseline justify-between">
+                <div className="flex items-center justify-between">
                   <h2 className={TITLE}>내 띠</h2>
-                  <span className={`${BADGE} ${RELATION_META[mine.relation].badge}`}>{RELATION_META[mine.relation].label}</span>
+                  <GradeTag grade={gradeOfRelation(mine.relation)} size="md" />{/* 홈 격자와 같은 등급 라벨(2026-11-06) — 보통이면 없음 */}
                 </div>
                 <p className={SUB}>{mine.emoji} {mine.korean}띠 · {mine.years.join("·")}년생</p>
                 <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
@@ -112,11 +113,11 @@ export default function ZodiacPage() {
                   const rel = focus ? d.zodiac.find((z) => z.branch === focus)?.relation ?? "보통" : "보통";
                   return (
                     <button type="button" key={d.date} onClick={() => setDayIdx(i)} aria-pressed={i === dayIdx}
-                      className={`flex flex-col items-center rounded-xl border py-1.5 ${i === dayIdx ? "border-[var(--color-ink)] bg-[var(--color-ivory)]" : "border-[var(--color-border-light)] bg-white"}`}>
+                      className={`relative flex flex-col items-center rounded-xl border py-1.5 ${i === dayIdx ? "border-[var(--color-ink)] bg-[var(--color-ivory)]" : "border-[var(--color-border-light)] bg-white"}`}>
                       <span className="text-[10px] text-[var(--color-ink-faint)]">{dayLabel(d.date, i).replace(/\(.\)$/, "")}</span>
                       <span className="text-lg leading-none mt-1">{d.animal.emoji}</span>
                       <span className="text-[9px] text-[var(--color-ink-muted)] mt-0.5">{d.day_kor}</span>
-                      <span className={`w-1.5 h-1.5 rounded-full mt-1 ${RELATION_META[rel].dot}`} aria-label={RELATION_META[rel].day} />
+                      <GradeTag grade={gradeOfRelation(rel)} corner />{/* 관계 점 대신 홈 격자와 같은 등급 라벨(2026-11-06) */}
                     </button>
                   );
                 })}
@@ -141,7 +142,7 @@ export default function ZodiacPage() {
                           <span className="text-[13px] font-bold text-[var(--color-ink)]">{z.korean}띠</span>
                           <span className="text-[11px] text-[var(--color-ink-faint)]">{z.years.join("·")}년생</span>
                           {z.branch === myBranch && <span className="text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
-                          <span className={`ml-auto ${BADGE} ${meta.badge}`}>{meta.label}</span>
+                          <GradeTag grade={gradeOfRelation(z.relation)} size="md" className="ml-auto" />
                         </div>
                         <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.4rem] break-keep">{z.advice}</p>
                       </button>
@@ -164,7 +165,6 @@ export default function ZodiacPage() {
 /** 이번 주 좋은 날에서 고른 하루 — 일진·손없는 날·절기 + 기준 띠와의 관계 + 그날 그 띠의 한 줄 */
 function DayBox({ day, index, focus }: { day: ZodiacWeek["days"][number]; index: number; focus?: ZodiacWeek["today"]["zodiac"][number] }) {
   const entry = focus ? day.zodiac.find((z) => z.branch === focus.branch) : undefined;
-  const meta = RELATION_META[entry?.relation ?? "보통"];
   return (
     <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
       <div className="flex items-center gap-2 flex-wrap">
@@ -177,7 +177,7 @@ function DayBox({ day, index, focus }: { day: ZodiacWeek["days"][number]; index:
       {focus && entry && (
         <>
           <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">
-            <span className={`${BADGE} ${meta.badge} mr-1.5 align-middle`}>{meta.day}</span>
+            <GradeTag grade={gradeOfRelation(entry.relation)} size="md" className="mr-1.5 align-middle" />
             {focus.emoji} {focus.korean}띠에겐 {entry.relation === "나" ? "같은 띠가 주인공인 날" : entry.relation === "보통" ? "특별한 합·충이 없는 날" : `일진 띠와 ${entry.relation}인 날`}이에요.
           </p>
           <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✦ {entry.advice}</p>

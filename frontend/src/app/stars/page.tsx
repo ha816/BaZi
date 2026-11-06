@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import GradeTag, { gradeOfScore } from "@/components/GradeTag";
 import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { getHoroscopeWeek, type HoroscopeWeek, type SkySign } from "@/lib/api";
 import { MEMBER_ID_KEY } from "@/lib/constants";
@@ -112,7 +113,7 @@ export default function StarsPage() {
               <p className={SUB}>달이 {moon?.symbol} {moon?.korean}자리에 있을 때 12별자리의 하루 — 색은 오늘 달과의 관계예요</p>
               <ul className="mt-3 divide-y divide-[var(--color-border-light)]">
                 {data.today.signs.map((s) => (
-                  <SignRow key={s.key} sign={s} mine={s.key === mySun} focused={s.key === focus} onPick={() => { setPicked(s.key); setDayIdx(0); }} />
+                  <SignRow key={s.key} sign={s} score={s.key === mySun && today ? today.score : s.score} mine={s.key === mySun} focused={s.key === focus} onPick={() => { setPicked(s.key); setDayIdx(0); }} />
                 ))}
               </ul>
             </section>
@@ -137,7 +138,10 @@ function MyStarsCard({ me, today, sign, byKey }: { me: NonNullable<HoroscopeWeek
   };
   return (
     <section className={CARD}>
-      <h2 className={TITLE}>내 별자리</h2>{/* 레벨 배지(✨ 평범한 날)는 2026-11-06 뺌(사용자) */}
+      <div className="flex items-center justify-between">
+        <h2 className={TITLE}>내 별자리</h2>
+        <GradeTag grade={gradeOfScore(today.score)} size="md" />{/* 홈 격자와 같은 등급 라벨(개인판 점수 70/60/42, 2026-11-06) — 레벨 배지(✨ 평범한 날)는 뺌 */}
+      </div>
       <p className={SUB}>{sign.symbol} {sign.korean}자리 · {sign.range}</p>
       <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
         <p className="text-[15px] text-[var(--color-ink)] leading-relaxed">{today.headline}</p>
@@ -184,14 +188,15 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
       <div className="grid grid-cols-7 gap-1 mt-3">
         {data.days.map((d, i) => {
           const m = byKey(d.moon);
-          const rel = focus ? d.signs.find((s) => s.key === focus.key)?.relation ?? "보통" : "보통";
+          // 그날 기준 별자리의 점수 — 내 별자리면 개인판(me.days[i]), 아니면 일반판. 관계 점 대신 홈 격자와 같은 등급 라벨(2026-11-06)
+          const score = data.me && focus?.key === data.me.chart.sun ? data.me.days[i]?.score : focus ? d.signs.find((s) => s.key === focus.key)?.score : undefined;
           return (
             <button type="button" key={d.date} onClick={() => setDayIdx(i)} aria-pressed={i === dayIdx}
-              className={`flex flex-col items-center rounded-xl border py-1.5 ${i === dayIdx ? "border-[var(--color-ink)] bg-[var(--color-ivory)]" : "border-[var(--color-border-light)] bg-white"}`}>
+              className={`relative flex flex-col items-center rounded-xl border py-1.5 ${i === dayIdx ? "border-[var(--color-ink)] bg-[var(--color-ivory)]" : "border-[var(--color-border-light)] bg-white"}`}>
               <span className="text-[10px] text-[var(--color-ink-faint)]">{dayLabel(d.date).replace(/\(.\)$/, "")}</span>
               <span className="text-lg leading-none mt-1">{m?.symbol}</span>
               <span className="text-[9px] text-[var(--color-ink-muted)] mt-0.5">{m?.korean}</span>
-              <span className={`w-1.5 h-1.5 rounded-full mt-1 ${RELATION_DOT[rel]}`} aria-label={RELATION_LABEL[rel]} />
+              <GradeTag grade={score == null ? null : gradeOfScore(score)} corner />
             </button>
           );
         })}
@@ -220,7 +225,7 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
 }
 
 /** 별자리별 오늘 한 줄 — 누르면 펼쳐지고 달의 길 기준이 그 별자리로 바뀐다 */
-function SignRow({ sign, mine, focused, onPick }: { sign: SkySign; mine: boolean; focused: boolean; onPick: () => void }) {
+function SignRow({ sign, score, mine, focused, onPick }: { sign: SkySign; score: number; mine: boolean; focused: boolean; onPick: () => void }) {
   return (
     <li>
       <button type="button" onClick={onPick} aria-expanded={focused} className="w-full text-left py-2.5 active:opacity-80">
@@ -230,6 +235,7 @@ function SignRow({ sign, mine, focused, onPick }: { sign: SkySign; mine: boolean
           <span className="text-[13px] font-bold text-[var(--color-ink)]">{sign.korean}자리</span>
           <span className="text-[11px] text-[var(--color-ink-faint)]">{sign.range}</span>
           {mine && <span className="text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
+          <GradeTag grade={gradeOfScore(score)} size="md" className="ml-auto" />{/* 홈 격자와 같은 등급 라벨(2026-11-06) */}
         </div>
         <p className={`text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.4rem] break-keep ${focused ? "" : "line-clamp-1"}`}>{sign.headline}</p>
         {focused && (
