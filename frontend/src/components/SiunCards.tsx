@@ -26,15 +26,17 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
 
   return (
     <div className={`${embedded ? "" : CARD} ${className}`}>
-      <div className={`flex items-center ${embedded ? "justify-end mb-1" : "justify-between mb-3"}`}>
-        {!embedded && <h2 className={TITLE}>이 시간대가 좋아요</h2>}
-        {yongshin && (
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-emerald-600 font-semibold">최고 = {yongshin}</span>
-            <span className="text-[10px] text-amber-600 font-semibold">좋음 = {GENERATES[yongshin] || "상생"}</span>
-          </div>
-        )}
-      </div>
+      {!embedded && (  /* 홈(embedded)은 제목도 범례도 없이 타일만 — 타일마다 최고·좋음 글자가 있어 범례가 겹쳤다(2026-11-06 사용자) */
+        <div className="flex items-center justify-between mb-3">
+          <h2 className={TITLE}>이 시간대가 좋아요</h2>
+          {yongshin && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-emerald-600 font-semibold">최고 = {yongshin}</span>
+              <span className="text-[10px] text-amber-600 font-semibold">좋음 = {GENERATES[yongshin] || "상생"}</span>
+            </div>
+          )}
+        </div>
+      )}
       <div className="overflow-x-auto -mx-1 px-1 py-1 no-scrollbar">
         <div className="flex gap-1 w-max items-end">
           {hours.map((h, i) => {
