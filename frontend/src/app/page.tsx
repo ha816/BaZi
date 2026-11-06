@@ -499,9 +499,9 @@ function LoggedInHome({ memberId }: { memberId: string }) {
       {home.me ? (
         <>
           <TodayHero me={home.me} />
+          <TodayTarotCard tarot={home.me.tarot} className="mx-4 mt-3" />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
           <TodayStarsCard sky={home.today.sky} mine={home.me.horoscope} className="mx-4 mt-3" />
-          <TodayTarotCard tarot={home.me.tarot} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
@@ -510,9 +510,9 @@ function LoggedInHome({ memberId }: { memberId: string }) {
       )}
       {!home.me && (
         <>
+          <TodayTarotCard tarot={home.today.tarot} className="mx-4 mt-3" />
           <TodayZodiacCard today={home.today} className="mx-4 mt-3" />
           <TodayStarsCard sky={home.today.sky} className="mx-4 mt-3" />
-          <TodayTarotCard tarot={home.today.tarot} className="mx-4 mt-3" />
         </>
       )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} date={home.date} />
@@ -637,9 +637,9 @@ function GuestHome() {
       <GuestHero location={location} />
       {today && (
         <>
+          <TodayTarotCard tarot={today.tarot} className="mx-4 mt-3" />
           <TodayZodiacCard today={today} className="mx-4 mt-3" />
           <TodayStarsCard sky={today.sky} className="mx-4 mt-3" />
-          <TodayTarotCard tarot={today.tarot} className="mx-4 mt-3" />
           <KkachiFeed today={today} showBite />
         </>
       )}
