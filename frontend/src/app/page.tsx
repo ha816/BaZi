@@ -64,9 +64,9 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
               onError={onCharArtError(me.character.key, level.image)}
               className="w-24 h-24 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)]"
             />
-            {/* 오늘 레벨 도장 — 그림 아래쪽에 운수대통 직인처럼 쾅 찍힌다(globals.css .seal-stamp, 2026-11-06 사용자 제안). 배지 줄은 없앰 */}
+            {/* 오늘 레벨 도장 — 그림 위쪽에 운수대통 직인처럼 쾅 찍힌다(globals.css .seal-stamp, 2026-11-06 사용자 제안 · 아래쪽 → 위쪽 같은 날). 배지 줄은 없앰 */}
             <span
-              className={`seal-stamp absolute inset-x-0 -bottom-1 mx-auto w-max text-[10px] font-bold px-2 py-0.5 rounded-md border-2 shadow-sm whitespace-nowrap ${level.color}`}
+              className={`seal-stamp absolute inset-x-0 -top-1 mx-auto w-max text-[10px] font-bold px-2 py-0.5 rounded-md border-2 shadow-sm whitespace-nowrap ${level.color}`}
               style={{ "--seal-rot": "-8deg" } as React.CSSProperties}
             >
               {level.icon} {f.level}
