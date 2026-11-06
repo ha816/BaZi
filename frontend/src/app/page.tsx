@@ -265,7 +265,7 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
         <Link href="/zodiac" className={FEED_LINK}>자세히 →</Link>
       </div>
       <p className={FEED_SUB}>
-        {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
+        {today.day_kor}({today.day_pillar}) — {today.animal.color} {today.animal.korean}의 날
       </p>
       <div className="grid grid-cols-6 gap-1 mt-2">
         {today.zodiac.map((z) => (

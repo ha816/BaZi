@@ -69,7 +69,7 @@ export default function ZodiacPage() {
       <div className="page__inner">
         <PageHeader
           title="오늘의 띠"
-          description={today ? `${today.day_kor}(${today.day_pillar})일 — ${today.animal.color} ${today.animal.korean}의 날` : "오늘 일진의 띠와 12띠의 하루"}
+          description={today ? `${today.day_kor}(${today.day_pillar}) — ${today.animal.color} ${today.animal.korean}의 날` : "오늘 일진의 띠와 12띠의 하루"}
         />
 
         {failed && <div className={`${CARD} text-center text-sm text-[var(--color-ink-muted)]`}>까치가 오늘 일진을 가져오지 못했어요. 잠시 뒤 다시 열어 주세요.</div>}
@@ -169,7 +169,7 @@ function DayBox({ day, index, focus }: { day: ZodiacWeek["days"][number]; index:
     <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
       <div className="flex items-center gap-2 flex-wrap">
         <p className="text-[11px] text-[var(--color-ink-muted)]">
-          <span className="font-bold text-[var(--color-ink)]">{dayLabel(day.date, index)}</span> · {day.day_kor}({day.day_pillar})일 — {day.animal.color} {day.animal.korean}의 날
+          <span className="font-bold text-[var(--color-ink)]">{dayLabel(day.date, index)}</span> · {day.day_kor}({day.day_pillar}) — {day.animal.color} {day.animal.korean}의 날
         </p>
         {day.solar_term && <span className={`${BADGE} bg-emerald-50 text-emerald-700 border-emerald-200`}>🌿 {day.solar_term}</span>}
         {day.son_eomneun_nal && <span className={`${BADGE} bg-indigo-50 text-indigo-700 border-indigo-200`}>👻 손없는 날</span>}
