@@ -436,6 +436,31 @@ export async function getTarotToday(input?: Pick<AnalysisInput, "birth_dt" | "ge
   return request<TarotToday>(`/tarot/today${qs ? `?${qs}` : ""}`);
 }
 
+/** 주역 질문 괘(V11-1, 2026-11-07, specs/iching/index.md) — POST /iching/ask. 문장은 전부 백엔드, 괘 그림은 lines로 그린다(HexagramFigure).
+ *  hexagram.line = 지금 한 줄(본괘), transformed.line = 앞으로 한 줄(지괘, 변효 없으면 null), change = 변효 머리 문장, cross = 사주 있을 때 일진·용신 교차 두 문장 */
+export interface IchingLine { yang: boolean; changing: boolean }
+export interface IchingHexagram {
+  id: number; key: string; name: string; hanja: string; traditional: string;
+  upper: { name: string; hanja: string; element: string }; lower: { name: string; hanja: string; element: string };
+  keywords: string[]; lines: IchingLine[]; line: string;
+}
+export type IchingCategory = "연애" | "일" | "재물" | "기타";
+export interface IchingAnswer {
+  date: string; identity: "person" | "date"; question: string; category: IchingCategory;
+  values: number[];                 // 효 여섯 값 아래→위 — 6 노음(변함)·7 소양·8 소음·9 노양(변함). 동전 앞면 수 = 값 − 6
+  mode: "still" | "one" | "many";
+  hexagram: IchingHexagram; transformed: IchingHexagram | null; change: string;
+  area: { label: string; text: string } | null; cross: string | null;
+}
+export interface IchingBlocked { blocked: "crisis"; message: string; helplines: { name: string; number: string }[] }
+export interface IchingAskBody {
+  question: string; category?: IchingCategory | null; member_id?: string | null;
+  birth_dt?: string; gender?: string; hour_unknown?: boolean; city?: string;
+}
+export async function askIching(body: IchingAskBody): Promise<IchingAnswer | IchingBlocked> {
+  return request<IchingAnswer | IchingBlocked>("/iching/ask", { method: "POST", body: JSON.stringify(body) });
+}
+
 /** 별자리 상세(/stars, specs/stars/index.md, 2026-11-06) — GET /horoscope/week. today는 홈 카드와 같은 오늘 12별자리 전체,
  *  days는 오늘부터 N일 "달의 길"(별자리별 관계·점수·레벨만), me는 개인판(출생 차트 + 날마다 개인판 전체) — 없으면 null */
 export interface HoroscopeDay { date: string; sun: string; moon: string; moon_phase: string; signs: Pick<SkySign, "key" | "relation" | "score" | "level">[] }

@@ -9,6 +9,7 @@ from kkachi.adapter.inner.admin_controller import admin_router
 from kkachi.adapter.inner.compatibility_controller import compatibility_router
 from kkachi.adapter.inner.event_controller import event_router
 from kkachi.adapter.inner.horoscope_controller import horoscope_router
+from kkachi.adapter.inner.iching_controller import iching_router
 from kkachi.adapter.inner.kkachi_controller import kkachi_router
 from kkachi.adapter.inner.mcp_server import init_mcp_services
 from kkachi.adapter.inner.mcp_server import mcp as mcp_server
@@ -59,5 +60,6 @@ app.include_router(admin_router)
 app.include_router(event_router)
 app.include_router(push_router)
 app.include_router(tarot_router, prefix="/tarot")
+app.include_router(iching_router, prefix="/iching")
 app.include_router(horoscope_router, prefix="/horoscope")
 app.mount("/mcp", mcp_server.streamable_http_app())

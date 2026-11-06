@@ -267,8 +267,21 @@ body {
   75%      { transform: translateX(6px) rotate(3deg); }
 }
 .tarot-shuffle { animation: tarot-shuffle 0.12s ease-in-out 7; }
+/* 주역 질문 괘 — 효가 아래부터 쌓이는 연출 + 동전 셋 뒤집기. HexagramFigure · /iching (V11-1, 2026-11-07) */
+@keyframes hex-line-drop {
+  0%   { opacity: 0; transform: translateY(-10px) scaleX(0.6); }
+  60%  { opacity: 1; transform: translateY(1px) scaleX(1.04); }
+  100% { opacity: 1; transform: translateY(0) scaleX(1); }
+}
+.hex-line-drop { animation: hex-line-drop 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.1) both; }
+@keyframes coin-toss {
+  0%   { transform: translateY(0) rotateX(0); }
+  40%  { transform: translateY(-14px) rotateX(540deg); }
+  100% { transform: translateY(0) rotateX(1080deg); }
+}
+.coin-toss { animation: coin-toss 0.42s ease-out both; }
 @media (prefers-reduced-motion: reduce) {
-  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp, .seal-stamp, .seal-thud, .tarot-shuffle { animation: none !important; }
+  .char-silhouette--shake, .char-reveal, .stem-slot__item, .stem-slot--landed, .bar-grow, .pillar-rise, .ink-stamp, .seal-stamp, .seal-thud, .tarot-shuffle, .hex-line-drop, .coin-toss { animation: none !important; }
   .tarot-card { transition: none; }
 }
 
