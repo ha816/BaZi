@@ -668,7 +668,7 @@ erDiagram
 | 날씨 오행이 용신을 剋 | -8 |
 
 - 결과 `Fortune`: total_score, level(좋은 날/평범한 날/주의가 필요한 날), domain_scores{score,level,reason}, description, tips(최대 3), weather, solar_term(24절기 — 해당일이면 팁 맨 앞에 삽입), yongshin, son_eomneun_nal(음력 끝자리 9·0), 시운 그리드(daeun/seun/wol ganji + yongshin_in_*)
-- **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운에 표시하고, 내일·모레·지난주("이날")는 첫 "오늘"을 라벨로 치환
+- **아침 한 마디** `headline`(왜 이런 날인지, `{name}님, ` 접두 — 홈 오늘의 나는 `MorningBrief stripName`으로 뗌)·`action`(할 것 하나)·`caution`(피할 것, 없으면 ""): 점수 구간이 아니라 위 표의 판정 요인에서 `_make_brief()`가 생성. 문장은 2026-11-06부터 **쉬운 말**("내게 꼭 필요한 쇠(金) 기운이 들어오는 날", "내 사주와 하루가 부딪혀 변수가 생기기 쉬운 날") — 일진·용신·일지·십신·육합·충 용어는 `reasons`(시운 근거)에만. 가장 큰 요인이 헤드라인, 동점이면 흉 우선, 흉이 헤드라인이면 action도 그 요인 것(모순 방지). 프론트 `MorningBrief`가 홈·시운에 표시하고, 내일·모레·지난주("이날")는 첫 "오늘"을 라벨로 치환
 - `FORECAST_LEVEL_META[level].image`(good/normal/caution 까치)는 홈 히어로 캐릭터 그림이 안 뜰 때의 마지막 대체 그림. good·caution은 `public/kkachi/originals/` 원본 PNG(7MB)에서 만든 1024px WebP(2026-10-24 — 원본을 originals로 옮기며 링크가 깨져 있던 것)
 
 ### 아침 알림 (Web Push, ROADMAP R4)

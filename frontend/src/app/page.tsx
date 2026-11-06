@@ -69,7 +69,7 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
         <div className="relative flex-1 min-w-0 rounded-2xl bg-[var(--color-ivory)] px-3.5 py-3 break-keep">
           {/* 말풍선 꼬리 — 캐릭터 쪽 */}
           <span className="absolute -left-1.5 top-6 w-3 h-3 rotate-45 bg-[var(--color-ivory)]" aria-hidden />
-          <MorningBrief data={f} />
+          <MorningBrief data={f} stripName={me.name} compact />
         </div>
       </div>
       <div className="flex items-center gap-1.5 flex-wrap mt-3.5">

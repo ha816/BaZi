@@ -44,10 +44,11 @@ def test_brief_without_name_has_no_honorific_prefix():
     assert "님," not in f.headline[:4]
 
 
-def test_yongshin_day_headline_mentions_yongshin():
+def test_yongshin_day_headline_is_plain_and_names_the_element():
     d = _first_day(lambda f: f.yongshin_in_il)
     f = compute_fortune(NATAL, d, name="승민")
-    assert "용신" in f.headline
+    assert "꼭 필요한" in f.headline and NATAL.yongshin.name in f.headline  # 2026-11-06 "용신·일진" 용어 없이 쉬운 말로
+    assert "용신" not in f.headline and "일진" not in f.headline
     assert "첫걸음" in f.action
 
 
@@ -56,7 +57,7 @@ def test_clash_day_has_caution():
     d = _first_day(lambda f: f.day_pillar[1] == BRANCH_CLASHES[my_branch].name)
     f = compute_fortune(NATAL, d, name="승민")
     assert f.caution, "충(衝) 날인데 caution 없음"
-    assert "충" in _brief(f)
+    assert "부딪혀" in f.headline or "다툼" in f.caution, _brief(f)  # 헤드라인은 쉬운 말, 충(衝)은 reasons에만
 
 
 def test_combine_day_suggests_contact():
@@ -70,7 +71,7 @@ def test_combine_day_suggests_contact():
         span=365,
     )
     f = compute_fortune(NATAL, d, name="승민")
-    assert "육합" in f.headline or "연락" in f.action, _brief(f)
+    assert "맞물려" in f.headline or "연락" in f.action, _brief(f)
 
 
 def test_score_bounds_and_level_every_day():
