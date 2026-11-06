@@ -30,21 +30,19 @@ export default function MorningBrief({ data, stripName, dayLabel, compact }: Pro
   const action = data.action ? adapt(data.action, dayLabel) : "";
   const caution = data.caution ? adapt(data.caution, dayLabel) : "";
 
-  // 항목마다 [글머리 기호 + 작은 라벨] 한 줄 → 문장 한 줄 — 한줄평·오늘 할 것·피할 것이 같은 모양으로 쌓인다(2026-11-06 사용자 "항목별로 이쁘게")
+  // 항목마다 작은 라벨 한 줄 → 문장 한 줄 — 한줄평·오늘 할 것·피할 것이 같은 모양으로 쌓인다(2026-11-06 사용자 "항목별로 이쁘게").
+  // 라벨 앞 글머리 기호(❝ ✦ ✕)는 2026-11-06 뺌 — 글자 라벨이 있어 겹친다(사용자)
   const items = [
-    { glyph: "❝", label: "한줄평", labelCls: "text-[var(--color-ink-muted)]", text: headline, textCls: "text-[var(--color-ink)]" },  // 2026-11-06 볼드 강조 뺌 — 세 문장이 같은 굵기
-    action && { glyph: "✦", label: dayLabel && dayLabel !== "오늘" ? `${dayLabel} 할 것` : "오늘 할 것", labelCls: "text-[var(--color-gold)]", text: action, textCls: "text-[var(--color-ink)]" },
-    caution && { glyph: "✕", label: "피할 것", labelCls: "text-rose-500", text: caution, textCls: "text-[var(--color-ink)]" },
-  ].filter((it): it is { glyph: string; label: string; labelCls: string; text: string; textCls: string } => !!it);
+    { label: "한줄평", labelCls: "text-[var(--color-ink-muted)]", text: headline, textCls: "text-[var(--color-ink)]" },  // 2026-11-06 볼드 강조 뺌 — 세 문장이 같은 굵기
+    action && { label: dayLabel && dayLabel !== "오늘" ? `${dayLabel} 할 것` : "오늘 할 것", labelCls: "text-[var(--color-gold)]", text: action, textCls: "text-[var(--color-ink)]" },
+    caution && { label: "피할 것", labelCls: "text-rose-500", text: caution, textCls: "text-[var(--color-ink)]" },
+  ].filter((it): it is { label: string; labelCls: string; text: string; textCls: string } => !!it);
 
   return (
     <div className={compact ? "space-y-2" : "space-y-3"}>
       {items.map((it) => (
         <div key={it.label} className="break-keep">
-          <p className={`flex items-center gap-1 font-bold leading-none ${compact ? "text-[9px]" : "text-[11px]"} ${it.labelCls}`}>
-            <span aria-hidden>{it.glyph}</span>
-            {it.label}
-          </p>
+          <p className={`font-bold leading-none ${compact ? "text-[9px]" : "text-[11px]"} ${it.labelCls}`}>{it.label}</p>
           <p className={`leading-relaxed mt-0.5 ${compact ? "text-[10px]" : "text-[15px]"} ${it.textCls}`}>{it.text}</p>
         </div>
       ))}
