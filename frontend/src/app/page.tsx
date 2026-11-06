@@ -242,15 +242,15 @@ const RELATION_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-/** 오늘의 띠 배지 — 관계 값(백엔드) → 이름·색. 상자엔 label(기운 받는 띠…), 격자 칸 오른쪽 위엔 "나" 배지와 같은 꼴의 등급 라벨 tag(최고·좋음·주의 — 보통은 없음;
- *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼"). 격자 아래 범례 줄 대신(2026-11-06, 오늘의 나와 같은 식으로 컴팩트하게) */
-const ZODIAC_RELATION_BADGE: Record<string, { label: string; tag: { text: string; cls: string } | null; cls: string }> = {
-  "나": { label: "오늘의 주인공", tag: { text: "최고", cls: "bg-[var(--color-gold)]" }, cls: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]" },
-  "삼합": { label: "기운 받는 띠", tag: { text: "좋음", cls: "bg-emerald-500" }, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "육합": { label: "기운 받는 띠", tag: { text: "좋음", cls: "bg-emerald-500" }, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "충": { label: "조심할 띠", tag: { text: "주의", cls: "bg-amber-500" }, cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  "원진": { label: "조심할 띠", tag: { text: "주의", cls: "bg-amber-500" }, cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  "보통": { label: "보통", tag: null, cls: "bg-white text-[var(--color-ink-muted)] border-[var(--color-border-light)]" },
+/** 오늘의 띠 격자 칸 오른쪽 위 등급 라벨 — 관계 값(백엔드) → "나" 배지와 같은 꼴(최고·좋음·주의, 보통은 없음).
+ *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼". 격자 아래 범례 줄·상자의 "기운 받는 띠" 배지는 뺌(같은 날) */
+const ZODIAC_TAG: Record<string, { text: string; cls: string } | null> = {
+  "나": { text: "최고", cls: "bg-[var(--color-gold)]" },
+  "삼합": { text: "좋음", cls: "bg-emerald-500" },
+  "육합": { text: "좋음", cls: "bg-emerald-500" },
+  "충": { text: "주의", cls: "bg-amber-500" },
+  "원진": { text: "주의", cls: "bg-amber-500" },
+  "보통": null,
 };
 
 // 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
@@ -274,8 +274,8 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
             <span className="text-lg leading-none">{z.emoji}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{z.korean}</span>
             {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 보통은 없음), 내 띠의 "나"는 왼쪽 위 */}
-            {ZODIAC_RELATION_BADGE[z.relation].tag && (
-              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${ZODIAC_RELATION_BADGE[z.relation].tag!.cls}`}>{ZODIAC_RELATION_BADGE[z.relation].tag!.text}</span>
+            {ZODIAC_TAG[z.relation] && (
+              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${ZODIAC_TAG[z.relation]!.cls}`}>{ZODIAC_TAG[z.relation]!.text}</span>
             )}
             {z.branch === myBranch && (
               <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
@@ -284,12 +284,9 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
         ))}
       </div>
       <div className="mt-2 rounded-xl bg-[var(--color-ivory)] px-3 py-2 break-keep">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] text-[var(--color-ink-muted)]">
-            <span className="text-[var(--color-ink)]">{sel.emoji} {sel.korean}띠</span> · {sel.years.join("·")}년생
-          </p>
-          <Badge cls={`${ZODIAC_RELATION_BADGE[sel.relation].cls} shrink-0`}>{ZODIAC_RELATION_BADGE[sel.relation].label}</Badge>
-        </div>
+        <p className="text-[10px] text-[var(--color-ink-muted)]">
+          <span className="text-[var(--color-ink)]">{sel.emoji} {sel.korean}띠</span> · {sel.years.join("·")}년생
+        </p>
         <p className="text-[12px] text-[var(--color-ink)] leading-relaxed mt-0.5">{sel.advice}</p>
       </div>
     </div>
