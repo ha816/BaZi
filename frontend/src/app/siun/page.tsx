@@ -124,42 +124,37 @@ export default function SiunPage() {
                 <div className={`px-6 pt-5 pb-4 ${heroBg}`}>
                   <MorningBrief data={data} dayLabel={label} />
                 </div>
-                {/* 한 줄: 왼쪽에 대운·세운·월운 세 칸("대운(10년)" 위, "戊辰 무진" 아래 — 용어 + 쉬운 말 + 간지 + 한글, 용신 든 간지엔 금색 "용신"),
-                    오른쪽에 일진 간지(甲申 크게, 아래 갑신)와 종합 점수(19 크게, 아래 종합). 2026-11-06 사용자 — 3칸 그리드 → 작은 세 줄 → 나열 → 같은 행.
-                    간지 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고 점수는 뒤이어 score-pop — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다 */}
-                <div className={`px-4 py-3 border-y border-[var(--color-border-light)] ${heroBg} flex items-center justify-between gap-3`}>
-                  <div className="flex items-center gap-3">
+                {/* 한 줄: 대운(10년) · 세운(올해) · 월운(이달) · 일진(오늘/내일…) 네 칸을 같은 꼴로(용어 + 쉬운 말 위, 간지 오행 색 + 한글 아래, 용신 든 간지엔 금색 "용신"),
+                    세로선, 오른쪽에 종합 점수(19 크게, 아래 종합). 2026-11-06 사용자 — 3칸 그리드 → 작은 세 줄 → 나열 → 같은 행 → 일진도 같은 꼴로 월운 옆에.
+                    일진 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고 점수는 뒤이어 score-pop — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다 */}
+                <div className={`px-4 py-3 border-y border-[var(--color-border-light)] ${heroBg} flex items-center justify-between gap-2`}>
+                  <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
                     {([
-                      data.daeun_ganji ? { term: "대운", plain: "10년", ganji: data.daeun_ganji, hit: data.yongshin_in_daeun ?? false } : null,
-                      data.seun_ganji ? { term: "세운", plain: "올해", ganji: data.seun_ganji, hit: data.yongshin_in_seun ?? false } : null,
-                      data.wol_ganji ? { term: "월운", plain: "이달", ganji: data.wol_ganji, hit: data.yongshin_in_wol ?? false } : null,
-                    ].filter(Boolean) as { term: string; plain: string; ganji: string; hit: boolean }[]).map((g) => (
-                      <div key={g.term} className="flex flex-col leading-none whitespace-nowrap">
+                      data.daeun_ganji ? { term: "대운", plain: "10년", ganji: data.daeun_ganji, hit: data.yongshin_in_daeun ?? false, stamp: false } : null,
+                      data.seun_ganji ? { term: "세운", plain: "올해", ganji: data.seun_ganji, hit: data.yongshin_in_seun ?? false, stamp: false } : null,
+                      data.wol_ganji ? { term: "월운", plain: "이달", ganji: data.wol_ganji, hit: data.yongshin_in_wol ?? false, stamp: false } : null,
+                      { term: "일진", plain: label, ganji: data.day_pillar, hit: data.yongshin_in_il ?? false, stamp: true },
+                    ].filter(Boolean) as { term: string; plain: string; ganji: string; hit: boolean; stamp: boolean }[]).map((g) => (
+                      <div key={g.stamp ? `il-${data.date}` : g.term} className="flex flex-col leading-none whitespace-nowrap">
                         <span className="text-[10px] text-[var(--color-ink-faint)]">{g.term}({g.plain})</span>
                         <span className="mt-1 flex items-baseline gap-1">
-                          <span className="font-heading text-[15px] font-bold" style={{ color: getElementInfo(g.ganji[0] ?? "").color }}>{g.ganji}</span>
+                          <span className="font-heading text-[15px] font-bold" style={{ color: getElementInfo(g.ganji[0] ?? "").color }}>
+                            {g.stamp
+                              ? Array.from(g.ganji).map((ch, i) => <span key={i} className="ink-stamp" style={{ animationDelay: `${i * 0.25}s` }}>{ch}</span>)
+                              : g.ganji}
+                          </span>
                           <span className="text-[10px] text-[var(--color-ink-muted)]">{toKorean(g.ganji)}</span>
                           {g.hit && <span className="text-[8px] font-bold text-[var(--color-gold)]">용신</span>}
                         </span>
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="h-8 w-px bg-[var(--color-border)]" aria-hidden />
-                    <div key={`pillar-${data.date}`} className="flex flex-col items-center leading-none">
-                      <span className="font-heading text-2xl font-bold" style={{ color: stemEl.color }}>
-                        {Array.from(data.day_pillar).map((ch, i) => (
-                          <span key={i} className="ink-stamp" style={{ animationDelay: `${i * 0.25}s` }}>{ch}</span>
-                        ))}
-                      </span>
-                      <span className="mt-1 text-[10px] font-semibold" style={{ color: stemEl.color }}>{toKorean(data.day_pillar)}</span>
-                    </div>
-                    <div className="relative flex flex-col items-center leading-none">
-                      <span key={`score-${data.date}`} className="score-pop font-heading text-2xl font-bold text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
-                      <span className="mt-1 text-[10px] text-[var(--color-ink-muted)]">종합</span>
-                      {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
-                      {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-8 -right-6" size={44} />}
-                    </div>
+                  <span className="h-8 w-px bg-[var(--color-border)] shrink-0" aria-hidden />
+                  <div className="relative flex flex-col items-center leading-none shrink-0">
+                    <span key={`score-${data.date}`} className="score-pop font-heading text-2xl font-bold text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
+                    <span className="mt-1 text-[10px] text-[var(--color-ink-muted)]">종합</span>
+                    {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
+                    {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-8 -right-6" size={44} />}
                   </div>
                 </div>
               </>
