@@ -14,7 +14,7 @@ const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
 /** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 count일까지(기본 글피, 홈은 모레 — 2026-10-26). 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음.
- *  날짜마다 머리줄 + 3시간 타일 줄. 머리줄은 날짜만(홈 embedded의 날씨·기온·레벨·점수 요약은 2026-11-06 사용자가 뺌 — 주간 시운 칸은 그대로 없앤 채) */
+ *  날짜마다 머리줄 + 3시간 타일 줄. 홈(embedded) 머리줄은 날짜 + 레벨 아이콘(날씨·기온·점수는 2026-11-06 사용자가 뺌 — 주간 시운 칸은 없앤 채) */
 export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embedded = false, className = "" }: { days: SiunDay[]; yongshin?: string; count?: number; embedded?: boolean; className?: string }) {
   const nowHour = new Date().getHours();
   const groups = days.slice(0, Math.min(count, DAY_LABELS.length)).map((day, i) => ({
@@ -41,12 +41,19 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
         <div className="flex gap-3 w-max items-start">
           {groups.map(({ day, label, hours }) => {
             const d = new Date(day.date);
+            const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
             return (
               <div key={day.date} className="flex flex-col gap-1 min-w-max">
                 <p className="flex items-center gap-1 text-[10px] whitespace-nowrap ml-1 mb-0.5 leading-none">
                   <span className="font-bold text-[var(--color-gold)]">{label}</span>
                   <span className="text-[var(--color-ink-faint)]">{d.getMonth() + 1}/{d.getDate()}</span>
-                  {/* 머리줄은 날짜만 — 홈(embedded)에 있던 날씨(☀️ 맑음 8°)·레벨·점수(🚨 19점)는 2026-11-06 사용자가 차례로 뺐다(레벨은 캐릭터 도장, 점수는 시운 화면에) */}
+                  {/* 홈(embedded) 머리줄: 날짜 + 그날 레벨 아이콘(🚨). 날씨(☀️ 맑음 8°)·점수(19점)는 2026-11-06 사용자가 뺌 — "경고등 같은 상태는 넣고 점수만 빼자" */}
+                  {embedded && (
+                    <>
+                      <span className="text-[var(--color-ink-faint)]">·</span>
+                      <span className="text-[12px] leading-none" aria-label={day.level}>{lMeta.icon}</span>
+                    </>
+                  )}
                 </p>
                 <div className="flex gap-1">
                   {hours.map((h, i) => {
