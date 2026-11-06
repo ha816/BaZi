@@ -220,7 +220,7 @@ body {
   100% { opacity: 1; transform: scale(1); }
 }
 .ink-stamp { display: inline-block; animation: ink-stamp 0.6s ease-out both; } /* 글자 하나가 찍히는 시간 */
-/* 운수대통 직인 — 좋은 날 시운 공유 페이지에서 점수 위로 쾅 찍힌다(2026-10-23). 크게 떠 있다가 내려와 살짝 눌리고 기울어진 채 멈춘다 */
+/* 운수대통 직인 — 좋은 날 시운 공유 페이지에서 점수 위로 쾅 찍힌다(2026-10-23). 크게 떠 있다가 내려와 살짝 눌리고 기울어진 채 멈춘다. 홈 오늘의 나의 레벨 도장도 같은 것(2026-11-06, --seal-rot -8deg) */
 @keyframes seal-stamp {
   0%   { opacity: 0; transform: scale(2.4) rotate(calc(var(--seal-rot, -12deg) - 16deg)); }
   55%  { opacity: 1; transform: scale(0.9) rotate(calc(var(--seal-rot, -12deg) + 2deg)); }

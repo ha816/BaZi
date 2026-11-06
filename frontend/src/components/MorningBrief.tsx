@@ -32,7 +32,7 @@ export default function MorningBrief({ data, stripName, dayLabel, compact }: Pro
 
   // 항목마다 [글머리 기호 + 작은 라벨] 한 줄 → 문장 한 줄 — 한줄평·오늘 할 것·피할 것이 같은 모양으로 쌓인다(2026-11-06 사용자 "항목별로 이쁘게")
   const items = [
-    { glyph: "❝", label: "한줄평", labelCls: "text-[var(--color-ink-muted)]", text: headline, textCls: "font-semibold text-[var(--color-ink)]" },
+    { glyph: "❝", label: "한줄평", labelCls: "text-[var(--color-ink-muted)]", text: headline, textCls: "text-[var(--color-ink)]" },  // 2026-11-06 볼드 강조 뺌 — 세 문장이 같은 굵기
     action && { glyph: "✦", label: dayLabel && dayLabel !== "오늘" ? `${dayLabel} 할 것` : "오늘 할 것", labelCls: "text-[var(--color-gold)]", text: action, textCls: "text-[var(--color-ink)]" },
     caution && { glyph: "✕", label: "피할 것", labelCls: "text-rose-500", text: caution, textCls: "text-[var(--color-ink)]" },
   ].filter((it): it is { glyph: string; label: string; labelCls: string; text: string; textCls: string } => !!it);

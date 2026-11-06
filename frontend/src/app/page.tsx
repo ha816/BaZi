@@ -12,7 +12,7 @@ import TarotCard, { TAROT_FLIPPED_KEY, TAROT_SHUFFLE_MS } from "@/components/Tar
 import { HourlyLuckCard, WeeklySiunCard } from "@/components/SiunCards";
 import FeedPost from "@/components/FeedPost";
 import { MEMBER_ID_KEY } from "@/lib/constants";
-import { ELEMENT_META, FORECAST_LEVEL_META } from "@/lib/elementColors";
+import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { charArtSrc, onCharArtError } from "@/lib/characterArt";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
@@ -48,7 +48,6 @@ const FEED_LINK = "shrink-0 text-xs font-semibold text-[var(--color-gold)] white
 // ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, [자세히 →](/siun)는 제목 줄 오른쪽(2026-11-06)
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
-  const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
   const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
   return (
     <section className={`mx-4 mt-4 ${FEED_CARD}`}>
@@ -58,12 +57,21 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
       </div>
       <div className="flex gap-3 items-start">
         <div className="flex flex-col items-center shrink-0 w-24">
-          <img
-            src={charArtSrc(me.character.art_key, me.character.key)}
-            alt={me.character.title}
-            onError={onCharArtError(me.character.key, level.image)}
-            className="w-24 h-24 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)]"
-          />
+          <div className="relative">
+            <img
+              src={charArtSrc(me.character.art_key, me.character.key)}
+              alt={me.character.title}
+              onError={onCharArtError(me.character.key, level.image)}
+              className="w-24 h-24 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)]"
+            />
+            {/* 오늘 레벨 도장 — 그림 아래쪽에 운수대통 직인처럼 쾅 찍힌다(globals.css .seal-stamp, 2026-11-06 사용자 제안). 배지 줄은 없앰 */}
+            <span
+              className={`seal-stamp absolute inset-x-0 -bottom-1 mx-auto w-max text-[10px] font-bold px-2 py-0.5 rounded-md border-2 shadow-sm whitespace-nowrap ${level.color}`}
+              style={{ "--seal-rot": "-8deg" } as React.CSSProperties}
+            >
+              {level.icon} {f.level}
+            </span>
+          </div>
           <p className="mt-1.5 text-[11px] font-semibold text-[var(--color-ink-muted)] text-center leading-tight">{me.character.title}</p>
         </div>
         <div className="relative flex-1 min-w-0 rounded-2xl bg-[var(--color-ivory)] px-3.5 py-3 break-keep">
@@ -71,13 +79,6 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
           <span className="absolute -left-1.5 top-6 w-3 h-3 rotate-45 bg-[var(--color-ivory)]" aria-hidden />
           <MorningBrief data={f} stripName={me.name} compact />
         </div>
-      </div>
-      <div className="flex items-center gap-1.5 flex-wrap mt-3.5">
-        <Badge cls={level.color}>{level.icon} {f.level}</Badge>
-        <Badge cls="bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]">{f.total_score}점</Badge>
-        <Badge cls={`${el.bg} text-[var(--color-ink-muted)] border-[var(--color-border-light)]`}>{el.emoji} {f.day_element}의 날</Badge>
-        {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
-        {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
       </div>
       {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요, 2026-10-26 */}
       <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
