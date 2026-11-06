@@ -52,8 +52,8 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
                     <>
                       <span className="text-[var(--color-ink-faint)]">·</span>
                       <span className="text-[var(--color-ink-muted)]">{elMeta(w.element).emoji} {w.condition.replace(/\s*\d+\.?\d*°C$/, "")} {Math.round(w.temperature)}°</span>
-                      <span className="font-bold text-[var(--color-ink)]">{day.total_score}점</span>
                       <span className="text-[12px] leading-none">{lMeta.icon}</span>
+                      <span className="text-[var(--color-ink)]">{day.total_score}점</span>
                     </>
                   )}
                 </p>
@@ -64,7 +64,7 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
                       ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl"
                       : rel === "generates" ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl" : "";
                     return (
-                      <div key={i} className={`relative flex flex-col items-center gap-1.5 px-2.5 py-1.5 min-w-[52px] ${highlight}`}>
+                      <div key={i} className={`relative flex flex-col items-center gap-1.5 px-2.5 pt-1.5 pb-1 min-w-[52px] ${highlight}`}>
                         <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
                         <span className="text-2xl">{elMeta(h.element).emoji}</span>
                         <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>

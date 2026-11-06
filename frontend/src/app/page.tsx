@@ -50,7 +50,7 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
   const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
   return (
-    <section className={`mx-4 mt-4 ${FEED_CARD}`}>
+    <section className={`mx-4 mt-4 ${FEED_CARD} pb-2`}>
       <div className="flex items-baseline justify-between mb-3">
         <h2 className={FEED_TITLE}>오늘의 나</h2>
         <Link href="/siun" className={FEED_LINK}>자세히 →</Link>
