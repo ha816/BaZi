@@ -182,7 +182,7 @@ BaZi/
 │   │   ├── compatibility/           # CompatIntro(결과 직후 전체 화면: 두근두근 RevealGate → CompatCharacterBox 칭호·점수 → 까치 인사 → [📋 설문조사]/[궁합 분석 보기]) · CompatTotal(RevealGate 두 캐릭터 실루엣·PairArt·CompatCharacterBox·CompatCharacterCard 두 분의 캐릭터 카드(팔자비교 탭, 2026-10-17)) · ScenarioCard(이럴 때 두 분은?, 5문항씩 페이지) · StrengthCard(신강·신약) · ZodiacTab(띠궁합) · PillarsTab · ElementTab · SinsalTab · DomainTab · DailyTab(GET /compatibility/daily, 프로필×2일 때만) · NarrativeTab · types.ts(CompatTabProps)
 │   │   ├── PersonCard.tsx · ProfileCard.tsx · ProfileForm.tsx
 │   │   ├── MorningBrief.tsx         # 아침 한 마디 항목 셋(한줄평·오늘 할 것·피할 것 — 항목마다 라벨 줄 + 문장 줄, 라벨 앞 기호는 2026-11-06 뺌) — 홈·시운(오늘~글피·지난주) 공용. compact(홈·지난주)는 라벨 9px·문장 10px·stripName으로 이름 접두 뗌(2026-11-06)
-│   │   ├── SiunCards.tsx            # HourlyLuckCard(이 시간대가 좋아요 — 날짜별 머리줄 + 3시간 타일, embedded면 머리줄에 점수·날씨·레벨 요약)·WeeklySiunCard(주간 시운 7일 목록, 시운 화면만) — 시운 오늘 탭·홈 공용 (2026-10-26, 2026-11-06)
+│   │   ├── SiunCards.tsx            # HourlyLuckCard(이 시간대가 좋아요 — 날짜별 머리줄(날짜만) + 3시간 타일)·WeeklySiunCard(주간 시운 7일 목록, 시운 화면만) — 시운 오늘 탭·홈 공용 (2026-10-26, 2026-11-06)
 │   │   ├── TarotCard.tsx            # 타로 카드 한 장 뒷면(CSS 문양+까치) ↔ 앞면(1909 클래식 덱 그림, 역방향은 그림만 180°) 3D 뒤집기 — 홈 TodayTarotCard·/tarot 공용. globals.css .tarot-* · TAROT_FLIPPED_KEY(sessionStorage 뒤집은 날짜) (2026-11-05)
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
 │   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
