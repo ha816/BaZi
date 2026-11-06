@@ -36,7 +36,7 @@
 
 | 경로 | 스펙 | 상태 |
 |---|---|---|
-| `/` | `home/index.md` | **정식**(2026-10-24) |
+| `/` | `home/index.md` · `home/horoscope.md`(오늘의 별자리 — 출생 차트 계산·칩·수용 기준) | **정식**(2026-10-24) · 별자리 살아있음(2026-10-30, 2026-11-06 분리) |
 | `/join` | `join/index.md` | 초안 |
 | `/my` | `my/index.md` | 초안 |
 | `/profile` | `profile/index.md` | 초안 |
@@ -47,7 +47,7 @@
 | `/siun` | `siun/index.md` | 초안 |
 | `/weather` | `weather/index.md` | 초안 |
 | `/palmistry` | `palmistry/index.md` | 초안 |
-| `/tarot` | `tarot/index.md`(오늘의 카드 V9-1 — 추첨·문장 규칙·수용 기준, 홈 카드는 `home/index.md` §3-1b) | 초안(2026-11-05) |
+| `/tarot` | `tarot/index.md`(오늘의 카드 V9-1 — 추첨·문장 규칙·수용 기준, 홈 카드 자리는 `home/index.md` §3-1b) | 초안(2026-11-05) |
 | `/admin/feedback` | `admin/index.md` | 초안 |
 | `/s/[id]` 공유 랜딩·OG | (미작성 — `CLAUDE.md` "결과 공유 카드" 절이 임시 출처) | — |
 | 공유 컴포넌트·상수·스토리지 키 | `shared/index.md` | 초안 |

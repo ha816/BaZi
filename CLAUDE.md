@@ -97,7 +97,7 @@ BaZi/
 │   │   ├── home_service.py           # HomeService.get_home — 홈 묶음(me 캐릭터·7일 예보([0]=오늘의 나, week=시간대·주간 시운 카드), people 캐릭터·오늘의 궁합, next 후보). 사람마다 natal만(analyze_natal) — analyses 캐시 안 씀 (specs/home §2-1, 2026-10-24) · `today.sky`·`me.horoscope` 오늘의 별자리(horoscope_rules, 2026-10-30)
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + make_brief() 아침 한 마디·level_fortune() 70/40(별자리도 같이 씀), 24절기, 손없는 날 · build_today() 홈 까치 소식(오늘의 띠·3일 안 절기)
-│   │   ├── horoscope_rules.py        # 오늘의 별자리(2026-10-30) — SIGNS 12(한글 이름·기호·원소) · whole-sign 애스펙트 · compute_horoscope(출생 차트 × 오늘 하늘 → score·level·headline·action·caution·lucky_item) · build_sky(12별자리 일반판)·build_chart(태양·달·상승, 시간 미상 uncertain)·build_my_horoscope. AstroPort를 첫 인자로 받는 순수 함수(서비스 없음)
+│   │   ├── horoscope_rules.py        # 오늘의 별자리(2026-10-30) — SIGNS 12(한글 이름·기호·원소) · whole-sign 애스펙트 · compute_horoscope(출생 차트 × 오늘 하늘 → score·level·headline·action·caution·lucky_item) · build_sky(12별자리 일반판)·build_chart(태양·달·상승, 시간 미상 uncertain)·build_my_horoscope. AstroPort를 첫 인자로 받는 순수 함수(서비스 없음). 상세 specs/home/horoscope.md
 │   │   ├── tarot_rules.py            # 오늘의 카드(V9-1, 2026-11-05) — draw_daily(today, user|None): 생년월일시·성별(없으면 날짜만) + 날짜 sha256 seed → 78장 중 1장·역방향 25%(저장 없음, 결정론이 캐시) · cross_line(card, 일진 레벨, today) 6셀×2문장. 순수 함수. 상세 specs/tarot/index.md
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
@@ -670,7 +670,7 @@ erDiagram
 ### 오늘의 별자리 — `horoscope_rules.compute_horoscope` (홈 카드, 2026-10-30)
 - 서양 점성술 열대 황도. 황경은 `AstroAdapter`(ephem) — 태양·달은 그날 분점 기준, 상승점은 항성시·황도경사·위도. 오늘 하늘은 **오늘 정오 KST**. 출생 차트는 birth_dt(KST 벽시계 → `ZoneInfo("Asia/Seoul")`)·`CITY_LATLON` 위경도. 시간 미상이면 상승 없음, 그날 별자리가 바뀌는 천체는 `uncertain`. 시간이 있어도 저장값은 12지시 블록 가운데라 블록 시작부터 30분 간격 5점의 상승 별자리를 `asc_signs`에 모으고 2개 이상이면 `uncertain`에 `asc`(서울 블록의 89%) → 홈 칩 "↑ 처녀 또는 천칭"(2026-11-06). 점수는 저장 시각 `asc`로
 - **whole-sign 애스펙트**(별자리 차이 0 합·4/8 삼각·2/10 육각·3/9 사각·6 충). base 50 + 달→태양 10/12/6/−10/−8 · 달→달 8/8/4/−8/−6 · 달→상승 6/6/3/−6/−4 · 태양→태양 8/8/4/−8/−6 · 태양→달 4/6/3/−6/−4 · 태양→상승 4/4/2/−4/−3 + 새달 +4 · 보름달 −3. 레벨·문장 고르기는 일진의 `level_fortune`·`make_brief` 재사용
-- 문장 30셀 + 보통 4쌍 + 삭망 2 + 행운의 아이템 원소별 6 — **한자·영문 없음**(화면 폰트 서브셋, 테스트가 검사), 태양 문장은 "요즘/이 시기"("이번 달" 금지). 외부 기사 문장 사용 안 함. 상세 `specs/home/index.md` §3-5
+- 문장 30셀 + 보통 4쌍 + 삭망 2 + 행운의 아이템 원소별 6 — **한자·영문 없음**(화면 폰트 서브셋, 테스트가 검사), 태양 문장은 "요즘/이 시기"("이번 달" 금지). 외부 기사 문장 사용 안 함. 상세 `specs/home/horoscope.md`(2026-11-06 홈 스펙에서 분리)
 
 ### 날씨 연동 (Open-Meteo, API 키 불필요)
 - 도시명 → Geocoding API → lat/lon (프로세스 내 캐시, 실패 시 Seoul) 또는 `lat/lon` 직접 전달

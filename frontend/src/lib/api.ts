@@ -385,7 +385,7 @@ export async function getDailyCompat(memberId: string, p1: string, p2: string): 
   return request<DailyCompat>(`/compatibility/daily?member_id=${memberId}&p1=${p1}&p2=${p2}`);
 }
 
-/** 오늘의 별자리(specs/home §3-1b, 2026-10-30) — 12별자리 일반판. relation은 오늘 달과 그 별자리의 whole-sign 관계(격자 색), 문장은 백엔드 */
+/** 오늘의 별자리(specs/home/horoscope.md, 2026-10-30) — 12별자리 일반판. relation은 오늘 달과 그 별자리의 whole-sign 관계(격자 색), 문장은 백엔드 */
 export interface SkySign {
   key: string; korean: string; symbol: string; range: string; element: string;
   relation: "합" | "삼각" | "육각" | "사각" | "충" | "보통";
