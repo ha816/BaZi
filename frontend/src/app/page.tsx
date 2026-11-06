@@ -359,7 +359,7 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
         <p className="text-[12px] text-[var(--color-ink)] leading-relaxed mt-0.5">{headline}</p>
         <p className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">✦ {text.action}</p>
         {text.caution && <p className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">✕ {text.caution}</p>}
-        <p className="text-[10px] text-[var(--color-ink-faint)] mt-1">행운의 아이템 · {text.lucky_item}</p>
+        {/* 행운의 아이템 줄은 2026-11-06 홈에서 뺌(사용자) — /stars 상세에는 남음 */}
       </div>
     </div>
   );
