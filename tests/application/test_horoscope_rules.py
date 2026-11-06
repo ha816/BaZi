@@ -9,6 +9,7 @@ from kkachi.application.horoscope_rules import (
     build_chart,
     build_my_horoscope,
     build_sky,
+    build_week,
     compute_horoscope,
     moon_phase,
     sign_of,
@@ -137,3 +138,16 @@ def test_new_and_full_moon_factor_and_phase_label():
     assert new["score"] == 54 and new["headline"].startswith("새달")
     assert full["score"] == 47 and full["headline"].startswith("보름달") and full["caution"]
     assert [moon_phase(x) for x in (5, 95, 180, 355)] == ["새달", "상현달", "보름달", "새달"]
+
+
+def test_build_week_general_days_and_personal_block():
+    astro = FakeAstro()
+    general = build_week(astro, TODAY, days=7)
+    assert general["me"] is None and len(general["days"]) == 7
+    assert [d["date"] for d in general["days"]] == [(TODAY + timedelta(days=i)).isoformat() for i in range(7)]
+    assert general["today"] == build_sky(astro, TODAY)  # 오늘 전체는 홈 카드와 같은 값
+    assert set(general["days"][1]["signs"][0]) == {"key", "relation", "score", "level"} and len(general["days"][1]["signs"]) == 12
+    mine = build_week(astro, TODAY, days=3, user=_user(datetime(1990, 11, 5, 9)))
+    assert mine["me"]["chart"]["sun"] == "scorpio" and len(mine["me"]["days"]) == 3
+    assert all(d["headline"].startswith("승민님, ") and d["moon"] == "cancer" and d["lucky_item"] for d in mine["me"]["days"])
+    assert mine["me"]["days"][0]["score"] == build_my_horoscope(astro, _user(datetime(1990, 11, 5, 9)), TODAY)["score"]

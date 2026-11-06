@@ -270,7 +270,10 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
   const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <h2 className={FEED_TITLE}>오늘의 별자리</h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className={FEED_TITLE}>오늘의 별자리</h2>
+        <Link href="/stars" className={FEED_LINK}>자세히 →</Link>
+      </div>
       <p className={FEED_SUB}>
         달이 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
       </p>

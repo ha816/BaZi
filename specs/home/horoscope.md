@@ -4,7 +4,7 @@
 |---|---|
 | 상태 | 살아있음 — 2026-10-30 구현, 2026-11-06 상승 2시간 블록 모호 표기(`asc_signs`). 2026-11-06 `home/index.md`에서 기능 파일로 분리. 더 깊게(10행성·하우스·진행법) 펼치는 것은 ROADMAP V10 후보 |
 | 관련 코드 | `src/kkachi/application/horoscope_rules.py`(SIGNS 12·whole-sign 애스펙트·점수·문장·`build_sky`·`build_chart`·`build_my_horoscope`) · `adapter/outer/astro_adapter.py`(ephem 황경·상승점) · `port/astro_port.py` · `adapter/outer/natal_adapter.py CITY_LATLON`(도시 → 위경도) · `home_service.py`(`me.horoscope`·`today.sky`) · `kkachi_controller.py`(`/kkachi/today sky`) · `frontend/src/app/page.tsx TodayStarsCard` · `lib/api.ts SkySign`·`HomeData.me.horoscope` |
-| 관련 API | `GET /members/{id}/home` `me.horoscope`(개인판)·`today.sky`(일반판) · `GET /kkachi/today` `sky` |
+| 관련 API | `GET /members/{id}/home` `me.horoscope`(개인판)·`today.sky`(일반판) · `GET /kkachi/today` `sky` · `GET /horoscope/week`(상세 페이지 `/stars`, `specs/stars/index.md`, 2026-11-06) |
 | 관련 문서 | `specs/home/index.md` §3-1b(카드 자리·순서) · `docs/research/home_홈화면.md` §7(문장의 애스펙트 전통 의미·whole-sign을 고른 이유) · `docs/research/astrology_출생차트.md`(사주 ↔ 점성술 대응표·상승 89% 측정, V10) · ROADMAP V8(홈)·V10(별자리 탭) |
 | 마지막 확인 | 2026-11-06 — 베타 390px Playwright(시스템 Chrome) 로그인 홈: 1989-08-16 08:00 프로필의 칩 "↑ 처녀 또는 천칭", 가로 스크롤 없음. 2026-10-30 — 비로그인·로그인(시간 아는 프로필: ☉☽↑ 칩·"나" 배지·이름 붙은 문장 / 시간 미상: ↑ 대신 안내 줄·☽ 물병?) 세 상태, 백엔드 호출 비로그인 `/kkachi/today` 1회·로그인 `/home` 1회. 별자리 기호 ♈~♓는 시스템 이모지(보라 타일)로 렌더된다 |
 
@@ -26,7 +26,7 @@
 | 홈 로그인, 기본 프로필 없음 | 같은 응답의 `today.sky` | 칩·"나" 없음, 12칸 모두 일반판, 처음엔 오늘 달의 별자리가 골라짐 |
 | 비로그인 | `GET /kkachi/today` → `sky` | 위와 같음 |
 
-백엔드 호출은 홈이 원래 하던 1회 그대로(로그인 `/home`, 비로그인 `/kkachi/today`) — 별자리 때문에 요청이 늘지 않는다. 따로 가는 페이지·이벤트는 없다(`home_view`만).
+백엔드 호출은 홈이 원래 하던 1회 그대로(로그인 `/home`, 비로그인 `/kkachi/today`) — 별자리 때문에 요청이 늘지 않는다. 홈 카드 제목 줄 오른쪽 [자세히 →]로 `/stars`(별자리 상세 — 12별자리 전체·이번 주 달의 길·출생 차트 설명, `specs/stars/index.md`, 2026-11-06)에 간다. 홈 자체의 이벤트는 `home_view`만.
 
 ```
 sky: {                                                  // 오늘 정오 KST의 하늘 — /kkachi/today 와 홈 today.sky 가 같은 값
@@ -100,6 +100,7 @@ me.horoscope: {                                         // 개인판 — 기본 
 
 ## 7. 변경 이력
 
+- 2026-11-06 — 상세 페이지 `/stars` 신설(`GET /horoscope/week`, `build_week`) — 홈 카드 제목 줄에 [자세히 →]. 페이지 스펙은 `specs/stars/index.md`
 - 2026-11-06 — 소제목 "오늘 달은 …" → "달이 …"(제목 "오늘의 별자리"와 겹치는 "오늘" 제거, 홈 전체 규칙)
 - 2026-11-06 — 홈 카드 머리를 "오늘의 별자리" 제목 + 회색 소제목(오늘 달) 두 줄로. "태양 ♏ 전갈자리" 줄 제거(홈 전체 규칙, `specs/home/index.md` §4)
 - 2026-11-06 — `specs/home/index.md` §3-1b·§4·수용 기준 21~24에 흩어져 있던 오늘의 별자리 규칙을 이 파일로 분리(타로 `specs/tarot/index.md`처럼 기능 파일). 홈 스펙에는 카드 자리와 한 줄만 남김

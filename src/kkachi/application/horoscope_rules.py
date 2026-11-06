@@ -183,6 +183,26 @@ def build_chart(astro: AstroPort, user: User) -> dict:
     }
 
 
+def build_week(astro: AstroPort, today: date, days: int = 7, user: User | None = None) -> dict:
+    """별자리 상세(/stars) 한 번 — today: build_sky와 같은 오늘 12별자리 전체 ·
+    days: 오늘부터 days일 "달의 길"(날마다 달 별자리·달 모양 + 별자리별 관계·점수·레벨만, 문장 없음) ·
+    me: user가 있으면 {chart, days[날마다 개인판 전체]} 아니면 None (2026-11-06)."""
+    chart = build_chart(astro, user) if user else None
+    today_block: dict = {}
+    out_days: list[dict] = []
+    me_days: list[dict] = []
+    for i in range(days):
+        d = today + timedelta(days=i)
+        sky = _get_sky(astro, d)
+        full = [{**s, **compute_horoscope({"sun": s["key"]}, sky, d)} for s in SIGNS]
+        if i == 0:
+            today_block = {**sky, "signs": full}
+        out_days.append({"date": d.isoformat(), **sky, "signs": [{k: s[k] for k in ("key", "relation", "score", "level")} for s in full]})
+        if chart and user:
+            me_days.append({"date": d.isoformat(), **sky, **compute_horoscope(chart, sky, d, user.name)})
+    return {"today": today_block, "days": out_days, "me": {"chart": chart, "days": me_days} if chart else None}
+
+
 def build_my_horoscope(astro: AstroPort, user: User, today: date) -> dict:
     """홈 me.horoscope — {chart, score, level, headline("{name}님, …"), action, caution, lucky_item}."""
     chart = build_chart(astro, user)
