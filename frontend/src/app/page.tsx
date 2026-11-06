@@ -242,14 +242,15 @@ const RELATION_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-/** 오늘의 띠 상자 배지 — 관계 값(백엔드) → 이름·색. 격자 아래 범례 줄 대신(2026-11-06, 오늘의 나와 같은 식으로 컴팩트하게) */
-const ZODIAC_RELATION_BADGE: Record<string, { label: string; cls: string }> = {
-  "나": { label: "오늘의 주인공", cls: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]" },
-  "삼합": { label: "기운 받는 띠", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "육합": { label: "기운 받는 띠", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "충": { label: "조심할 띠", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  "원진": { label: "조심할 띠", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  "보통": { label: "보통", cls: "bg-white text-[var(--color-ink-muted)] border-[var(--color-border-light)]" },
+/** 오늘의 띠 배지 — 관계 값(백엔드) → 이름·색. 상자엔 label(기운 받는 띠…), 제목 줄 오른쪽엔 내 띠의 오늘 등급 grade(최고·좋음·보통·주의 — 라벨 없이도
+ *  오늘이 내게 이로운 날인지 보이게, 2026-11-06 사용자). 격자 아래 범례 줄 대신(2026-11-06, 오늘의 나와 같은 식으로 컴팩트하게) */
+const ZODIAC_RELATION_BADGE: Record<string, { label: string; grade: string; cls: string }> = {
+  "나": { label: "오늘의 주인공", grade: "👑 최고", cls: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]" },
+  "삼합": { label: "기운 받는 띠", grade: "🌟 좋음", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "육합": { label: "기운 받는 띠", grade: "🌟 좋음", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "충": { label: "조심할 띠", grade: "🚨 주의", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  "원진": { label: "조심할 띠", grade: "🚨 주의", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  "보통": { label: "보통", grade: "보통", cls: "bg-white text-[var(--color-ink-muted)] border-[var(--color-border-light)]" },
 };
 
 // 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
@@ -257,11 +258,16 @@ const ZODIAC_RELATION_BADGE: Record<string, { label: string; cls: string }> = {
 function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData; myBranch?: string; className?: string }) {
   const [picked, setPicked] = useState(myBranch ?? today.animal.branch);
   const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
+  const mine = myBranch ? today.zodiac.find((z) => z.branch === myBranch) : undefined;
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-center justify-between">
         <h2 className={FEED_TITLE}>오늘의 띠</h2>
-        <Link href="/zodiac" className={FEED_LINK}>자세히 →</Link>
+        <span className="flex items-center gap-2">
+          {/* 내 띠의 오늘 등급 — 어떤 칸을 눌렀든 늘 내 띠 기준(기본 프로필 있을 때만) */}
+          {mine && <Badge cls={ZODIAC_RELATION_BADGE[mine.relation].cls}>{mine.emoji} {ZODIAC_RELATION_BADGE[mine.relation].grade}</Badge>}
+          <Link href="/zodiac" className={FEED_LINK}>자세히 →</Link>
+        </span>
       </div>
       <p className={FEED_SUB}>
         {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
