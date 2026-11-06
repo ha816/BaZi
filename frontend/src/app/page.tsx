@@ -139,10 +139,15 @@ function PeopleRow({ people, canAdd, me }: { people: HomeData["people"]; canAdd:
   );
 }
 
-// 사주 한 입(로그인) — 오늘의 신살·십신 하나 + "내 사람들에게도 있을까?" [확인하기] → 그 기운을 가진 사람(나 포함)의 캐릭터 얼굴 줄.
-// 2026-11-06 ② 카드 안에서 별도 카드로(사용자), 결과는 글("…에게 있어요") 대신 얼굴 줄로(사용자 "결과도 어색해 — 캐릭터 카드로"). 확인 상태는 저장하지 않는다
-function SajuBiteCard({ bite, people, me }: { bite: Bite; people: HomeData["people"]; me: HomeData["me"] }) {
+// 사주 한 입(로그인) — 신살·십신 하나 + "내 사람들에게도 있을까?" [확인하기] → 그 기운을 가진 사람(나 포함)의 캐릭터 얼굴 줄.
+// 2026-11-06 ② 카드 안에서 별도 카드로(사용자), 결과는 글("…에게 있어요") 대신 얼굴 줄로(사용자 "결과도 어색해 — 캐릭터 카드로"). 확인 상태는 저장하지 않는다.
+// 오늘의 것은 나 포함 내 사람들 중 누군가 가진 신살·십신 가운데 날짜 순번으로 고른다(사용자 "누르면 가진 사람이 나와야" — 비로그인의 19일 순번과 다름).
+// 아무도 아무것도 없을 때만 날짜 순번 그대로
+function SajuBiteCard({ date, people, me }: { date: string; people: HomeData["people"]; me: HomeData["me"] }) {
   const [revealed, setRevealed] = useState(false);
+  const marks = [me?.marks, ...people.map((p) => p.marks)];
+  const held = BITES.filter((b) => marks.some((m) => m?.[b.field].includes(b.mark)));
+  const bite = held.length ? held[dayNoOf(date) % held.length] : biteOf(date);
   const has = (m: { sinsal: string[]; sipsin: string[] } | undefined) => !!m?.[bite.field].includes(bite.mark);
   const holders = [
     ...(me && has(me.marks) ? [{ id: me.profile_id, name: me.name, character: me.character, isMe: true }] : []),
@@ -547,7 +552,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         </>
       )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} />
-      <SajuBiteCard bite={biteOf(home.date)} people={home.people} me={home.me} />
+      <SajuBiteCard date={home.date} people={home.people} me={home.me} />
       <KkachiFeed today={home.today} />
     </>
   );
