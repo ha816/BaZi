@@ -80,7 +80,7 @@ class HomeService:
                 "character": self._character(my_natal, me, full=True),
                 "zodiac_branch": my_natal.saju[Pillar.年柱].branch.name,
                 "horoscope": build_my_horoscope(self._astro, me.to_user(), today),
-                "tarot": {**tarot, "cross": cross_line(tarot["card"], week[0].get("level", ""), today)},
+                "tarot": {**tarot, "cross": cross_line(tarot["card"], week[0].get("level", ""))},
                 "marks": self._marks(my_natal),
                 "fortune": {k: week[0].get(k) for k in _FORTUNE_KEYS},
                 "week": [{k: d.get(k) for k in _WEEK_KEYS} for d in week],

@@ -38,11 +38,17 @@ def branch_relation(a: str, b: str) -> str:
     return "보통"
 
 
+_DIGIT_JONG = set("013678")  # 영·일·삼·육·칠·팔은 받침 있음, 이·사·오·구는 없음 (타로 "지팡이 3"·"동전 10", 2026-11-06)
+
+
 def josa(word: str, with_jong: str, without_jong: str) -> str:
-    """한국어 조사 선택 — 마지막 음절 받침 유무에 따라 with_jong / without_jong 반환."""
+    """한국어 조사 선택 — 마지막 음절(숫자면 그 읽기) 받침 유무에 따라 with_jong / without_jong 반환."""
     if not word:
         return without_jong
-    code = ord(word[-1])
+    last = word[-1]
+    if last.isdigit():
+        return with_jong if last in _DIGIT_JONG else without_jong
+    code = ord(last)
     has = 0xAC00 <= code <= 0xD7A3 and (code - 0xAC00) % 28 != 0
     return with_jong if has else without_jong
 

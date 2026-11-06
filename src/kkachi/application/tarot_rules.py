@@ -2,37 +2,34 @@ import hashlib
 import random
 from datetime import date
 
+from kkachi.application.util.util import josa
 from kkachi.domain.tarot import CARDS, TarotCard
 from kkachi.domain.user import User
 
 REVERSED_RATE = 0.25  # 매일 역방향이면 아침부터 무거워서 넷 중 하나만
 
-# (오늘 일진 레벨, 카드 방향) → 교차 한 줄 두 개(날짜로 회전). 일진 headline은 안 붙인다 — 홈 ① 오늘의 나와 겹친다
-_CROSS: dict[tuple[str, str], tuple[str, str]] = {
-    ("좋은 날", "정방향"): (
-        "오늘 일진도 좋은 날이고 카드도 밝은 쪽이에요. 미뤄 둔 일을 오늘 하세요.",
-        "사주와 카드가 같은 방향을 가리켜요. 자신 있게 움직여도 되는 날이에요.",
-    ),
-    ("좋은 날", "역방향"): (
-        "일진은 좋은 날인데 카드는 그늘진 쪽이에요. 기운은 있으니 속도만 늦추세요.",
-        "운은 밀어주는데 마음에 걸리는 게 있어요. 걸리는 그것부터 정리하면 좋은 날이 돼요.",
-    ),
-    ("평범한 날", "정방향"): (
-        "일진은 잔잔한데 카드가 밝아요. 카드가 가리키는 한 가지에 힘을 쓰세요.",
-        "큰 흐름은 조용한 날이에요. 카드의 주제 하나만 챙기면 알찬 하루예요.",
-    ),
-    ("평범한 날", "역방향"): (
-        "일진도 카드도 조용히 가라는 신호예요. 새 일보다 정리가 어울려요.",
-        "무리할 이유가 없는 날이에요. 카드가 짚어 준 것만 조심하면 돼요.",
-    ),
-    ("주의가 필요한 날", "정방향"): (
-        "일진은 조심하라는데 카드는 밝아요. 카드가 말한 쪽으로만 움직이고 나머지는 쉬세요.",
-        "하루 기운은 거친데 카드가 손을 내밀어요. 카드의 조언이 오늘의 안전지대예요.",
-    ),
-    ("주의가 필요한 날", "역방향"): (
-        "일진도 카드도 조심하라고 해요. 결정은 내일로, 오늘은 몸과 잠을 챙기세요.",
-        "두 신호가 같이 멈추라고 해요. 오늘은 지키는 날이에요.",
-    ),
+# 교차 한 줄(2026-11-06 고도화 — 옛 6셀×2문장은 카드가 무엇이든 같은 말이었다). 두 문장:
+# 1문장 = (오늘 일진 레벨, 카드 방향) 판정 틀에 카드 이름·첫 키워드를 끼움. 일진 headline은 안 붙인다 — 홈 ① 오늘의 나와 겹친다
+_CROSS_VERDICT: dict[tuple[str, str], str] = {
+    ("좋은 날", "정방향"): "좋은 일진에 {name}도 {kw}{eul} 말하며 힘을 보태요.",
+    ("좋은 날", "역방향"): "일진은 좋은데 {name}{ga} 뒤집혀 {kw}{eul} 조심하라고 해요.",
+    ("평범한 날", "정방향"): "평범한 일진에 {name}{ga} {kw}{eul} 말하며 힘을 보태요.",
+    ("평범한 날", "역방향"): "평범한 일진인데 {name}{ga} 뒤집혀 {kw}{eul} 짚어요.",
+    ("주의가 필요한 날", "정방향"): "일진은 조심하라는데 {name}{neun} {kw}{eul} 말하며 밝게 나왔어요.",
+    ("주의가 필요한 날", "역방향"): "일진도 조심하라 하고 {name}도 뒤집혀 {kw}{eul} 짚어요.",
+}
+# 두 신호의 합 — 정방향은 주의 날만 반반(mixed), 역방향은 좋은 날만 반반
+_CROSS_TONE: dict[tuple[str, str], str] = {
+    ("좋은 날", "정방향"): "go", ("평범한 날", "정방향"): "go", ("주의가 필요한 날", "정방향"): "mixed",
+    ("좋은 날", "역방향"): "mixed", ("평범한 날", "역방향"): "hold", ("주의가 필요한 날", "역방향"): "hold",
+}
+# 2문장 = 카드의 영역(수트: 지팡이 일·추진, 잔 마음·관계, 검 생각·결정, 동전 돈·몸, 메이저 큰 흐름) × 두 신호의 합
+_CROSS_ACTION: dict[str, dict[str, str]] = {
+    "지팡이": {"go": "하고 싶던 일은 오늘 한 걸음 내디디세요.", "mixed": "일은 크게 벌이지 말고 하나만 고르세요.", "hold": "밀어붙이기보다 속도를 늦추세요."},
+    "잔": {"go": "마음을 전하기 좋은 날이에요.", "mixed": "사람 일은 가볍게, 깊은 얘기는 다음에 하세요.", "hold": "서운한 말은 하루 묵혀 두세요."},
+    "검": {"go": "미뤄 둔 결정을 또렷하게 내리세요.", "mixed": "말은 아끼고 결정은 하나만 하세요.", "hold": "말과 결정은 내일로 미루세요."},
+    "동전": {"go": "돈과 몸을 챙기는 일이 잘 풀려요.", "mixed": "큰 지출만 피하면 무난해요.", "hold": "지출과 계약은 피하고 몸을 쉬게 하세요."},
+    "메이저": {"go": "큰 흐름이 밀어주니 흐름을 타세요.", "mixed": "큰 변화는 하루 더 지켜보세요.", "hold": "큰 결정과 변화는 서두르지 마세요."},
 }
 
 
@@ -48,10 +45,18 @@ def draw_daily(today: date, user: User | None = None) -> dict:
     return {"date": today.isoformat(), "identity": "person" if user else "date", "card": _card_view(card, reversed_)}
 
 
-def cross_line(card: dict, level: str, today: date) -> str:
-    """오늘 일진 레벨(좋은 날·평범한 날·주의가 필요한 날) × 카드 방향 → 교차 한 줄. 모르는 레벨은 평범한 날로."""
-    lines = _CROSS.get((level, card["orientation"])) or _CROSS[("평범한 날", card["orientation"])]
-    return lines[today.toordinal() % len(lines)]
+def cross_line(card: dict, level: str) -> str:
+    """오늘 일진 레벨(좋은 날·평범한 날·주의가 필요한 날) × 카드(_card_view) → 교차 두 문장.
+    1문장은 두 신호의 합 + 카드 이름·첫 키워드(조사는 josa — "지팡이 3이"), 2문장은 카드 영역(수트, 메이저는 큰 흐름)에 맞는 행동.
+    모르는 레벨은 평범한 날로."""
+    if level not in ("좋은 날", "평범한 날", "주의가 필요한 날"):
+        level = "평범한 날"
+    key = (level, card["orientation"])
+    name, kw = card["name"], card["keywords"][0]
+    verdict = _CROSS_VERDICT[key].format(
+        name=name, kw=kw, ga=josa(name, "이", "가"), neun=josa(name, "은", "는"), eul=josa(kw, "을", "를"),
+    )
+    return f"{verdict} {_CROSS_ACTION[card['suit'] or '메이저'][_CROSS_TONE[key]]}"
 
 
 def _card_view(card: TarotCard, reversed_: bool) -> dict:

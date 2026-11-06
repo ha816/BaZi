@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 217 tests
+uv run pytest            # 218 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -98,7 +98,7 @@ BaZi/
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + make_brief() 아침 한 마디·level_fortune() 70/40(별자리도 같이 씀), 24절기, 손없는 날 · build_today() 홈 까치 소식(오늘의 띠·3일 안 절기) · build_zodiac_week() 띠 상세(/zodiac — 오늘 전체 + N일 일진 띠·12띠 관계·한 줄, 2026-11-06)
 │   │   ├── horoscope_rules.py        # 오늘의 별자리(2026-10-30) — SIGNS 12(한글 이름·기호·원소) · whole-sign 애스펙트 · compute_horoscope(출생 차트 × 오늘 하늘 → score·level·headline·action·caution·lucky_item) · build_sky(12별자리 일반판)·build_chart(태양·달·상승, 시간 미상 uncertain)·build_my_horoscope. AstroPort를 첫 인자로 받는 순수 함수(서비스 없음). 상세 specs/home/horoscope.md · build_week(오늘 전체 + N일 달의 길 + 개인판 N일 — /stars, 2026-11-06)
-│   │   ├── tarot_rules.py            # 오늘의 타로카드(V9-1, 2026-11-05) — draw_daily(today, user|None): 생년월일시·성별(없으면 날짜만) + 날짜 sha256 seed → 78장 중 1장·역방향 25%(저장 없음, 결정론이 캐시) · cross_line(card, 일진 레벨, today) 6셀×2문장. 순수 함수. 상세 specs/tarot/index.md
+│   │   ├── tarot_rules.py            # 오늘의 타로카드(V9-1, 2026-11-05) — draw_daily(today, user|None): 생년월일시·성별(없으면 날짜만) + 날짜 sha256 seed → 78장 중 1장·역방향 25%(저장 없음, 결정론이 캐시) · cross_line(card, 일진 레벨) 교차 두 문장 — 1문장 판정 틀 6(레벨 × 방향)에 카드 이름·첫 키워드(조사 josa, "지팡이 3이"), 2문장 카드 영역(수트 4 + 메이저) × 두 신호의 합(go·mixed·hold) 15 (2026-11-06 고도화, 날짜 회전 없음). 순수 함수. 상세 specs/tarot/index.md
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
@@ -344,7 +344,7 @@ GET  /horoscope/week         ?days=7(1~14)[&member_id | &birth_dt&gender&hour_un
                              member_id → 그 회원의 기본 프로필(없는 회원·기본 프로필 없음은 me null), 없으면 birth_dt&gender 직접 입력, 둘 다 없으면 일반판. 저장 없음(build_week 순수 함수)
 
 # 타로 — 오늘의 타로카드 (tarot_controller, prefix /tarot, 로그인 불필요, V9-1 2026-11-05 — specs/tarot/index.md)
-GET  /tarot/today            ?birth_dt&gender[&hour_unknown&city] → { date, identity:"person", card{id,key,name,arcana,number,suit,orientation(정방향|역방향),keywords[3],line,love,work,money}, cross }  사람 카드(생년월일시·성별 + 날짜 sha256 seed, 역방향 25%, 저장 없음) + 오늘 일진 레벨 × 카드 방향 교차 한 줄(compute_fortune, 날씨·대운 없이)
+GET  /tarot/today            ?birth_dt&gender[&hour_unknown&city] → { date, identity:"person", card{id,key,name,arcana,number,suit,orientation(정방향|역방향),keywords[3],line,love,work,money}, cross }  사람 카드(생년월일시·성별 + 날짜 sha256 seed, 역방향 25%, 저장 없음) + 오늘 일진 레벨 × 카드(방향·이름·첫 키워드·수트) 교차 두 문장(compute_fortune, 날씨·대운 없이)
                              파라미터 없음(또는 둘 중 하나만) → { …, identity:"date", cross:null }  날짜 카드. 로그인 사용자의 카드는 GET /members/{id}/home 의 me.tarot(홈 week[0] 일진 재사용). card 문장은 방향에 맞는 것만 평탄화(프론트 분기 없음), 그림 /kkachi/tarot/{key}.webp
 GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,art_key(그림 키 — 여성은 {key}_여, 2026-10-23),stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
 
@@ -732,7 +732,7 @@ tests/
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     ├── test_self_quiz.py       # 설문조사 10문항(십신·지장간·투출 점수→그렇다/아니다·근거 문장·세 기둥·옛 결과)
-    ├── test_tarot_rules.py     # 오늘의 타로카드 — 78장·키 유일·전 문장 한자·영문 0 · 같은 입력 같은 카드·30일 ≥ 10종 · 역방향 2,000표본 20~30% · 교차 한 줄 6셀·날짜 회전
+    ├── test_tarot_rules.py     # 오늘의 타로카드 — 78장·키 유일·전 문장 한자·영문 0 · 같은 입력 같은 카드·30일 ≥ 10종 · 역방향 2,000표본 20~30% · 교차 두 문장(판정 6 × 수트 5 · 조사·숫자 이름 · 78장 × 정역 × 3레벨 한글만)
     ├── test_compat_share_card.py # 궁합 공유 카드 스냅샷(점수만·character 이름 채움·일간 색은 일간 오행) · test_daily_share_card.py 시운 카드 · test_profile_service.py
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```

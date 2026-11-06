@@ -62,12 +62,34 @@ def test_reversed_rate_is_about_a_quarter():
     assert 0.20 <= reversed_ / n <= 0.30 and abs(reversed_ / n - REVERSED_RATE) < 0.05
 
 
-def test_cross_line_covers_levels_and_rotates_by_day():
-    for level in ("좋은 날", "평범한 날", "주의가 필요한 날"):
+_CARD = {"name": "바보", "suit": None, "orientation": "정방향", "keywords": ["시작", "모험", "자유"]}
+_LEVELS = ("좋은 날", "평범한 날", "주의가 필요한 날")
+
+
+def test_cross_line_weaves_card_name_keyword_and_suit():
+    """2026-11-06: 1문장은 (일진 레벨 × 방향) 판정 틀에 카드 이름·첫 키워드, 2문장은 카드 영역(수트·메이저) × 두 신호의 합."""
+    for level in _LEVELS:
         for orientation in ("정방향", "역방향"):
-            line = cross_line({"orientation": orientation}, level, TODAY)
-            assert line.endswith("요.") and not _FOREIGN.search(line)
-    today_line = cross_line({"orientation": "정방향"}, "좋은 날", TODAY)
-    assert today_line != cross_line({"orientation": "정방향"}, "좋은 날", TODAY + timedelta(days=1))
-    assert today_line == cross_line({"orientation": "정방향"}, "좋은 날", TODAY + timedelta(days=2))
-    assert cross_line({"orientation": "역방향"}, "모르는 레벨", TODAY) == cross_line({"orientation": "역방향"}, "평범한 날", TODAY)
+            for suit in (None, "지팡이", "잔", "검", "동전"):
+                line = cross_line({**_CARD, "orientation": orientation, "suit": suit}, level)
+                assert line.endswith("요.") and not _FOREIGN.search(line)
+                assert "바보" in line and "시작을" in line and line.count(". ") == 1  # 두 문장: 판정 + 영역 행동
+    wands, cups = (cross_line({**_CARD, "suit": s}, "좋은 날") for s in ("지팡이", "잔"))
+    assert wands.split(". ")[0] == cups.split(". ")[0] and wands != cups  # 수트는 2문장째만 바꾼다
+    assert cross_line(_CARD, "좋은 날") != cross_line({**_CARD, "orientation": "역방향"}, "좋은 날")
+    assert cross_line(_CARD, "모르는 레벨") == cross_line(_CARD, "평범한 날")
+    # 조사 — 받침·숫자 이름("지팡이 3이", "잔 4가")·키워드
+    assert "탑이 뒤집혀" in cross_line({**_CARD, "name": "탑", "orientation": "역방향"}, "좋은 날")
+    assert "지팡이 3이 뒤집혀" in cross_line({**_CARD, "name": "지팡이 3", "suit": "지팡이", "orientation": "역방향"}, "좋은 날")
+    assert "잔 4가 뒤집혀" in cross_line({**_CARD, "name": "잔 4", "suit": "잔", "orientation": "역방향"}, "좋은 날")
+    assert "동전 10이 뒤집혀" in cross_line({**_CARD, "name": "동전 10", "suit": "동전", "orientation": "역방향"}, "좋은 날")
+    assert "무모함을 짚어요" in cross_line({**_CARD, "orientation": "역방향", "keywords": ["무모함", "망설임", "준비 부족"]}, "평범한 날")
+
+
+def test_cross_line_for_every_card_and_level_is_korean_only():
+    for c in CARDS:
+        for orientation, kws in (("정방향", c.keywords_up), ("역방향", c.keywords_rev)):
+            card = {"name": c.name, "suit": c.suit, "orientation": orientation, "keywords": list(kws)}
+            for level in _LEVELS:
+                line = cross_line(card, level)
+                assert c.name in line and kws[0] in line and not _FOREIGN.search(line)

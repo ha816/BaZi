@@ -29,4 +29,4 @@ async def get_tarot_today(
     user = User(name="", gender=gender, birth_dt=birth_dt, city=city, hour_unknown=hour_unknown)
     out = draw_daily(today, user)
     level = compute_fortune(saju_svc.analyze_natal(user), today).level
-    return {**out, "cross": cross_line(out["card"], level, today)}
+    return {**out, "cross": cross_line(out["card"], level)}
