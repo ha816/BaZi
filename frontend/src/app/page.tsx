@@ -36,10 +36,10 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 
 /** 홈 카드 공통 틀(CLAUDE.md 카드 규약) — 칸 소제목 없이 카드마다 안에 제목 */
 const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
-/** 카드 제목 한 줄 = 카드 이름(오늘의 나·오늘 내 사람들·오늘의 띠·별자리·타로카드·사주 한 입·절기·새소식). 2026-11-06 작은 금색 라벨 + 굵은 문장 두 단 제목을 없앰 */
+/** 카드 머리 규칙(2026-11-06 사용자 확정): 제목 = 카드 이름 한 줄(오늘의 나·오늘 내 사람들·오늘의 띠·별자리·타로카드·사주 한 입·절기·새소식) + 소제목 한 줄까지. 셋째 줄은 두지 않는다 */
 const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
-/** 제목 아래 그날의 문장(본문 첫 줄) — 제목처럼 굵지 않게 */
-const FEED_LEAD = "text-sm text-[var(--color-ink)] leading-snug mt-1 break-keep";
+/** 제목 아래 소제목 한 줄(회색, PageHeader 설명과 같은 톤) — 그날의 문장이나 카드 설명 */
+const FEED_SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
 /** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜·사주 한 입 종류) */
 const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
 
@@ -225,7 +225,7 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   return (
     <div className={`${FEED_CARD} ${className}`}>
       <h2 className={FEED_TITLE}>오늘의 띠</h2>
-      <p className={FEED_LEAD}>
+      <p className={FEED_SUB}>
         오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>
       <div className="grid grid-cols-6 gap-1.5 mt-3">
@@ -264,17 +264,15 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
   const byKey = (key: string) => sky.signs.find((s) => s.key === key) ?? sky.signs[0];
   const sel = byKey(picked);
   const moon = byKey(sky.moon);
-  const sun = byKey(sky.sun);
   const text = mine && sel.key === mine.chart.sun ? mine : sel;
   const level = FORECAST_LEVEL_META[text.level] ?? FORECAST_LEVEL_META["평범한 날"];
   const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
     <div className={`${FEED_CARD} ${className}`}>
       <h2 className={FEED_TITLE}>오늘의 별자리</h2>
-      <p className={FEED_LEAD}>
+      <p className={FEED_SUB}>
         오늘 달은 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
       </p>
-      <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">태양 {sun.symbol} {sun.korean}자리</p>
       {mine && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
           <Badge cls={chip}>☉ {byKey(mine.chart.sun).korean}</Badge>
@@ -326,7 +324,7 @@ const ORIENTATION_BADGE: Record<string, string> = {
 
 // 오늘의 타로카드 — 1909 클래식 덱 한 장(사람·날짜로 정해짐). 뒷면 → 누르면 셔플 떨림 → 앞면·이름·정/역·한 줄 → 일진 교차 한 줄(사람 카드만).
 // 뒤집은 날짜는 sessionStorage에 두어 다시 와도 또 안 뒤집는다 (V9-1, 2026-11-05)
-function TodayTarotCard({ tarot, name, className = "" }: { tarot: TarotToday; name?: string; className?: string }) {
+function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; className?: string }) {
   const stored = useStorageValue(TAROT_FLIPPED_KEY, "session");
   const [flippedNow, setFlippedNow] = useState(false);
   const [shuffling, setShuffling] = useState(false);
@@ -346,10 +344,7 @@ function TodayTarotCard({ tarot, name, className = "" }: { tarot: TarotToday; na
   return (
     <div className={`${FEED_CARD} ${className}`}>
       <h2 className={FEED_TITLE}>오늘의 타로카드</h2>
-      <p className={FEED_LEAD}>
-        {person ? `${name}님께 온 카드 한 장` : "오늘 까치가 뽑아 둔 카드"}
-      </p>
-      <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">
+      <p className={FEED_SUB}>
         {person ? "하루 한 장, 사람마다 정해진 카드예요" : "모두에게 같은 카드예요 · 내 사주를 보면 내 카드가 생겨요"}
       </p>
       <div className="flex flex-col items-center mt-3">
@@ -395,7 +390,7 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
               <h2 className={FEED_TITLE}>절기</h2>
               <span className={FEED_ASIDE}>{termWhen}</span>
             </div>
-            <p className={FEED_LEAD}>🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
+            <p className={FEED_SUB}>🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
             <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
           </>
         ) : showBite ? (
@@ -417,7 +412,7 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
               <span className={FEED_TITLE}>새소식</span>
               <span className={FEED_ASIDE}>{news.date.slice(5).replace("-", ".")}</span>
             </span>
-            <span className={`block ${FEED_LEAD}`}>{news.title}</span>
+            <span className={`block ${FEED_SUB}`}>{news.title}</span>
             <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
           </span>
         </Link>
@@ -499,7 +494,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
           <TodayHero me={home.me} />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
           <TodayStarsCard sky={home.today.sky} mine={home.me.horoscope} className="mx-4 mt-3" />
-          <TodayTarotCard tarot={home.me.tarot} name={home.me.name} className="mx-4 mt-3" />
+          <TodayTarotCard tarot={home.me.tarot} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
