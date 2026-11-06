@@ -225,7 +225,10 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <h2 className={FEED_TITLE}>오늘의 띠</h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className={FEED_TITLE}>오늘의 띠</h2>
+        <Link href="/zodiac" className={FEED_LINK}>자세히 →</Link>
+      </div>
       <p className={FEED_SUB}>
         {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>

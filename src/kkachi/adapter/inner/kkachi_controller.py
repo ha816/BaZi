@@ -3,19 +3,21 @@ from datetime import date, datetime
 from uuid import UUID
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from kkachi.adapter.inner.streaming import text_stream
 from kkachi.application.ai_report_service import AiReportService
-from kkachi.application.fortune_rules import build_today
+from kkachi.application.fortune_rules import build_today, build_zodiac_week
 from kkachi.application.horoscope_rules import build_sky
 from kkachi.application.kkachi_service import KkachiService
 from kkachi.application.port.astro_port import AstroPort
+from kkachi.application.port.profile_port import ProfilePort
 from kkachi.application.self_quiz import build_self_quiz
 from kkachi.application.tarot_rules import draw_daily
 from kkachi.container import Container
+from kkachi.domain.ganji import Pillar
 from kkachi.domain.user import Gender, User
 
 kkachi_router = APIRouter()
@@ -40,6 +42,31 @@ async def get_today(astro: AstroPort = Depends(Provide[Container.astro_adapter])
     """홈의 오늘 띠·절기 + 오늘의 별자리(sky) + 오늘의 타로카드(tarot, 날짜 seed) — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
     today = date.today()
     return {**build_today(today), "sky": build_sky(astro, today), "tarot": draw_daily(today)}
+
+
+@kkachi_router.get("/zodiac/week")
+@inject
+async def get_zodiac_week(
+    days: int = Query(7, ge=1, le=14),
+    member_id: UUID | None = None,
+    birth_dt: datetime | None = None,
+    gender: Gender | None = None,
+    hour_unknown: bool = False,
+    city: str = "Seoul",
+    saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
+    profile_port: ProfilePort = Depends(Provide[Container.profile_repo]),
+) -> dict:
+    """띠 상세(/zodiac, 로그인 불필요, 2026-11-06) — 오늘 12띠 전체 + 오늘부터 days일 일진 띠·12띠 관계·한 줄(이번 주 좋은 날).
+    member_id면 그 회원의 기본 프로필, 아니면 birth_dt&gender로 내 띠(년지, 입춘 기준 natal) — 없으면 me null. specs/zodiac/index.md"""
+    today = date.today()
+    user = None
+    if member_id is not None:
+        me = next((p for p in await profile_port.list_by_member(member_id) if p.is_self), None)
+        user = me.to_user() if me else None
+    elif birth_dt is not None and gender is not None:
+        user = User(name="", gender=gender, birth_dt=birth_dt, city=city, hour_unknown=hour_unknown)
+    branch = saju_svc.analyze_natal(user).saju[Pillar.年柱].branch.name if user else None
+    return {"date": today.isoformat(), **build_zodiac_week(today, days, branch)}
 
 
 @kkachi_router.post("/interpret")

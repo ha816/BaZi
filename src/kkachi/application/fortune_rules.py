@@ -193,6 +193,25 @@ _BAD_SIPSIN_CAUTION: dict[Sipsin, str] = {
 }
 
 
+
+def build_zodiac_week(today: date, days: int = 7, branch: str | None = None) -> dict:
+    """띠 상세(/zodiac) 한 번 — today: build_today(오늘 전체) · days: 오늘부터 days일 일진 띠 + 12띠 관계·한 줄(이번 주 좋은 날) ·
+    me: 내 띠 {branch} | None(이름·년생은 today.zodiac에서). 2026-11-06"""
+    out_days: list[dict] = []
+    today_block: dict = {}
+    for i in range(days):
+        d = today + timedelta(days=i)
+        t = build_today(d)
+        if i == 0:
+            today_block = t
+        term = t["solar_term"]
+        out_days.append({
+            "date": d.isoformat(), "day_pillar": t["day_pillar"], "day_kor": t["day_kor"], "animal": t["animal"],
+            "son_eomneun_nal": t["son_eomneun_nal"], "solar_term": term["name"] if term and term["days"] == 0 else None,
+            "zodiac": [{k: z[k] for k in ("branch", "relation", "advice")} for z in t["zodiac"]],
+        })
+    return {"today": today_block, "days": out_days, "me": {"branch": branch} if branch else None}
+
 def _domain_short(sipsin: Sipsin) -> str:
     """'재능·표현·식복' → '재능·표현' (앞 두 단어)."""
     return "·".join(sipsin.domain.split("·")[:2])

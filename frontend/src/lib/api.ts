@@ -465,6 +465,37 @@ export async function getHoroscopeWeek(opts: { memberId?: string | null; input?:
   return request<HoroscopeWeek>(`/horoscope/week${qs ? `?${qs}` : ""}`);
 }
 
+/** 띠 상세(/zodiac, specs/zodiac/index.md, 2026-11-06) — GET /kkachi/zodiac/week. today는 홈 까치 소식과 같은 오늘(12띠 전체),
+ *  days는 오늘부터 N일 일진 띠 + 12띠 관계·한 줄(이번 주 좋은 날), me는 내 띠(년지 branch) — 없으면 null. 이름·년생은 today.zodiac에서 */
+export type ZodiacRelation = TodayData["zodiac"][number]["relation"];
+export interface ZodiacDay {
+  date: string; day_pillar: string; day_kor: string;
+  animal: TodayData["animal"]; son_eomneun_nal: boolean; solar_term: string | null;
+  zodiac: { branch: string; relation: ZodiacRelation; advice: string }[];
+}
+export interface ZodiacWeek {
+  date: string;
+  today: Omit<TodayData, "sky" | "tarot">;
+  days: ZodiacDay[];
+  me: { branch: string } | null;
+}
+
+/** 로그인은 memberId(기본 프로필), 비로그인은 /analysis 입력값 — 둘 다 없으면 일반판만 */
+export async function getZodiacWeek(opts: { memberId?: string | null; input?: Pick<AnalysisInput, "birth_dt" | "gender" | "hour_unknown" | "city"> | null; days?: number } = {}): Promise<ZodiacWeek> {
+  const q = new URLSearchParams();
+  if (opts.days) q.set("days", String(opts.days));
+  if (opts.memberId) {
+    q.set("member_id", opts.memberId);
+  } else if (opts.input?.birth_dt && opts.input.gender) {
+    q.set("birth_dt", opts.input.birth_dt);
+    q.set("gender", opts.input.gender);
+    if (opts.input.hour_unknown) q.set("hour_unknown", "true");
+    if (opts.input.city) q.set("city", opts.input.city);
+  }
+  const qs = q.toString();
+  return request<ZodiacWeek>(`/kkachi/zodiac/week${qs ? `?${qs}` : ""}`);
+}
+
 /** 홈 한 장 — GET /members/{id}/home (specs/home/index.md §2-1, 2026-10-24). 기본 프로필이 없으면 me null */
 export interface HomeData {
   date: string;
