@@ -403,14 +403,14 @@ export interface TodayData {
   solar_term: { name: string; tip: string; date: string; days: number } | null;
   son_eomneun_nal: boolean;
   sky: SkyData;  // 오늘의 별자리 (2026-10-30)
-  tarot: TarotToday;  // 오늘의 카드 날짜판 — 모두 같은 카드, cross 없음 (V9-1, 2026-11-05)
+  tarot: TarotToday;  // 오늘의 타로카드 날짜판 — 모두 같은 카드, cross 없음 (V9-1, 2026-11-05)
 }
 
 export async function getToday(): Promise<TodayData> {
   return request<TodayData>("/kkachi/today");
 }
 
-/** 오늘의 카드(V9-1, 2026-11-05) — 1909 클래식 덱 78장. 방향(정·역)에 맞는 문장만 들어 있어 프론트는 분기하지 않는다. 그림 /kkachi/tarot/{key}.webp */
+/** 오늘의 타로카드(V9-1, 2026-11-05) — 1909 클래식 덱 78장. 방향(정·역)에 맞는 문장만 들어 있어 프론트는 분기하지 않는다. 그림 /kkachi/tarot/{key}.webp */
 export interface TarotCardData {
   id: number; key: string; name: string; arcana: "major" | "minor"; number: number; suit: string | null;
   orientation: "정방향" | "역방향";
@@ -447,7 +447,7 @@ export interface HomeData {
     // 오늘의 별자리 개인판(2026-10-30) — 출생 차트(태양·달·상승 key, 시간 미상이면 asc null·그날 바뀌는 천체는 uncertain) × 오늘 하늘. headline은 "{이름}님, " 접두
     // asc_signs: 저장된 시(12지시 2시간 블록) 안에서 상승이 지나는 별자리 전부(1개면 확실, 2개 이상이면 uncertain에 asc — 2026-11-06)
     horoscope: { chart: { sun: string; moon: string; asc: string | null; asc_signs: string[]; uncertain: string[] } } & Pick<SkySign, "score" | "level" | "headline" | "action" | "caution" | "lucky_item">;
-    tarot: TarotToday;  // 오늘의 카드 개인판(V9-1) — 사람·날짜로 정해진 카드 + 오늘 일진과의 교차 한 줄(cross)
+    tarot: TarotToday;  // 오늘의 타로카드 개인판(V9-1) — 사람·날짜로 정해진 카드 + 오늘 일진과의 교차 한 줄(cross)
     marks: { sinsal: string[]; sipsin: string[] };  // 가진 신살(한글)·십신(한자) — 사주 한 입 "내 사람들에게도 있을까?"
     fortune: Pick<DailyFortune, "headline" | "action" | "caution" | "total_score" | "level" | "day_element" | "solar_term" | "son_eomneun_nal" | "yongshin">;
     week: Pick<DailyFortune, "date" | "total_score" | "level" | "weather">[];  // 오늘부터 7일 — 홈 시간대·주간 시운 카드

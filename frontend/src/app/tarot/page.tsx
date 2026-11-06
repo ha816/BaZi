@@ -11,7 +11,7 @@ import { parseStored, useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
 import type { AnalysisInput } from "@/types/analysis";
 
-// 오늘의 카드 자세히 (V9-1, 2026-11-05, specs/tarot/index.md) — 로그인은 홈 묶음(me.tarot) 재사용, 비로그인은 /analysis 입력값으로 GET /tarot/today.
+// 오늘의 타로카드 자세히 (V9-1, 2026-11-05, specs/tarot/index.md) — 로그인은 홈 묶음(me.tarot) 재사용, 비로그인은 /analysis 입력값으로 GET /tarot/today.
 // 둘 다 없으면 날짜 카드(모두 같은 카드) + 내 사주 보기 안내. 홈에서 이미 뒤집은 날이면 바로 앞면
 
 const CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-4";
@@ -77,7 +77,7 @@ export default function TarotPage() {
     <main className="page">
       <div className="page__inner">
         <PageHeader
-          title="오늘의 카드"
+          title="오늘의 타로카드"
           description={person && name ? `${name}님의 카드예요. 하루 한 장, 사람마다 정해진 카드` : "하루 한 장, 사람·날짜마다 정해진 카드예요"}
         />
 

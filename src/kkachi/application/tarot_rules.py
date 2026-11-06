@@ -37,7 +37,7 @@ _CROSS: dict[tuple[str, str], tuple[str, str]] = {
 
 
 def draw_daily(today: date, user: User | None = None) -> dict:
-    """오늘의 카드 — 사람(생년월일시·성별)과 날짜로 정해진다. 같은 입력이면 늘 같은 카드라 저장 없이 캐시 효과.
+    """오늘의 타로카드 — 사람(생년월일시·성별)과 날짜로 정해진다. 같은 입력이면 늘 같은 카드라 저장 없이 캐시 효과.
     identity에 profile_id를 쓰지 않는 이유: 직접 입력 → 가입·프로필 저장 순간 카드가 바뀌지 않게(둘이 같은 카드).
     user가 없으면 날짜만으로 뽑는다(비로그인 홈 티저 — 모두 같은 카드). 반환 {date, identity: person|date, card}."""
     identity = f"{user.birth_dt:%Y-%m-%dT%H:%M}|{user.gender}" if user else ""

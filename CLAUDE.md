@@ -98,7 +98,7 @@ BaZi/
 │   │   ├── push_service.py           # build_push_payload() + PushService(subscribe/unsubscribe/send_daily)
 │   │   ├── fortune_rules.py          # compute_fortune() 일진 점수 룰 + make_brief() 아침 한 마디·level_fortune() 70/40(별자리도 같이 씀), 24절기, 손없는 날 · build_today() 홈 까치 소식(오늘의 띠·3일 안 절기)
 │   │   ├── horoscope_rules.py        # 오늘의 별자리(2026-10-30) — SIGNS 12(한글 이름·기호·원소) · whole-sign 애스펙트 · compute_horoscope(출생 차트 × 오늘 하늘 → score·level·headline·action·caution·lucky_item) · build_sky(12별자리 일반판)·build_chart(태양·달·상승, 시간 미상 uncertain)·build_my_horoscope. AstroPort를 첫 인자로 받는 순수 함수(서비스 없음). 상세 specs/home/horoscope.md
-│   │   ├── tarot_rules.py            # 오늘의 카드(V9-1, 2026-11-05) — draw_daily(today, user|None): 생년월일시·성별(없으면 날짜만) + 날짜 sha256 seed → 78장 중 1장·역방향 25%(저장 없음, 결정론이 캐시) · cross_line(card, 일진 레벨, today) 6셀×2문장. 순수 함수. 상세 specs/tarot/index.md
+│   │   ├── tarot_rules.py            # 오늘의 타로카드(V9-1, 2026-11-05) — draw_daily(today, user|None): 생년월일시·성별(없으면 날짜만) + 날짜 sha256 seed → 78장 중 1장·역방향 25%(저장 없음, 결정론이 캐시) · cross_line(card, 일진 레벨, today) 6셀×2문장. 순수 함수. 상세 specs/tarot/index.md
 │   │   ├── timing_rules.py           # compute_timing() 영역×12개월 타이밍 (R3) · timing_digest()
 │   │   ├── compatibility_service.py  # 궁합 점수 계산(기둥 합충·삼합·오행 보완·신살 → 총점, 영역별 _score_love/marriage/wealth/career)·캐시·관계유형 prose 재적용 (594 LOC) · build_compat_share_card(궁합 공유 카드 스냅샷 + character 칭호)
 │   │   ├── compatibility_prose.py    # narrate_domain·advice_for·compute_key_traits·make_description — 궁합 점수·신호(pros/cons)를 문장으로. 관계 유형별 문장 표는 util/compatibility_meta
@@ -164,7 +164,7 @@ BaZi/
 │   │   ├── manifest.ts              # PWA 매니페스트 (/manifest.webmanifest)
 │   │   ├── weather/page.tsx         # 날씨 오행 (GPS → ipapi → Seoul), 로그인 시 용신 팁
 │   │   ├── palmistry/page.tsx       # 손금 (idle → preview → loading → result)
-│   │   ├── tarot/page.tsx           # 오늘의 카드 자세히(V9-1, 2026-11-05) — 로그인은 getHome().me.tarot, 비로그인은 kkachi_analysis_input → GET /tarot/today. 큰 카드 뒤집기·키워드·연애·일·재물·면책
+│   │   ├── tarot/page.tsx           # 오늘의 타로카드 자세히(V9-1, 2026-11-05) — 로그인은 getHome().me.tarot, 비로그인은 kkachi_analysis_input → GET /tarot/today. 큰 카드 뒤집기·키워드·연애·일·재물·면책
 │   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
 │   │   └── admin/feedback/page.tsx  # 탭별 👍/👎 요약 대시보드
 │   ├── components/
@@ -332,9 +332,9 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이 — 같은 입력·이름은 메모리 캐시, Ollama 꺼짐 503)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}|null, son_eomneun_nal, sky{sun,moon(별자리 key),moon_phase,signs[12]{key,korean,symbol,range,element,relation(합·삼각·육각·사각·충·보통 — 오늘 달과의 whole-sign 관계),score,level,headline,action,caution,lucky_item}}, tarot{date,identity:"date",card} }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26) + 오늘의 별자리 일반판(2026-10-30) + 오늘의 카드 날짜판(모두 같은 카드, 2026-11-05)
+GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}|null, son_eomneun_nal, sky{sun,moon(별자리 key),moon_phase,signs[12]{key,korean,symbol,range,element,relation(합·삼각·육각·사각·충·보통 — 오늘 달과의 whole-sign 관계),score,level,headline,action,caution,lucky_item}}, tarot{date,identity:"date",card} }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26) + 오늘의 별자리 일반판(2026-10-30) + 오늘의 타로카드 날짜판(모두 같은 카드, 2026-11-05)
 
-# 타로 — 오늘의 카드 (tarot_controller, prefix /tarot, 로그인 불필요, V9-1 2026-11-05 — specs/tarot/index.md)
+# 타로 — 오늘의 타로카드 (tarot_controller, prefix /tarot, 로그인 불필요, V9-1 2026-11-05 — specs/tarot/index.md)
 GET  /tarot/today            ?birth_dt&gender[&hour_unknown&city] → { date, identity:"person", card{id,key,name,arcana,number,suit,orientation(정방향|역방향),keywords[3],line,love,work,money}, cross }  사람 카드(생년월일시·성별 + 날짜 sha256 seed, 역방향 25%, 저장 없음) + 오늘 일진 레벨 × 카드 방향 교차 한 줄(compute_fortune, 날씨·대운 없이)
                              파라미터 없음(또는 둘 중 하나만) → { …, identity:"date", cross:null }  날짜 카드. 로그인 사용자의 카드는 GET /members/{id}/home 의 me.tarot(홈 week[0] 일진 재사용). card 문장은 방향에 맞는 것만 평탄화(프론트 분기 없음), 그림 /kkachi/tarot/{key}.webp
 GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShareCard (kind="daily") 또는 CompatShareCard (kind="compat") { name, year, pillars, pillar_elements, hour_unknown, day_stem, element_stats, strength_label, yongshin, pillar_summary, sinsal[], character{key,art_key(그림 키 — 여성은 {key}_여, 2026-10-23),stem,stem_korean,element,strong,strength_label,title,line,jobs,jobs_avoid}|null(나의 캐릭터 V4, 2026-10-16 이후 카드), summary{me,energy,yongshin,year,caution} }  404 if 없음
@@ -342,7 +342,7 @@ GET  /kkachi/shares/{id}     → ShareCard (kind 없음=사주) 또는 DailyShar
 # 회원
 POST   /members              { name, email } → 201 Member (이메일 중복 시 기존 반환)
 GET    /members/{id}
-GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,horoscope{chart{sun,moon,asc|null,asc_signs[],uncertain[]},score,level,headline,action,caution,lucky_item}(오늘의 별자리 개인판 — 출생 차트 태양·달·상승, 2026-10-30. asc_signs는 저장된 시의 2시간 블록 안에서 상승이 지나는 별자리 전부, 2개 이상이면 uncertain에 asc — 2026-11-06),tarot{date,identity:"person",card,cross}(오늘의 카드 사람판 + 일진 교차 한 줄, 2026-11-05),marks{sinsal[],sipsin[]},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
+GET    /members/{id}/home    → { date, me:{profile_id,name,character{key,art_key,title,line},zodiac_branch,horoscope{chart{sun,moon,asc|null,asc_signs[],uncertain[]},score,level,headline,action,caution,lucky_item}(오늘의 별자리 개인판 — 출생 차트 태양·달·상승, 2026-10-30. asc_signs는 저장된 시의 2시간 블록 안에서 상승이 지나는 별자리 전부, 2개 이상이면 uncertain에 asc — 2026-11-06),tarot{date,identity:"person",card,cross}(오늘의 타로카드 사람판 + 일진 교차 한 줄, 2026-11-05),marks{sinsal[],sipsin[]},fortune{headline,action,caution,total_score,level,day_element,solar_term,son_eomneun_nal,yongshin},week[7]{date,total_score,level,weather}}|null,
                                people:[{profile_id,name,character{key,art_key},marks{sinsal[],sipsin[]},compat{score,level(좋음·보통·주의),headline}|null}](기본 프로필 제외, 최근 추가 먼저),
                                next:[{kind:"good_day",date,action}|{kind:"compat",profile_id,name}|{kind:"ai_report"}](화면 노출 없음 — 2026-10-26 홈 ③ 제거), today(= GET /kkachi/today) }  홈 묶음(V8, 2026-10-24) — 404 if 회원 없음, 기본 프로필 없으면 me null·next []
 DELETE /members/{id}         → 204 (프로필·분석·궁합·일진·피드백 cascade)
@@ -527,7 +527,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 띠 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, 카드 안 하단에 주간 시운(3일)·이 시간대가 좋아요(시운 화면과 같은 `components/SiunCards.tsx` `embedded`), [오늘 시운 자세히 →]는 배지 줄 오른쪽 작은 링크, 공유 버튼 없음 2026-10-26) → 오늘의 띠(12띠 격자+내 띠, 칸을 누르면 띠별 한 줄·년생) → 오늘의 별자리(12별자리 격자 — 색은 오늘 달과의 관계, 내 출생 차트 ☉☽↑ 칩 + 태양 별자리 "나" 배지, 칸을 누르면 한 줄·✦ 행동·행운의 아이템, 2026-10-30) → 오늘의 카드(타로 V9-1 — 뒷면을 누르면 셔플 떨림 → 1909 클래식 덱 그림·이름·정/역·한 줄 → "오늘 일진과 함께 보면" 교차 한 줄, [자세히 →] `/tarot`; 비로그인·기본 프로필 없음은 날짜 카드, 2026-11-05) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 사주 한 입: 오늘의 신살·십신 + "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴 금테·✦, 2026-10-26) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식도) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 띠 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 오행 색은 "○의 날" 배지에만·내 캐릭터·까치 말풍선 아침 한 마디·레벨/점수/절기 배지, 카드 안 하단에 주간 시운(3일)·이 시간대가 좋아요(시운 화면과 같은 `components/SiunCards.tsx` `embedded`), [오늘 시운 자세히 →]는 배지 줄 오른쪽 작은 링크, 공유 버튼 없음 2026-10-26) → 오늘의 띠(12띠 격자+내 띠, 칸을 누르면 띠별 한 줄·년생) → 오늘의 별자리(12별자리 격자 — 색은 오늘 달과의 관계, 내 출생 차트 ☉☽↑ 칩 + 태양 별자리 "나" 배지, 칸을 누르면 한 줄·✦ 행동·행운의 아이템, 2026-10-30) → 오늘의 타로카드(타로 V9-1 — 뒷면을 누르면 셔플 떨림 → 1909 클래식 덱 그림·이름·정/역·한 줄 → "오늘 일진과 함께 보면" 교차 한 줄, [자세히 →] `/tarot`; 비로그인·기본 프로필 없음은 날짜 카드, 2026-11-05) ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 사주 한 입: 오늘의 신살·십신 + "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴 금테·✦, 2026-10-26) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식도) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
@@ -539,7 +539,7 @@ erDiagram
 | `/siun` | 시운(時運) — 헤더 "나의/○○의 시운 공유"(선택 프로필의 오늘 일진 카드 → `/s/{id}`), 아침 한 마디, 아침 알림 켜기, is_self 프로필 기본, 프로필 전환, 오늘~글피 탭, 날씨 배지. 지난주 탭(지난 7일 + "맞았어요?" 👍/👎, R6)은 코드만 남기고 노출 보류(2026-09-28) | 필수(비로그인 CTA) |
 | `/weather` | 날씨 오행 — GPS → ipapi → Seoul, 도시 검색, 시간별 예보, 로그인 시 용신 팁 | 선택 |
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
-| `/tarot` | 오늘의 카드 자세히(타로 V9-1, 2026-11-05, `specs/tarot/index.md`) — 로그인은 `getHome().me.tarot`(기본 프로필 없으면 `today.tarot` 날짜 카드), 비로그인은 sessionStorage `kkachi_analysis_input` → `GET /tarot/today`(없으면 날짜 카드 + "내 사주를 먼저 보면 내 카드가 나와요 → /analysis"). 큰 카드 뒤집기(홈에서 뒤집은 날이면 바로 앞면) → 이름·정/역·"1909 클래식 덱" → 키워드 3 → 한 줄 → 일진 교차 한 줄(사람 카드) → 연애·일·재물 → 면책 한 줄. 진입은 홈 카드 [자세히 →]·새소식·아침 알림(하단 메뉴 없음) | 선택 |
+| `/tarot` | 오늘의 타로카드 자세히(타로 V9-1, 2026-11-05, `specs/tarot/index.md`) — 로그인은 `getHome().me.tarot`(기본 프로필 없으면 `today.tarot` 날짜 카드), 비로그인은 sessionStorage `kkachi_analysis_input` → `GET /tarot/today`(없으면 날짜 카드 + "내 사주를 먼저 보면 내 카드가 나와요 → /analysis"). 큰 카드 뒤집기(홈에서 뒤집은 날이면 바로 앞면) → 이름·정/역·"1909 클래식 덱" → 키워드 3 → 한 줄 → 일진 교차 한 줄(사람 카드) → 연애·일·재물 → 면책 한 줄. 진입은 홈 카드 [자세히 →]·새소식·아침 알림(하단 메뉴 없음) | 선택 |
 | `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(맨 위 나의 캐릭터 상자 → 이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: 두 사람 사주 캐릭터 그림 `saju_character/{roles[i].character_key}.webp`(파일 존재 확인, 옛 카드·없는 쪽은 역할 이모지) + 칭호 + 역할 칩 + 설명 + 잘 맞는 순간 칩 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
@@ -719,7 +719,7 @@ tests/
     ├── test_compat_character.py # 궁합 캐릭터(칭호 비유·순서·관계별 접미/수식어·문답 근거)
     ├── test_compat_zodiac.py   # 띠궁합(띠 관계·같은 띠·연도별 충·스냅샷 없음)
     ├── test_self_quiz.py       # 설문조사 10문항(십신·지장간·투출 점수→그렇다/아니다·근거 문장·세 기둥·옛 결과)
-    ├── test_tarot_rules.py     # 오늘의 카드 — 78장·키 유일·전 문장 한자·영문 0 · 같은 입력 같은 카드·30일 ≥ 10종 · 역방향 2,000표본 20~30% · 교차 한 줄 6셀·날짜 회전
+    ├── test_tarot_rules.py     # 오늘의 타로카드 — 78장·키 유일·전 문장 한자·영문 0 · 같은 입력 같은 카드·30일 ≥ 10종 · 역방향 2,000표본 20~30% · 교차 한 줄 6셀·날짜 회전
     ├── test_compat_share_card.py # 궁합 공유 카드 스냅샷(점수만·character 이름 채움·일간 색은 일간 오행) · test_daily_share_card.py 시운 카드 · test_profile_service.py
     └── test_compat_summary.py  # 궁합 한눈에 4줄(일주 대표 관계·용신 보완·조사·영역 최고/최저)
 ```

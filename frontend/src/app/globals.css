@@ -230,7 +230,7 @@ body {
 .seal-stamp { animation: seal-stamp 0.55s cubic-bezier(0.2, 0.7, 0.3, 1.2) 0.5s both; }
 @keyframes seal-thud { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-1px, 2px); } 50% { transform: translate(1px, -1px); } }
 .seal-thud { animation: seal-thud 0.25s ease-out 0.82s both; }
-/* 오늘의 카드 — 뒷면(문양 + 까치) ↔ 앞면(1909 클래식 덱) 뒤집기. TarotCard (V9-1, 2026-11-05) */
+/* 오늘의 타로카드 — 뒷면(문양 + 까치) ↔ 앞면(1909 클래식 덱) 뒤집기. TarotCard (V9-1, 2026-11-05) */
 .tarot-scene { perspective: 1000px; display: block; }
 .tarot-card {
   position: relative;

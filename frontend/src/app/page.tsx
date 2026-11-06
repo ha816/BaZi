@@ -167,7 +167,7 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
 
 /** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
 const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
-  { date: "2026-11-05", emoji: "🃏", title: "오늘의 카드가 생겼어요", body: "까치가 매일 아침 타로 카드 한 장을 뽑아 둬요. 홈에서 뒤집어 보세요.", href: "/tarot" },
+  { date: "2026-11-05", emoji: "🃏", title: "오늘의 타로카드가 생겼어요", body: "까치가 매일 아침 타로 카드 한 장을 뽑아 둬요. 홈에서 뒤집어 보세요.", href: "/tarot" },
   { date: "2026-10-25", emoji: "🪪", title: "사주 분석도 궁합처럼 골라서", body: "저장한 프로필을 카드에서 바로 고르거나, 직접 입력해 저장 없이 바로 볼 수 있어요.", href: "/analysis" },
   { date: "2026-10-18", emoji: "💞", title: "궁합에 시운 탭이 생겼어요", body: "두 분의 오늘·내일·모레 궁합과 2주 안에 함께하기 좋은 날을 알려 드려요.", href: "/compatibility" },
 ];
@@ -315,7 +315,7 @@ const ORIENTATION_BADGE: Record<string, string> = {
   "역방향": "bg-amber-100 text-amber-800 border-amber-200",
 };
 
-// 오늘의 카드 — 1909 클래식 덱 한 장(사람·날짜로 정해짐). 뒷면 → 누르면 셔플 떨림 → 앞면·이름·정/역·한 줄 → 일진 교차 한 줄(사람 카드만).
+// 오늘의 타로카드 — 1909 클래식 덱 한 장(사람·날짜로 정해짐). 뒷면 → 누르면 셔플 떨림 → 앞면·이름·정/역·한 줄 → 일진 교차 한 줄(사람 카드만).
 // 뒤집은 날짜는 sessionStorage에 두어 다시 와도 또 안 뒤집는다 (V9-1, 2026-11-05)
 function TodayTarotCard({ tarot, name, className = "" }: { tarot: TarotToday; name?: string; className?: string }) {
   const stored = useStorageValue(TAROT_FLIPPED_KEY, "session");
@@ -336,7 +336,7 @@ function TodayTarotCard({ tarot, name, className = "" }: { tarot: TarotToday; na
   };
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <p className={FEED_LABEL}>오늘의 카드</p>
+      <p className={FEED_LABEL}>오늘의 타로카드</p>
       <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
         {person ? `${name}님께 온 카드 한 장` : "오늘 까치가 뽑아 둔 카드"}
       </p>

@@ -20,7 +20,7 @@ def test_payload_appends_daily_tarot_line():
         {"date": "2026-11-05", "headline": "오늘은 무난해요.", "action": "산책하세요."},
         {"name": "별", "orientation": "정방향"},
     )
-    assert p["body"].splitlines() == ["✦ 산책하세요.", "🃏 오늘의 카드 · 별(정방향)"]
+    assert p["body"].splitlines() == ["✦ 산책하세요.", "🃏 오늘의 타로카드 · 별(정방향)"]
 
 
 def test_payload_falls_back_without_brief():

@@ -70,7 +70,7 @@ class HomeService:
             return {"date": today.isoformat(), "me": None, "people": people, "today": today_block, "next": []}
 
         week = await self._fortune.get_forecast(me.id, days=7, start_date=today)
-        tarot = draw_daily(today, me.to_user())  # 오늘의 카드(V9-1) — 교차 한 줄은 오늘 일진 레벨(week[0])로, 추가 호출 없음
+        tarot = draw_daily(today, me.to_user())  # 오늘의 타로카드(V9-1) — 교차 한 줄은 오늘 일진 레벨(week[0])로, 추가 호출 없음
         return {
             "date": today.isoformat(),
             "me": {

@@ -13,7 +13,7 @@ PUSH_URL = "/siun?src=push"
 
 
 def build_push_payload(fortune: dict, tarot: dict | None = None) -> dict:
-    """일진 dict → 알림 페이로드. 제목은 헤드라인(이름 접두 제거), 본문은 할 것·피할 것(+ 오늘의 카드 한 줄, V9-1)."""
+    """일진 dict → 알림 페이로드. 제목은 헤드라인(이름 접두 제거), 본문은 할 것·피할 것(+ 오늘의 타로카드 한 줄, V9-1)."""
     headline = fortune.get("headline") or fortune.get("description") or "오늘의 기운을 확인해보세요."
     if "님, " in headline[:12]:
         headline = headline.split("님, ", 1)[1]
@@ -23,7 +23,7 @@ def build_push_payload(fortune: dict, tarot: dict | None = None) -> dict:
     if fortune.get("caution"):
         lines.append(f"✕ {fortune['caution']}")
     if tarot:
-        lines.append(f"🃏 오늘의 카드 · {tarot['name']}({tarot['orientation']})")
+        lines.append(f"🃏 오늘의 타로카드 · {tarot['name']}({tarot['orientation']})")
     return {
         "title": f"🐦 {headline}",
         "body": "\n".join(lines) or f"{fortune.get('level', '')} · {fortune.get('total_score', '')}점",

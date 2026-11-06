@@ -37,7 +37,7 @@ def _make_user(req: AnalysisRequest) -> User:
 @kkachi_router.get("/today")
 @inject
 async def get_today(astro: AstroPort = Depends(Provide[Container.astro_adapter])):
-    """홈의 오늘 띠·절기 + 오늘의 별자리(sky) + 오늘의 카드(tarot, 날짜 seed) — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
+    """홈의 오늘 띠·절기 + 오늘의 별자리(sky) + 오늘의 타로카드(tarot, 날짜 seed) — 비로그인 홈용(로그인 홈은 /members/{id}/home의 today)."""
     today = date.today()
     return {**build_today(today), "sky": build_sky(astro, today), "tarot": draw_daily(today)}
 

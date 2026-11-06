@@ -21,7 +21,7 @@ async def get_tarot_today(
     city: str = "Seoul",
     saju_svc: KkachiService = Depends(Provide[Container.kkachi_service]),
 ) -> dict:
-    """오늘의 카드(V9-1, 로그인 불필요) — 생년월일시·성별이 둘 다 있으면 그 사람 카드 + 오늘 일진과의 교차 한 줄,
+    """오늘의 타로카드(V9-1, 로그인 불필요) — 생년월일시·성별이 둘 다 있으면 그 사람 카드 + 오늘 일진과의 교차 한 줄,
     아니면 날짜 카드(모두 같은 카드, cross 없음). 로그인 사용자의 카드는 GET /members/{id}/home 의 me.tarot."""
     today = date.today()
     if birth_dt is None or gender is None:

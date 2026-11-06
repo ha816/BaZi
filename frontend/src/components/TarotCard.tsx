@@ -20,7 +20,7 @@ interface Props {
 
 /**
  * 타로 카드 한 장 — 뒷면(CSS 문양 + 까치) ↔ 앞면(1909 클래식 덱 그림, 역방향은 그림만 180°).
- * 뒤집기 연출은 globals.css .tarot-scene/.tarot-card. 홈 오늘의 카드 · /tarot 공용 (V9-1, 2026-11-05)
+ * 뒤집기 연출은 globals.css .tarot-scene/.tarot-card. 홈 오늘의 타로카드 · /tarot 공용 (V9-1, 2026-11-05)
  */
 export default function TarotCard({ card, flipped, shuffling = false, onFlip, size = "sm", className = "" }: Props) {
   const [broken, setBroken] = useState(false);
