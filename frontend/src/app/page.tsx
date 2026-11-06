@@ -312,7 +312,6 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
   const text = mine && sel.key === mine.chart.sun ? mine : sel;
   const prefix = stripName ? `${stripName}님, ` : "";
   const headline = text === mine && text.headline.startsWith(prefix) ? text.headline.slice(prefix.length) : text.headline;
-  const level = FORECAST_LEVEL_META[text.level] ?? FORECAST_LEVEL_META["평범한 날"];
   const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
     <div className={`${FEED_CARD} ${className}`}>
@@ -351,12 +350,10 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
         ))}
       </div>
       <div className="mt-2 rounded-xl bg-[var(--color-ivory)] px-3 py-2 break-keep">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] text-[var(--color-ink-muted)]">
-            <span className="text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}
-          </p>
-          <Badge cls={`${level.color} shrink-0`}>{level.icon} {text.level}</Badge>
-        </div>
+        {/* 레벨 배지(✨ 평범한 날)는 2026-11-06 뺌(사용자) — 칸의 등급 라벨이 그 몫 */}
+        <p className="text-[10px] text-[var(--color-ink-muted)]">
+          <span className="text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}
+        </p>
         <p className="text-[12px] text-[var(--color-ink)] leading-relaxed mt-0.5">{headline}</p>
         <p className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">✦ {text.action}</p>
         {text.caution && <p className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">✕ {text.caution}</p>}
