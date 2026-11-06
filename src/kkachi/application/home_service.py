@@ -62,7 +62,8 @@ class HomeService:
                 "name": p.name,
                 "character": self._character(natal, p, full=False),
                 "marks": self._marks(natal),
-                "compat": {k: compat[k] for k in ("score", "level", "headline")} if compat else None,
+                # 홈 ② 줄은 레벨 문장만(brief) — 이유 문장은 궁합 시운 탭의 headline에만(2026-11-06 사용자)
+                "compat": {"score": compat["score"], "level": compat["level"], "headline": compat["brief"]} if compat else None,
             })
 
         today_block = {**build_today(today), "sky": build_sky(self._astro, today)}  # 오늘의 띠 + 오늘의 별자리

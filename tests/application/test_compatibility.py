@@ -314,6 +314,7 @@ def test_daily_compat_shape_and_bounds():
     assert 0 <= r["score"] <= 100
     assert r["level"] in {"좋음", "보통", "주의"}
     assert r["headline"] and len(r["day_pillar"]) == 2
+    assert r["brief"] and r["headline"].startswith(r["brief"]) and "." not in r["brief"][:-1]  # brief = 레벨 문장만
 
 
 def test_daily_compat_reasons_are_full_polite_sentences():

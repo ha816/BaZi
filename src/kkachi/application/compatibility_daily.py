@@ -79,11 +79,11 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
 
     score = max(0, min(100, score))
     if score >= 65:
-        level, headline = "좋음", "오늘은 함께 움직이기 좋은 날이에요."
+        level, brief = "좋음", "오늘은 함께 움직이기 좋은 날이에요."
     elif score >= 45:
-        level, headline = "보통", "오늘은 무난하게 통하는 날이에요."
+        level, brief = "보통", "오늘은 무난하게 통하는 날이에요."
     else:
-        level, headline = "주의", "오늘은 서로 페이스를 존중하면 좋은 날이에요."
+        level, brief = "주의", "오늘은 서로 페이스를 존중하면 좋은 날이에요."
     # 이유는 레벨 문장 뒤에 온전한 문장으로 — 옛 "A에게 결이 맞는 날" 조각은 어색하다(2026-11-06 사용자)
     reasons: list[str] = []
     if len(hap) == 2:
@@ -96,7 +96,7 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
         reasons.append(f"{clash[0]}에겐 변수가 생기기 쉬워요.")
     if len(yong_hits) == 2:
         reasons.append("두 분 모두에게 꼭 필요한 기운이 들어와요.")
-    headline = " ".join([headline, *reasons])
+    headline = " ".join([brief, *reasons])  # brief = 레벨 문장만(홈 ② 줄, 2026-11-06) · headline = 레벨 + 이유(궁합 시운 탭)
 
     # 각자의 오늘 — 시운 화면과 같은 계산(날씨·대운·세운은 뺀다). 이름은 아침 한 마디 접두에 쓰인다
     f1 = compute_fortune(natal1, today, name=name1)
@@ -140,6 +140,7 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
         "score": score,
         "level": level,
         "headline": headline,
+        "brief": brief,
         "day_element": today_el.name,
         "solar_term": term[0] if term else None,
         "son_eomneun_nal": son_nal,

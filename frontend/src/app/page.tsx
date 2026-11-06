@@ -86,7 +86,7 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   );
 }
 
-// ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지 + 오늘 가장 좋은 사람 한 줄 (사주 한 입은 2026-11-06 별도 카드 SajuBiteCard로)
+// ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지 + 오늘 가장 좋은 사람 한 줄 "{이름}님 — 레벨 문장"(♥ 기호·이유 문장 없음, 2026-11-06 사용자) (사주 한 입은 2026-11-06 별도 카드 SajuBiteCard로)
 function PeopleRow({ people, canAdd, me }: { people: HomeData["people"]; canAdd: boolean; me: HomeData["me"] }) {
   const best = people
     .filter((p) => p.compat?.level === "좋음")
@@ -132,7 +132,7 @@ function PeopleRow({ people, canAdd, me }: { people: HomeData["people"]; canAdd:
         <p className="mt-2 text-xs text-[var(--color-ink-faint)]">궁금한 사람을 추가하면 오늘 둘의 궁합을 알려 줘요</p>
       ) : best && me ? (
         <p className="mt-2 text-xs text-[var(--color-ink-light)] leading-relaxed break-keep">
-          <span className="font-semibold text-emerald-700">♥ {best.name}님과</span> — {best.compat?.headline}
+          <span className="font-semibold text-emerald-700">{best.name}님</span> — {best.compat?.headline}
         </p>
       ) : null}
     </section>

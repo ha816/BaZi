@@ -128,6 +128,7 @@ def test_me_has_character_and_today_fortune_people_have_face_and_compat():
     assert friend["character"]["art_key"] == friend["character"]["key"]  # 남성은 유형 키 그대로
     assert friend["compat"]["level"] in ("좋음", "보통", "주의")
     assert 0 <= friend["compat"]["score"] <= 100 and friend["compat"]["headline"]
+    assert "." not in friend["compat"]["headline"][:-1]  # 홈 줄은 레벨 문장 한 문장만(이유 문장 없음, 2026-11-06)
 
 
 def test_no_self_profile_means_no_me_and_no_compat():
