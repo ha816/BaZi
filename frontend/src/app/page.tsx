@@ -42,10 +42,10 @@ const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const FEED_SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
 /** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜·사주 한 입 종류) */
 const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
-/** 상세 페이지로 가는 링크([오늘 시운 자세히 →]·[자세히 →]·[관리]) — 늘 제목 줄 오른쪽 끝(2026-11-06 사용자 결정) */
+/** 상세 페이지로 가는 링크 — 글자는 늘 "자세히 →"(오늘의 나 → /siun, 타로카드 → /tarot), 자리는 제목 줄 오른쪽 끝. [관리 →]도 같은 모양(2026-11-06 사용자 규칙) */
 const FEED_LINK = "shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70";
 
-// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, [오늘 시운 자세히 →]는 제목 줄 오른쪽(2026-11-06)
+// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, [자세히 →](/siun)는 제목 줄 오른쪽(2026-11-06)
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
   const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
@@ -54,7 +54,7 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
     <section className={`mx-4 mt-4 ${FEED_CARD}`}>
       <div className="flex items-baseline justify-between mb-3">
         <h2 className={FEED_TITLE}>오늘의 나</h2>
-        <Link href="/siun" className={FEED_LINK}>오늘 시운 자세히 →</Link>
+        <Link href="/siun" className={FEED_LINK}>자세히 →</Link>
       </div>
       <div className="flex gap-3 items-start">
         <div className="flex flex-col items-center shrink-0 w-24">
