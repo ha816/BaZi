@@ -40,7 +40,7 @@ const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var
 const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 /** 제목 아래 소제목 한 줄(회색, PageHeader 설명과 같은 톤) — 그날의 문장이나 카드 설명. 제목·오른쪽 부가 정보에 있는 "오늘"·"내일"은 되풀이하지 않는다(자리 부족, 2026-11-06) */
 const FEED_SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
-/** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜·사주 한 입 종류) */
+/** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜 — 사주 한 입의 종류는 2026-11-06부터 제목에 "사주 한 입 — 십신(十神)") */
 const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
 /** 상세 페이지로 가는 링크 — 글자는 늘 "자세히 →"(오늘의 나 → /siun, 타로카드 → /tarot), 자리는 제목 줄 오른쪽 끝. [관리 →]도 같은 모양(2026-11-06 사용자 규칙) */
 const FEED_LINK = "shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70";
@@ -190,10 +190,7 @@ const biteOf = (iso: string) => BITES[dayNoOf(iso) % BITES.length];
 function BiteIntro({ bite }: { bite: Bite }) {
   return (
     <div>
-      <div className="flex items-baseline justify-between">
-        <h2 className={FEED_TITLE}>사주 한 입</h2>
-        <span className={FEED_ASIDE}>{bite.kind}</span>
-      </div>
+      <h2 className={FEED_TITLE}>사주 한 입 — {bite.kind}</h2>
       <div className="flex items-start gap-3 mt-2">
         <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
         <div className="flex-1 min-w-0 break-keep">
@@ -219,7 +216,18 @@ const RELATION_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
+/** 오늘의 띠 상자 배지 — 관계 값(백엔드) → 이름·색. 격자 아래 범례 줄 대신(2026-11-06, 오늘의 나와 같은 식으로 컴팩트하게) */
+const ZODIAC_RELATION_BADGE: Record<string, { label: string; cls: string }> = {
+  "나": { label: "오늘의 주인공", cls: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]" },
+  "삼합": { label: "기운 받는 띠", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "육합": { label: "기운 받는 띠", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "충": { label: "조심할 띠", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  "원진": { label: "조심할 띠", cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  "보통": { label: "보통", cls: "bg-white text-[var(--color-ink-muted)] border-[var(--color-border-light)]" },
+};
+
 // 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
+// 2026-11-06 오늘의 나와 같은 식으로 컴팩트하게 — 범례 줄 뺌(관계는 상자 배지), 격자·상자 여백 줄임, 상자 글자 10/12px·굵게 없음
 function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData; myBranch?: string; className?: string }) {
   const [picked, setPicked] = useState(myBranch ?? today.animal.branch);
   const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
@@ -232,28 +240,26 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
       <p className={FEED_SUB}>
         {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>
-      <div className="grid grid-cols-6 gap-1.5 mt-3">
+      <div className="grid grid-cols-6 gap-1 mt-2">
         {today.zodiac.map((z) => (
           <button type="button" key={z.branch} onClick={() => setPicked(z.branch)} aria-pressed={z.branch === sel.branch}
-            className={`relative flex flex-col items-center rounded-xl border py-1.5 ${RELATION_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
-            <span className="text-xl leading-none">{z.emoji}</span>
-            <span className="text-[10px] text-[var(--color-ink-muted)] mt-1">{z.korean}</span>
+            className={`relative flex flex-col items-center rounded-xl border py-1 ${RELATION_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            <span className="text-lg leading-none">{z.emoji}</span>
+            <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{z.korean}</span>
             {z.branch === myBranch && (
               <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
           </button>
         ))}
       </div>
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-[var(--color-ink-faint)]">
-        <span><span className="text-emerald-600">●</span> 기운 받는 띠</span>
-        <span><span className="text-amber-500">●</span> 조심할 띠</span>
-        <span><span className="text-[var(--color-gold)]">●</span> 오늘의 주인공</span>
-      </div>
-      <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
-        <p className="text-[11px] text-[var(--color-ink-muted)]">
-          <span className="font-bold text-[var(--color-ink)]">{sel.emoji} {sel.korean}띠</span> · {sel.years.join("·")}년생
-        </p>
-        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-0.5">{sel.advice}</p>
+      <div className="mt-2 rounded-xl bg-[var(--color-ivory)] px-3 py-2 break-keep">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] text-[var(--color-ink-muted)]">
+            <span className="text-[var(--color-ink)]">{sel.emoji} {sel.korean}띠</span> · {sel.years.join("·")}년생
+          </p>
+          <Badge cls={`${ZODIAC_RELATION_BADGE[sel.relation].cls} shrink-0`}>{ZODIAC_RELATION_BADGE[sel.relation].label}</Badge>
+        </div>
+        <p className="text-[12px] text-[var(--color-ink)] leading-relaxed mt-0.5">{sel.advice}</p>
       </div>
     </div>
   );
