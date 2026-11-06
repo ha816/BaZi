@@ -9,20 +9,20 @@ const GENERATES: Record<string, string> = { 木: "火", 火: "土", 土: "金", 
 const DAY_LABELS = ["오늘", "내일", "모레", "글피"];
 const CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
 const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
-// embedded: 다른 카드(홈 오늘의 나) 안에 넣을 때 — 테두리·제목 없이 (2026-10-26)
+// embedded: 다른 카드(홈 오늘의 나) 안에 넣을 때 — 테두리·제목 없이 (2026-10-26). 홈은 HourlyLuckCard만 쓴다(2026-11-06). 홈은 HourlyLuckCard만 쓴다(2026-11-06)
 
 const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
-/** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 count일까지(기본 글피, 홈은 모레 — 2026-10-26). 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음 */
+/** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 count일까지(기본 글피, 홈은 모레 — 2026-10-26). 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음.
+ *  날짜마다 머리줄 + 3시간 타일 줄. 홈(embedded)은 머리줄에 그날 요약(날짜·운세 점수·날씨·기온·레벨)까지 담아 주간 시운 칸을 대신한다(2026-11-06 사용자 제안) */
 export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embedded = false, className = "" }: { days: SiunDay[]; yongshin?: string; count?: number; embedded?: boolean; className?: string }) {
   const nowHour = new Date().getHours();
-  const hours = days.slice(0, Math.min(count, DAY_LABELS.length)).flatMap((d, i) =>
-    (d.weather?.hours ?? [])
-      .filter((h: HourlyWeather) => i > 0 || parseInt(h.hour.replace(/[^0-9]/g, "")) >= Math.max(0, nowHour - 2))
-      .map((h) => ({ ...h, dateLabel: DAY_LABELS[i] })),
-  );
+  const groups = days.slice(0, Math.min(count, DAY_LABELS.length)).map((day, i) => ({
+    day, label: DAY_LABELS[i],
+    hours: (day.weather?.hours ?? []).filter((h: HourlyWeather) => i > 0 || parseInt(h.hour.replace(/[^0-9]/g, "")) >= Math.max(0, nowHour - 2)),
+  })).filter((g) => g.hours.length > 0);
   const relOf = (el: string) => (!yongshin ? "neutral" : el === yongshin ? "match" : GENERATES[el] === yongshin ? "generates" : "neutral");
-  if (hours.length === 0) return null;
+  if (groups.length === 0) return null;
 
   return (
     <div className={`${embedded ? "" : CARD} ${className}`}>
@@ -38,23 +38,42 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
         </div>
       )}
       <div className="overflow-x-auto -mx-1 px-1 py-1 no-scrollbar">
-        <div className="flex gap-1 w-max items-end">
-          {hours.map((h, i) => {
-            const rel = relOf(h.element);
-            const highlight = rel === "match"
-              ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl"
-              : rel === "generates" ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl" : "";
-            const showDate = i === 0 || h.dateLabel !== hours[i - 1].dateLabel;
+        <div className="flex gap-3 w-max items-start">
+          {groups.map(({ day, label, hours }) => {
+            const w = day.weather!;
+            const d = new Date(day.date);
+            const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
             return (
-              <div key={i} className="flex flex-col gap-1">
-                {showDate && <span className="text-[10px] font-bold text-[var(--color-gold)] ml-1 mb-0.5 w-full text-center">{h.dateLabel}</span>}
-                <div className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[52px] ${highlight}`}>
-                  <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
-                  <span className="text-2xl">{elMeta(h.element).emoji}</span>
-                  <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
-                  <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(h.temperature)}°</span>
-                  {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
-                  {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋음</span>}
+              <div key={day.date} className="flex flex-col gap-1 min-w-max">
+                <p className="flex items-center gap-1 text-[10px] whitespace-nowrap ml-1 mb-0.5 leading-none">
+                  <span className="font-bold text-[var(--color-gold)]">{label}</span>
+                  <span className="text-[var(--color-ink-faint)]">{d.getMonth() + 1}/{d.getDate()}</span>
+                  {embedded && (
+                    <>
+                      <span className="text-[var(--color-ink-faint)]">·</span>
+                      <span className="font-bold text-[var(--color-ink)]">{day.total_score}점</span>
+                      <span className="text-[var(--color-ink-muted)]">{elMeta(w.element).emoji} {w.condition.replace(/\s*\d+\.?\d*°C$/, "")} {Math.round(w.temperature)}°</span>
+                      <span className="text-[12px] leading-none">{lMeta.icon}</span>
+                    </>
+                  )}
+                </p>
+                <div className="flex gap-1">
+                  {hours.map((h, i) => {
+                    const rel = relOf(h.element);
+                    const highlight = rel === "match"
+                      ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl"
+                      : rel === "generates" ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl" : "";
+                    return (
+                      <div key={i} className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[52px] ${highlight}`}>
+                        <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
+                        <span className="text-2xl">{elMeta(h.element).emoji}</span>
+                        <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
+                        <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(h.temperature)}°</span>
+                        {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
+                        {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋음</span>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -65,7 +84,7 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
   );
 }
 
-/** 오늘부터 count일(기본 7, 홈은 3 — 2026-10-26) — 날씨 오행·운세 점수·레벨 아이콘. 날씨 없는 날은 건너뛴다 */
+/** 오늘부터 count일(기본 7) 한 줄씩 — 날씨 오행·운세 점수·레벨 아이콘. 날씨 없는 날은 건너뛴다. 시운 화면용(홈은 2026-11-06부터 HourlyLuckCard 머리줄이 대신) */
 export function WeeklySiunCard({ days, count = 7, embedded = false, className = "" }: { days: SiunDay[]; count?: number; embedded?: boolean; className?: string }) {
   const rows = days.slice(0, count).filter((d) => d.weather);
   if (rows.length === 0) return null;

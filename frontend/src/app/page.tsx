@@ -9,7 +9,7 @@ import { detectLocation, type LocationInfo } from "@/lib/location";
 import AnalysisForm from "@/components/AnalysisForm";
 import MorningBrief from "@/components/MorningBrief";
 import TarotCard, { TAROT_FLIPPED_KEY, TAROT_SHUFFLE_MS } from "@/components/TarotCard";
-import { HourlyLuckCard, WeeklySiunCard } from "@/components/SiunCards";
+import { HourlyLuckCard } from "@/components/SiunCards";
 import FeedPost from "@/components/FeedPost";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { FORECAST_LEVEL_META } from "@/lib/elementColors";
@@ -80,9 +80,8 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
           <MorningBrief data={f} stripName={me.name} compact />
         </div>
       </div>
-      {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요, 2026-10-26 */}
-      <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
-      <HourlyLuckCard days={me.week} yongshin={f.yongshin} count={3} embedded className="mt-2 pt-3 border-t border-[var(--color-border-light)]" />
+      {/* 오늘~모레 — 날마다 머리줄(날짜·점수·날씨·레벨) + 3시간 타일. 주간 시운 칸은 2026-11-06 여기에 합침 */}
+      <HourlyLuckCard days={me.week} yongshin={f.yongshin} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
     </section>
   );
 }
