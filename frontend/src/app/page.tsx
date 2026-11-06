@@ -242,15 +242,15 @@ const RELATION_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-/** 오늘의 띠 배지 — 관계 값(백엔드) → 이름·색. 상자엔 label(기운 받는 띠…), 제목 줄 오른쪽엔 내 띠의 오늘 등급 grade(최고·좋음·보통·주의 — 라벨 없이도
- *  오늘이 내게 이로운 날인지 보이게, 2026-11-06 사용자). 격자 아래 범례 줄 대신(2026-11-06, 오늘의 나와 같은 식으로 컴팩트하게) */
-const ZODIAC_RELATION_BADGE: Record<string, { label: string; grade: string; cls: string }> = {
-  "나": { label: "오늘의 주인공", grade: "👑 최고", cls: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]" },
-  "삼합": { label: "기운 받는 띠", grade: "🌟 좋음", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "육합": { label: "기운 받는 띠", grade: "🌟 좋음", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  "충": { label: "조심할 띠", grade: "🚨 주의", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  "원진": { label: "조심할 띠", grade: "🚨 주의", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  "보통": { label: "보통", grade: "보통", cls: "bg-white text-[var(--color-ink-muted)] border-[var(--color-border-light)]" },
+/** 오늘의 띠 배지 — 관계 값(백엔드) → 이름·색. 상자엔 label(기운 받는 띠…), 격자 칸 오른쪽 위엔 "나" 배지와 같은 꼴의 등급 라벨 tag(최고·좋음·주의 — 보통은 없음;
+ *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼"). 격자 아래 범례 줄 대신(2026-11-06, 오늘의 나와 같은 식으로 컴팩트하게) */
+const ZODIAC_RELATION_BADGE: Record<string, { label: string; tag: { text: string; cls: string } | null; cls: string }> = {
+  "나": { label: "오늘의 주인공", tag: { text: "최고", cls: "bg-[var(--color-gold)]" }, cls: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]" },
+  "삼합": { label: "기운 받는 띠", tag: { text: "좋음", cls: "bg-emerald-500" }, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "육합": { label: "기운 받는 띠", tag: { text: "좋음", cls: "bg-emerald-500" }, cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  "충": { label: "조심할 띠", tag: { text: "주의", cls: "bg-amber-500" }, cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  "원진": { label: "조심할 띠", tag: { text: "주의", cls: "bg-amber-500" }, cls: "bg-amber-50 text-amber-700 border-amber-200" },
+  "보통": { label: "보통", tag: null, cls: "bg-white text-[var(--color-ink-muted)] border-[var(--color-border-light)]" },
 };
 
 // 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
@@ -258,16 +258,11 @@ const ZODIAC_RELATION_BADGE: Record<string, { label: string; grade: string; cls:
 function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData; myBranch?: string; className?: string }) {
   const [picked, setPicked] = useState(myBranch ?? today.animal.branch);
   const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
-  const mine = myBranch ? today.zodiac.find((z) => z.branch === myBranch) : undefined;
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-baseline justify-between">
         <h2 className={FEED_TITLE}>오늘의 띠</h2>
-        <span className="flex items-center gap-2">
-          {/* 내 띠의 오늘 등급 — 어떤 칸을 눌렀든 늘 내 띠 기준(기본 프로필 있을 때만) */}
-          {mine && <Badge cls={ZODIAC_RELATION_BADGE[mine.relation].cls}>{mine.emoji} {ZODIAC_RELATION_BADGE[mine.relation].grade}</Badge>}
-          <Link href="/zodiac" className={FEED_LINK}>자세히 →</Link>
-        </span>
+        <Link href="/zodiac" className={FEED_LINK}>자세히 →</Link>
       </div>
       <p className={FEED_SUB}>
         {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
@@ -278,8 +273,12 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
             className={`relative flex flex-col items-center rounded-xl border py-1 ${RELATION_TONE[z.relation]} ${z.branch === sel.branch ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-lg leading-none">{z.emoji}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{z.korean}</span>
+            {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 보통은 없음), 내 띠의 "나"는 왼쪽 위 */}
+            {ZODIAC_RELATION_BADGE[z.relation].tag && (
+              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${ZODIAC_RELATION_BADGE[z.relation].tag!.cls}`}>{ZODIAC_RELATION_BADGE[z.relation].tag!.text}</span>
+            )}
             {z.branch === myBranch && (
-              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
+              <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
           </button>
         ))}
