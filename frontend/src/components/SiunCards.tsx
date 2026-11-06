@@ -14,7 +14,7 @@ const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const elMeta = (el: string) => ELEMENT_META[el] ?? ELEMENT_META["土"];
 
 /** days[0]이 오늘 — 오늘은 지금 2시간 전부터, 이어서 count일까지(기본 글피, 홈은 모레 — 2026-10-26). 용신과 같은 오행 = 최고, 용신을 생하는 오행 = 좋음.
- *  날짜마다 머리줄 + 3시간 타일 줄. 홈(embedded)은 머리줄에 그날 요약(날짜·운세 점수·날씨·기온·레벨)까지 담아 주간 시운 칸을 대신한다(2026-11-06 사용자 제안) */
+ *  날짜마다 머리줄 + 3시간 타일 줄. 홈(embedded)은 머리줄에 그날 요약(날짜·레벨·운세 점수 — 날씨·기온은 2026-11-06 뺌)까지 담아 주간 시운 칸을 대신한다(2026-11-06 사용자 제안) */
 export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embedded = false, className = "" }: { days: SiunDay[]; yongshin?: string; count?: number; embedded?: boolean; className?: string }) {
   const nowHour = new Date().getHours();
   const groups = days.slice(0, Math.min(count, DAY_LABELS.length)).map((day, i) => ({
@@ -40,7 +40,6 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
       <div className="overflow-x-auto -mx-1 px-1 pt-1 pb-0.5 no-scrollbar">  {/* 위아래 여백은 모서리 배지·테두리가 안 잘릴 만큼만(2026-11-06) */}
         <div className="flex gap-3 w-max items-start">
           {groups.map(({ day, label, hours }) => {
-            const w = day.weather!;
             const d = new Date(day.date);
             const lMeta = FORECAST_LEVEL_META[day.level] ?? FORECAST_LEVEL_META["평범한 날"];
             return (
@@ -51,7 +50,7 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
                   {embedded && (
                     <>
                       <span className="text-[var(--color-ink-faint)]">·</span>
-                      <span className="text-[var(--color-ink-muted)]">{elMeta(w.element).emoji} {w.condition.replace(/\s*\d+\.?\d*°C$/, "")} {Math.round(w.temperature)}°</span>
+                      {/* 날씨(☀️ 맑음 8°)는 2026-11-06 뺌(사용자) — 타일마다 날씨가 있어 겹쳤다 */}
                       <span className="text-[12px] leading-none">{lMeta.icon}</span>
                       <span className="text-[var(--color-ink)]">{day.total_score}점</span>
                     </>
