@@ -345,7 +345,7 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
     <div className={`${FEED_CARD} ${className}`}>
       <h2 className={FEED_TITLE}>오늘의 타로카드</h2>
       <p className={FEED_SUB}>
-        {person ? "하루 한 장, 사람마다 정해진 카드예요" : "모두에게 같은 카드예요 · 내 사주를 보면 내 카드가 생겨요"}
+        {person ? "하루 한 장, 사람마다 정해진 카드예요" : "내 사주를 보면 나만의 카드가 생겨요"}
       </p>
       <div className="flex flex-col items-center mt-3">
         <TarotCard card={c} flipped={flipped} shuffling={shuffling} onFlip={flip} size="sm" />
