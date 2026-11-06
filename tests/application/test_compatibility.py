@@ -314,3 +314,19 @@ def test_daily_compat_shape_and_bounds():
     assert 0 <= r["score"] <= 100
     assert r["level"] in {"좋음", "보통", "주의"}
     assert r["headline"] and len(r["day_pillar"]) == 2
+
+
+def test_daily_compat_reasons_are_full_polite_sentences():
+    """2026-11-06: 이유는 "A에게 결이 맞는 날" 같은 조각이 아니라 이름에 님을 붙인 온전한 문장으로 레벨 문장 뒤에 붙는다."""
+    from datetime import date, timedelta
+
+    from kkachi.application.compatibility_daily import compute_daily_compat
+    n1 = _natal_adapter.analyze(_user(1990, 5, 15, 10, Gender.MALE, "A"))
+    n2 = _natal_adapter.analyze(_user(1992, 8, 20, 14, Gender.FEMALE, "B"))
+    seen: set[str] = set()
+    for i in range(60):  # 12지지가 다섯 바퀴 — 합·충인 날이 다 나온다
+        h = compute_daily_compat(n1, n2, date(2026, 9, 1) + timedelta(days=i), "A", "B")["headline"]
+        assert "결이 맞는 날" not in h and ", " not in h and h.endswith(".")
+        assert "A에" not in h and "B에" not in h  # 이름 뒤엔 늘 님
+        seen |= {s for s in ("잘 맞는 하루예요", "변수가 생기기 쉬워요") if s in h}
+    assert seen == {"잘 맞는 하루예요", "변수가 생기기 쉬워요"}

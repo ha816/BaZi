@@ -50,6 +50,7 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
     today_branch = day_sb.branch
     today_el = day_sb.stem.element
     n1, n2 = name1 or "첫째 분", name2 or "둘째 분"
+    h1, h2 = (f"{name1}님" if name1 else n1), (f"{name2}님" if name2 else n2)  # 문장 속 호칭
 
     b1 = natal1.saju[Pillar.日柱].branch
     b2 = natal2.saju[Pillar.日柱].branch
@@ -57,20 +58,15 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
     rel2 = _branch_relation(today_branch, b2)
 
     score = 50
-    reasons: list[str] = []
     _DELTA = {"육합": 10, "삼합": 7, "같음": 4, "보통": 0, "충": -12}
-    for who, rel in ((n1, rel1), (n2, rel2)):
-        score += _DELTA[rel]
-        if rel in ("육합", "삼합"):
-            reasons.append(f"{who}에게 결이 맞는 날")
-        elif rel == "충":
-            reasons.append(f"{who}에겐 변수 있는 날")
+    score += _DELTA[rel1] + _DELTA[rel2]
+    hap = [h for h, rel in ((h1, rel1), (h2, rel2)) if rel in ("육합", "삼합")]
+    clash = [h for h, rel in ((h1, rel1), (h2, rel2)) if rel == "충"]
 
     # 오늘 오행이 두 사람 용신에 닿으면 공통으로 힘이 실림
-    yong_hits = [n for n, nat in ((n1, natal1), (n2, natal2)) if today_el == nat.yongshin]
+    yong_hits = [h for h, nat in ((h1, natal1), (h2, natal2)) if today_el == nat.yongshin]
     if len(yong_hits) == 2:
         score += 12
-        reasons.append("두 분 모두 용신 기운이 드는 날")
     elif len(yong_hits) == 1:
         score += 6
 
@@ -88,8 +84,19 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
         level, headline = "보통", "오늘은 무난하게 통하는 날이에요."
     else:
         level, headline = "주의", "오늘은 서로 페이스를 존중하면 좋은 날이에요."
-    if reasons:
-        headline += " " + ", ".join(dict.fromkeys(reasons)) + "."
+    # 이유는 레벨 문장 뒤에 온전한 문장으로 — 옛 "A에게 결이 맞는 날" 조각은 어색하다(2026-11-06 사용자)
+    reasons: list[str] = []
+    if len(hap) == 2:
+        reasons.append("두 분 모두에게 잘 맞는 하루예요.")
+    elif hap:
+        reasons.append(f"{hap[0]}에게 잘 맞는 하루예요.")
+    if len(clash) == 2:
+        reasons.append("두 분 다 변수가 생기기 쉬워요.")
+    elif clash:
+        reasons.append(f"{clash[0]}에겐 변수가 생기기 쉬워요.")
+    if len(yong_hits) == 2:
+        reasons.append("두 분 모두에게 꼭 필요한 기운이 들어와요.")
+    headline = " ".join([headline, *reasons])
 
     # 각자의 오늘 — 시운 화면과 같은 계산(날씨·대운·세운은 뺀다). 이름은 아침 한 마디 접두에 쓰인다
     f1 = compute_fortune(natal1, today, name=name1)
@@ -117,7 +124,6 @@ def compute_daily_compat(natal1: NatalInfo, natal2: NatalInfo, today: date, name
         tips.append("두 분 모두 용신 기운이 드는 날이에요. 미뤄 둔 결정을 함께 내려 보세요.")
     elif yong_hits:
         tips.append(f"{yong_hits[0]}에게 용신 기운이 드는 날 — 그분이 앞장서면 일이 잘 풀려요.")
-    clash = [who for who, rel in ((n1, rel1), (n2, rel2)) if rel == "충"]
     if clash:
         tips.append(f"{'·'.join(clash)}에게 변수 있는 날이에요. 중요한 약속은 컨디션을 먼저 살피고 잡으세요.")
     if rel1 in ("육합", "삼합") and rel2 in ("육합", "삼합"):

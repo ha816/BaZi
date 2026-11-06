@@ -86,14 +86,8 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   );
 }
 
-// ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지
-// + 사주 한 입: 오늘의 신살·십신 하나 → "내 사람들에게도 있을까?" [확인하기] → 가진 얼굴에 금테·✦ (2026-10-26)
-function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; canAdd: boolean; me: HomeData["me"]; date: string }) {
-  const [revealed, setRevealed] = useState(false);
-  const bite = biteOf(date);
-  const has = (m: { sinsal: string[]; sipsin: string[] } | undefined) => !!m?.[bite.field].includes(bite.mark);
-  const holders = people.filter((p) => has(p.marks));
-  const meHas = has(me?.marks);
+// ② 오늘 내 사람들 — 캐릭터 얼굴 줄 + 나와 오늘의 궁합 배지 + 오늘 가장 좋은 사람 한 줄 (사주 한 입은 2026-11-06 별도 카드 SajuBiteCard로)
+function PeopleRow({ people, canAdd, me }: { people: HomeData["people"]; canAdd: boolean; me: HomeData["me"] }) {
   const best = people
     .filter((p) => p.compat?.level === "좋음")
     .sort((a, b) => (b.compat?.score ?? 0) - (a.compat?.score ?? 0))[0];
@@ -104,7 +98,7 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
         <Link href="/profile" className={FEED_LINK}>관리 →</Link>
       </div>
       <div className="-mx-4 overflow-x-auto no-scrollbar">
-        <div className="flex gap-4 px-4 min-w-max pt-1.5 pb-1">
+        <div className="flex gap-4 px-4 min-w-max pt-1 pb-1">
           {people.map((p) => {
             const badge = p.compat ? COMPAT_BADGE[p.compat.level] : null;
             return (
@@ -114,11 +108,8 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
                     src={charArtSrc(p.character.art_key, p.character.key)}
                     alt=""
                     onError={onCharArtError(p.character.key, FALLBACK_IMG)}
-                    className={`w-16 h-16 rounded-full object-cover border-2 bg-[var(--color-gold-faint)] transition-all ${revealed && has(p.marks) ? "border-[var(--color-gold)] ring-2 ring-[var(--color-gold-light)]" : "border-[var(--color-border-light)]"}`}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-[var(--color-border-light)] bg-[var(--color-gold-faint)]"
                   />
-                  {revealed && has(p.marks) && (
-                    <span className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-[var(--color-gold)] text-white text-[10px] flex items-center justify-center" aria-label={`${bite.name} 있음`}>✦</span>
-                  )}
                   {badge && (
                     <span className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full border text-[11px] font-bold flex items-center justify-center ${badge.cls}`} aria-label={`오늘 궁합 ${p.compat?.level}`}>
                       {badge.glyph}
@@ -144,26 +135,35 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
           <span className="font-semibold text-emerald-700">♥ {best.name}님과</span> — {best.compat?.headline}
         </p>
       ) : null}
+    </section>
+  );
+}
 
-      <div className="mt-3 pt-3 border-t border-[var(--color-border-light)]">
-        <BiteIntro bite={bite} />
-        {!revealed ? (
-          <button type="button" onClick={() => setRevealed(true)} className="mt-3 w-full flex items-center justify-between gap-2 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-left active:opacity-80">
-            <span className="text-[13px] font-semibold text-[var(--color-ink)] break-keep">
-              {bite.name}({bite.hanja}), {people.length ? "내 사람들에게도 있을까?" : "나에게도 있을까?"}
-            </span>
-            <span className="shrink-0 text-xs font-bold text-[var(--color-gold)]">확인하기 →</span>
-          </button>
-        ) : (
-          <p className="mt-3 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-[13px] text-[var(--color-ink)] leading-relaxed break-keep">
-            <span className="block text-[11px] text-[var(--color-ink-muted)] mb-0.5">{bite.name}({bite.hanja})</span>
-            {people.length > 0 && (holders.length
-              ? <><span className="font-semibold text-[var(--color-gold)]">✦ {holders.map((p) => `${p.name}님`).join("·")}</span>에게 있어요. </>
-              : <>오늘 내 사람들 중엔 없어요. </>)}
-            {me ? (meHas ? <span className="font-semibold">나에게도 있어요!</span> : <>나에게는 없어요.</>) : null}
-          </p>
-        )}
-      </div>
+// 사주 한 입(로그인) — 오늘의 신살·십신 하나 + "내 사람들에게도 있을까?" [확인하기] → 가진 사람 이름·나.
+// 2026-11-06 ② 카드 안에서 별도 카드로(사용자) — 카드가 갈라져 얼굴 금테·✦ 표시는 뺌. 확인 상태는 저장하지 않는다
+function SajuBiteCard({ bite, people, me }: { bite: Bite; people: HomeData["people"]; me: HomeData["me"] }) {
+  const [revealed, setRevealed] = useState(false);
+  const has = (m: { sinsal: string[]; sipsin: string[] } | undefined) => !!m?.[bite.field].includes(bite.mark);
+  const holders = people.filter((p) => has(p.marks));
+  const meHas = has(me?.marks);
+  return (
+    <section className={`mx-4 mt-3 ${FEED_CARD}`}>
+      <BiteIntro bite={bite} />
+      {!revealed ? (
+        <button type="button" onClick={() => setRevealed(true)} className="mt-3 w-full flex items-center justify-between gap-2 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-left active:opacity-80">
+          <span className="text-[13px] font-semibold text-[var(--color-ink)] break-keep">
+            {bite.name}({bite.hanja}), {people.length ? "내 사람들에게도 있을까?" : "나에게도 있을까?"}
+          </span>
+          <span className="shrink-0 text-xs font-bold text-[var(--color-gold)]">확인하기 →</span>
+        </button>
+      ) : (
+        <p className="mt-3 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-[13px] text-[var(--color-ink)] leading-relaxed break-keep">
+          {people.length > 0 && (holders.length
+            ? <><span className="font-semibold text-[var(--color-gold)]">✦ {holders.map((p) => `${p.name}님`).join("·")}</span>에게 있어요. </>
+            : <>오늘 내 사람들 중엔 없어요. </>)}
+          {me ? (meHas ? <span className="font-semibold">나에게도 있어요!</span> : <>나에게는 없어요.</>) : null}
+        </p>
+      )}
     </section>
   );
 }
@@ -191,7 +191,7 @@ function BiteIntro({ bite }: { bite: Bite }) {
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <h3 className={FEED_TITLE}>사주 한 입</h3>
+        <h2 className={FEED_TITLE}>사주 한 입</h2>
         <span className={FEED_ASIDE}>{bite.kind}</span>
       </div>
       <div className="flex items-start gap-3 mt-2">
@@ -262,13 +262,15 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
 type Horoscope = NonNullable<HomeData["me"]>["horoscope"];
 
 // 오늘의 별자리 — 오늘 달·태양 별자리 + 내 출생 차트 칩(☉☽↑) + 12별자리 격자(칸을 누르면 그 별자리 한 줄·행운의 아이템).
-// 내 태양 별자리 칸은 달·상승까지 넣은 개인판(me.horoscope) 문장, 처음엔 내 별자리(없으면 오늘 달의 별자리) (2026-10-30)
-function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Horoscope; className?: string }) {
+// 내 태양 별자리 칸은 달·상승까지 넣은 개인판(me.horoscope) 문장 — 이름 접두는 뗀다(stripName, 2026-11-06 오늘의 나와 같게 "어차피 알고 있어"), 처음엔 내 별자리(없으면 오늘 달의 별자리) (2026-10-30)
+function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData; mine?: Horoscope; stripName?: string; className?: string }) {
   const [picked, setPicked] = useState(mine?.chart.sun ?? sky.moon);
   const byKey = (key: string) => sky.signs.find((s) => s.key === key) ?? sky.signs[0];
   const sel = byKey(picked);
   const moon = byKey(sky.moon);
   const text = mine && sel.key === mine.chart.sun ? mine : sel;
+  const prefix = stripName ? `${stripName}님, ` : "";
+  const headline = text === mine && text.headline.startsWith(prefix) ? text.headline.slice(prefix.length) : text.headline;
   const level = FORECAST_LEVEL_META[text.level] ?? FORECAST_LEVEL_META["평범한 날"];
   const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
@@ -315,7 +317,7 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
           </p>
           <Badge cls={level.color}>{level.icon} {text.level}</Badge>
         </div>
-        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">{text.headline}</p>
+        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">{headline}</p>
         <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✦ {text.action}</p>
         {text.caution && <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✕ {text.caution}</p>}
         <p className="text-[11px] text-[var(--color-ink-faint)] mt-1">행운의 아이템 · {text.lucky_item}</p>
@@ -382,7 +384,7 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
   );
 }
 
-/** showBite: 비로그인만 — 로그인은 사주 한 입이 오늘 내 사람들 카드 안에 있다 (2026-10-26) */
+/** showBite: 비로그인만 — 로그인은 사주 한 입이 ② 다음 별도 카드 SajuBiteCard (2026-10-26 ② 안 → 2026-11-06 분리) */
 function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: boolean }) {
   const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= NEWS_DAYS);
   const term = today.solar_term;
@@ -501,7 +503,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
           <TodayHero me={home.me} />
           <TodayTarotCard tarot={home.me.tarot} className="mx-4 mt-3" />
           <TodayZodiacCard today={home.today} myBranch={home.me.zodiac_branch} className="mx-4 mt-3" />
-          <TodayStarsCard sky={home.today.sky} mine={home.me.horoscope} className="mx-4 mt-3" />
+          <TodayStarsCard sky={home.today.sky} mine={home.me.horoscope} stripName={home.me.name} className="mx-4 mt-3" />
         </>
       ) : (
         <div className={`mx-4 mt-4 ${FEED_CARD} text-sm text-[var(--color-ink-muted)]`}>
@@ -515,7 +517,8 @@ function LoggedInHome({ memberId }: { memberId: string }) {
           <TodayStarsCard sky={home.today.sky} className="mx-4 mt-3" />
         </>
       )}
-      <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} date={home.date} />
+      <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} />
+      <SajuBiteCard bite={biteOf(home.date)} people={home.people} me={home.me} />
       <KkachiFeed today={home.today} />
     </>
   );
