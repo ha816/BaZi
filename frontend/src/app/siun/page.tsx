@@ -125,7 +125,7 @@ export default function SiunPage() {
                   <MorningBrief data={data} dayLabel={label} />
                 </div>
                 {/* 한 줄: 대운(10년) · 세운(올해) · 월운(이달) · 일진(오늘/내일…) 네 칸을 같은 꼴로(용어 + 쉬운 말 위, 간지 오행 색 + 한글 아래, 용신 든 간지엔 금색 "용신"),
-                    네 칸은 왼쪽부터 붙여 쓰고(사용자 "왼쪽으로 붙여줘"), 오른쪽에 종합 점수("종합 19" 가로, 19는 3xl — 세로선 없음). 2026-11-06 사용자 — 3칸 그리드 → 작은 세 줄 → 나열 → 같은 행 → 일진도 같은 꼴로 월운 옆에.
+                    네 칸은 왼쪽부터 붙여 쓰고(사용자 "왼쪽으로 붙여줘"), 오른쪽에 종합 점수("종합 19" 가로, 종합 sm·19는 4xl — 세로선 없음). 2026-11-06 사용자 — 3칸 그리드 → 작은 세 줄 → 나열 → 같은 행 → 일진도 같은 꼴로 월운 옆에.
                     일진 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고 점수는 뒤이어 score-pop — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다 */}
                 <div className={`px-3 py-3 border-y border-[var(--color-border-light)] ${heroBg} flex items-center justify-between gap-2`}>
                   <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -151,8 +151,8 @@ export default function SiunPage() {
                   </div>
                   {/* 종합 점수는 가로로 큼지막하게 "종합 19"(2026-11-06 사용자). 앞의 희미한 세로선은 뺌(같은 날 사용자) */}
                   <div className="relative flex items-baseline gap-1 leading-none shrink-0">
-                    <span className="text-[11px] text-[var(--color-ink-muted)]">종합</span>
-                    <span key={`score-${data.date}`} className="score-pop font-heading text-3xl font-bold text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
+                    <span className="text-sm font-semibold text-[var(--color-ink-muted)]">종합</span>
+                    <span key={`score-${data.date}`} className="score-pop font-heading text-4xl font-bold text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
                     {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
                     {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-8 -right-6" size={44} />}
                   </div>
