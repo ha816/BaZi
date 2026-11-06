@@ -109,8 +109,8 @@ export default function TarotPage() {
                   <p className="text-[15px] text-[var(--color-ink)] leading-relaxed text-center mt-3">{c.line}</p>
                   {data.cross && (
                     <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5">
-                      <p className="text-[12px] text-[var(--color-ink-muted)] leading-relaxed">
-                        <span className="font-bold text-[var(--color-ink)]">오늘 일진과 함께 보면</span> · {data.cross}
+                      <p className="text-[12px] text-[var(--color-ink-muted)] leading-relaxed break-keep">
+                        {`오늘 일진과 함께 보면, ${data.cross}`.split(". ").map((s, i, a) => <span key={i} className="block">{i < a.length - 1 ? `${s}.` : s}</span>)}
                       </p>
                     </div>
                   )}

@@ -400,8 +400,9 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
             <p className="text-[13px] text-[var(--color-ink)] leading-relaxed text-center mt-1">{c.line}</p>
             {tarot.cross && (
               <div className="mt-2.5 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5">
-                <p className="text-[12px] text-[var(--color-ink-muted)] leading-relaxed">
-                  <span className="font-bold text-[var(--color-ink)]">오늘 일진과 함께 보면</span> · {tarot.cross}
+                <p className="text-[12px] text-[var(--color-ink-muted)] leading-relaxed break-keep">
+                  {/* 문장마다 한 줄 — "오늘 일진과 함께 보면, 첫 문장." / "둘째 문장." (굵게·가운뎃점 없음, 2026-11-06 사용자) */}
+                  {`오늘 일진과 함께 보면, ${tarot.cross}`.split(". ").map((s, i, a) => <span key={i} className="block">{i < a.length - 1 ? `${s}.` : s}</span>)}
                 </p>
               </div>
             )}
