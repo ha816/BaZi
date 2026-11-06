@@ -167,7 +167,7 @@ BaZi/
 │   │   ├── palmistry/page.tsx       # 손금 (idle → preview → loading → result)
 │   │   ├── zodiac/page.tsx          # 띠 상세(2026-11-06) — GET /kkachi/zodiac/week 한 번: 내 띠 → 이번 주 좋은 날(7칸) → 띠별 오늘(12줄). specs/zodiac/index.md
 │   │   ├── stars/page.tsx           # 별자리 상세(2026-11-06) — GET /horoscope/week 한 번: 내 별자리(개인판·출생 차트 뜻) → 이번 주 달의 길(7칸) → 별자리별 오늘(12줄). specs/stars/index.md
-│   │   ├── tarot/page.tsx           # 오늘의 타로카드 자세히(V9-1, 2026-11-05) — 로그인은 getHome().me.tarot, 비로그인은 kkachi_analysis_input → GET /tarot/today. 큰 카드 뒤집기·키워드·연애·일·재물·면책
+│   │   ├── tarot/page.tsx           # 오늘의 타로카드 자세히(V9-1, 2026-11-05) — 로그인은 getHome().me.tarot, 비로그인은 kkachi_analysis_input → GET /tarot/today. 큰 카드(뒤집기 없음, 2026-11-06)·키워드·연애·일·재물·면책
 │   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
 │   │   └── admin/feedback/page.tsx  # 탭별 👍/👎 요약 대시보드
 │   ├── components/
@@ -550,7 +550,7 @@ erDiagram
 | `/palmistry` | 손금 — 업로드 → 미리보기 → 분석 → 오행형·손금선 점수·해석 블록 | — |
 | `/zodiac` | 띠 상세(2026-11-06, `specs/zodiac/index.md`) — `GET /kkachi/zodiac/week` 한 번(로그인 `member_id` / 비로그인 `kkachi_analysis_input` / 없으면 일반판). 내 띠(오늘 한 줄 + 일진과의 관계) → 이번 주 좋은 날(7칸 — 일진 띠와 내 띠의 삼합·육합 초록·충·원진 주황·같은 띠 금, 누르면 그날 한 줄·절기·손없는 날) → 띠별 오늘(12줄, 누르면 기준 띠 바뀜). 진입은 홈 카드 [자세히 →] | 선택 |
 | `/stars` | 별자리 상세(2026-11-06, `specs/stars/index.md`) — `GET /horoscope/week` 한 번(로그인 `member_id` 기본 프로필 / 비로그인 sessionStorage `kkachi_analysis_input`·`_name` / 없으면 일반판). 내 별자리(개인판 오늘 + 출생 차트 ☉☽↑ 뜻, 상승 "처녀 또는 천칭" 이유) → 이번 주 달의 길(7칸, 기준 별자리와의 관계 색, 누르면 그날 내 문장) → 별자리별 오늘(12줄 펼치기, 누르면 달의 길 기준도 바뀜). 진입은 홈 카드 [자세히 →] | 선택 |
-| `/tarot` | 오늘의 타로카드 자세히(타로 V9-1, 2026-11-05, `specs/tarot/index.md`) — 로그인은 `getHome().me.tarot`(기본 프로필 없으면 `today.tarot` 날짜 카드), 비로그인은 sessionStorage `kkachi_analysis_input` → `GET /tarot/today`(없으면 날짜 카드 + "내 사주를 먼저 보면 내 카드가 나와요 → /analysis"). 큰 카드 뒤집기(홈에서 뒤집은 날이면 바로 앞면) → 이름·정/역·"1909 클래식 덱" → 키워드 3 → 한 줄 → 일진 교차 한 줄(사람 카드) → 연애·일·재물 → 면책 한 줄. 진입은 홈 카드 [자세히 →]·새소식·아침 알림(하단 메뉴 없음) | 선택 |
+| `/tarot` | 오늘의 타로카드 자세히(타로 V9-1, 2026-11-05, `specs/tarot/index.md`) — 로그인은 `getHome().me.tarot`(기본 프로필 없으면 `today.tarot` 날짜 카드), 비로그인은 sessionStorage `kkachi_analysis_input` → `GET /tarot/today`(없으면 날짜 카드 + "내 사주를 먼저 보면 내 카드가 나와요 → /analysis"). 큰 카드(늘 앞면 — 뒤집기는 홈 카드에서만, 2026-11-06) → 이름·정/역·"1909 클래식 덱" → 키워드 3 → 한 줄 → 일진 교차 한 줄(사람 카드) → 연애·일·재물 → 면책 한 줄. 진입은 홈 카드 [자세히 →]·새소식·아침 알림(하단 메뉴 없음) | 선택 |
 | `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(맨 위 나의 캐릭터 상자 → 이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: 두 사람 사주 캐릭터 그림 `saju_character/{roles[i].character_key}.webp`(파일 존재 확인, 옛 카드·없는 쪽은 역할 이모지) + 칭호 + 역할 칩 + 설명 + 잘 맞는 순간 칩 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
@@ -590,7 +590,7 @@ erDiagram
 | `kkachi_profile_input` | `/analysis` 프로필 모드 | `{memberId, profileId, year}` → FeedbackBar가 profileId 필요 |
 | `kkachi_compat_input` / `kkachi_compat_names` | `/compatibility` | `/compatibility/chat` |
 | `kkachi_login_next` | `LoginRequired`·분석 폼 캡션 (`lib/loginNext.ts`) | `/join`이 로그인 직후 한 번 꺼내 그 경로로 이동 후 삭제 |
-| `kkachi_tarot_flipped` | 홈 `TodayTarotCard`·`/tarot` (`TarotCard.tsx TAROT_FLIPPED_KEY`) | 오늘 카드를 뒤집은 날짜 — 같은 날은 어디서든 바로 앞면, 날이 바뀌면 뒷면 |
+| `kkachi_tarot_flipped` | 홈 `TodayTarotCard` (`TarotCard.tsx TAROT_FLIPPED_KEY`) | 오늘 카드를 홈에서 뒤집은 날짜 — 같은 날은 홈이 바로 앞면, 날이 바뀌면 뒷면. `/tarot`는 늘 앞면(2026-11-06) |
 
 ### ResultSlides 탭 구성 (`?tab=`)
 | id | 라벨 | 컴포넌트 |
