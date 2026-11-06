@@ -6,7 +6,6 @@ import PageHeader from "@/components/PageHeader";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { getHoroscopeWeek, type HoroscopeWeek, type SkySign } from "@/lib/api";
 import { MEMBER_ID_KEY } from "@/lib/constants";
-import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { parseStored, useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
 import type { AnalysisInput } from "@/types/analysis";
@@ -18,7 +17,6 @@ import type { AnalysisInput } from "@/types/analysis";
 const CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-4";
 const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
-const BADGE = "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border";
 
 /** 오늘 달과의 관계 → 색(홈 격자와 같은 표) */
 const RELATION_DOT: Record<string, string> = {
@@ -129,7 +127,6 @@ export default function StarsPage() {
 
 /** 내 별자리 — 오늘 개인판(이름 접두 headline) + 출생 차트 세 자리와 뜻. 상승이 2시간 블록 안에서 바뀌면 "처녀 또는 천칭" */
 function MyStarsCard({ me, today, sign, byKey }: { me: NonNullable<HoroscopeWeek["me"]>; today: NonNullable<HoroscopeWeek["me"]>["days"][number]; sign: SkySign; byKey: (k: string) => SkySign | undefined }) {
-  const level = FORECAST_LEVEL_META[today.level] ?? FORECAST_LEVEL_META["평범한 날"];
   const chart = me.chart;
   const chartText = (key: "sun" | "moon" | "asc") => {
     if (key === "asc") return chart.asc_signs.length ? chart.asc_signs.map((k) => byKey(k)?.korean ?? k).join(" 또는 ") : null;
@@ -138,10 +135,7 @@ function MyStarsCard({ me, today, sign, byKey }: { me: NonNullable<HoroscopeWeek
   };
   return (
     <section className={CARD}>
-      <div className="flex items-baseline justify-between">
-        <h2 className={TITLE}>내 별자리</h2>
-        <span className={`${BADGE} ${level.color}`}>{level.icon} {today.level}</span>
-      </div>
+      <h2 className={TITLE}>내 별자리</h2>{/* 레벨 배지(✨ 평범한 날)는 2026-11-06 뺌(사용자) */}
       <p className={SUB}>{sign.symbol} {sign.korean}자리 · {sign.range}</p>
       <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
         <p className="text-[15px] text-[var(--color-ink)] leading-relaxed">{today.headline}</p>
@@ -179,7 +173,6 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
   const mine = data.me && focus?.key === data.me.chart.sun ? data.me.days[dayIdx] : undefined;
   const forFocus = focus ? day.signs.find((s) => s.key === focus.key) : undefined;
   const relation = mine?.relation ?? forFocus?.relation ?? "보통";
-  const level = FORECAST_LEVEL_META[mine?.level ?? forFocus?.level ?? "평범한 날"] ?? FORECAST_LEVEL_META["평범한 날"];
   const dayMoon = byKey(day.moon);
   return (
     <section className={CARD}>
@@ -201,12 +194,9 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
         })}
       </div>
       <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-[11px] text-[var(--color-ink-muted)]">
-            <span className="font-bold text-[var(--color-ink)]">{dayLabel(day.date, dayIdx)}</span> · 달 {dayMoon?.symbol} {dayMoon?.korean}자리 · {day.moon_phase}
-          </p>
-          {focus && <span className={`${BADGE} ${level.color}`}>{level.icon} {mine?.level ?? forFocus?.level}</span>}
-        </div>
+        <p className="text-[11px] text-[var(--color-ink-muted)]">
+          <span className="font-bold text-[var(--color-ink)]">{dayLabel(day.date, dayIdx)}</span> · 달 {dayMoon?.symbol} {dayMoon?.korean}자리 · {day.moon_phase}
+        </p>
         {mine ? (
           <>
             <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">{mine.headline}</p>
@@ -225,7 +215,6 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
 
 /** 별자리별 오늘 한 줄 — 누르면 펼쳐지고 달의 길 기준이 그 별자리로 바뀐다 */
 function SignRow({ sign, mine, focused, onPick }: { sign: SkySign; mine: boolean; focused: boolean; onPick: () => void }) {
-  const level = FORECAST_LEVEL_META[sign.level] ?? FORECAST_LEVEL_META["평범한 날"];
   return (
     <li>
       <button type="button" onClick={onPick} aria-expanded={focused} className="w-full text-left py-2.5 active:opacity-80">
@@ -235,7 +224,6 @@ function SignRow({ sign, mine, focused, onPick }: { sign: SkySign; mine: boolean
           <span className="text-[13px] font-bold text-[var(--color-ink)]">{sign.korean}자리</span>
           <span className="text-[11px] text-[var(--color-ink-faint)]">{sign.range}</span>
           {mine && <span className="text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
-          <span className={`ml-auto ${BADGE} ${level.color}`}>{level.icon} {sign.level}</span>
         </div>
         <p className={`text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.4rem] break-keep ${focused ? "" : "line-clamp-1"}`}>{sign.headline}</p>
         {focused && (

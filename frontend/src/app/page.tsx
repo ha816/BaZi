@@ -312,7 +312,6 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
   const text = mine && sel.key === mine.chart.sun ? mine : sel;
   const prefix = stripName ? `${stripName}님, ` : "";
   const headline = text === mine && text.headline.startsWith(prefix) ? text.headline.slice(prefix.length) : text.headline;
-  const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
     <div className={`${FEED_CARD} ${className}`}>
       <div className="flex items-baseline justify-between">
@@ -322,17 +321,7 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
       <p className={FEED_SUB}>
         달이 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
       </p>
-      {mine && (
-        <div className="flex flex-wrap items-center gap-1.5 mt-2">
-          <Badge cls={chip}>☉ {byKey(mine.chart.sun).korean}</Badge>
-          <Badge cls={chip}>☽ {byKey(mine.chart.moon).korean}{mine.chart.uncertain.includes("moon") ? "?" : ""}</Badge>
-          {mine.chart.asc ? (
-            <Badge cls={chip}>↑ {mine.chart.asc_signs.map((k) => byKey(k).korean).join(" 또는 ")}</Badge>
-          ) : (
-            <span className="text-[10px] text-[var(--color-ink-faint)]">출생 시간을 넣으면 첫인상 별자리까지 봐요</span>
-          )}
-        </div>
-      )}
+      {/* 출생 차트 칩(☉☽↑)은 2026-11-06 홈에서 뺌(사용자 — 설명 없인 낯섦) — /stars 내 별자리에 뜻과 함께 남음 */}
       <div className="grid grid-cols-6 gap-1 mt-2">
         {sky.signs.map((s) => {
           const tag = scoreTag((mine && s.key === mine.chart.sun ? mine : s).score);  // 내 태양 별자리는 개인판 점수
