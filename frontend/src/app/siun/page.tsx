@@ -124,18 +124,23 @@ export default function SiunPage() {
                 <div className={`px-6 pt-5 pb-4 ${heroBg}`}>
                   <MorningBrief data={data} dayLabel={label} />
                 </div>
-                <div className={`px-6 py-3 flex items-center justify-between border-y border-[var(--color-border-light)] ${heroBg}`}>
-                  <div className="flex items-baseline gap-2">
+                {/* 일진 간지 + 종합 점수를 오른쪽에 함께(2026-11-06 사용자). 간지 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고,
+                    점수는 뒤이어 score-pop으로 튀어나온다 — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다 */}
+                <div className={`px-6 py-3 flex items-center justify-end gap-4 border-y border-[var(--color-border-light)] ${heroBg}`}>
+                  <div key={`pillar-${data.date}`} className="flex items-baseline gap-2">
                     <span className="font-heading text-3xl font-bold leading-none" style={{ color: stemEl.color }}>
-                      {data.day_pillar}
+                      {Array.from(data.day_pillar).map((ch, i) => (
+                        <span key={i} className="ink-stamp" style={{ animationDelay: `${i * 0.25}s` }}>{ch}</span>
+                      ))}
                     </span>
                     <span className="text-sm font-semibold" style={{ color: stemEl.color }}>
                       {toKorean(data.day_pillar)}
                     </span>
                   </div>
+                  <span className="h-6 w-px bg-[var(--color-border)]" aria-hidden />
                   <div className="relative flex items-baseline gap-1.5">
                     <span className="text-xs text-[var(--color-ink-muted)]">종합</span>
-                    <span className="font-heading text-3xl font-bold leading-none text-[var(--color-ink)]">{data.total_score}</span>
+                    <span key={`score-${data.date}`} className="score-pop font-heading text-3xl font-bold leading-none text-[var(--color-ink)]" style={{ animationDelay: "0.55s" }}>{data.total_score}</span>
                     {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
                     {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-9 -right-5" size={50} />}
                   </div>
