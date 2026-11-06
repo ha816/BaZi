@@ -9,7 +9,7 @@ interface Props {
   stripName?: string;
   /** "내일"·"모레"처럼 오늘이 아닌 날이면 문장의 첫 "오늘"을 이 라벨로 바꾼다 */
   dayLabel?: string;
-  /** 작은 글씨 — 헤드라인 14px·줄 13px(홈 오늘의 나, 시운 지난주) */
+  /** 작은 글씨 — 라벨 9px·문장 10px(홈 오늘의 나, 시운 지난주 — 2026-11-06 사용자 "폰트 10으로"). 아니면 11px·15px */
   compact?: boolean;
 }
 
@@ -30,29 +30,24 @@ export default function MorningBrief({ data, stripName, dayLabel, compact }: Pro
   const action = data.action ? adapt(data.action, dayLabel) : "";
   const caution = data.caution ? adapt(data.caution, dayLabel) : "";
 
+  // 항목마다 [글머리 기호 + 작은 라벨] 한 줄 → 문장 한 줄 — 한줄평·오늘 할 것·피할 것이 같은 모양으로 쌓인다(2026-11-06 사용자 "항목별로 이쁘게")
+  const items = [
+    { glyph: "❝", label: "한줄평", labelCls: "text-[var(--color-ink-muted)]", text: headline, textCls: "font-semibold text-[var(--color-ink)]" },
+    action && { glyph: "✦", label: dayLabel && dayLabel !== "오늘" ? `${dayLabel} 할 것` : "오늘 할 것", labelCls: "text-[var(--color-gold)]", text: action, textCls: "text-[var(--color-ink)]" },
+    caution && { glyph: "✕", label: "피할 것", labelCls: "text-rose-500", text: caution, textCls: "text-[var(--color-ink)]" },
+  ].filter((it): it is { glyph: string; label: string; labelCls: string; text: string; textCls: string } => !!it);
+
   return (
-    <div className={compact ? "space-y-1.5" : "space-y-2"}>
-      <p className={`font-heading font-semibold text-[var(--color-ink)] leading-snug ${compact ? "text-[14px]" : "text-base"}`}>
-        {headline}
-      </p>
-      {action && (
-        <div className={`flex gap-2 leading-snug ${compact ? "text-[13px]" : "text-sm"}`}>
-          <span className="text-[var(--color-gold)] flex-shrink-0">✦</span>
-          <p className="text-[var(--color-ink-light)]">
-            <span className="text-[10px] font-semibold text-[var(--color-ink-faint)] mr-1.5 align-middle">{dayLabel && dayLabel !== "오늘" ? `${dayLabel} 할 것` : "오늘 할 것"}</span>
-            {action}
+    <div className={compact ? "space-y-2" : "space-y-3"}>
+      {items.map((it) => (
+        <div key={it.label} className="break-keep">
+          <p className={`flex items-center gap-1 font-bold leading-none ${compact ? "text-[9px]" : "text-[11px]"} ${it.labelCls}`}>
+            <span aria-hidden>{it.glyph}</span>
+            {it.label}
           </p>
+          <p className={`leading-relaxed mt-0.5 ${compact ? "text-[10px]" : "text-[15px]"} ${it.textCls}`}>{it.text}</p>
         </div>
-      )}
-      {caution && (
-        <div className={`flex gap-2 leading-snug ${compact ? "text-[13px]" : "text-sm"}`}>
-          <span className="text-rose-500 flex-shrink-0">✕</span>
-          <p className="text-[var(--color-ink-light)]">
-            <span className="text-[10px] font-semibold text-[var(--color-ink-faint)] mr-1.5 align-middle">피할 것</span>
-            {caution}
-          </p>
-        </div>
-      )}
+      ))}
     </div>
   );
 }
