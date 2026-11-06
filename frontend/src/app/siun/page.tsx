@@ -125,10 +125,10 @@ export default function SiunPage() {
                   <MorningBrief data={data} dayLabel={label} />
                 </div>
                 {/* 한 줄: 대운(10년) · 세운(올해) · 월운(이달) · 일진(오늘/내일…) 네 칸을 같은 꼴로(용어 + 쉬운 말 위, 간지 오행 색 + 한글 아래, 용신 든 간지엔 금색 "용신"),
-                    세로선, 오른쪽에 종합 점수(19 크게, 아래 종합). 2026-11-06 사용자 — 3칸 그리드 → 작은 세 줄 → 나열 → 같은 행 → 일진도 같은 꼴로 월운 옆에.
+                    네 칸은 왼쪽부터 붙여 쓰고(사용자 "왼쪽으로 붙여줘"), 세로선, 오른쪽에 종합 점수(19 크게, 아래 종합). 2026-11-06 사용자 — 3칸 그리드 → 작은 세 줄 → 나열 → 같은 행 → 일진도 같은 꼴로 월운 옆에.
                     일진 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고 점수는 뒤이어 score-pop — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다 */}
                 <div className={`px-4 py-3 border-y border-[var(--color-border-light)] ${heroBg} flex items-center justify-between gap-2`}>
-                  <div className="flex items-center justify-between gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
                     {([
                       data.daeun_ganji ? { term: "대운", plain: "10년", ganji: data.daeun_ganji, hit: data.yongshin_in_daeun ?? false, stamp: false } : null,
                       data.seun_ganji ? { term: "세운", plain: "올해", ganji: data.seun_ganji, hit: data.yongshin_in_seun ?? false, stamp: false } : null,
