@@ -36,8 +36,12 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 
 /** 홈 카드 공통 틀(CLAUDE.md 카드 규약) — 칸 소제목 없이 카드마다 안에 제목 */
 const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
-/** 카드 안 윗줄 작은 금색 라벨(사주 한 입·오늘의 띠·오늘의 별자리·절기·새소식) */
-const FEED_LABEL = "text-[10px] font-bold text-[var(--color-gold)]";
+/** 카드 제목 한 줄 = 카드 이름(오늘의 나·오늘 내 사람들·오늘의 띠·별자리·타로카드·사주 한 입·절기·새소식). 2026-11-06 작은 금색 라벨 + 굵은 문장 두 단 제목을 없앰 */
+const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
+/** 제목 아래 그날의 문장(본문 첫 줄) — 제목처럼 굵지 않게 */
+const FEED_LEAD = "text-sm text-[var(--color-ink)] leading-snug mt-1 break-keep";
+/** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜·사주 한 입 종류) */
+const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
 
 // ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, 그 줄 오른쪽에 [오늘 시운 자세히 →]
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
@@ -46,7 +50,7 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
   return (
     <section className={`mx-4 mt-4 ${FEED_CARD}`}>
-      <h2 className="font-heading text-[15px] font-bold text-[var(--color-ink)] mb-3">오늘의 나</h2>
+      <h2 className={`${FEED_TITLE} mb-3`}>오늘의 나</h2>
       <div className="flex gap-3 items-start">
         <div className="flex flex-col items-center shrink-0 w-24">
           <img
@@ -95,7 +99,7 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
   return (
     <section className={`mx-4 mt-3 ${FEED_CARD}`}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-heading text-[15px] font-bold text-[var(--color-ink)]">오늘 내 사람들</h2>
+        <h2 className={FEED_TITLE}>오늘 내 사람들</h2>
         <Link href="/profile" className="text-xs text-[var(--color-ink-faint)]">관리</Link>
       </div>
       <div className="-mx-4 overflow-x-auto no-scrollbar">
@@ -184,12 +188,17 @@ const biteOf = (iso: string) => BITES[dayNoOf(iso) % BITES.length];
 
 function BiteIntro({ bite }: { bite: Bite }) {
   return (
-    <div className="flex items-start gap-3">
-      <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
-      <div className="flex-1 min-w-0 break-keep">
-        <p className={FEED_LABEL}>사주 한 입 · {bite.kind}</p>
-        <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">{bite.name}({bite.hanja}) — {bite.tagline}</p>
-        <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
+    <div>
+      <div className="flex items-baseline justify-between">
+        <h3 className={FEED_TITLE}>사주 한 입</h3>
+        <span className={FEED_ASIDE}>{bite.kind}</span>
+      </div>
+      <div className="flex items-start gap-3 mt-2">
+        <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+        <div className="flex-1 min-w-0 break-keep">
+          <p className="text-sm text-[var(--color-ink)] leading-snug">{bite.name}({bite.hanja}) — {bite.tagline}</p>
+          <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
+        </div>
       </div>
     </div>
   );
@@ -215,8 +224,8 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
   const sel = today.zodiac.find((z) => z.branch === picked) ?? today.zodiac[0];
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <p className={FEED_LABEL}>오늘의 띠</p>
-      <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+      <h2 className={FEED_TITLE}>오늘의 띠</h2>
+      <p className={FEED_LEAD}>
         오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>
       <div className="grid grid-cols-6 gap-1.5 mt-3">
@@ -261,8 +270,8 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
   const chip = "bg-[var(--color-ivory)] text-[var(--color-ink)] border-[var(--color-border-light)]";
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <p className={FEED_LABEL}>오늘의 별자리</p>
-      <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+      <h2 className={FEED_TITLE}>오늘의 별자리</h2>
+      <p className={FEED_LEAD}>
         오늘 달은 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
       </p>
       <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">태양 {sun.symbol} {sun.korean}자리</p>
@@ -336,8 +345,8 @@ function TodayTarotCard({ tarot, name, className = "" }: { tarot: TarotToday; na
   };
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <p className={FEED_LABEL}>오늘의 타로카드</p>
-      <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">
+      <h2 className={FEED_TITLE}>오늘의 타로카드</h2>
+      <p className={FEED_LEAD}>
         {person ? `${name}님께 온 카드 한 장` : "오늘 까치가 뽑아 둔 카드"}
       </p>
       <p className="text-[11px] text-[var(--color-ink-faint)] mt-0.5">
@@ -382,8 +391,11 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
       {(term || showBite || today.son_eomneun_nal) && <div className={FEED_CARD}>
         {term ? (
           <>
-            <p className={FEED_LABEL}>절기 · {termWhen}</p>
-            <p className="font-heading text-[15px] font-bold text-[var(--color-ink)] mt-0.5">🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
+            <div className="flex items-baseline justify-between">
+              <h2 className={FEED_TITLE}>절기</h2>
+              <span className={FEED_ASIDE}>{termWhen}</span>
+            </div>
+            <p className={FEED_LEAD}>🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
             <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
           </>
         ) : showBite ? (
@@ -401,8 +413,11 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
         <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
           <span className="text-2xl shrink-0">{news.emoji}</span>
           <span className="flex-1 min-w-0 break-keep">
-            <span className={`block ${FEED_LABEL}`}>새소식 · {news.date.slice(5).replace("-", ".")}</span>
-            <span className="block text-sm font-semibold text-[var(--color-ink)] leading-snug mt-0.5">{news.title}</span>
+            <span className="flex items-baseline justify-between">
+              <span className={FEED_TITLE}>새소식</span>
+              <span className={FEED_ASIDE}>{news.date.slice(5).replace("-", ".")}</span>
+            </span>
+            <span className={`block ${FEED_LEAD}`}>{news.title}</span>
             <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
           </span>
         </Link>
