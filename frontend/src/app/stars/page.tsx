@@ -22,15 +22,6 @@ const SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-kee
 
 const BADGE = "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border";  // 달의 길 상자의 레벨 배지에만(2026-11-06 — 내 별자리·별자리별 오늘에서는 뺌)
 
-/** 오늘 달과의 관계 → 색(홈 격자와 같은 표) */
-const RELATION_DOT: Record<string, string> = {
-  "합": "bg-[var(--color-gold)]",
-  "삼각": "bg-emerald-500",
-  "육각": "bg-emerald-500",
-  "사각": "bg-amber-500",
-  "충": "bg-amber-500",
-  "보통": "bg-[var(--color-border)]",
-};
 const RELATION_LABEL: Record<string, string> = {
   "합": "달이 머무는 날", "삼각": "기운 받는 날", "육각": "기운 받는 날", "사각": "조심할 날", "충": "조심할 날", "보통": "보통인 날",
 };
@@ -110,7 +101,7 @@ export default function StarsPage() {
 
             <section className={CARD}>
               <h2 className={TITLE}>별자리별 오늘</h2>
-              <p className={SUB}>달이 {moon?.symbol} {moon?.korean}자리에 있을 때 12별자리의 하루 — 색은 오늘 달과의 관계예요</p>
+              <p className={SUB}>달이 {moon?.symbol} {moon?.korean}자리에 있을 때 12별자리의 하루 — 라벨은 그 별자리의 오늘 점수예요</p>
               <ul className="mt-3 divide-y divide-[var(--color-border-light)]">
                 {data.today.signs.map((s) => (
                   <SignRow key={s.key} sign={s} score={s.key === mySun && today ? today.score : s.score} mine={s.key === mySun} focused={s.key === focus} onPick={() => { setPicked(s.key); setDayIdx(0); }} />
@@ -230,16 +221,15 @@ function SignRow({ sign, score, mine, focused, onPick }: { sign: SkySign; score:
     <li>
       <button type="button" onClick={onPick} aria-expanded={focused} className="w-full text-left py-2.5 active:opacity-80">
         <div className="flex items-center gap-2">
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${RELATION_DOT[sign.relation]}`} aria-hidden />
           <span className="text-lg leading-none">{sign.symbol}</span>
           <span className="text-[13px] font-bold text-[var(--color-ink)]">{sign.korean}자리</span>
           <span className="text-[11px] text-[var(--color-ink-faint)]">{sign.range}</span>
           {mine && <span className="text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
           <GradeTag grade={gradeOfScore(score)} size="md" className="ml-auto" />{/* 홈 격자와 같은 등급 라벨(2026-11-06) */}
         </div>
-        <p className={`text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.4rem] break-keep ${focused ? "" : "line-clamp-1"}`}>{sign.headline}</p>
+        <p className={`text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.6rem] break-keep ${focused ? "" : "line-clamp-1"}`}>{sign.headline}</p>
         {focused && (
-          <div className="pl-[1.4rem] mt-1 break-keep">
+          <div className="pl-[1.6rem] mt-1 break-keep">
             <p className="text-[12px] text-[var(--color-ink-muted)]">✦ {sign.action}</p>
             {sign.caution && <p className="text-[12px] text-[var(--color-ink-muted)] mt-0.5">✕ {sign.caution}</p>}
             <p className="text-[11px] text-[var(--color-ink-faint)] mt-1">행운의 아이템 · {sign.lucky_item}</p>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import GradeTag, { gradeOfRelation } from "@/components/GradeTag";
-import { getZodiacWeek, type ZodiacRelation, type ZodiacWeek } from "@/lib/api";
+import { getZodiacWeek, type ZodiacWeek } from "@/lib/api";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { parseStored, useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
@@ -20,15 +20,6 @@ const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
 const BADGE = "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border";
 
-/** 일진 띠와의 관계 → 색·이름(홈 격자와 같은 표). 삼합·육합 기운 받음, 충·원진 조심, 같은 띠는 주인공 */
-const RELATION_META: Record<ZodiacRelation, { dot: string; badge: string; label: string; day: string }> = {
-  "나": { dot: "bg-[var(--color-gold)]", badge: "bg-[var(--color-gold-faint)] text-[var(--color-ink)] border-[var(--color-gold)]", label: "오늘의 주인공", day: "주인공인 날" },
-  "삼합": { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "기운 받는 띠", day: "기운 받는 날" },
-  "육합": { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-emerald-200", label: "기운 받는 띠", day: "기운 받는 날" },
-  "충": { dot: "bg-amber-500", badge: "bg-amber-50 text-amber-700 border-amber-200", label: "조심할 띠", day: "조심할 날" },
-  "원진": { dot: "bg-amber-500", badge: "bg-amber-50 text-amber-700 border-amber-200", label: "조심할 띠", day: "조심할 날" },
-  "보통": { dot: "bg-[var(--color-border)]", badge: "bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]", label: "보통", day: "보통인 날" },
-};
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
 
 function dayLabel(iso: string, i: number) {
@@ -127,24 +118,22 @@ export default function ZodiacPage() {
 
             <section className={CARD}>
               <h2 className={TITLE}>띠별 오늘</h2>
-              <p className={SUB}>{today.animal.emoji} {today.animal.korean}의 날, 12띠의 하루 — 색은 오늘 일진 띠와의 관계예요</p>
+              <p className={SUB}>{today.animal.emoji} {today.animal.korean}의 날, 12띠의 하루 — 라벨은 일진 띠와의 관계예요</p>
               <ul className="mt-3 divide-y divide-[var(--color-border-light)]">
                 {today.zodiac.map((z) => {
-                  const meta = RELATION_META[z.relation];
                   const focused = z.branch === focus;
                   return (
                     <li key={z.branch}>
                       <button type="button" onClick={() => { setPicked(z.branch); setDayIdx(0); }} aria-pressed={focused}
                         className={`w-full text-left py-2.5 active:opacity-80 ${focused ? "bg-[var(--color-ivory)] -mx-2 px-2 rounded-xl" : ""}`}>
                         <div className="flex items-center gap-2">
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dot}`} aria-hidden />
                           <span className="text-lg leading-none">{z.emoji}</span>
                           <span className="text-[13px] font-bold text-[var(--color-ink)]">{z.korean}띠</span>
                           <span className="text-[11px] text-[var(--color-ink-faint)]">{z.years.join("·")}년생</span>
                           {z.branch === myBranch && <span className="text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
                           <GradeTag grade={gradeOfRelation(z.relation)} size="md" className="ml-auto" />
                         </div>
-                        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.4rem] break-keep">{z.advice}</p>
+                        <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1 pl-[1.6rem] break-keep">{z.advice}</p>
                       </button>
                     </li>
                   );
