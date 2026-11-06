@@ -42,15 +42,20 @@ const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const FEED_SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
 /** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜·사주 한 입 종류) */
 const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
+/** 상세 페이지로 가는 링크([오늘 시운 자세히 →]·[자세히 →]·[관리]) — 늘 제목 줄 오른쪽 끝(2026-11-06 사용자 결정) */
+const FEED_LINK = "shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70";
 
-// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, 그 줄 오른쪽에 [오늘 시운 자세히 →]
+// ① 오늘의 나 — 내 캐릭터 + 까치 말풍선(아침 한 마디). 점수는 배지 줄로만, [오늘 시운 자세히 →]는 제목 줄 오른쪽(2026-11-06)
 function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
   const f = me.fortune;
   const el = ELEMENT_META[f.day_element] ?? ELEMENT_META["土"];
   const level = FORECAST_LEVEL_META[f.level] ?? FORECAST_LEVEL_META["평범한 날"];
   return (
     <section className={`mx-4 mt-4 ${FEED_CARD}`}>
-      <h2 className={`${FEED_TITLE} mb-3`}>오늘의 나</h2>
+      <div className="flex items-baseline justify-between mb-3">
+        <h2 className={FEED_TITLE}>오늘의 나</h2>
+        <Link href="/siun" className={FEED_LINK}>오늘 시운 자세히 →</Link>
+      </div>
       <div className="flex gap-3 items-start">
         <div className="flex flex-col items-center shrink-0 w-24">
           <img
@@ -67,16 +72,12 @@ function TodayHero({ me }: { me: NonNullable<HomeData["me"]> }) {
           <MorningBrief data={f} />
         </div>
       </div>
-      <div className="flex items-center gap-2 mt-3.5">
-        <div className="flex items-center gap-1.5 flex-wrap flex-1 min-w-0">
-          <Badge cls={level.color}>{level.icon} {f.level}</Badge>
-          <Badge cls="bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]">{f.total_score}점</Badge>
-          <Badge cls={`${el.bg} text-[var(--color-ink-muted)] border-[var(--color-border-light)]`}>{el.emoji} {f.day_element}의 날</Badge>
-          {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
-          {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
-        </div>
-        {/* 2026-10-26 큰 검은 버튼 → 배지 줄 오른쪽 작은 링크 */}
-        <Link href="/siun" className="shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70">오늘 시운 자세히 →</Link>
+      <div className="flex items-center gap-1.5 flex-wrap mt-3.5">
+        <Badge cls={level.color}>{level.icon} {f.level}</Badge>
+        <Badge cls="bg-[var(--color-ivory)] text-[var(--color-ink-muted)] border-[var(--color-border-light)]">{f.total_score}점</Badge>
+        <Badge cls={`${el.bg} text-[var(--color-ink-muted)] border-[var(--color-border-light)]`}>{el.emoji} {f.day_element}의 날</Badge>
+        {f.solar_term && <Badge cls="bg-emerald-50 text-emerald-700 border-emerald-200">🌿 {f.solar_term}</Badge>}
+        {f.son_eomneun_nal && <Badge cls="bg-indigo-50 text-indigo-700 border-indigo-200">👻 손없는 날</Badge>}
       </div>
       {/* 오늘의 나 하단 — 주간 시운(3일) · 이 시간대가 좋아요, 2026-10-26 */}
       <WeeklySiunCard days={me.week} count={3} embedded className="mt-3 pt-3 border-t border-[var(--color-border-light)]" />
@@ -100,7 +101,7 @@ function PeopleRow({ people, canAdd, me, date }: { people: HomeData["people"]; c
     <section className={`mx-4 mt-3 ${FEED_CARD}`}>
       <div className="flex items-center justify-between mb-3">
         <h2 className={FEED_TITLE}>오늘 내 사람들</h2>
-        <Link href="/profile" className="text-xs text-[var(--color-ink-faint)]">관리</Link>
+        <Link href="/profile" className={FEED_LINK}>관리 →</Link>
       </div>
       <div className="-mx-4 overflow-x-auto no-scrollbar">
         <div className="flex gap-4 px-4 min-w-max pt-1.5 pb-1">
@@ -343,7 +344,10 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
   };
   return (
     <div className={`${FEED_CARD} ${className}`}>
-      <h2 className={FEED_TITLE}>오늘의 타로카드</h2>
+      <div className="flex items-baseline justify-between">
+        <h2 className={FEED_TITLE}>오늘의 타로카드</h2>
+        <Link href="/tarot" className={FEED_LINK}>자세히 →</Link>
+      </div>
       <p className={FEED_SUB}>
         {person ? "하루 한 장, 사람마다 정해진 카드예요" : "내 사주를 보면 나만의 카드가 생겨요"}
       </p>
@@ -367,9 +371,6 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
             )}
           </div>
         )}
-      </div>
-      <div className="flex justify-end mt-2">
-        <Link href="/tarot" className="text-xs font-semibold text-[var(--color-gold)]">자세히 →</Link>
       </div>
     </div>
   );
