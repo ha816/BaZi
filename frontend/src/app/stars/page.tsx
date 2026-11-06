@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { getHoroscopeWeek, type HoroscopeWeek, type SkySign } from "@/lib/api";
 import { MEMBER_ID_KEY } from "@/lib/constants";
 import { parseStored, useStorageValue } from "@/lib/useStorageValue";
@@ -17,6 +18,8 @@ import type { AnalysisInput } from "@/types/analysis";
 const CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-4";
 const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 const SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
+
+const BADGE = "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border";  // 달의 길 상자의 레벨 배지에만(2026-11-06 — 내 별자리·별자리별 오늘에서는 뺌)
 
 /** 오늘 달과의 관계 → 색(홈 격자와 같은 표) */
 const RELATION_DOT: Record<string, string> = {
@@ -38,9 +41,8 @@ const CHART_POINTS: { key: "sun" | "moon" | "asc"; symbol: string; name: string;
 ];
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"];
 
-function dayLabel(iso: string, i: number) {
-  if (i === 0) return "오늘";
-  if (i === 1) return "내일";
+/** 달의 길 날짜 — "오늘·내일" 대신 늘 날짜(2026-11-06 사용자) */
+function dayLabel(iso: string) {
   const d = new Date(`${iso}T00:00:00`);
   return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAY[d.getDay()]})`;
 }
@@ -173,6 +175,7 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
   const mine = data.me && focus?.key === data.me.chart.sun ? data.me.days[dayIdx] : undefined;
   const forFocus = focus ? day.signs.find((s) => s.key === focus.key) : undefined;
   const relation = mine?.relation ?? forFocus?.relation ?? "보통";
+  const level = FORECAST_LEVEL_META[mine?.level ?? forFocus?.level ?? "평범한 날"] ?? FORECAST_LEVEL_META["평범한 날"];  // 레벨 배지는 이 상자에만 남김(2026-11-06 사용자)
   const dayMoon = byKey(day.moon);
   return (
     <section className={CARD}>
@@ -185,7 +188,7 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
           return (
             <button type="button" key={d.date} onClick={() => setDayIdx(i)} aria-pressed={i === dayIdx}
               className={`flex flex-col items-center rounded-xl border py-1.5 ${i === dayIdx ? "border-[var(--color-ink)] bg-[var(--color-ivory)]" : "border-[var(--color-border-light)] bg-white"}`}>
-              <span className="text-[10px] text-[var(--color-ink-faint)]">{dayLabel(d.date, i).replace(/\(.\)$/, "")}</span>
+              <span className="text-[10px] text-[var(--color-ink-faint)]">{dayLabel(d.date).replace(/\(.\)$/, "")}</span>
               <span className="text-lg leading-none mt-1">{m?.symbol}</span>
               <span className="text-[9px] text-[var(--color-ink-muted)] mt-0.5">{m?.korean}</span>
               <span className={`w-1.5 h-1.5 rounded-full mt-1 ${RELATION_DOT[rel]}`} aria-label={RELATION_LABEL[rel]} />
@@ -194,9 +197,12 @@ function MoonPathCard({ data, focus, dayIdx, setDayIdx }: { data: HoroscopeWeek;
         })}
       </div>
       <div className="mt-3 rounded-xl bg-[var(--color-ivory)] px-3.5 py-2.5 break-keep">
-        <p className="text-[11px] text-[var(--color-ink-muted)]">
-          <span className="font-bold text-[var(--color-ink)]">{dayLabel(day.date, dayIdx)}</span> · 달 {dayMoon?.symbol} {dayMoon?.korean}자리 · {day.moon_phase}
-        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="text-[11px] text-[var(--color-ink-muted)]">
+            <span className="font-bold text-[var(--color-ink)]">{dayLabel(day.date)}</span> · 달 {dayMoon?.symbol} {dayMoon?.korean}자리 · {day.moon_phase}
+          </p>
+          {focus && <span className={`${BADGE} ${level.color}`}>{level.icon} {mine?.level ?? forFocus?.level}</span>}
+        </div>
         {mine ? (
           <>
             <p className="text-[13px] text-[var(--color-ink)] leading-relaxed mt-1">{mine.headline}</p>
