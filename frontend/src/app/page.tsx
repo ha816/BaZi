@@ -242,14 +242,19 @@ const RELATION_TONE: Record<string, string> = {
   "보통": "border-[var(--color-border-light)] bg-white",
 };
 
-/** 오늘의 띠 격자 칸 오른쪽 위 등급 라벨 — 관계 값(백엔드) → "나" 배지와 같은 꼴(최고·좋음·주의, 보통은 없음).
- *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼". 격자 아래 범례 줄·상자의 "기운 받는 띠" 배지는 뺌(같은 날) */
-const ZODIAC_TAG: Record<string, { text: string; cls: string } | null> = {
+/** 띠·별자리 격자 칸 오른쪽 위 등급 라벨 — 관계 값(백엔드, RELATION_TONE과 같은 키) → "나" 배지와 같은 꼴(최고·좋음·주의, 보통은 없음).
+ *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼", 별자리도 같은 날 같은 꼴로.
+ *  격자 아래 범례 줄·상자의 관계 말(기운 받는 띠/별자리)은 뺌(같은 날) */
+const RELATION_TAG: Record<string, { text: string; cls: string } | null> = {
   "나": { text: "최고", cls: "bg-[var(--color-gold)]" },
+  "합": { text: "최고", cls: "bg-[var(--color-gold)]" },
   "삼합": { text: "좋음", cls: "bg-emerald-500" },
   "육합": { text: "좋음", cls: "bg-emerald-500" },
+  "삼각": { text: "좋음", cls: "bg-emerald-500" },
+  "육각": { text: "좋음", cls: "bg-emerald-500" },
   "충": { text: "주의", cls: "bg-amber-500" },
   "원진": { text: "주의", cls: "bg-amber-500" },
+  "사각": { text: "주의", cls: "bg-amber-500" },
   "보통": null,
 };
 
@@ -274,8 +279,8 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
             <span className="text-lg leading-none">{z.emoji}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{z.korean}</span>
             {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 보통은 없음), 내 띠의 "나"는 왼쪽 위 */}
-            {ZODIAC_TAG[z.relation] && (
-              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${ZODIAC_TAG[z.relation]!.cls}`}>{ZODIAC_TAG[z.relation]!.text}</span>
+            {RELATION_TAG[z.relation] && (
+              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${RELATION_TAG[z.relation]!.cls}`}>{RELATION_TAG[z.relation]!.text}</span>
             )}
             {z.branch === myBranch && (
               <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
@@ -295,10 +300,6 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
 
 type Horoscope = NonNullable<HomeData["me"]>["horoscope"];
 
-/** 오늘의 별자리 상자의 관계 말 — 격자 아래 범례 줄 대신(2026-11-06, 띠 카드와 같은 식). 보통은 적지 않는다 */
-const STAR_RELATION_LABEL: Record<string, string> = {
-  "합": "달이 머무는 별자리", "삼각": "기운 받는 별자리", "육각": "기운 받는 별자리", "사각": "조심할 별자리", "충": "조심할 별자리",
-};
 
 // 오늘의 별자리 — 오늘 달·태양 별자리 + 내 출생 차트 칩(☉☽↑) + 12별자리 격자(칸을 누르면 그 별자리 한 줄·행운의 아이템).
 // 내 태양 별자리 칸은 달·상승까지 넣은 개인판(me.horoscope) 문장 — 이름 접두는 뗀다(stripName, 2026-11-06 오늘의 나와 같게 "어차피 알고 있어"), 처음엔 내 별자리(없으면 오늘 달의 별자리) (2026-10-30)
@@ -339,8 +340,12 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
             className={`relative flex flex-col items-center rounded-xl border py-1 ${RELATION_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-lg leading-none">{s.symbol}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{s.korean}</span>
+            {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 띠 카드와 같은 꼴, 2026-11-06), 내 태양 별자리의 "나"는 왼쪽 위 */}
+            {RELATION_TAG[s.relation] && (
+              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${RELATION_TAG[s.relation]!.cls}`}>{RELATION_TAG[s.relation]!.text}</span>
+            )}
             {s.key === mine?.chart.sun && (
-              <span className="absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
+              <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
           </button>
         ))}
@@ -348,7 +353,7 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
       <div className="mt-2 rounded-xl bg-[var(--color-ivory)] px-3 py-2 break-keep">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] text-[var(--color-ink-muted)]">
-            <span className="text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}{STAR_RELATION_LABEL[sel.relation] ? ` · ${STAR_RELATION_LABEL[sel.relation]}` : ""}
+            <span className="text-[var(--color-ink)]">{sel.symbol} {sel.korean}자리</span> · {sel.range}
           </p>
           <Badge cls={`${level.color} shrink-0`}>{level.icon} {text.level}</Badge>
         </div>
