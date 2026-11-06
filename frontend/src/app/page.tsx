@@ -228,33 +228,35 @@ function BiteIntro({ bite }: { bite: Bite }) {
   );
 }
 
-/** 띠·별자리 칸 테두리·바탕 — 관계 값(백엔드)에 따라 색만 고른다: 오늘의 주인공 금 · 기운 받는 초록 · 조심할 주황 */
+/** 띠 칸 테두리·바탕 — 관계 값(백엔드)에 따라 색만 고른다: 오늘의 주인공 금 · 기운 받는 초록 · 조심할 주황 (별자리는 LEVEL_TONE — 레벨 기준) */
 const RELATION_TONE: Record<string, string> = {
   "나": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
-  "합": "border-[var(--color-gold)] bg-[var(--color-gold-faint)]",
   "삼합": "border-emerald-300 bg-emerald-50",
   "육합": "border-emerald-300 bg-emerald-50",
-  "삼각": "border-emerald-300 bg-emerald-50",
-  "육각": "border-emerald-300 bg-emerald-50",
   "충": "border-amber-300 bg-amber-50",
   "원진": "border-amber-300 bg-amber-50",
-  "사각": "border-amber-300 bg-amber-50",
   "보통": "border-[var(--color-border-light)] bg-white",
 };
+/** 별자리 칸 테두리·바탕·라벨 — 그 별자리의 오늘 레벨(일반판 score/level, 내 태양 별자리는 개인판) 기준. 2026-11-06 사용자 "평범한 날인데 왜 좋음 라벨이?"
+ *  — 달과의 각도(육각)만 보던 색·라벨이 태양·달·상승을 합친 레벨과 어긋나서, 둘 다 레벨을 따르게 했다. 최고 = 좋은 날이면서 85점 이상 */
+const LEVEL_TONE: Record<string, string> = {
+  "좋은 날": "border-emerald-300 bg-emerald-50",
+  "주의가 필요한 날": "border-amber-300 bg-amber-50",
+  "평범한 날": "border-[var(--color-border-light)] bg-white",
+};
+const levelTag = (level: string, score: number): { text: string; cls: string } | null =>
+  level === "좋은 날" ? (score >= 85 ? { text: "최고", cls: "bg-[var(--color-gold)]" } : { text: "좋음", cls: "bg-emerald-500" })
+  : level === "주의가 필요한 날" ? { text: "주의", cls: "bg-amber-500" } : null;
 
-/** 띠·별자리 격자 칸 오른쪽 위 등급 라벨 — 관계 값(백엔드, RELATION_TONE과 같은 키) → "나" 배지와 같은 꼴(최고·좋음·주의, 보통은 없음).
- *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼", 별자리도 같은 날 같은 꼴로.
- *  격자 아래 범례 줄·상자의 관계 말(기운 받는 띠/별자리)은 뺌(같은 날) */
+/** 띠 격자 칸 오른쪽 위 등급 라벨 — 관계 값(백엔드, RELATION_TONE과 같은 키) → "나" 배지와 같은 꼴(최고·좋음·주의, 보통은 없음).
+ *  2026-11-06 사용자 "라벨을 보지 않고서는 이로운 날인지 모른다 → 십이지신 오른쪽 위에 나 라고 붙인 것처럼". 별자리는 levelTag(레벨 기준).
+ *  격자 아래 범례 줄·상자의 관계 말(기운 받는 띠)은 뺌(같은 날) */
 const RELATION_TAG: Record<string, { text: string; cls: string } | null> = {
   "나": { text: "최고", cls: "bg-[var(--color-gold)]" },
-  "합": { text: "최고", cls: "bg-[var(--color-gold)]" },
   "삼합": { text: "좋음", cls: "bg-emerald-500" },
   "육합": { text: "좋음", cls: "bg-emerald-500" },
-  "삼각": { text: "좋음", cls: "bg-emerald-500" },
-  "육각": { text: "좋음", cls: "bg-emerald-500" },
   "충": { text: "주의", cls: "bg-amber-500" },
   "원진": { text: "주의", cls: "bg-amber-500" },
-  "사각": { text: "주의", cls: "bg-amber-500" },
   "보통": null,
 };
 
@@ -334,20 +336,24 @@ function TodayStarsCard({ sky, mine, stripName, className = "" }: { sky: SkyData
         </div>
       )}
       <div className="grid grid-cols-6 gap-1 mt-2">
-        {sky.signs.map((s) => (
+        {sky.signs.map((s) => {
+          const v = mine && s.key === mine.chart.sun ? mine : s;  // 내 태양 별자리는 개인판 점수·레벨
+          const tag = levelTag(v.level, v.score);
+          return (
           <button type="button" key={s.key} onClick={() => setPicked(s.key)} aria-pressed={s.key === sel.key}
-            className={`relative flex flex-col items-center rounded-xl border py-1 ${RELATION_TONE[s.relation]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
+            className={`relative flex flex-col items-center rounded-xl border py-1 ${LEVEL_TONE[v.level] ?? LEVEL_TONE["평범한 날"]} ${s.key === sel.key ? "ring-2 ring-[var(--color-ink)]/70" : ""}`}>
             <span className="text-lg leading-none">{s.symbol}</span>
             <span className="text-[10px] text-[var(--color-ink-muted)] mt-0.5">{s.korean}</span>
-            {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 띠 카드와 같은 꼴, 2026-11-06), 내 태양 별자리의 "나"는 왼쪽 위 */}
-            {RELATION_TAG[s.relation] && (
-              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${RELATION_TAG[s.relation]!.cls}`}>{RELATION_TAG[s.relation]!.text}</span>
+            {/* 오른쪽 위 등급 라벨(최고·좋음·주의 — 그 별자리의 오늘 레벨, 띠 카드와 같은 꼴, 2026-11-06), 내 태양 별자리의 "나"는 왼쪽 위 */}
+            {tag && (
+              <span className={`absolute -top-1.5 -right-1 text-[9px] font-bold px-1 rounded-full text-white ${tag.cls}`}>{tag.text}</span>
             )}
             {s.key === mine?.chart.sun && (
               <span className="absolute -top-1.5 -left-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>
             )}
           </button>
-        ))}
+          );
+        })}
       </div>
       <div className="mt-2 rounded-xl bg-[var(--color-ivory)] px-3 py-2 break-keep">
         {/* 레벨 배지(✨ 평범한 날)는 2026-11-06 뺌(사용자) — 칸의 등급 라벨이 그 몫 */}
