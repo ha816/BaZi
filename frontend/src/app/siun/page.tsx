@@ -125,8 +125,24 @@ export default function SiunPage() {
                   <MorningBrief data={data} dayLabel={label} />
                 </div>
                 {/* 일진 간지 + 종합 점수를 오른쪽에 함께(2026-11-06 사용자). 간지 글자는 분석 사주팔자와 같은 ink-stamp로 한 자씩 찍히고,
-                    점수는 뒤이어 score-pop으로 튀어나온다 — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다 */}
-                <div className={`px-6 py-3 flex items-center justify-end gap-4 border-y border-[var(--color-border-light)] ${heroBg}`}>
+                    점수는 뒤이어 score-pop으로 튀어나온다 — 날짜를 바꾸면 key가 바뀌어 다시 찍힌다.
+                    왼쪽엔 대운·세운·월운을 쉬운 말로 작게 세 줄("10년 戊辰 / 올해 丙午 / 이달 己亥", 용신 든 간지는 금색) —
+                    옛 3칸 그리드는 일반 사용자가 용어를 몰라 뺐다(2026-11-06 사용자) */}
+                <div className={`px-6 py-3 flex items-center justify-between gap-4 border-y border-[var(--color-border-light)] ${heroBg}`}>
+                  <div className="flex flex-col gap-1 text-[10px] leading-none text-[var(--color-ink-faint)]">
+                    {([
+                      data.daeun_ganji ? { label: "10년", ganji: data.daeun_ganji, hit: data.yongshin_in_daeun ?? false } : null,
+                      data.seun_ganji ? { label: "올해", ganji: data.seun_ganji, hit: data.yongshin_in_seun ?? false } : null,
+                      data.wol_ganji ? { label: "이달", ganji: data.wol_ganji, hit: data.yongshin_in_wol ?? false } : null,
+                    ].filter(Boolean) as { label: string; ganji: string; hit: boolean }[]).map((g) => (
+                      <span key={g.label} className="whitespace-nowrap">
+                        {g.label}{" "}
+                        <span className={`font-heading text-[12px] font-bold ${g.hit ? "text-[var(--color-gold)]" : "text-[var(--color-ink-muted)]"}`}>{g.ganji}</span>
+                        {g.hit && <span className="ml-1 text-[8px] font-bold text-[var(--color-gold)]">용신</span>}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-4">
                   <div key={`pillar-${data.date}`} className="flex items-baseline gap-2">
                     <span className="font-heading text-3xl font-bold leading-none" style={{ color: stemEl.color }}>
                       {Array.from(data.day_pillar).map((ch, i) => (
@@ -144,6 +160,7 @@ export default function SiunPage() {
                     {/* 좋은 날이면 점수 위에 운수대통 직인 — 날짜를 바꿔 들어올 때마다 다시 찍힌다(2026-10-23, 사용자 지시) */}
                     {data.level === "좋은 날" && <LuckySeal key={data.date} seed={data.date} className="absolute -top-9 -right-5" size={50} />}
                   </div>
+                  </div>
                 </div>
               </>
             );
@@ -151,33 +168,6 @@ export default function SiunPage() {
 
           {/* 데이터 섹션 */}
           <div className="px-6 py-5 space-y-4">
-            {/* 대운/세운/월운 그리드 */}
-            {(data.daeun_ganji || data.seun_ganji || data.wol_ganji) && (() => {
-              const gridCards = [
-                data.daeun_ganji ? { label: "대운", ganji: data.daeun_ganji, highlight: data.yongshin_in_daeun ?? false } : null,
-                data.seun_ganji  ? { label: `세운`, ganji: data.seun_ganji, highlight: data.yongshin_in_seun ?? false } : null,
-                data.wol_ganji   ? { label: `월운`, ganji: data.wol_ganji, highlight: data.yongshin_in_wol ?? false } : null,
-              ].filter(Boolean) as { label: string; ganji: string; highlight: boolean }[];
-              return (
-                <div className="grid grid-cols-3 gap-2">
-                  {gridCards.map(({ label, ganji, highlight }) => {
-                    const stemEl = getElementInfo(ganji[0] ?? "");
-                    return (
-                      <div
-                        key={label}
-                        className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2.5 border ${highlight ? "border-[var(--color-gold)] bg-[var(--color-gold-light)]/10" : "border-[var(--color-border-light)]"}`}
-                      >
-                        <span className="text-[9px] text-[var(--color-ink-faint)] leading-none text-center">{label}</span>
-                        <span className="font-heading text-lg font-bold leading-none" style={{ color: stemEl.color }}>{ganji[0]}</span>
-                        <span className="font-heading text-lg leading-none text-[var(--color-ink-muted)]">{ganji[1]}</span>
-                        {highlight && <span className="text-[8px] font-bold text-[var(--color-gold)] leading-none">용신</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-
             {/* 영역별 점수 */}
             {Object.keys(data.domain_scores).length > 0 && (
               <div className="grid grid-cols-2 gap-2">
