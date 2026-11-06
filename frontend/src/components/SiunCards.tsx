@@ -37,7 +37,7 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
           )}
         </div>
       )}
-      <div className="overflow-x-auto -mx-1 px-1 py-1 no-scrollbar">
+      <div className="overflow-x-auto -mx-1 px-1 pt-1 pb-0.5 no-scrollbar">  {/* 위아래 여백은 모서리 배지·테두리가 안 잘릴 만큼만(2026-11-06) */}
         <div className="flex gap-3 w-max items-start">
           {groups.map(({ day, label, hours }) => {
             const w = day.weather!;
@@ -51,8 +51,8 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
                   {embedded && (
                     <>
                       <span className="text-[var(--color-ink-faint)]">·</span>
-                      <span className="font-bold text-[var(--color-ink)]">{day.total_score}점</span>
                       <span className="text-[var(--color-ink-muted)]">{elMeta(w.element).emoji} {w.condition.replace(/\s*\d+\.?\d*°C$/, "")} {Math.round(w.temperature)}°</span>
+                      <span className="font-bold text-[var(--color-ink)]">{day.total_score}점</span>
                       <span className="text-[12px] leading-none">{lMeta.icon}</span>
                     </>
                   )}
@@ -64,13 +64,14 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
                       ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl"
                       : rel === "generates" ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl" : "";
                     return (
-                      <div key={i} className={`flex flex-col items-center gap-1.5 px-2.5 py-2 min-w-[52px] ${highlight}`}>
+                      <div key={i} className={`relative flex flex-col items-center gap-1.5 px-2.5 py-1.5 min-w-[52px] ${highlight}`}>
                         <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
                         <span className="text-2xl">{elMeta(h.element).emoji}</span>
                         <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
                         <span className="text-sm font-medium text-[var(--color-ink)]">{Math.round(h.temperature)}°</span>
-                        {rel === "match" && <span className="text-[9px] font-bold text-emerald-600 leading-none">최고</span>}
-                        {rel === "generates" && <span className="text-[9px] font-bold text-amber-600 leading-none">좋음</span>}
+                        {/* 최고·좋음은 모서리 배지 — 아래 줄을 쓰지 않아 타일 높이가 늘 같다(2026-11-06) */}
+                        {rel === "match" && <span className="absolute -top-0.5 -right-1.5 text-[8px] font-bold leading-none px-1 py-px rounded-full bg-emerald-500 text-white">최고</span>}
+                        {rel === "generates" && <span className="absolute -top-0.5 -right-1.5 text-[8px] font-bold leading-none px-1 py-px rounded-full bg-amber-500 text-white">좋음</span>}
                       </div>
                     );
                   })}
