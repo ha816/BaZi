@@ -418,7 +418,7 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
   );
 }
 
-/** showBite: 비로그인만 — 로그인은 사주 한 입이 ② 다음 별도 카드 SajuBiteCard (2026-10-26 ② 안 → 2026-11-06 분리) */
+/** showBite: 비로그인만 — 로그인은 사주 한 입이 ② 다음 별도 카드 SajuBiteCard (2026-10-26 ② 안 → 2026-11-06 분리). 비로그인은 사주 한 입과 절기를 둘 다 따로 카드로(2026-11-06 사용자 — 전에는 절기가 있으면 사주 한 입을 숨겼다) */
 function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: boolean }) {
   const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= NEWS_DAYS);
   const term = today.solar_term;
@@ -426,8 +426,14 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
 
   return (
     <section className="mt-3 px-4 space-y-3">
-      {(term || showBite || today.son_eomneun_nal) && <div className={FEED_CARD}>
-        {term ? (
+      {showBite && (
+        <div className={FEED_CARD}>
+          <BiteIntro bite={biteOf(today.date)} />
+          <Link href="/analysis" className="inline-block text-xs font-semibold text-[var(--color-gold)] mt-2 ml-[68px]">내 사주에도 있을까? →</Link>
+        </div>
+      )}
+      {(term || today.son_eomneun_nal) && <div className={FEED_CARD}>
+        {term && (
           <>
             <div className="flex items-baseline justify-between">
               <h2 className={FEED_TITLE}>절기</h2>
@@ -436,14 +442,9 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
             <p className={FEED_SUB}>🌾 {term.name}</p>
             <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
           </>
-        ) : showBite ? (
-          <>
-            <BiteIntro bite={biteOf(today.date)} />
-            <Link href="/analysis" className="inline-block text-xs font-semibold text-[var(--color-gold)] mt-2 ml-[68px]">내 사주에도 있을까? →</Link>
-          </>
-        ) : null}
+        )}
         {today.son_eomneun_nal && (
-          <p className={`text-xs text-[var(--color-ink-muted)] ${term || showBite ? "mt-2 pt-2 border-t border-[var(--color-border-light)]" : ""}`}>👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
+          <p className={`text-xs text-[var(--color-ink-muted)] ${term ? "mt-2 pt-2 border-t border-[var(--color-border-light)]" : ""}`}>👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
         )}
       </div>}
 
