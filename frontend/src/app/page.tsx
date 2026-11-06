@@ -38,7 +38,7 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
 /** 카드 머리 규칙(2026-11-06 사용자 확정): 제목 = 카드 이름 한 줄(오늘의 나·오늘 내 사람들·오늘의 띠·별자리·타로카드·사주 한 입·절기·새소식) + 소제목 한 줄까지. 셋째 줄은 두지 않는다 */
 const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
-/** 제목 아래 소제목 한 줄(회색, PageHeader 설명과 같은 톤) — 그날의 문장이나 카드 설명 */
+/** 제목 아래 소제목 한 줄(회색, PageHeader 설명과 같은 톤) — 그날의 문장이나 카드 설명. 제목·오른쪽 부가 정보에 있는 "오늘"·"내일"은 되풀이하지 않는다(자리 부족, 2026-11-06) */
 const FEED_SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
 /** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜·사주 한 입 종류) */
 const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
@@ -226,7 +226,7 @@ function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData
     <div className={`${FEED_CARD} ${className}`}>
       <h2 className={FEED_TITLE}>오늘의 띠</h2>
       <p className={FEED_SUB}>
-        오늘은 {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
+        {today.day_kor}({today.day_pillar})일 — {today.animal.color} {today.animal.korean}의 날
       </p>
       <div className="grid grid-cols-6 gap-1.5 mt-3">
         {today.zodiac.map((z) => (
@@ -271,7 +271,7 @@ function TodayStarsCard({ sky, mine, className = "" }: { sky: SkyData; mine?: Ho
     <div className={`${FEED_CARD} ${className}`}>
       <h2 className={FEED_TITLE}>오늘의 별자리</h2>
       <p className={FEED_SUB}>
-        오늘 달은 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
+        달이 {moon.symbol} {moon.korean}자리를 지나요 · {sky.moon_phase}
       </p>
       {mine && (
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -390,7 +390,7 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
               <h2 className={FEED_TITLE}>절기</h2>
               <span className={FEED_ASIDE}>{termWhen}</span>
             </div>
-            <p className={FEED_SUB}>🌾 {termWhen === "오늘" ? "오늘은" : `${termWhen}는`} {term.name}</p>
+            <p className={FEED_SUB}>🌾 {term.name}</p>
             <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
           </>
         ) : showBite ? (
