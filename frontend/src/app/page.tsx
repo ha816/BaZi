@@ -199,7 +199,6 @@ function SajuBiteCard({ date, people, me }: { date: string; people: HomeData["pe
 
 /** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
 const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
-  { date: "2026-11-07", emoji: "🪙", title: "까치에게 묻기가 생겼어요", body: "고민을 적으면 동전 여섯 번으로 주역 괘를 뽑아 지금과 앞으로를 한 줄씩 알려 드려요.", href: "/iching" },
   { date: "2026-11-05", emoji: "🃏", title: "오늘의 타로카드가 생겼어요", body: "까치가 매일 아침 타로 카드 한 장을 뽑아 둬요. 홈에서 뒤집어 보세요.", href: "/tarot" },
   { date: "2026-10-25", emoji: "🪪", title: "사주 분석도 궁합처럼 골라서", body: "저장한 프로필을 카드에서 바로 고르거나, 직접 입력해 저장 없이 바로 볼 수 있어요.", href: "/analysis" },
   { date: "2026-10-18", emoji: "💞", title: "궁합에 시운 탭이 생겼어요", body: "두 분의 오늘·내일·모레 궁합과 2주 안에 함께하기 좋은 날을 알려 드려요.", href: "/compatibility" },
@@ -413,15 +412,6 @@ function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: 
           <p className={`text-xs text-[var(--color-ink-muted)] ${term ? "mt-2 pt-2 border-t border-[var(--color-border-light)]" : ""}`}>👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
         )}
       </div>}
-
-      {/* 까치에게 묻기(주역 V11-1, 2026-11-07) — 질문 괘 입구. 카드 전체가 링크, 제목 줄 오른쪽 "자세히 →"(홈 링크 규칙) */}
-      <Link href="/iching" className={`${FEED_CARD} block active:opacity-80`}>
-        <span className="flex items-baseline justify-between">
-          <span className={FEED_TITLE}>까치에게 묻기</span>
-          <span className={FEED_LINK}>자세히 →</span>
-        </span>
-        <span className={`block ${FEED_SUB}`}>고민 하나를 적으면 동전 여섯 번으로 주역(周易) 괘를 뽑아 드려요</span>
-      </Link>
 
       {news && (
         <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>

@@ -50,7 +50,7 @@
 | `/zodiac` | `zodiac/index.md`(띠 상세 — 내 띠·이번 주 좋은 날·띠별 오늘, 문장은 `home/index.md` §3-5) | 초안(2026-11-06) |
 | `/stars` | `stars/index.md`(별자리 상세 — 내 별자리·이번 주 달의 길·별자리별 오늘, 계산은 `home/horoscope.md`) | 초안(2026-11-06) |
 | `/tarot` | `tarot/index.md`(오늘의 타로카드 V9-1 — 추첨·문장 규칙·수용 기준, 홈 카드 자리는 `home/index.md` §3-1b) | 초안(2026-11-05) |
-| `/iching` | `iching/index.md`(까치에게 묻기 — 주역 질문 괘 V11-1: 3동전 뽑기·변효·지괘·교차·가드레일·수용 기준, 홈 입구 카드는 `home/index.md` §3-5) | 초안(2026-11-07) |
+| `/iching` | `iching/index.md`(까치에게 묻기 — 주역 질문 괘 V11-1: 3동전 뽑기·변효·지괘·교차·가드레일·수용 기준, 홈 입구 카드는 2026-11-08 뺌 — URL 직접 진입) | 초안(2026-11-07) |
 | `/admin/feedback` | `admin/index.md` | 초안 |
 | `/s/[id]` 공유 랜딩·OG | (미작성 — `CLAUDE.md` "결과 공유 카드" 절이 임시 출처) | — |
 | 공유 컴포넌트·상수·스토리지 키 | `shared/index.md` | 초안 |
