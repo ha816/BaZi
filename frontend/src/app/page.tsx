@@ -17,7 +17,7 @@ import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { charArtSrc, onCharArtError } from "@/lib/characterArt";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
-import { pickBite } from "@/components/SajuBiteCard";
+import SajuBiteCard from "@/components/SajuBiteCard";
 import { KKACHI_NEWS, dayNoOf } from "@/lib/news";
 
 // 홈 — 까치가 물어다 준 오늘 (specs/home/index.md, 2026-10-24). 로그인은 GET /members/{id}/home 한 번
@@ -296,25 +296,34 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
 }
 
 /** showBite: 비로그인만 — 로그인은 사주 한 입이 ② 다음 별도 카드 SajuBiteCard (2026-10-26 ② 안 → 2026-11-06 분리). 비로그인은 사주 한 입과 절기를 둘 다 따로 카드로(2026-11-06 사용자 — 전에는 절기가 있으면 사주 한 입을 숨겼다) */
-// ③ 까치 신문 카드 (2026-11-08, specs/news §3-B) — 읽을거리(새소식·사주 한 입·절기·손없는 날)는 /news로 옮기고 홈엔 머리기사 한 줄 카드만.
-// 머리기사 우선순위: 오늘·내일 절기 → 오늘 손없는 날 → 7일 안 새소식 → 오늘의 사주 한 입(로그인은 내 사람들 기준 — 신문과 같은 것). 2026-10-26~11-08의 까치 소식 세 카드(절기·사주 한 입·새소식)를 대신한다
+// ③ 까치 신문 카드 (2026-11-08, specs/news §3-B) — 옛 까치 소식 세 카드(사주 한 입·절기/손없는 날·새소식)를 "까치 신문" 카드 하나에 모은 1면(사용자 "모아서 까치 신문이라고 하나" → "홈화면에도 보여줘야지").
+// 사주 한 입(확인하기 포함) → 절기·손없는 날 한 줄 → 새소식(30일 안) 한 줄. 전체 판(지난 소식·손없는 날 2주·절기 팁)은 제목 줄 "자세히 →" /news
 function KkachiPaperCard({ today, me = null, people = [], className = "" }: { today: TodayData; me?: HomeData["me"]; people?: HomeData["people"]; className?: string }) {
   const term = today.solar_term;
-  const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= 7);
-  const bite = pickBite(today.date, [me?.marks, ...people.map((p) => p.marks)]);
-  const headline = term && term.days <= 1
-    ? `🌾 ${term.days === 0 ? "오늘" : "내일"}은 ${term.name}`
-    : today.son_eomneun_nal ? "👻 오늘은 손없는 날 — 이사·계약하기 좋은 날"
-    : news ? `📣 ${news.title}`
-    : `${bite.name}(${bite.hanja}) — 오늘의 사주 한 입`;
+  const termWhen = term ? (term.days === 0 ? "오늘" : term.days === 1 ? "내일" : `${term.days}일 뒤`) : "";
+  const nextSon = today.son_eomneun_days[0];  // 오늘이 손없는 날이면 오늘
+  const sonLabel = today.son_eomneun_nal ? "오늘" : nextSon ? `${parseInt(nextSon.slice(5, 7))}/${parseInt(nextSon.slice(8, 10))}` : "";
+  const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= 30);
   return (
-    <Link href="/news" className={`${FEED_CARD} block active:opacity-80 ${className}`}>
-      <span className="flex items-baseline justify-between">
-        <span className={FEED_TITLE}>까치 신문</span>
-        <span className={FEED_LINK}>자세히 →</span>
-      </span>
-      <span className={`block ${FEED_SUB}`}>{headline}</span>
-    </Link>
+    <section className={`${FEED_CARD} ${className}`}>
+      <div className="flex items-baseline justify-between">
+        <h2 className={FEED_TITLE}>까치 신문</h2>
+        <Link href="/news" className={FEED_LINK}>자세히 →</Link>
+      </div>
+      <SajuBiteCard date={today.date} people={people} me={me} embedded className="mt-2" />
+      {(term || nextSon) && (
+        <div className="mt-3 pt-2.5 border-t border-[var(--color-border-light)] flex items-center justify-between gap-3 text-xs text-[var(--color-ink-light)] break-keep">
+          {term && <span>🌾 {term.name} <span className="text-[var(--color-ink-faint)]">· {termWhen}</span></span>}
+          {nextSon && <span className="shrink-0">👻 손없는 날 <span className={today.son_eomneun_nal ? "font-bold text-[var(--color-gold)]" : "text-[var(--color-ink-faint)]"}>· {sonLabel}</span></span>}
+        </div>
+      )}
+      {news && (
+        <Link href={news.href ?? "/news"} className="mt-2.5 pt-2.5 border-t border-[var(--color-border-light)] flex items-baseline justify-between gap-3 text-xs active:opacity-70">
+          <span className="text-[var(--color-ink-light)] break-keep">{news.emoji} {news.title}</span>
+          <span className="text-[var(--color-ink-faint)] shrink-0">{news.date.slice(5).replace("-", ".")}</span>
+        </Link>
+      )}
+    </section>
   );
 }
 

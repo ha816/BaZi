@@ -9,7 +9,7 @@ import { SINSAL_INFO, SINSAL_ORDER, SIPSIN_INFO } from "@/components/tabs/natal/
 
 // 사주 한 입 — 만세력 섹션의 신살 9 + 십신 10을 날마다 하나씩. 2026-10-26 홈 ②에서 시작, 2026-11-06 별도 카드, 2026-11-08 까치 신문(/news)으로 옮김(specs/news §3-A 2).
 // 로그인(내 사람들 있음): 나 포함 내 사람들 중 누군가 가진 것 가운데 날짜 순번 + "내 사람들에게도 있을까?" [확인하기 →] → 가진 사람 캐릭터 얼굴 줄.
-// 그 밖(비로그인·사람 없음): 19일 순번 상식 + [내 사주에도 있을까? →] /analysis. 홈 까치 신문 카드 머리기사는 pickBite로 같은 것을 가리킨다.
+// 그 밖(비로그인·사람 없음): 19일 순번 상식 + [내 사주에도 있을까? →] /analysis. 홈 까치 신문 카드(embedded)와 /news가 같은 컴포넌트·같은 날 같은 것.
 
 const FALLBACK_IMG = "/kkachi/normal_kkachi_00.png";
 const TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
@@ -28,7 +28,8 @@ export function pickBite(date: string, marks: Marks[] = []): Bite {
   return held.length ? held[dayNoOf(date) % held.length] : BITES[dayNoOf(date) % BITES.length];
 }
 
-export default function SajuBiteCard({ date, people = [], me = null, className = "" }: { date: string; people?: HomeData["people"]; me?: HomeData["me"]; className?: string }) {
+/** embedded: 홈 까치 신문 카드 안 한 꼭지 — 카드 제목 대신 작은 회색 라벨(카드 머리는 "까치 신문" 하나) */
+export default function SajuBiteCard({ date, people = [], me = null, embedded = false, className = "" }: { date: string; people?: HomeData["people"]; me?: HomeData["me"]; embedded?: boolean; className?: string }) {
   const [revealed, setRevealed] = useState(false);
   const bite = pickBite(date, [me?.marks, ...people.map((p) => p.marks)]);
   const has = (m: Marks) => !!m?.[bite.field].includes(bite.mark);
@@ -40,7 +41,9 @@ export default function SajuBiteCard({ date, people = [], me = null, className =
 
   return (
     <section className={className}>
-      <h2 className={TITLE}>사주 한 입 — {bite.kind}</h2>
+      {embedded
+        ? <p className="text-xs font-semibold text-[var(--color-ink-muted)]">사주 한 입 — {bite.kind}</p>
+        : <h2 className={TITLE}>사주 한 입 — {bite.kind}</h2>}
       <div className="flex items-start gap-3 mt-2">
         <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
         <div className="flex-1 min-w-0 break-keep">
