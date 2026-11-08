@@ -97,7 +97,8 @@ def _get_day_stembrach(today: date) -> StemBranch:
 
 
 _STEM_COLOR = {Oheng.木: "푸른", Oheng.火: "붉은", Oheng.土: "누런", Oheng.金: "흰", Oheng.水: "검은"}
-_SOLAR_TERM_AHEAD = 3
+_SOLAR_TERM_AHEAD = 16  # 다음 절기까지(절기 사이 최대 16일 — 늘 하나 있다). 2026-11-08 까치 신문: 3일 안 → 다음 절기. 홈 카드는 days ≤ 1만 머리기사로
+_SON_NAL_AHEAD = 14  # 까치 신문 손없는 날 목록 — 오늘부터 2주
 _BIRTH_YEARS_SHOWN = 5  # 신문 띠별 운세처럼 "72·84·96·08·20년생" — 최근 다섯 해(오늘 기준 6살 이상)
 
 # 띠별 한 줄 — 그 띠(년지)와 오늘 일지의 관계마다 4문장, 날짜·띠로 돌려 매일 다르게. 문장은 관계의 전통 의미
@@ -144,7 +145,7 @@ _ZODIAC_ADVICE: dict[str, list[str]] = {
 
 
 def build_today(today: date) -> dict:
-    """홈 '까치 소식' 칸(specs/home §3-5) — 오늘 일진의 띠와 12띠 관계·띠별 한 줄(년생), 3일 안 절기, 손없는 날. 로그인 무관."""
+    """홈 오늘의 띠·까치 신문(specs/home §3-5, specs/news) — 오늘 일진의 띠와 12띠 관계·띠별 한 줄(년생), 다음 절기(최대 16일), 오늘 손없는 날 + 14일 안 손없는 날 목록. 로그인 무관."""
     day = _get_day_stembrach(today)
     branch = day.branch.name
     animal = zodiac_info(branch)
@@ -176,6 +177,8 @@ def build_today(today: date) -> dict:
         "zodiac": zodiac,
         "solar_term": term,
         "son_eomneun_nal": _is_son_eomneun_nal(today),
+        "son_eomneun_days": [(today + timedelta(days=i)).isoformat() for i in range(_SON_NAL_AHEAD)
+                             if _is_son_eomneun_nal(today + timedelta(days=i))],
     }
 
 

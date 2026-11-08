@@ -17,7 +17,8 @@ import { FORECAST_LEVEL_META } from "@/lib/elementColors";
 import { charArtSrc, onCharArtError } from "@/lib/characterArt";
 import { useStorageValue } from "@/lib/useStorageValue";
 import { track } from "@/lib/track";
-import { SINSAL_INFO, SINSAL_ORDER, SIPSIN_INFO } from "@/components/tabs/natal/data";
+import { pickBite } from "@/components/SajuBiteCard";
+import { KKACHI_NEWS, dayNoOf } from "@/lib/news";
 
 // 홈 — 까치가 물어다 준 오늘 (specs/home/index.md, 2026-10-24). 로그인은 GET /members/{id}/home 한 번
 
@@ -37,12 +38,10 @@ function Badge({ children, cls }: { children: React.ReactNode; cls: string }) {
 
 /** 홈 카드 공통 틀(CLAUDE.md 카드 규약) — 칸 소제목 없이 카드마다 안에 제목 */
 const FEED_CARD = "rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-card)] px-4 py-3.5";
-/** 카드 머리 규칙(2026-11-06 사용자 확정): 제목 = 카드 이름 한 줄(오늘의 나·오늘 내 사람들·오늘의 띠·별자리·타로카드·사주 한 입·절기·새소식) + 소제목 한 줄까지. 셋째 줄은 두지 않는다 */
+/** 카드 머리 규칙(2026-11-06 사용자 확정): 제목 = 카드 이름 한 줄(오늘의 나·오늘 내 사람들·오늘의 띠·별자리·타로카드·까치 신문) + 소제목 한 줄까지. 셋째 줄은 두지 않는다. 제목 줄 오른쪽 작은 회색 부가 정보는 2026-11-08 사주 한 입·절기·새소식과 함께 /news로 */
 const FEED_TITLE = "font-heading text-[15px] font-bold text-[var(--color-ink)]";
 /** 제목 아래 소제목 한 줄(회색, PageHeader 설명과 같은 톤) — 그날의 문장이나 카드 설명. 제목·오른쪽 부가 정보에 있는 "오늘"·"내일"은 되풀이하지 않는다(자리 부족, 2026-11-06) */
 const FEED_SUB = "text-sm text-[var(--color-ink-muted)] leading-snug mt-0.5 break-keep";
-/** 제목 줄 오른쪽 부가 정보(절기 언제·새소식 날짜 — 사주 한 입의 종류는 2026-11-06부터 제목에 "사주 한 입 — 십신(十神)") */
-const FEED_ASIDE = "text-xs text-[var(--color-ink-faint)]";
 /** 상세 페이지로 가는 링크 — 글자는 늘 "자세히 →"(오늘의 나 → /siun, 타로카드 → /tarot), 자리는 제목 줄 오른쪽 끝. [관리 →]도 같은 모양(2026-11-06 사용자 규칙) */
 const FEED_LINK = "shrink-0 text-xs font-semibold text-[var(--color-gold)] whitespace-nowrap active:opacity-70";
 
@@ -144,93 +143,6 @@ function PeopleRow({ people, canAdd, me }: { people: HomeData["people"]; canAdd:
 // 2026-11-06 ② 카드 안에서 별도 카드로(사용자), 결과는 글("…에게 있어요") 대신 얼굴 줄로(사용자 "결과도 어색해 — 캐릭터 카드로"). 확인 상태는 저장하지 않는다.
 // 오늘의 것은 나 포함 내 사람들 중 누군가 가진 신살·십신 가운데 날짜 순번으로 고른다(사용자 "누르면 가진 사람이 나와야" — 비로그인의 19일 순번과 다름).
 // 아무도 아무것도 없을 때만 날짜 순번 그대로
-function SajuBiteCard({ date, people, me }: { date: string; people: HomeData["people"]; me: HomeData["me"] }) {
-  const [revealed, setRevealed] = useState(false);
-  const marks = [me?.marks, ...people.map((p) => p.marks)];
-  const held = BITES.filter((b) => marks.some((m) => m?.[b.field].includes(b.mark)));
-  const bite = held.length ? held[dayNoOf(date) % held.length] : biteOf(date);
-  const has = (m: { sinsal: string[]; sipsin: string[] } | undefined) => !!m?.[bite.field].includes(bite.mark);
-  const holders = [
-    ...(me && has(me.marks) ? [{ id: me.profile_id, name: me.name, character: me.character, isMe: true }] : []),
-    ...people.filter((p) => has(p.marks)).map((p) => ({ id: p.profile_id, name: p.name, character: p.character, isMe: false })),
-  ];
-  return (
-    <section className={`mx-4 mt-3 ${FEED_CARD}`}>
-      <BiteIntro bite={bite} />
-      {!revealed ? (
-        <button type="button" onClick={() => setRevealed(true)} className="mt-3 w-full flex items-center justify-between gap-2 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 text-left active:opacity-80">
-          <span className="text-[13px] font-semibold text-[var(--color-ink)] break-keep">
-            {bite.name}({bite.hanja}), {people.length ? "내 사람들에게도 있을까?" : "나에게도 있을까?"}
-          </span>
-          <span className="shrink-0 text-xs font-bold text-[var(--color-gold)]">확인하기 →</span>
-        </button>
-      ) : (
-        <div className="mt-3 rounded-xl bg-[var(--color-gold-faint)] px-3.5 py-2.5 break-keep">
-          {holders.length ? (
-            <>
-              <p className="text-[10px] font-bold text-[var(--color-gold)]">{bite.name}({bite.hanja}) 가진 사람 · {holders.length}명</p>
-              <div className="flex gap-3 mt-2 overflow-x-auto no-scrollbar">
-                {holders.map((h) => (
-                  <div key={h.id} className="flex flex-col items-center gap-1 w-14 shrink-0">
-                    <div className="relative">
-                      <img
-                        src={charArtSrc(h.character.art_key, h.character.key)}
-                        alt=""
-                        onError={onCharArtError(h.character.key, FALLBACK_IMG)}
-                        className="w-14 h-14 rounded-full object-cover border-2 border-[var(--color-gold)] bg-white"
-                      />
-                      {h.isMe && <span className="absolute -top-1 -right-1 text-[9px] font-bold px-1 rounded-full bg-[var(--color-ink)] text-white">나</span>}
-                    </div>
-                    <span className="text-[11px] text-[var(--color-ink)] truncate w-14 text-center">{h.name}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="text-[12px] text-[var(--color-ink-muted)]">오늘 기운을 가진 사람이 없어요 — 내일은 다른 기운이에요.</p>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
-// ③ 까치 소식 (specs/home §3-5) — 사주 한 입 · 새소식(맨 아래, 노출 조건은 열린 결정), 종류마다 한 장 (오늘의 띠는 TodayZodiacCard)
-
-/** 운영자가 쓰는 새소식 — 맨 위가 최신, 30일 안 것 하나만 홈에 뜬다. 새 소식은 맨 위에 한 줄 */
-const KKACHI_NEWS: { date: string; emoji: string; title: string; body: string; href?: string }[] = [
-  { date: "2026-11-05", emoji: "🃏", title: "오늘의 타로카드가 생겼어요", body: "까치가 매일 아침 타로 카드 한 장을 뽑아 둬요. 홈에서 뒤집어 보세요.", href: "/tarot" },
-  { date: "2026-10-25", emoji: "🪪", title: "사주 분석도 궁합처럼 골라서", body: "저장한 프로필을 카드에서 바로 고르거나, 직접 입력해 저장 없이 바로 볼 수 있어요.", href: "/analysis" },
-  { date: "2026-10-18", emoji: "💞", title: "궁합에 시운 탭이 생겼어요", body: "두 분의 오늘·내일·모레 궁합과 2주 안에 함께하기 좋은 날을 알려 드려요.", href: "/compatibility" },
-];
-const NEWS_DAYS = 30;
-
-/** 사주 한 입 — 만세력 섹션의 신살 9 + 십신 10을 날마다 하나씩(19일 주기). field·mark = 홈 응답 marks에서 찾을 키 */
-type Bite = { kind: string; name: string; hanja: string; tagline: string; desc: string; img: string; field: "sinsal" | "sipsin"; mark: string };
-const BITES: Bite[] = [
-  ...SINSAL_ORDER.map((name) => ({ kind: "신살(神殺)", name, hanja: SINSAL_INFO[name].hanja, tagline: SINSAL_INFO[name].tagline, desc: SINSAL_INFO[name].desc, img: `/kkachi/sinsal/sinsal_${name}.png`, field: "sinsal" as const, mark: name })),
-  ...Object.entries(SIPSIN_INFO).map(([hanja, v]) => ({ kind: "십신(十神)", name: v.korean, hanja, tagline: v.tagline, desc: v.desc, img: `/kkachi/sipsin/sipsin_${v.korean}.png`, field: "sipsin" as const, mark: hanja })),
-];
-const dayNoOf = (iso: string) => Math.floor(Date.parse(iso) / 86_400_000);
-const biteOf = (iso: string) => BITES[dayNoOf(iso) % BITES.length];
-
-function BiteIntro({ bite }: { bite: Bite }) {
-  return (
-    <div>
-      <h2 className={FEED_TITLE}>사주 한 입 — {bite.kind}</h2>
-      <div className="flex items-start gap-3 mt-2">
-        <img src={bite.img} alt="" onError={(e) => { e.currentTarget.src = FALLBACK_IMG; }} className="w-14 h-14 rounded-xl object-cover shrink-0" />
-        <div className="flex-1 min-w-0 break-keep">
-          <p className="text-sm text-[var(--color-ink)] leading-snug">{bite.name}({bite.hanja}) — {bite.tagline}</p>
-          <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1">{bite.desc}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-
 // 오늘의 띠 — 오늘 일지와 12띠 관계 + 내 띠 "나" 배지 + 띠별 한 줄(옛 신문 띠별 운세처럼, 칸을 누르면 그 띠). 처음엔 내 띠, 없으면 오늘의 띠 (2026-10-26)
 // 2026-11-06 오늘의 나와 같은 식으로 컴팩트하게 — 범례 줄 뺌(관계는 상자 배지), 격자·상자 여백 줄임, 상자 글자 10/12px·굵게 없음
 function TodayZodiacCard({ today, myBranch, className = "" }: { today: TodayData; myBranch?: string; className?: string }) {
@@ -384,49 +296,25 @@ function TodayTarotCard({ tarot, className = "" }: { tarot: TarotToday; classNam
 }
 
 /** showBite: 비로그인만 — 로그인은 사주 한 입이 ② 다음 별도 카드 SajuBiteCard (2026-10-26 ② 안 → 2026-11-06 분리). 비로그인은 사주 한 입과 절기를 둘 다 따로 카드로(2026-11-06 사용자 — 전에는 절기가 있으면 사주 한 입을 숨겼다) */
-function KkachiFeed({ today, showBite = false }: { today: TodayData; showBite?: boolean }) {
-  const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= NEWS_DAYS);
+// ③ 까치 신문 카드 (2026-11-08, specs/news §3-B) — 읽을거리(새소식·사주 한 입·절기·손없는 날)는 /news로 옮기고 홈엔 머리기사 한 줄 카드만.
+// 머리기사 우선순위: 오늘·내일 절기 → 오늘 손없는 날 → 7일 안 새소식 → 오늘의 사주 한 입(로그인은 내 사람들 기준 — 신문과 같은 것). 2026-10-26~11-08의 까치 소식 세 카드(절기·사주 한 입·새소식)를 대신한다
+function KkachiPaperCard({ today, me = null, people = [], className = "" }: { today: TodayData; me?: HomeData["me"]; people?: HomeData["people"]; className?: string }) {
   const term = today.solar_term;
-  const termWhen = term ? (term.days === 0 ? "오늘" : term.days === 1 ? "내일" : `${term.days}일 뒤`) : "";
-
+  const news = KKACHI_NEWS.find((n) => dayNoOf(today.date) - dayNoOf(n.date) <= 7);
+  const bite = pickBite(today.date, [me?.marks, ...people.map((p) => p.marks)]);
+  const headline = term && term.days <= 1
+    ? `🌾 ${term.days === 0 ? "오늘" : "내일"}은 ${term.name}`
+    : today.son_eomneun_nal ? "👻 오늘은 손없는 날 — 이사·계약하기 좋은 날"
+    : news ? `📣 ${news.title}`
+    : `${bite.name}(${bite.hanja}) — 오늘의 사주 한 입`;
   return (
-    <section className="mt-3 px-4 space-y-3">
-      {showBite && (
-        <div className={FEED_CARD}>
-          <BiteIntro bite={biteOf(today.date)} />
-          <Link href="/analysis" className="inline-block text-xs font-semibold text-[var(--color-gold)] mt-2 ml-[68px]">내 사주에도 있을까? →</Link>
-        </div>
-      )}
-      {(term || today.son_eomneun_nal) && <div className={FEED_CARD}>
-        {term && (
-          <>
-            <div className="flex items-baseline justify-between">
-              <h2 className={FEED_TITLE}>절기</h2>
-              <span className={FEED_ASIDE}>{termWhen}</span>
-            </div>
-            <p className={FEED_SUB}>🌾 {term.name}</p>
-            <p className="text-xs text-[var(--color-ink-light)] leading-relaxed mt-1.5 break-keep">{term.tip}</p>
-          </>
-        )}
-        {today.son_eomneun_nal && (
-          <p className={`text-xs text-[var(--color-ink-muted)] ${term ? "mt-2 pt-2 border-t border-[var(--color-border-light)]" : ""}`}>👻 오늘은 손없는 날 — 이사·계약하기 좋은 날로 꼽혀요</p>
-        )}
-      </div>}
-
-      {news && (
-        <Link href={news.href ?? "#"} className={`${FEED_CARD} flex items-start gap-3 active:opacity-80`}>
-          <span className="text-2xl shrink-0">{news.emoji}</span>
-          <span className="flex-1 min-w-0 break-keep">
-            <span className="flex items-baseline justify-between">
-              <span className={FEED_TITLE}>새소식</span>
-              <span className={FEED_ASIDE}>{news.date.slice(5).replace("-", ".")}</span>
-            </span>
-            <span className={`block ${FEED_SUB}`}>{news.title}</span>
-            <span className="block text-xs text-[var(--color-ink-muted)] leading-relaxed mt-1">{news.body}</span>
-          </span>
-        </Link>
-      )}
-    </section>
+    <Link href="/news" className={`${FEED_CARD} block active:opacity-80 ${className}`}>
+      <span className="flex items-baseline justify-between">
+        <span className={FEED_TITLE}>까치 신문</span>
+        <span className={FEED_LINK}>자세히 →</span>
+      </span>
+      <span className={`block ${FEED_SUB}`}>{headline}</span>
+    </Link>
   );
 }
 
@@ -518,8 +406,7 @@ function LoggedInHome({ memberId }: { memberId: string }) {
         </>
       )}
       <PeopleRow people={home.people} canAdd={total < MAX_PROFILES} me={home.me} />
-      <SajuBiteCard date={home.date} people={home.people} me={home.me} />
-      <KkachiFeed today={home.today} />
+      <KkachiPaperCard today={home.today} me={home.me} people={home.people} className="mx-4 mt-3" />
     </>
   );
 }
@@ -643,7 +530,7 @@ function GuestHome() {
           <TodayTarotCard tarot={today.tarot} className="mx-4 mt-3" />
           <TodayZodiacCard today={today} className="mx-4 mt-3" />
           <TodayStarsCard sky={today.sky} className="mx-4 mt-3" />
-          <KkachiFeed today={today} showBite />
+          <KkachiPaperCard today={today} className="mx-4 mt-3" />
         </>
       )}
       <VideoPost />

@@ -1,5 +1,7 @@
 from datetime import date, datetime, timedelta
 
+from lunardate import LunarDate
+
 from kkachi.adapter.outer.natal_adapter import NatalAdapter
 from kkachi.application.fortune_rules import (
     BRANCH_CLASHES,
@@ -132,9 +134,27 @@ def test_today_zodiac_advice_and_birth_years():
     assert any(nxt[b] != z[b]["advice"] for b in z if z[b]["relation"] == "보통")
 
 
-def test_today_solar_term_within_three_days():
+def test_today_solar_term_is_next_term():
+    # 2026-11-08 까치 신문: 3일 안만 → 늘 다음 절기(최대 16일). 홈 카드는 days ≤ 1만 머리기사로 쓴다
     assert build_today(date(2026, 11, 4))["solar_term"]["days"] == 3  # 입동 11-07
     assert build_today(date(2026, 11, 7))["solar_term"] == {
         "name": "입동(立冬)", "tip": build_today(date(2026, 11, 7))["solar_term"]["tip"], "date": "2026-11-07", "days": 0,
     }
-    assert build_today(date(2026, 11, 3))["solar_term"] is None  # 4일 전
+    assert build_today(date(2026, 11, 3))["solar_term"]["days"] == 4  # 옛 규칙(3일 안)이면 None이던 날
+    nxt = build_today(date(2026, 11, 8))["solar_term"]
+    assert nxt["name"] == "소설(小雪)" and nxt["date"] == "2026-11-22" and nxt["days"] == 14
+    for i in range(366):  # 어느 날이나 다음 절기가 있고 16일 안
+        t = build_today(date(2026, 1, 1) + timedelta(days=i))["solar_term"]
+        assert t is not None and 0 <= t["days"] <= 16
+
+
+def test_today_son_eomneun_days_two_weeks():
+    for start in (date(2026, 11, 8), date(2026, 2, 16), date(2026, 7, 1)):
+        t = build_today(start)
+        days = t["son_eomneun_days"]
+        assert 1 <= len(days) <= 14 and days == sorted(days)
+        for iso in days:
+            d = date.fromisoformat(iso)
+            assert 0 <= (d - start).days < 14
+            assert LunarDate.fromSolarDate(d.year, d.month, d.day).day % 10 in (9, 0)
+        assert (start.isoformat() in days) == t["son_eomneun_nal"]

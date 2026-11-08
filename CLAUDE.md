@@ -25,7 +25,7 @@ uv run uvicorn kkachi.fastapi:app --reload --port 8000
 cd frontend && npm run dev
 
 # 테스트
-uv run pytest            # 233 tests
+uv run pytest            # 234 tests
 cd frontend && npx tsc --noEmit
 
 # 이 머신의 베타 인스턴스(launchd com.kkachi.* + Caddy :8080 + Tailscale Funnel)에 코드 반영
@@ -155,7 +155,7 @@ BaZi/
 │               └── payment_repo.py # PaymentRepo
 ├── frontend/src/
 │   ├── app/
-│   │   ├── page.tsx                 # 홈(V8, specs/home) — 비로그인: GuestHero("나는 어떤 캐릭터일까?" 실루엣+맛보기 4장+퀵스타트 폼) · VideoPost / 로그인: GET /members/{id}/home 한 번 → TodayHero(캐릭터+까치 말풍선 MorningBrief) · PeopleRow(캐릭터 얼굴+오늘 궁합 배지) · SajuBiteCard(사주 한 입 — 2026-11-06 별도 카드) · KkachiFeed(까치 소식: 새소식·오늘의 띠·사주 한 입, 2026-10-26) · TodayStarsCard(오늘의 별자리 — 12별자리 격자(색·등급 라벨은 그 별자리의 오늘 점수 70/60/42)·태양 별자리 "나" 배지(☉☽↑ 칩은 /stars에만, 2026-11-06), 2026-10-30) — 공유·이어서 할 것 카드는 2026-10-26 제거
+│   │   ├── page.tsx                 # 홈(V8, specs/home) — 비로그인: GuestHero("나는 어떤 캐릭터일까?" 실루엣+맛보기 4장+퀵스타트 폼) · VideoPost / 로그인: GET /members/{id}/home 한 번 → TodayHero(캐릭터+까치 말풍선 MorningBrief) · PeopleRow(캐릭터 얼굴+오늘 궁합 배지) · KkachiPaperCard(까치 신문 카드 — 머리기사 한 줄 → /news, 2026-11-08; 사주 한 입·까치 소식 카드는 /news로 옮김) · TodayStarsCard(오늘의 별자리 — 12별자리 격자(색·등급 라벨은 그 별자리의 오늘 점수 70/60/42)·태양 별자리 "나" 배지(☉☽↑ 칩은 /stars에만, 2026-11-06), 2026-10-30) — 공유·이어서 할 것 카드는 2026-10-26 제거
 │   │   ├── s/[id]/                  # 공유 카드 랜딩 (서버 렌더, 로그인 없음) — page.tsx(사주/시운/궁합 kind 분기) · opengraph-image.tsx · share.ts(백엔드 직접 fetch)
 │   │   ├── opengraph-image.tsx      # 사이트 기본 OG 이미지 (satori) · robots.ts(/s/ 색인 금지) · sitemap.ts
 │   │   ├── layout.tsx · fonts/      # 루트 레이아웃 — 화면 폰트는 next/font/local 서브셋 WOFF2(fonts/: Noto Sans KR·Noto Serif KR 가변, 상용 한글 2,350 + 코드의 한자 321(2026-11-07 주역 괘 글자 76자 추가 재생성); 빌드·dev가 구글 폰트를 받지 않음 2026-10-18, 재생성은 fonts/README.md)
@@ -172,6 +172,7 @@ BaZi/
 │   │   ├── stars/page.tsx           # 별자리 상세(2026-11-06) — GET /horoscope/week 한 번: 내 별자리(개인판·출생 차트 뜻) → 이번 주 달의 길(7칸) → 별자리별 오늘(12줄). specs/stars/index.md
 │   │   ├── iching/page.tsx          # 까치에게 묻기 — 주역 질문 괘(V11-1, 2026-11-07, specs/iching/index.md): 질문(4~80자)+영역 칩 → POST /iching/ask(로그인 member_id / 비로그인 kkachi_analysis_input) → 동전 셋 ×6 연출(480ms, 아래부터 효 쌓임) → 이름(글자)·전통 이름·키워드·지금·앞으로(지괘)·영역·교차 두 문장·면책. 위기면 전화번호 카드
 │   │   ├── tarot/page.tsx           # 오늘의 타로카드 자세히(V9-1, 2026-11-05) — 로그인은 getHome().me.tarot, 비로그인은 kkachi_analysis_input → GET /tarot/today. 큰 카드(뒤집기 없음, 2026-11-06)·키워드·연애·일·재물·면책
+│   │   ├── news/page.tsx            # 까치 신문(2026-11-08, specs/news/index.md) — 홈에서 떼어 낸 읽을거리 한 면: 새소식(전부 + 지난 소식 접힘) → 사주 한 입(SajuBiteCard) → 다음 절기 → 손없는 날 14일 칩. 로그인 getHome(marks) / 비로그인 getToday 한 번, 실패하면 날짜판
 │   │   ├── join/ · my/ · profile/   # 가입/로그인 · 계정(로그아웃·탈퇴) · 프로필 관리
 │   │   └── admin/feedback/page.tsx  # 탭별 👍/👎 요약 대시보드
 │   ├── components/
@@ -189,6 +190,7 @@ BaZi/
 │   │   ├── SiunCards.tsx            # HourlyLuckCard(이 시간대가 좋아요 — 날짜별 머리줄(날짜, embedded면 + 레벨 아이콘) + 3시간 타일)·WeeklySiunCard(주간 시운 7일 목록, 시운 화면만) — 시운 오늘 탭·홈 공용 (2026-10-26, 2026-11-06)
 │   │   ├── HexagramFigure.tsx       # 괘 그림 — 선 여섯 줄 CSS(양 한 줄·음 두 토막, 변효 금색 + ○/×), shown으로 아래부터 쌓임. /iching 본괘·지괘 (주역 V11-1, 2026-11-07)
 │   │   ├── TarotCard.tsx            # 타로 카드 한 장 뒷면(CSS 문양+까치) ↔ 앞면(1909 클래식 덱 그림, 역방향은 그림만 180°) 3D 뒤집기 — 홈 TodayTarotCard·/tarot 공용. globals.css .tarot-* · TAROT_FLIPPED_KEY(sessionStorage 뒤집은 날짜) (2026-11-05)
+│   │   ├── SajuBiteCard.tsx         # 사주 한 입 — 신살 9·십신 10 중 나 포함 내 사람들이 가진 것 가운데 날짜 순번(없으면 19일 순번) + [확인하기] → 가진 사람 얼굴 줄 / 비로그인·사람 없음은 /analysis 링크. pickBite(홈 까치 신문 카드 머리기사도 같은 것). 2026-11-08 홈에서 /news로 옮기며 분리
 │   │   ├── GradeTag.tsx             # 등급 라벨(최고·좋음·주의 — "나" 배지 꼴 알약) + gradeOfRelation(띠: 일진 띠와의 관계)·gradeOfScore(별자리: 점수 70/60/42)·toneOf(칸 색) — 홈 격자 모서리, /zodiac·/stars 제목 줄·목록 줄(2026-11-06)
 │   │   ├── PushSubscribeButton.tsx  # 아침 알림 켜기/끄기 (미지원·VAPID 미설정이면 숨김)
 │   │   ├── SajuChat.tsx · CompatibilityChat.tsx   # /chat, /compatibility/chat 로 가는 FAB
@@ -211,6 +213,7 @@ BaZi/
 │   │   ├── api.ts                # 모든 API 호출 + 스트리밍 reader
 │   │   ├── ganji.ts              # 천간·지지 표시 메타 SoT (해석 분기 금지)
 │   │   ├── track.ts              # 행동 이벤트 track(name, props) — 세션 UUID + fire-and-forget
+│   │   ├── news.ts               # 까치 신문 새소식 KKACHI_NEWS(운영자가 맨 위에 한 줄 — /news 전부, 홈 카드는 7일 안만 머리기사) + dayNoOf (2026-11-08)
 │   │   ├── useStorageValue.ts    # localStorage/sessionStorage를 hydration-safe하게 읽는 훅(useSyncExternalStore) + parseStored — 마운트 effect 안 setState 금지
 │   │   ├── useAiReport.ts        # AI 풀이 스트림 상태 — 분석 페이지가 결과 직후 start()로 미리 시작, 탭을 오가도 유지, 직접 입력은 sessionStorage kkachi_ai_report 캐시, 503 → unavailable (2026-10-23)
 │   │   ├── push.ts               # getPushState/subscribePush/unsubscribePush — sw.js 등록 + VAPID 구독 + 서버 저장
@@ -327,7 +330,7 @@ GET /members/{id}/profiles/{pid}/forecast?days=N&start_date=
 - 상수는 사용처 가까이 위치 (constant.py 분리 안 함)
 - **클래스 메서드 순서**: public 메서드 상단, private(`_`) 메서드 하단
 - UI 텍스트 레이블은 **한글(한자)** 병기 — 예) 용신(用神), 신강(身強). 간지도 같은 순서 갑신(甲申)이고 뒤에 "일"을 붙이지 않는다(2026-11-06 사용자 — 시운 화면의 큰 간지 글자 "甲申 갑신"은 글자가 주인공인 표시 예외)
-- **카드 규약** (2026-10-26, 사용자 확정): 화면을 덩어리로 나눌 때 카드 밖에 칸 소제목(`<h2>` 줄)을 두지 않는다. 덩어리마다 **둥근 카드 하나, 제목은 카드 안 윗줄**(작은 링크·라벨도 카드 안). 홈 `FEED_CARD`(`app/page.tsx`)가 기준. 카드 머리는 **제목 + 소제목 두 줄까지** — 제목은 카드 이름 한 줄(15px 굵게 `FEED_TITLE`), 소제목은 회색 한 줄(`FEED_SUB`, 그날의 문장이나 카드 설명), 부가 정보는 제목 줄 오른쪽 작은 회색(`FEED_ASIDE`), 상세 페이지 링크는 글자가 늘 "자세히 →"이고 [관리 →]와 함께 제목 줄 오른쪽 끝(`FEED_LINK`, 카드 아래 금지). 셋째 줄·작은 라벨 + 굵은 문장의 두 단 제목 금지, 제목에 든 "오늘"(오늘의 띠·별자리·타로카드)·부가 정보의 "내일"을 소제목에 되풀이하지 않음(2026-11-06 사용자 확정 "이건 일종의 룰", "자리 부족해")
+- **카드 규약** (2026-10-26, 사용자 확정): 화면을 덩어리로 나눌 때 카드 밖에 칸 소제목(`<h2>` 줄)을 두지 않는다. 덩어리마다 **둥근 카드 하나, 제목은 카드 안 윗줄**(작은 링크·라벨도 카드 안). 홈 `FEED_CARD`(`app/page.tsx`)가 기준. 카드 머리는 **제목 + 소제목 두 줄까지** — 제목은 카드 이름 한 줄(15px 굵게 `FEED_TITLE`), 소제목은 회색 한 줄(`FEED_SUB`, 그날의 문장이나 카드 설명), 부가 정보는 제목 줄 오른쪽 작은 회색(옛 홈 `FEED_ASIDE` — 2026-11-08부터 홈엔 없고 `/news`·`/zodiac`의 `ASIDE`), 상세 페이지 링크는 글자가 늘 "자세히 →"이고 [관리 →]와 함께 제목 줄 오른쪽 끝(`FEED_LINK`, 카드 아래 금지). 셋째 줄·작은 라벨 + 굵은 문장의 두 단 제목 금지, 제목에 든 "오늘"(오늘의 띠·별자리·타로카드)·부가 정보의 "내일"을 소제목에 되풀이하지 않음(2026-11-06 사용자 확정 "이건 일종의 룰", "자리 부족해")
 - ruff: line-length 100, select E/F/I/UP (E501 무시). `.claude/hooks/lint.sh`가 Write/Edit 시 자동 실행
 
 ## API 스펙
@@ -341,7 +344,7 @@ POST /kkachi/interpret       { birth_dt, gender, analysis_year=2026, city="Seoul
 POST /kkachi/stream-report   같은 요청 → text/plain 스트림 (LLM AI 풀이 — 같은 입력·이름은 메모리 캐시, Ollama 꺼짐 503)
 POST /kkachi/chat            { birth_dt, gender, analysis_year, city, name, messages:[{role,content}] } → text/plain 스트림
 POST /kkachi/shares          interpret와 같은 요청 → 201 { share_id }  (서버가 계산한 카드 스냅샷만 저장, 생년월일·성별 미저장)
-GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}|null, son_eomneun_nal, sky{sun,moon(별자리 key),moon_phase,signs[12]{key,korean,symbol,range,element,relation(합·삼각·육각·사각·충·보통 — 오늘 달과의 whole-sign 관계),score,level,headline,action,caution,lucky_item}}, tarot{date,identity:"date",card} }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26) + 오늘의 별자리 일반판(2026-10-30) + 오늘의 타로카드 날짜판(모두 같은 카드, 2026-11-05)
+GET  /kkachi/today          → { date, day_pillar, day_kor, animal{branch,korean,emoji,color}, zodiac[12]{branch,korean,emoji,relation,years[5],advice}, solar_term{name,tip,date,days}(다음 절기 — 최대 16일, 늘 있음; 2026-11-08 전엔 3일 안만), son_eomneun_nal, son_eomneun_days[≤14](오늘부터 14일 안 손없는 날 YYYY-MM-DD — 까치 신문 2026-11-08), sky{sun,moon(별자리 key),moon_phase,signs[12]{key,korean,symbol,range,element,relation(합·삼각·육각·사각·충·보통 — 오늘 달과의 whole-sign 관계),score,level,headline,action,caution,lucky_item}}, tarot{date,identity:"date",card} }  홈 까치 소식(오늘의 띠·3일 안 절기, 로그인 불필요, 2026-10-26) + 오늘의 별자리 일반판(2026-10-30) + 오늘의 타로카드 날짜판(모두 같은 카드, 2026-11-05)
 
 GET  /kkachi/zodiac/week    ?days=7(1~14)[&member_id | &birth_dt&gender&hour_unknown&city] → { date, today(= /kkachi/today에서 sky·tarot 뺀 것), days[N]{date,day_pillar,day_kor,animal,son_eomneun_nal,solar_term|null,zodiac[12]{branch,relation,advice}}, me{branch}|null }  띠 상세(/zodiac, 2026-11-06 — specs/zodiac/index.md). me는 년지(입춘 기준 natal) — member_id 기본 프로필 | 직접 입력, 없으면 null
 
@@ -546,7 +549,7 @@ erDiagram
 
 | 경로 | 설명 | 로그인 |
 |------|------|--------|
-| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 타로카드(날짜 카드) + 오늘의 띠 + 오늘의 별자리 + 까치 소식 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 내 캐릭터(그림 위쪽에 오늘 레벨 도장 `.seal-stamp` — 배지 줄은 2026-11-06 제거)·까치 말풍선(한줄평·오늘 할 것·피할 것 라벨 — 기호 없음, 10px), 카드 안 하단에 이 시간대가 좋아요 3일(시운 화면과 같은 `components/SiunCards.tsx HourlyLuckCard embedded` — 제목·범례 없이, 날짜마다 머리줄 "오늘 11/6 · 🚨"(날짜 + 레벨 아이콘, 날씨·점수는 2026-11-06 뺌) + 3시간 타일(모두 연한 상자 — 2026-11-08, 최고·좋음은 색 + 모서리 배지); 주간 시운 칸은 2026-11-06 여기에 합침), [자세히 →](`/siun`)는 제목 줄 오른쪽 작은 링크(2026-11-06 — 글자는 어느 카드든 "자세히 →"), 공유 버튼 없음 2026-10-26) → 오늘의 타로카드(타로 V9-1 — 뒷면을 누르면 셔플 떨림 → 1909 클래식 덱 그림·이름·정/역·한 줄 → "오늘 일진과 함께 보면, …" 교차 두 문장(문장마다 줄바꿈·굵게 없음 2026-11-06), [자세히 →] `/tarot`; 비로그인·기본 프로필 없음은 날짜 카드, 2026-11-05) → 오늘의 띠(12띠 격자 — 칸 오른쪽 위에 등급 라벨 최고·좋음·주의("나" 배지 꼴, 2026-11-06)·내 띠는 왼쪽 위 "나", 칸을 누르면 띠별 한 줄·년생 — 범례 줄·상자 관계 배지 없음·상자 글자 10/12px 2026-11-06) → 오늘의 별자리(12별자리 격자 — 칸 색·오른쪽 위 등급 라벨(최고·좋음·주의)은 그 별자리의 오늘 점수 기준 70/60/42(내 태양 별자리는 개인판 점수, 2026-11-06 — 달과의 각도 기준에서 바꿈; 일반판은 레벨 문턱을 거의 안 넘어 칸 전용 문턱), 태양 별자리 "나" 배지(출생 차트 ☉☽↑ 칩은 2026-11-06 홈에서 뺌 — /stars에만), 칸을 누르면 한 줄·✦ 행동(레벨 배지 없음 2026-11-06), 2026-10-30; 개인판 문장의 "{이름}님, " 접두는 뗌·범례 줄 없음·행운의 아이템 줄 없음·상자 글자 10/12px 2026-11-06) — 순서 ① → 타로 → 띠 → 별자리 → ②는 2026-11-06 사용자 확정 ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 오늘 가장 좋은 사람 한 줄 "{이름}님 — 레벨 문장" — ♥ 기호·이유 문장 없음 2026-11-06) → 사주 한 입(별도 카드 `SajuBiteCard`, 제목 "사주 한 입 — 십신(十神)" 2026-11-06 — 나 포함 내 사람들 중 누군가 가진 신살·십신에서 날짜 순번으로 하나(비로그인은 19일 순번) + "내 사람들에게도 있을까?" [확인하기] → 가진 사람(나 포함) 캐릭터 얼굴 줄; 2026-10-26~11-06은 ② 안, 얼굴 금테는 뺌) ③ 까치 소식(2026-10-26 — 3일 안 절기·손없는 날(비로그인은 사주 한 입 상식 카드도 — 절기 카드와 별개로 둘 다, 2026-11-06) · 맨 아래 새소식 `KKACHI_NEWS` 30일 안 1개(노출 조건 미정)). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
+| `/` | **까치가 물어다 준 오늘**(V8, 2026-10-24, `specs/home/index.md`). 비로그인(날짜 머리줄 없음, 2026-10-26): "나는 어떤 캐릭터일까?"(물음표 실루엣 + 맛보기 캐릭터 4장 → `AnalysisForm quick`, 제출 시 sessionStorage 저장 후 `/analysis?step=intro` 자동 분석) + 오늘의 타로카드(날짜 카드) + 오늘의 띠 + 오늘의 별자리 + 까치 신문 카드 + 소개 영상(백엔드는 `GET /kkachi/today` 1회) / 로그인: `GET /members/{id}/home` 한 번 → ① 오늘의 나(다른 카드와 같은 흰 카드 + 안에 제목, 내 캐릭터(그림 위쪽에 오늘 레벨 도장 `.seal-stamp` — 배지 줄은 2026-11-06 제거)·까치 말풍선(한줄평·오늘 할 것·피할 것 라벨 — 기호 없음, 10px), 카드 안 하단에 이 시간대가 좋아요 3일(시운 화면과 같은 `components/SiunCards.tsx HourlyLuckCard embedded` — 제목·범례 없이, 날짜마다 머리줄 "오늘 11/6 · 🚨"(날짜 + 레벨 아이콘, 날씨·점수는 2026-11-06 뺌) + 3시간 타일(모두 연한 상자 — 2026-11-08, 최고·좋음은 색 + 모서리 배지); 주간 시운 칸은 2026-11-06 여기에 합침), [자세히 →](`/siun`)는 제목 줄 오른쪽 작은 링크(2026-11-06 — 글자는 어느 카드든 "자세히 →"), 공유 버튼 없음 2026-10-26) → 오늘의 타로카드(타로 V9-1 — 뒷면을 누르면 셔플 떨림 → 1909 클래식 덱 그림·이름·정/역·한 줄 → "오늘 일진과 함께 보면, …" 교차 두 문장(문장마다 줄바꿈·굵게 없음 2026-11-06), [자세히 →] `/tarot`; 비로그인·기본 프로필 없음은 날짜 카드, 2026-11-05) → 오늘의 띠(12띠 격자 — 칸 오른쪽 위에 등급 라벨 최고·좋음·주의("나" 배지 꼴, 2026-11-06)·내 띠는 왼쪽 위 "나", 칸을 누르면 띠별 한 줄·년생 — 범례 줄·상자 관계 배지 없음·상자 글자 10/12px 2026-11-06) → 오늘의 별자리(12별자리 격자 — 칸 색·오른쪽 위 등급 라벨(최고·좋음·주의)은 그 별자리의 오늘 점수 기준 70/60/42(내 태양 별자리는 개인판 점수, 2026-11-06 — 달과의 각도 기준에서 바꿈; 일반판은 레벨 문턱을 거의 안 넘어 칸 전용 문턱), 태양 별자리 "나" 배지(출생 차트 ☉☽↑ 칩은 2026-11-06 홈에서 뺌 — /stars에만), 칸을 누르면 한 줄·✦ 행동(레벨 배지 없음 2026-11-06), 2026-10-30; 개인판 문장의 "{이름}님, " 접두는 뗌·범례 줄 없음·행운의 아이템 줄 없음·상자 글자 10/12px 2026-11-06) — 순서 ① → 타로 → 띠 → 별자리 → ②는 2026-11-06 사용자 확정 ② 오늘 내 사람들(캐릭터 얼굴 가로 줄 + 오늘 궁합 ♥/·/! → `/compatibility?p2=`, + 사람 추가, 아래 오늘 가장 좋은 사람 한 줄 "{이름}님 — 레벨 문장" — ♥ 기호·이유 문장 없음 2026-11-06) → ③ **까치 신문** 카드 한 장(2026-11-08, `specs/news/index.md` — 제목 "까치 신문" + 제목 줄 오른쪽 "자세히 →" `/news`, 소제목은 머리기사 한 줄: 오늘·내일 절기 🌾 → 오늘 손없는 날 👻 → 7일 안 새소식 📣 → "{문창귀인(文昌貴人)} — 오늘의 사주 한 입"(내 사람들 기준). 2026-10-26~11-08의 사주 한 입 별도 카드·절기·손없는 날 줄·새소식 카드·비로그인 상식 카드는 전부 `/news`로 — 사용자 "홈은 하루 의식만, 읽을거리는 까치 신문"). 영상·이어서 할 것 없음(이어서 할 것은 2026-10-26 제거, API `next`는 화면 노출 없이 남음) | 선택 |
 | `/join` | 이름+이메일 → `POST /members` → 프로필 있으면 `/`, 없으면 Step 2(내 사주 등록, `is_self=true`) → `/`. sessionStorage `kkachi_login_next`가 있으면 로그인 후 그 경로로 | — |
 | `/my` | 계정 정보 · 로그아웃 · **회원 탈퇴**(이메일 재입력 확인 후 cascade 삭제) | 필수 (`/join` redirect) |
 | `/profile` | 프로필 추가/수정/삭제 (최대 10개, `is_self`는 삭제 불가·"나" 뱃지). **"기본으로" 버튼**으로 다른 프로필을 기본 프로필(나)로 바꿀 수 있음 (`POST …/set-self`) | 필수 |
@@ -562,6 +565,7 @@ erDiagram
 | `/stars` | 별자리 상세(2026-11-06, `specs/stars/index.md`) — `GET /horoscope/week` 한 번(로그인 `member_id` 기본 프로필 / 비로그인 sessionStorage `kkachi_analysis_input`·`_name` / 없으면 일반판). 내 별자리(개인판 오늘 + 등급 라벨 + 출생 차트 ☉☽↑ 뜻, 상승 "처녀 또는 천칭" 이유) → 이번 주 달의 길(7칸 — 칸 오른쪽 위 등급 라벨(그날 기준 별자리 점수, GradeTag), 누르면 그날 내 문장 + 레벨 배지) → 별자리별 오늘(12줄 + 등급 라벨, 누르면 달의 길 기준도 바뀜). 진입은 홈 카드 [자세히 →] | 선택 |
 | `/tarot` | 오늘의 타로카드 자세히(타로 V9-1, 2026-11-05, `specs/tarot/index.md`) — 로그인은 `getHome().me.tarot`(기본 프로필 없으면 `today.tarot` 날짜 카드), 비로그인은 sessionStorage `kkachi_analysis_input` → `GET /tarot/today`(없으면 날짜 카드 + "내 사주를 먼저 보면 내 카드가 나와요 → /analysis"). 큰 카드(늘 앞면 — 뒤집기는 홈 카드에서만, 2026-11-06) → 이름·정/역·"1909 클래식 덱" → 키워드 3 → 한 줄 → 일진 교차 한 줄(사람 카드) → 연애·일·재물 → 면책 한 줄. 진입은 홈 카드 [자세히 →]·새소식·아침 알림(하단 메뉴 없음) | 선택 |
 | `/iching` | 까치에게 묻기 — 주역 질문 괘(V11-1, 2026-11-07, `specs/iching/index.md`) — 질문(4~80자) + 영역 칩 → `POST /iching/ask`(로그인 `member_id` 기본 프로필 / 비로그인 sessionStorage `kkachi_analysis_input` / 없으면 괘만) → 동전 셋이 여섯 번 뒤집히며 괘 그림이 아래부터 쌓임(약 3초) → 쉬운 이름(괘 글자)·전통 이름·키워드 3 → 지금 한 줄 → 앞으로(변효 있으면 지괘 작은 그림 + 한 줄) → 영역 한 줄(기타는 없음) → 사주 있으면 "오늘 일진과 함께 보면" 두 문장(없으면 `/profile`·`/analysis` 안내) → 면책 → [다른 것 묻기]. 위기 어간은 괘 없이 109·1577-0199 카드. **진입은 URL 직접뿐** — 홈 입구 카드·새소식은 2026-11-08 뺌(사용자: 질문형 점 보기(게임) 기능은 홈이 아니라 나중에 모아서 별도 화면으로, ROADMAP §5 후보), 하단 메뉴 없음 | 선택 |
+| `/news` | **까치 신문**(2026-11-08, `specs/news/index.md`) — 홈에서 떼어 낸 읽을거리 한 면. 로그인은 `getHome` 한 번(오늘 + 사주 한 입용 `marks`, 실패하면 날짜판), 비로그인은 `getToday` 한 번. 제목 아래 "{2026년 11월 8일 일요일} · {갑신(甲申)} — {푸른 원숭이}의 날" → 새소식(최신 1건은 30일 제한 없이 + "지난 소식 N개" 접힘, `lib/news.ts KKACHI_NEWS`) → 사주 한 입(`SajuBiteCard` — 홈 것 그대로, 로그인은 내 사람들 기준 [확인하기] 얼굴 줄 / 그 밖엔 19일 순번 + `/analysis`) → 절기(늘 다음 절기 하나 + "오늘·내일·N일 뒤" + 팁) → 손없는 날(14일 안 날짜 칩, 오늘은 금색) → [← 홈으로]. 진입은 홈 까치 신문 카드 "자세히 →"(하단 메뉴 없음). 이벤트 `news_view` | 선택 |
 | `/s/[id]` | 결과 공유 카드 랜딩 3종 — 사주(맨 위 나의 캐릭터 상자 → 이름·팔자·오행 분포·신살·한눈에 5줄) · 시운(일진·점수·아침 한 마디·절기/날씨 배지·팁 1개) · 궁합(캐릭터 칭호 박스: 두 사람 사주 캐릭터 그림 `saju_character/{roles[i].character_key}.webp`(파일 존재 확인, 옛 카드·없는 쪽은 역할 이모지) + 칭호 + 역할 칩 + 설명 + 잘 맞는 순간 칩 → 점수·라벨·두 사람 일간·시간 미상이면 세 기둥 고지·관계 기호 ♥★✿·영역 점수). kind별 CTA(내 사주 / 오늘 시운 / 궁합). 서버 렌더, OG 이미지는 `/s/[id]/opengraph-image`. `robots` noindex | — |
 | `/admin/feedback` | 탭별 👍/👎 긍정률·최근 7일 이벤트 대시보드. 서버에 `KKACHI_ADMIN_TOKEN`이 있으면 401 → 토큰 프롬프트(localStorage `kkachi_admin_token`) | — |
 
@@ -736,7 +740,7 @@ tests/
 └── application/
     ├── test_interpret.py       # 종합 해석 통합 테스트
     ├── test_compatibility.py   # 궁합 점수·관계·삼합·캐시·관계유형·오늘의 궁합 문장(이름엔 님, 조각 아닌 문장)
-    ├── test_fortune_rules.py   # 일진 점수·아침 한 마디
+    ├── test_fortune_rules.py   # 일진 점수·아침 한 마디 · build_today 다음 절기(366일 전부 ≤16일)·손없는 날 14일 목록(음력 끝자리 9·0)
     ├── test_timing_rules.py    # 타이밍 리포트(R3)
     ├── test_push_service.py    # 푸시 페이로드
     ├── test_home_service.py    # 홈 묶음 — 회원 없음 None·기본 프로필 없음·여성 art_key·다른 회원 제외·next 순서(좋은 날은 내일 이후·안 본 궁합 첫 사람·옛 버전 AI 풀이)·me.horoscope 차트·today.sky

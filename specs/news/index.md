@@ -2,11 +2,11 @@
 
 | 항목 | 내용 |
 |---|---|
-| 상태 | **초안 — 미구현**. 2026-11-08 사용자 제안("새소식, 사주 한 입 등을 모아서 까치 신문이라고 하나 모아둘까") → 코드보다 스펙 먼저. 구현 여부·범위는 사용자 결정(§6) |
-| 관련 코드(예정) | `frontend/src/app/news/page.tsx`(새) · `lib/news.ts`(새 — `KKACHI_NEWS`를 홈 `app/page.tsx`에서 옮김, 홈 카드 소제목과 신문이 같이 씀) · 홈 `app/page.tsx`(③ 까치 소식 → 까치 신문 카드 한 장, `SajuBiteCard`·`KkachiFeed` 이동) · `src/kkachi/application/fortune_rules.py build_today`(절기 범위·손없는 날 목록) |
+| 상태 | **살아있음** — 2026-11-08 사용자 제안("새소식, 사주 한 입 등을 모아서 까치 신문이라고 하나 모아둘까") → 같은 날 스펙 초안 → 구현("홈에 까치 신문은 없네?"). 열린 결정은 초안 기본값으로(§6) |
+| 관련 코드 | `frontend/src/app/news/page.tsx` · `components/SajuBiteCard.tsx`(사주 한 입 — 홈에서 옮기며 분리, `pickBite`) · `lib/news.ts`(`KKACHI_NEWS`·`dayNoOf`) · 홈 `app/page.tsx KkachiPaperCard`(③ 카드 한 장) · `src/kkachi/application/fortune_rules.py build_today`(`_SOLAR_TERM_AHEAD` 16·`_SON_NAL_AHEAD` 14) · `lib/api.ts TodayData.son_eomneun_days` · sitemap |
 | 관련 API | `GET /kkachi/today`(기존 — §2에 적은 두 가지 확장) · 로그인은 `GET /members/{id}/home`(기존 — `me.marks`·`people[].marks`) |
 | 관련 문서 | `specs/home/index.md` §3-2(사주 한 입)·§3-5(까치 소식) — 구현 때 그쪽을 "까치 신문 카드 한 장"으로 고친다 · `specs/iching/index.md` §2(진입 자리 열린 결정) · ROADMAP §5 "까치 신문"·"점 보기(게임) 모음 화면" |
-| 마지막 확인 | — (미구현) |
+| 마지막 확인 | 2026-11-08 — 베타 390px Playwright(시스템 Chrome) 홈 로그인·비로그인의 까치 신문 카드, `/news` 로그인(내 사람들 기준 사주 한 입)·비로그인(19일 순번 + `/analysis`), 가로 스크롤 없음, 백엔드 테스트 234 통과 |
 
 ## 1. 목적
 
@@ -19,7 +19,7 @@
 | 상태 | 요청 | 보이는 것 |
 |---|---|---|
 | 로그인, 기본 프로필 있음 | `GET /members/{id}/home` 한 번(홈과 같은 응답 — `today` + `marks`) | 새소식 → 사주 한 입(**내 사람들 기준** + 확인하기) → 절기 → 손없는 날 |
-| 로그인, 기본 프로필 없음 | 같은 요청(`me: null`) | 사주 한 입이 19일 순번 상식 + [내 사주에도 있을까? →] `/analysis`(나머지 같음) |
+| 로그인, 기본 프로필 없음 | 같은 요청(`me: null`) | 사주 한 입은 내 사람들이 있으면 그 기준(`people[].marks`), 아무도 없으면 19일 순번 상식 + [내 사주에도 있을까? →] `/analysis`(나머지 같음). 회원 응답이 실패하면(지워진 회원 등) `GET /kkachi/today`로 날짜판 |
 | 비로그인 | `GET /kkachi/today` 한 번 | 로그인·기본 프로필 없음과 같음 |
 
 - 로그인 불필요(`/tarot`·`/zodiac`·`/stars`와 같은 정책). 하단 메뉴에 칸을 더하지 않는다 — 진입은 **홈 까치 신문 카드**(카드 전체 링크, 제목 줄 오른쪽 "자세히 →", §3-B).
@@ -27,8 +27,8 @@
 - `GET /kkachi/today` 확장 두 가지(`build_today`, 순수 함수 — `/members/{id}/home today`·`/kkachi/zodiac/week today`에도 같이 실린다):
 
 ```
-solar_term: { name, tip, date, days } | null   // 지금: 오늘~3일 뒤 첫 절기(_SOLAR_TERM_AHEAD = 3) → 바꿈: 다음 절기(최대 16일 뒤, 늘 있음). 홈 신문 카드는 days ≤ 1일 때만 머리기사로 씀
-son_eomneun_days: ["2026-11-09", "2026-11-10", …]   // 새 필드 — 오늘부터 14일 안 손없는 날(음력 끝자리 9·0, _is_son_eomneun_nal). 오늘이 들어 있으면 오늘이 손없는 날
+solar_term: { name, tip, date, days } | null   // 2026-11-08 바꿈: 오늘~3일 뒤 첫 절기(_SOLAR_TERM_AHEAD = 3) → 다음 절기(16, 최대 16일 뒤 — 늘 있음). 홈 신문 카드는 days ≤ 1일 때만 머리기사로 씀
+son_eomneun_days: ["2026-11-09", "2026-11-10", …]   // 2026-11-08 새 필드 — 오늘부터 14일 안 손없는 날(음력 끝자리 9·0, _is_son_eomneun_nal, _SON_NAL_AHEAD = 14). 오늘이 들어 있으면 오늘이 손없는 날
 ```
 - 새소식은 코드 안 목록 `KKACHI_NEWS`(`lib/news.ts`로 옮김 — 맨 위가 최신, `{date, emoji, title, body, href}`) — 백엔드·DB 없음. 운영자가 맨 위에 한 줄 더하면 신문 머리기사가 바뀐다.
 
@@ -65,10 +65,12 @@ son_eomneun_days: ["2026-11-09", "2026-11-10", …]   // 새 필드 — 오늘�
 4. 로그인(기본 프로필 있음)의 사주 한 입은 홈이 2026-11-07까지 보여 주던 것과 같은 규칙(내 사람들 중 누군가 가진 것, [확인하기 →] → 얼굴 줄)이고, 비로그인은 19일 순번 상식 + [내 사주에도 있을까? →]다. 같은 날 홈 카드 소제목 ④의 이름과 신문의 사주 한 입 이름이 같다.
 5. 절기 카드는 오늘이 절기가 아니어도 다음 절기 이름·날짜·"N일 뒤"·팁이 있다(예: 11월 8일에 "소설(小雪) · 11월 22일 · 14일 뒤"). 절기 당일엔 오른쪽이 "오늘"이고 홈 카드 소제목이 "🌾 오늘은 소설(小雪)"이다.
 6. 손없는 날 카드의 칩은 오늘부터 14일 안의 손없는 날 날짜·요일이고(응답 `son_eomneun_days`), 오늘이 손없는 날이면 첫 칩이 금색 "오늘"이며 홈 카드 소제목이 👻 줄이다(절기가 오늘·내일이 아닐 때).
-7. 백엔드 테스트: `build_today`의 `solar_term`이 어느 날짜에나 `null`이 아니고 `days ≤ 16`, 절기 당일 `days == 0` · `son_eomneun_days`가 14개 이하의 ISO 날짜이고 각각 음력 끝자리 9·0 · `/kkachi/today`·`/members/{id}/home today`·`/kkachi/zodiac/week today`에 두 필드가 같이 실림.
+7. 백엔드 테스트(`tests/application/test_fortune_rules.py`, 2026-11-08 통과): `build_today`의 `solar_term`이 2026년 366일 어느 날이나 `null`이 아니고 `0 ≤ days ≤ 16`, 입동 당일 `days == 0`·11-03 `days 4`·11-08 소설 `days 14` · `son_eomneun_days`가 14개 이하·오름차순·14일 안의 ISO 날짜이고 각각 음력 끝자리 9·0, 오늘 포함 여부 = `son_eomneun_nal` · 같은 `build_today`가 `/kkachi/today`·`/members/{id}/home today`·`/kkachi/zodiac/week today`에 실린다.
 8. `/news` 백엔드 호출 1회, 가로 스크롤 없음, `news_view` 이벤트 1회.
 
 ## 6. 열린 결정
+
+2026-11-08 구현은 모두 **초안 기본값**으로 했다 — 이름 까치 신문·경로 `/news`·호수 없음·소개 영상 비로그인 홈 그대로·점 보기 임시 입구 없음·지난 소식 전부·손없는 날 14일·읽음 표시 없음·`_SOLAR_TERM_AHEAD` 3 → 16. 바꾸려면 아래에서 고른다.
 
 | 결정 | 선택지 | 누가 |
 |---|---|---|
@@ -83,4 +85,5 @@ son_eomneun_days: ["2026-11-09", "2026-11-10", …]   // 새 필드 — 오늘�
 
 ## 7. 변경 이력
 
+- 2026-11-08 — **구현**(사용자 "홈에 까치 신문은 없네?" — 초안 기본값 그대로): `/news` 네 카드 + [← 홈으로], 홈 ③ → `KkachiPaperCard` 한 장(머리기사 소제목), `SajuBiteCard`를 `components/`로 분리(`pickBite`), `KKACHI_NEWS`를 `lib/news.ts`로(새소식 "까치 신문을 펼쳤어요" 추가), `build_today` 절기 3 → 16일·`son_eomneun_days` 14일, sitemap `/news`, 이벤트 `news_view`. 새 엔드포인트·DB 없음. 테스트 233 → 234. 상태 초안 → 살아있음
 - 2026-11-08 — 초안 신설(사용자 제안 "새소식, 사주 한 입 등을 모아서 까치 신문이라고 하나 모아둘까"). 같은 날 홈에서 뺀 까치에게 묻기(점 보기 모음 화면 후보)와 짝 — 홈은 하루 의식만, 읽는 것은 신문, 묻는 것은 점 보기. 미구현

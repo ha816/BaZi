@@ -393,15 +393,16 @@ export interface SkySign {
 }
 export interface SkyData { sun: string; moon: string; moon_phase: string; signs: SkySign[] }  // sun·moon은 별자리 key, 오늘 정오 KST
 
-/** 홈 '까치 소식' 칸의 오늘 띠·절기 (specs/home §3-5, 2026-10-26) — 로그인 홈은 HomeData.today, 비로그인은 getToday() */
+/** 홈 오늘의 띠·까치 신문의 오늘 (specs/home §3-5·specs/news, 2026-10-26) — 로그인 홈은 HomeData.today, 비로그인은 getToday() */
 export interface TodayData {
   date: string;
   day_pillar: string;
   day_kor: string;
   animal: { branch: string; korean: string; emoji: string; color: string };
   zodiac: { branch: string; korean: string; emoji: string; relation: "나" | "삼합" | "육합" | "충" | "원진" | "보통"; years: string[]; advice: string }[];
-  solar_term: { name: string; tip: string; date: string; days: number } | null;
+  solar_term: { name: string; tip: string; date: string; days: number } | null;  // 다음 절기(최대 16일 뒤, 늘 있음 — 2026-11-08 까치 신문; 전엔 3일 안만). 홈 카드는 days ≤ 1만 머리기사로
   son_eomneun_nal: boolean;
+  son_eomneun_days: string[];  // 오늘부터 14일 안 손없는 날(YYYY-MM-DD) — 까치 신문 (2026-11-08)
   sky: SkyData;  // 오늘의 별자리 (2026-10-30)
   tarot: TarotToday;  // 오늘의 타로카드 날짜판 — 모두 같은 카드, cross 없음 (V9-1, 2026-11-05)
 }
