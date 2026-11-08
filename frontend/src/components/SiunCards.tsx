@@ -58,11 +58,12 @@ export function HourlyLuckCard({ days, yongshin, count = DAY_LABELS.length, embe
                 <div className="flex gap-1">
                   {hours.map((h, i) => {
                     const rel = relOf(h.element);
+                    // 타일은 모두 상자(연한 상아색) — 최고·좋음만 상자였을 때 보통 타일은 그림만 떠 보여 간격이 들쭉날쭉해 보였다(2026-11-08 사용자). 색만 관계별로
                     const highlight = rel === "match"
-                      ? "bg-emerald-50 ring-1 ring-emerald-300 rounded-xl"
-                      : rel === "generates" ? "bg-amber-50 ring-1 ring-amber-200 rounded-xl" : "";
+                      ? "bg-emerald-50 ring-emerald-300"
+                      : rel === "generates" ? "bg-amber-50 ring-amber-200" : "bg-[var(--color-ivory)] ring-[var(--color-border-light)]";
                     return (
-                      <div key={i} className={`relative flex flex-col items-center gap-1.5 px-2.5 pt-1.5 pb-1 min-w-[52px] ${highlight}`}>
+                      <div key={i} className={`relative flex flex-col items-center gap-1.5 px-2.5 pt-1.5 pb-1 min-w-[52px] rounded-xl ring-1 ${highlight}`}>
                         <span className="text-[11px] text-[var(--color-ink-faint)] leading-none">{h.hour}</span>
                         <span className="text-2xl">{elMeta(h.element).emoji}</span>
                         <span className={`text-[11px] font-bold leading-none ${elMeta(h.element).color}`}>{h.element}</span>
